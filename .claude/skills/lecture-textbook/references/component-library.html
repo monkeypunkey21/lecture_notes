@@ -1,0 +1,241 @@
+<!--
+  CANONICAL REFERENCE: Lecture 3 — OCaml lecture rendered with the skill's design system.
+  Every component (hero, callouts, quizzes, flow-steps, figure-box, comparison table,
+  collapsible details, SVG diagrams, progress bar, sidebar nav) appears here in real use.
+  When generating a new lecture page, mirror this structure exactly.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 3 — Interactive Textbook</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ── PASTE assets/styles.css HERE VERBATIM ── */
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 3</div>
+  <a href="#part1">Part I — Currying</a>
+  <a href="#why-currying" class="sub">Why Currying Exists</a>
+  <a href="#cons-function" class="sub">The Cons Function</a>
+  <a href="#quiz-currying" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Pattern Matching</a>
+  <a href="#car-problem" class="sub">The Car Problem</a>
+  <a href="#match-expressions" class="sub">Match Expressions</a>
+  <a href="#pattern-catalog" class="sub">Pattern Catalog</a>
+  <a href="#quiz-patterns" class="sub">↳ Check Yourself</a>
+  <a href="#no-selectors" class="sub">Why Not Hd / Tl</a>
+  <!-- ... additional sidebar entries one per major sub-section ... -->
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">CS 131 · Programming Languages</div>
+  <h1>Patterns, Recursion &amp; the Anatomy of Syntax</h1>
+  <p class="hero-sub">An interactive guide to Lecture 3 — covering currying, pattern matching, efficient recursion, and how compilers begin to read your code.</p>
+</header>
+
+<!-- ═══════════════════════ PART HEADER ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>Currying — One Argument at a Time</h2>
+</div>
+
+<h3 id="why-currying">Why Does Currying Exist?</h3>
+<p>Lead with a "why are we learning this" paragraph. Then the historical or
+motivating story. Then the precise definition. Always set up <em>why</em>
+before the <em>what</em>.</p>
+
+<!-- CONCEPT CALLOUT — for formal definitions / key terms -->
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Currying</div>
+  <p>A <strong>curried function</strong> is a function that appears to take multiple arguments, but actually takes them one at a time...</p>
+</div>
+
+<h3 id="cons-function">Example: The <code>cons</code> Function</h3>
+<p>Show concrete code. Walk through what it does.</p>
+
+<pre><code><span class="kw">let</span> <span class="fn">cons</span> x y = x <span class="op">::</span> y</code></pre>
+
+<!-- FLOW-STEP — numbered walkthrough with vertical connector -->
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>First step of the trace or argument.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>Second step. The connector line between them is automatic.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>Last step has no trailing connector (auto-handled by CSS).</p>
+</div>
+
+<!-- TIP CALLOUT — practical advice / "why this matters later" -->
+<div class="callout tip">
+  <div class="callout-title">Why This Matters Later</div>
+  <p>Bridge to upcoming material. Use freely for connection callouts.</p>
+</div>
+
+<!-- QUIZ — every part ends with one of these -->
+<div class="quiz" id="quiz-currying">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">What is the type of <code>cons "hello"</code>?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div><code>string</code></div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div><code>string list -&gt; string list</code></div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div><code>string -&gt; string list</code></div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div><code>'a list -&gt; 'a list</code></div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct!</strong> Since <code>cons</code> has type <code>'a -&gt; 'a list -&gt; 'a list</code>... [full explanation here, several sentences]
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ ANOTHER PART ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>Pattern Matching — Taking Data Apart</h2>
+</div>
+
+<!-- WARNING CALLOUT — for compiler warnings, common mistakes, gotchas -->
+<div class="callout warning">
+  <div class="callout-title">Compiler Warning — Partial Match</div>
+  <p>OCaml warns us that our pattern doesn't cover all possible inputs...</p>
+</div>
+
+<!-- INSIGHT CALLOUT — for "aha" moments / deeper realizations -->
+<div class="callout insight">
+  <div class="callout-title">Type Inference in Action</div>
+  <p>OCaml doesn't require type annotations. It <strong>infers</strong> all types automatically...</p>
+</div>
+
+<!-- BIG-IDEA CALLOUT — reserve for the 3–5 most important takeaways of the whole lecture -->
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>One of the core reasons we use OCaml is to write programs where if it compiles, it won't crash...</p>
+</div>
+
+<!-- COLLAPSIBLE DETAILS — for desugared forms, full proofs, optional deep-dives -->
+<details>
+<summary>Expand: The desugared (long) version</summary>
+<div class="details-body">
+<p>Optional content the student can drill into if they want.</p>
+<pre><code>... longer code example ...</code></pre>
+</div>
+</details>
+
+<!-- COMPARISON TABLE -->
+<table class="compare-table">
+  <tr><th>Syntax (Form)</th><th>Semantics (Meaning)</th></tr>
+  <tr><td>What does the code <em>look like</em>?</td><td>What does the code <em>mean</em>?</td></tr>
+  <tr><td>Mechanically checkable</td><td>Requires understanding intent</td></tr>
+</table>
+
+<!-- INLINE SVG FIGURE — for parse trees, list diagrams, recursion trees, etc. -->
+<div class="figure">
+  <div class="figure-box">
+    <svg width="180" height="120" viewBox="0 0 180 120" style="display:block; margin:0 auto;">
+      <text x="90" y="30" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="18" font-weight="600" fill="#c0510a">+</text>
+      <line x1="80" y1="36" x2="50" y2="80" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="100" y1="36" x2="130" y2="80" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="50" y="100" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="16" fill="#2a2520">x</text>
+      <text x="130" y="100" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="16" fill="#2a2520">1</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Parse tree for <code>x + 1</code>. Leaves are tokens; the internal node is the operator.</div>
+</div>
+
+</section>
+
+<!-- ═══════════════════════ SUMMARY ═══════════════════════ -->
+<section class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+<p>End every lecture page with this section. Connect the parts to each other and to the bigger picture of the course.</p>
+
+<div class="callout tip" style="margin-top: 32px;">
+  <div class="callout-title">What's Next</div>
+  <p>Preview the next lecture or where these ideas show up later.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>
