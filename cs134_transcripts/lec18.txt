@@ -1,0 +1,668 @@
+Holy cow.
+Legion, please?
+Estimate.
+I see it's gonna smooth it, though.
+That's what's right.
+Basically.
+We dare make that, huh?
+Yeah, I was not sure what's in the bugs, God, he's so…
+Okay, hello everyone, let's get started, with, the…
+Previous to last lecture for this year's Distributed Systems.
+As always, let's start with the quiz questions from last time.
+So, the first one, which is also, I think, the most interesting, and the one that most of you, most people, got wrong, is… is the following, is the one that talks about how to build a database on top of a virtual log, DLO's log. And,
+The question was asking whether and when we can run a read-write transaction, whether we can run it right after it has been appended to the log.
+But the answer is not true, actually. And the reason is that an append succeeding does not mean that we succeeded in appending to the exact point we had in mind.
+What it means is that just we managed to write it successfully in the log and replicate it. So even though the event succeeded, other transactions might have been appended in the meantime, in between what we knew was the tail and the new tail, so we now need to read
+Check the new tail, and execute everything that has happened since our last tail, to then execute also our transaction.
+Questions about this?
+Thoughts about this, stick to reading a transaction?
+Great.
+The second question was about failures and tolerating failures, and then, what we, what we, what we saw and what we know about Velos is that it can tolerate up to F failures, so a minority of failures.
+And still be able to respond to seal and check tail, but append
+cannot tolerate the failure of the sequencer. So if the sequencer fails, a pen stops working completely, and the system has to use SEAL and SecTail to continue execution. So, Delos is highly available in this sense, because it can respond even if, there are multiple failures, servers that are down.
+But it can still respond and do the CL and sectale, but appends only work in native loglet, if the sequencer is up and running, and if the majority of service is up and running.
+Okay?
+Questions about this? I think most of you got it right, but yeah.
+Great. And finally,
+there was a question about the append operations in native loglet and this concept of zombie rides.
+Even a pen succeeded.
+what we know through Delos in native loglet, is that we are sure that it is committed and replicated. So, if we get the response that an append has succeeded, there is no way that this append will be dropped under our feet and, you know, we will not suddenly, later, someone will not acknowledge it.
+However, what is not guaranteed is that if an append fails, then it actually was not committed or replicated. And this is because of this zombie-right phenomenon. So, if an append failed.
+that doesn't necessarily mean the append has failed, but rather that, you know… so you have to check the day to make sure that the append actually failed, okay? This is beneficial, and… and Realers chooses this because
+The append succeeding is a common case, appends usually succeed, and so in the rare case that an append fails, you can just check to make sure, you know, if it succeeded or failed, and then you're good.
+And yes, if they choose the other approach, which we had discussed in last lecture, of not doing the zombie rides, but rather dropping things, appends that were not written to the majority, that could lead to lost, appends that would violate the corrector's guarantee that we have, okay?
+Questions about this?
+And about dealers in general?
+Great.
+So… Today is the last main lecture of the class, and we'll talk about a system, called NUCAS.
+And the agenda for today's lecture is that we will first talk about microservices.
+We will then talk about Nubas' goals.
+It's correctness
+And finally, implementation, and… evalu.
+Portuguese.
+So, Microservices are a very, very common way to structure applications.
+Today, in the cloud, and kind of, like, modern contemporary applications are often written in this way of microservices, where you take the application, and you split it into multiple small services, and each of these services does something separate, and this gives a lot of benefits, which we'll talk about.
+So microservices, the one main property of them is that they are written in multiple languages.
+So, one of the main properties and benefits. So, they allow you to write each of these services in a different language,
+And that makes development easier.
+However, this introduces an issue.
+What is… what is an issue that comes to mind? If we split the monolithic application and we have microservices with multiple languages, yes?
+Some days not.
+you need some API for them to talk to each other, and their data is also represented completely differently, exactly. So, the solution and the way microservice applications usually work is that they use some form of serialization library, like gRPC or Apache Thrift.
+And they have some APIs that they expose, and we have seen about APIs and RPCs already in the class.
+So Microsoft applications talk with these RPCs, which also do the serialization of data, so that we're able to talk to each other. They have RPC calls where you can call and hear back, or also queues where you fire and forget, so this is also another way to compose them, where you send some event, but then you don't care to hear a response.
+Its service… Has its own state.
+And the way to imagine this is that each one of those could be backed up by a KV store or a database, or could be implementing a data store.
+And
+Each service is deployed on its own set of machines, or possibly multiplexed, but still the deployment is handled separately from its… for its service, and each service can be sharded, replicated, multithreaded, and so on.
+And yeah, each team manages the deployment of its service, and each team manages the upgrades of its service, and so on.
+So Microsoft's applications, this is… this is the context for Microsoft's applications. Any questions about, about, about this paradigm, or, you know, questions about, about this?
+Great. So…
+A common Microsoft application, on top of the logic, the application logic, they also have to do several generic tasks, which are things like, how can we find which other service exists in the network and how to call them?
+Authenticate requests across services, serialization to serialization, encrypting requests for privacy, or monitoring request-level metrics to be able to understand the performance characteristics of our applications.
+All of these things are usually done using the help of service meshes. So service meshes are an application-dependent way to implement all of this functionality, and almost always, in today's world, microservice applications are deployed together with a service mesh.
+And so service meshes are software components that implement application-dependent microservice tasks, all of the ones that we talked about. And, some examples of them are DAPR or EastIO.
+And they almost always come together with a proxy or sidecast, meaning that
+to each service is also deployed together with a little other process that's a sidecar, and this sidecar does all of this work that the service mess needs to do globally. So the sidecar does authentication, encryption, serialization, monitoring, and so on.
+And the second intercepts, of course, all incoming and outgoing communication between the services to be able to perform this task.
+Questions about service masses? This is mostly context so far, I'm just setting the context for this that we will see today. Any questions about service masses?
+Great.
+So, as we said, microservices are heavily used in the industry.
+And these are some… some example graphs. Admittedly, they're kind of old. These were… these were, like, maybe 5 years ago in some papers. These graphs are from AWS, from X, at the time Twitter, Netflix, of their… of their microservices. And…
+I want to ask you, why do you think that microservice applications are used in industry? What are the main benefits that people can get from them? Any thoughts? This is a kind of open-ended question, again, like, other times. There's multiple benefits, and there's no, you know, wrong answers.
+It kind of allows you to modularize things, like, in a very fine-grained way, so, like, one team knows exactly what they need to work on. Yeah, so it allows you to modularize things in a very fine-grained functionality, and separate teams know what to work on. Exactly.
+You know, things are redeveloping every time.
+That's beautiful.
+That's exactly right also, so you can… instead of in a huge company, instead of implementing some monolith, you implement a separate service, the team manages it, and then if someone needs this functionality, then they can just call that service and get a functionality. Great. Other thoughts?
+specific vessel.
+You can hold team-specific SLAs, so each team can separately manage their SLAs, their performance guarantees for their service.
+Scale certain, also horizontally depend upon
+You can scale different services separately, exactly, depending on needs, so you're not now blocked to have the complete monolithic application to scale, but you can scale each one separately. Great. Other points and other thoughts?
+Anything related to this class, also?
+to the thing that we… most often, when I ask a question in this class, that the answer is, X. Yeah.
+Do you need to get fault tolerant.
+It's easy to get fault tolerance, and it's also easy to localize the faults. And so, yeah, let me kind of get some of the benefits here on the… that I have also written, but these are mostly all the things you said. Primarily, the first thing I wanted to keep in mind is that the benefits are mostly organizational.
+Meaning that the company can split engineers into teams, its team handles a different service.
+And its team can quickly iterate, upgrade their service, its team can basically scale their service, provide SLAs for their service, and its team deals with operational and monitoring of their service, which has to do with faults, because a classic scenario, and this is what, at some point in the past, when I was talking to a microservice engineer from a big company, what he told me is that
+Look, the reason why we're using them is because there is a problem in the application, and it's 3 AM.
+and you paid someone in. If you have a monolith, and there is, you know, the whole application crashes, you have to pay the engineers that know the whole application. But for a microservice application.
+Whichever service crashed, you paid the engineers of that service, and then they can fix the service, so you don't need to wake up, you know, everyone. You can localize the faults, and you can deal with them in a kind of more modular and scalable fashion.
+Okay?
+Questions about microservice benefits?
+Great.
+So now, I want… now to have this context, I want to talk a little bit about microservice graphs, because I represented microservice as graphs, but I think there are some subtleties that I want you to keep in mind for realistic applications.
+So, first of all, as we saw, graphs end up being very big, so the graphs from these companies are hundreds or thousands of nodes big, and they have various calling patterns, like, you know, fan note patterns, chain patterns, fan-in patterns, and so on.
+But… what does an EDS mean in this graph? What do people think? What does an EDS?
+What is the precise information that this graph mean?
+The two services?
+The two services need to communicate, so that's one way to think about it, but can we be more precise, or is it correct to be more precise than this?
+do these services always communicate, or not? So…
+and NEDS, in these representations, means that a service might call another service. So, the question, you know, does that mean that it calls the other service always for every request? Does it call it for some requests, but not others? So, imagine a scenario where you have a service, where
+you know, depending on some non-determinism, or depending on some kind of factors, it's sometimes called Service 2 and sometimes called service 3. For example, if you do some form of A-B testing, and you want to test, you know, some different backends for your Microsoft application.
+So, the graph representation is rather lossy.
+Meaning that there is no graph that we can represent this
+without losing any information. If we saw this in a graph, we would show Service 1 calling 2 and calling 3, but we don't know that this means it's always calling 2 and 3, it's sometimes calling 2 and 3, does it call 2 and then 3, and so on, does it call them in parallel? So the graph doesn't have this capability, and the fundamental reason is that,
+service calls are dynamic in real life, and very messy.
+one way to think about this is that you might have a service that if it doesn't find data in one service, it first tries service two. If it doesn't find data, it then goes to service three. If a service is down, fall back to another, load balancing, and so on.
+And this is very important to keep in mind, and this is a very important, also, assumption that today's paper and system has to kind of get around, because if we knew the graph, we could do many things much more easily. So in realistic applications, we don't have a graph.
+Things are dynamic, and we don't know exactly what services the service might call, even though we represent them in this nice graph, okay?
+Questions about this point, about graphs?
+Like, a little bit of, what would be the problem with, like, requiring, like, the engineer to, like, specify these are all the services, this one service depends on…
+We would just let you give it for now.
+If it's, like, simply, like, important, they can do that. The thing is that you can describe all the services that the service could potentially con.
+But that doesn't give you all the information, because if it could call some services, that doesn't necessarily mean that it will call them for a specific request. So then if you actually try to do things to optimize this system on a reasonable system, you can't take it for granted that this service will call all these other services. And also, you don't know in which order, because the order sometimes matters too. So, yeah.
+Other questions, on this?
+Great.
+The graph hides one more thing, which is that the service could be deployed on many nodes. As I said, they could have a service to be replicated and shared.
+And as we've seen in this class, it could be cytoscalability, replicate for fault tolerance, and so on.
+So we've seen the good things about microservices. We've seen that they are very dynamic.
+So now let's look at, also, problems.
+What problems can people think about microservice applications? Thoughts? What are some drawbacks or shortcomings of microservice applications that you could think of?
+Nothing, they're getting… yeah? Increased latency.
+Increase the latency, you have to go through a whole stack of, you know, sidecar, back to network, back to sidecar. Other thoughts? There are more components in the microservice to where, like, if one fails, the entire service doesn't necessarily fail, but that doesn't…
+negate the fact that there are more moving parts that can…
+Totally. So there's many moving parts, and this means… this really… I will take a step further, what you are describing, this means that we actually… this complicates reasoning. Because now, to reason about what your complete application does, what guarantees it offers, you have to talk to each team and somehow compose their separate
+you know, specifications of what their services do, to then have a guarantee, okay, my complete system does X.
+Okay? So this is pretty hard with microservices, because now you don't have the whole application in a single place.
+Any other thoughts?
+It's often a lot harder than you.
+It's harder to debug, and more complicated, and it also is harder to program in the sense of
+you, you cannot just, you know, use the additional ID and write a whole application, but you have to… to follow this, you know, each service is hidden behind its own API and so on, and then you don't know what's happening behind the other service, you cannot use a type system for your whole application. There are ways to use it, but it just becomes… everything becomes harder for reasoning for the complete application.
+So the key thing that we will focus about in today's lecture is performance.
+And, yeah, this is the stack without the sidecar, actually, just with RPC serialization encryption, but the sidecars make performance even worse. yeah, so in this lecture, the main focus is on performance.
+So now for the first, kind of, like, you know, pair question of the class,
+I would like all of you to think a little bit about and spend a few minutes to talk to each other and think, how can we improve Microsoft's application performance? And again, this is an open question, and the answer is it's still a question that is being
+the community's trying to answer continuously, so there's still, like, coming hot, hot research coming out every year, trying to figure out how to optimize microservice applications. So yeah, spend a few minutes to talk to the people next to you, behind you, in front of you, merge into bigger groups, doesn't matter, and then we'll get back together and talk about it.
+Thanks for doing this as a part of the coordinator.
+Oh, this is a big printer.
+Well, let me just call anyone.
+I think that's related to. I don't think it's a big change every…
+Seems will be…
+Listen to do this.
+You are.
+I'm sure.
+Yeah, the availability.
+appreciate everybody.
+improve legal justice.
+Yeah, you can work on it.
+Okay, it's something that's terrible.
+But you still have to be open to making it simple.
+I know you don't need it.
+Okay.
+So, what do people think?
+what could we do to improve Microsoft's application performance? And here, really, as I said, this is an open question. Your idea might be so good that you can write a paper about it. So, you know, share your ideas, please, Hans. More hands, more hands. More hands.
+More ideas.
+1, 2, 3, 4, more, more, 5, 6… Few more?
+Okay, let's stay with 6.
+So, the bug?
+Yep.
+Yeah, you can, like, serialize and, like, linearize the requests from different, like.
+From different microservices, so you don't have to, like, wait for all of them to put, like, in series. So you could, like, just team up all at once and just do it all, like, if it, like, makes sense to do it in, like, a specific order.
+So, that's a good point, and I guess the way I understand it is essentially merging, somehow, microservice together, fusing them together, doing everything all at once. That's how I understand it, correct? Yeah. Yeah. Other, other, other thoughts? That's a great point. So, fusion is indeed an approach,
+It's been out.
+That's like running related services on the same machine. You could run same microservices on the same data center or on the same machine. Other thoughts?
+You could add, like, caching layers.
+Right now, between different networks, if we…
+are able to tell if some state has a change. That's true, you cannot casting, also implied by the name of today's, today's system, yeah, but it's a good, it's a great point, yeah. But you could, like, do some sort of, like, branch prediction or something, or, like, if you have some branch that's very commonly run, you could, like, send out two requests, and then, like…
+You could have some form of, exactly, some form of speculative execution for an important services, and I think there is work that tries to do that in the form of straggler, dealing with stragglers. If you have some service that very frequently has stragglers, so very bad tail latencies, you could fire off two of them.
+And, you know, hope for the best, and that one of them, you know, increases your chances that your latency will be low. Other points, other ideas?
+Anything else?
+That people can think of?
+Great. I think these are the things that I have… oh, I have one more, actually. So, passing…
+Collocating, fusing is an even more intense version of that, where you could even, if you have some of them running in the same language, there is… or not even in the same language, but there is research trying to run them as, you know, in very, very lightweight containers, but in the same machine, so that you don't even have to go
+through… you have to go through minimal serialization, but no encryption and no network. There is also work, a lot of work, in systems trying to
+really brute force improve these different parts that happen all the time, so how can we minimize serialization? How can we minimize encryption costs? How can we offload, maybe, to specialized hardware, some things that always happen, like to the NICs, to the network, and so on? So there is a lot of research that's happening in the area, and there is a lot of ideas, and yeah, this is a very fruitful kind of area for research.
+Because this, this latency is very, very high, but the benefits of microservices are very, are very important also, so people want to be using them.
+Okay?
+So, today we'll be talking about cassing, as we said, and just to get the same kind of ground on what we mean here, what I mean by cassing is that a service call that does not have side effects
+Can be cast and not made again, as long as the downstream data has not been modified.
+Let's say we want to make a… we have a request from front-end to hotel, let's say, and we have a cache sitting at the front end, and, you know, saving the responses from hotel.
+Let's say this is, like, some kind of reservation, microservice application.
+Then, the next time we want to make a call, if we can find the result in the CAS, we can just pick it up, and we are good. And we don't need to make the call again, so we completely skip the backend service.
+And actually, a recent study by Alibaba shows that 40% of their microservice call graphs on production traces avoid
+calling up to hundreds of services due to casing. So, you know, they hit casses, and so they avoid calling very, very, very big kind of subtrees of the system with services when the data has not changed.
+So, when you have cassing, the main problem that you have to deal with, as was mentioned, is that the data does not… should not change on the button.
+So, any database update, so let's say we have CASES in front, and there is some update back here on this backend service, then what we need to do is to communicate with all of these services to let them know that the data has changed, right?
+And this is very expensive as a process, especially in a distributed setting.
+So…
+Some solutions that are used now, state-of-the-art, prior to newcast, are to use backend-only caching, which means only saving the cost of going to your database, which might be, you know, a different service, but just castings in front of your database.
+Or use some custom invalidation protocol per application, so manually create an invalidation protocol per application, figure out what's the way to hold your caches, what's the way… what you have to do to invalidate the data, when can you avoid invalidating data, and so on.
+And the only form of automation,
+before Newcastle was to do time-to-live addiction per service, meaning that,
+Each item in the cache has a time, an expiration time, time to leave, TTL, and after time passes, this is deleted. So, let's say we make a call to hotel, we save it here, and we say, okay, this call was… will expire tomorrow, or in an hour, or in 10 minutes.
+And then, for 10 minutes, if we make this call again, we will get the new results, but if the 10 minutes pass, we will have to make the call again.
+Is there an issue with ETL?
+It can be still for the…
+It can be stale, so it has problems for correctness.
+So, also, it complicates very seriously, first of all, how do we even pick what the right ETL is? And it really complicates reasoning about the consistency and the correctness of the end-to-end application.
+So the system that progress today, Newcast, actually addresses this problem in a more principled way that is also automated, though, across any application.
+questions about, about the, the coherence problem, and the TTL, and the classism.
+Yeah.
+A database of things.
+Great.
+So, brief break, I hope you're done with Assignment 4. Very angry.
+Also, fill in the ACT survey, you get bonus score currently. I think there is, last time I checked, it was around 30% participation.
+people who are here in the class is about 30% of the class, so maybe the rest of you, you know, maybe all of you have filled it in, so maybe this is not even useful, I'm mentioning it here now. It closed on Friday, so if you miss it, you missed it, okay? So, tell your friends to fill it in, you know, or fill it in if you have not.
+In addition to this, we have another survey for you, which is, though, different. So the SD survey, unfortunately, does not allow for any customization, so we have some specific questions, the teaching, the teaching group of the class.
+So, we put them in this little form. So, if you could take a few minutes now to fill it in. The question is very, very simple. The only mandatory questions require that you respond something 1 to 5.
+And then everything else is just optional open form. So let's spend, you know, the next 2 minutes, so that everyone can fill this in. If you are done, before everyone else is done, feel free to talk to your… the person next to you, or, you know, fill in the ST survey too, I don't know, or something. Yeah, but,
+Yeah, let's take two minutes so that people can fill this in, because this would be very useful for this. Yeah.
+And this is totally anonymous, so you can be as honest as you want.
+There's no way for me to know what you wrote… who wrote wife, so again…
+Thanks for being a good captive audience.
+Are people most redundant, we need more time?
+If people are done, raise your hands if you're done.
+Okay, maybe we'll give it a little bit more, another minute. Let's wait for one more minute, and then…
+If you are done, feel free to chat.
+Hmm.
+Okay.
+let's get, back to the class. If you, if you have still more things to write, and you are not, you know, and you have a little bit of free time afterwards, please do, you know.
+refill it, refill it afterwards, add more information. Really, here, whatever you add is very useful for us to make the class better for next year, and I really appreciate it.
+Great. Another thing that we will not fill now in class, but it's there just so that you can remember for tomorrow, for two days from now, fill in your questions for the Ask Me Anything. There are only a few now, so ask more, and more importantly, come to class.
+Okay, so you can ask your questions also in person. I just want the ones in the form to get things started and to have a sense of what people want to know about.
+Great.
+So… Let's now talk about…
+new CAS. And the problem of coherence for CAS is, and how you can deal with it in a principled manner.
+So, new CAS is a system that allows for automatic CAS invalidation for microservice applications.
+What could be the system goals? What goals would you think that such a system would want? Any ideas? What do people think? What kind of goals should such a system have? Hands up, and yeah.
+What would you want from such a system?
+Ease of deployment. Ease of deployment. That's very important. Microservice applications are deployed, incrementally, and so such a system should also be deployable incrementally.
+Other thoughts?
+What other benefits, what other goals would we have by such a system?
+Even the obvious ones.
+Correctness, exactly. Full tolerance too, that's correct, yes. Other points? What other things we might want from Zeta System?
+Fast. It's fast, exactly. So it should improve performance. Otherwise, yeah. So, there is two types, there is two kind of different classifications of, or important metrics of fast yellow. Can you think of… can you… does anyone want to refine the notion of fast and performance here?
+Like, I think it's something like Zookeeper and Chubby, like, we see that, like, you want to have it passed on the hot pack, and then on the less you use the app, we can handle working validation checks and stuff.
+So, so there is exactly a hot and a cold path. So there is the good path, we find the thing in the CAS, so there we should be able to improve the performance of the RISM application. But, there's also the bad path, which is, I didn't find the thing in the CAS.
+And in this case, if anyone is to use the system, actually, because you plug it on top of your acoustic application, the overhead has to be minimum.
+So if the overheat is a lot, in the bad case, then you're screwed, no one will use this system. So… so we actually want both, good, hot, and good cold.
+Other thoughts? What other things might you want to have?
+I think I have one more, but let's get to the things that I've written. So, correctness, so the system with the classes behaves the same way as the original.
+low overhead, task management has to not add a lot of overhead to the system. Oh, that's the extra thing I have. We need to support real microservice deployments, and this means be able to support sharding, be able to support dynamic call graphs, so no ahead-of-time knowledge about what the graph is, or what the service is gonna call.
+We wanted to be plug-and-play, no modifications of the application, no modification of the database, you can just add the system and get benefits.
+And incrementally deployed, meaning that if your graph is, you know, if you just add new cache to a small part of your graph, you can still get benefits, even if it's not deployed in the whole system, because otherwise, again, it requires some global coordination that would not be acceptable in a real,
+an aerial deployment scenario.
+Questions about these goals, or any additional thoughts about the goals?
+Great. So, let's, see a little bit of how, overview Newcastle architecture.
+So, first of all, we have the original application, let's say that we have a front-end that has a getDates API, which has a database also, and a backend hotel, which has a get hotel and said hotel, which also has a database.
+And, what we do as a first step is that developers declare the read-only methods of the system. So the methods that do not write to the database. Here, the gethotel method.
+And then… We are… Newcastle, all this yellow stuff, which are, a cast, of course.
+It also adds wrappers that intercept communication between services and between the services in the database, and it's… the assumption is that it will happen very easily on top of the sidecar.
+And a cache manager, which invalidates the caches, depending on some information that it learns from the wrappers and from the other cache managers in the system.
+The important thing about this design is that it does not require any modification to the database or to the application, okay?
+So let's now talk about collectors, which is maybe the… one of the most important problems here.
+What kind of correctness could we have here? What does it mean intuitively for such a system to be correct?
+thoughts? What could we use? Could we use any notions from this class, any ideas from this class to kind of define correctness in this case? What do people think?
+Imagine you were… you were told to assess whether Newcastle is the correct system. What would you want to check? Or… or… yeah.
+Awful.
+input, running the system with and without MCAT as the same output, updo some things as well as, like.
+I live in Guarantee.
+That's exactly right. So the intuition is that we want the behavior of the system to not sense after adding casses, and we can do it the way we've done it before with linearizability, serializability, and so on, using these execution traces.
+So let's look at how we would, we would, kind of talk about this. We have the class-enabled application.
+And if we observe its execution, we get a bunch of traces.
+Of execution. Like always, by monitoring the requests that are going in between the services and in between the clients.
+Based on these traces, we have a set of CAS-enabled executions, which are all of these traces.
+And we have also the set of original executions from the original system.
+And what we want, as always, is that a set of the class-enabled executions is a subset of the original set of executions.
+And this kind of models the input and output discussion that was mentioned, but in microservices, there is no one input and one output, so that's why we need traces. So if microservice was a program that got an input, produced an output, then we would say for all inputs, the same outputs. But here, we want to say for all possible executions that can be obsole
+We want them to be also in the execution that can be observed in the original system. So the caches do not add executions that were not present in the original execution of the system.
+Questions and thoughts about this?
+Does that make sense?
+Does it sound like a reasonable definition of correctness?
+Great. So let's dive a little bit deeper into seeing what this definition gives us now.
+So let's say we have, again, this front-end hotel, this has a cache. We have one request that says upload a review for the hotel or something.
+And this request goes in, it's a blue request, goes in the front end, goes to the backend, updates the database, goes back, responds to the client, and then it's here.
+And then we have another request that says, get reviews, that starts after the previous request was finished.
+And, it goes in, hits the cars, And it returns the reviews.
+Are there any problems with this execution?
+Any of that red jack reviews doesn't include both.
+Upload everything.
+So, in order for this to actually include this.
+we need to always, by default, it doesn't include this if we have a CAS. So, we found an execution that's not necessarily inside the original, but is inside the set of the CAS enabled.
+Both!
+to get to… and to get… to get this to be correct, what we would need is something like what Xavi does. If you remember Chabi, they… every time there is a ride, you have to, from the right, also talk to the front end and make sure to invalidate the classes. So either at the lead, or at the right, we would have to pay the cost.
+of invalidating the cache on the critical path. Otherwise, there is no way to guarantee that these get reviews that happened after the upload review will have exactly the same, execution, result. Does that make sense?
+Does the problem here make sense?
+Great.
+But!
+The thing that I want you to keep in mind is that, do clients really care about what we said here?
+Actually, what clients care about is only the execution from their perspective, and not the complete execution.
+And this is the key insight that Mucas has, which is exactly the same kind of idea that happens in sequential consistency.
+If a client makes a request, they don't really care to know that this request happened in some specific order based on another client, because they cannot talk to that other client.
+So clients do not need real-time ordering across themselves, and we're allowed to reorder executions.
+And based on that, we can say the following.
+We take this set of class-enabled executions.
+For each of these executions, we reorder the… some… some… we find the reordering across, you know, only in specific clients. We don't reorder things in a client, but only across clients. And then, that reordering is a subset of the original set.
+And we're good. And the reason why this is good is because in the real world also.
+there is no guarantee that because this finished before, you know, this, or in this particular case, it did finish before, but there could be a little bit of a network delay, and this could have, you know, overlapped with this. There could be some multithreading. So in the real system, even though this ended up happening like this.
+there was no guarantee that they would happen like this. The clients didn't know about this, so we can essentially just ignore the real-time ordering across clients, because the system would anyway always have alternative executions just by, you know, a little bit of network delay here, a little bit of multi-threading scheduling delay here.
+So that's why, even though we ordered this execution is still inside the system.
+And, given this new correctness condition, what Newcastle can do is essentially push all the task management off the critical path. So Newcastle is able to do processing of requests without any overhead on the critical path, or with very minimal overhead, we'll see what that is.
+But every custom… all the custom management happens off the critical path, so it doesn't affect latency at all.
+questions about the correctness condition here, and if it makes sense, if it sounds bogus, and so on. So this is just essentially state by shortness.
+So that's a great question, and this is also a question I got almost always. So this, because a disclaimer, it's work that I'm involved in. So this is also the question that I got literally in… not literally none of them, but most of the job interviews I had applied for jobs two years ago. and the answer is, not exactly.
+And the reason is sequential consistency, and all of the correctness conditions that we have learned about.
+All we talk about systems that have clients.
+cover epic has here of assembles, but there is only these two lanes. There's the client.
+Then there's the celebrities.
+So, in this environment system, actually, this is also a client for another service.
+for another service, at least a client for another service. So here, actually, there is no straightforward lifting of sequential consistency, at least as far as I know, in a microservice setting, and I think this is also a very interesting potential avenue for reasons. People that don't think there is a good understanding of what
+a generalized correctness condition is for these services. So this is essentially a custom correctness condition that works for new cars, but uses the inside of sequential constancy, but it is not exactly sequential constancy.
+Questions on top of this?
+Great.
+So…
+We will see in a little bit how Newcastle implements its invalidation in a way that satisfies this collector's condition.
+But before that, I wanted to look at an interesting service invocation pattern.
+Imagine we had services like this, and now I'm showing them, as a graph, meaning describing, oh.
+that they could be calling each other in some order. So this graph doesn't necessarily describe the order, but it says that this could be calling this, this could be calling this, this could be calling this, and so on.
+I want you to think a little bit with the person next to you, or behind you, as always, in a little group.
+Are there any correctness challenges with this service pattern? What could happen in such a service pattern that might be problematic for the casing that we are doing? So yeah, take a few minutes and talk to the people next to you, and then we will get back together and talk about this.
+audio.
+doesn't run S4.
+No, but S1 is now requesting from S2 and S3, so, like, S1 is going to be very confused as when… Oh, but the thing is, S1…
+The only thing, like, is it possible that some other services?
+Like, just in case that I keep going outside, so that's one.
+No, but I'm saying, like, you're requesting the same project, so you would expect it to be the same for us, right?
+They are, but, like, I guess, like…
+You represent the same object, but you're starting to be the same bill.
+Would you be requesting me staying longer?
+It stays a little bit.
+Wait, we can, like, scale… Interesting.
+Holy .
+It is, it is there, like…
+So I can't talk to us.
+But, you know.
+Yeah, they didn't wrap this.
+So, what do people think? Any thoughts?
+what is the problem here, or is there any correctness? I mean, there is one, okay. What's the problem, the correctness problem with the service pattern if you do casting?
+Can anyone give any thoughts, intuition, observations? We don't need to have the exact problem, but any thoughts about it would be very useful. So yeah, what do people think? I see two hands. Any… let's get two more, two more hands on. What could the problem be here? Three hands, four hands? On the back?
+You.
+Would it be possible for S2 to modify S4, or S3, like, reads from the cache from the cache? Totally. So that's exactly the execution that is problematic here. Let's say we are processing a single request at S1, a single big request, and this request
+Ferris calls us to… And S2 calls S4 and writes something to a key.
+And then this returns to S1, S1 then asks S3 to read something from S4. And that read is the key. So, if this has a cache of S4, there is no guarantee that we will actually read the latest value here, okay?
+So…
+This is a problem, because now we can't just reorder things to get away from it. This is an execution that was not observable in the original system.
+And… and so this is… this is a problem that we have to deal with.
+By the way, just to get a sense of this, this would also be possible if we assume that the clients are not actually independent, but there is, like, a mega-client that has multiple mini-clients and talks to them. So, the assumption that we make, that the clients do not talk to each other, and this problem are very related.
+And the solution that UCAS has for this, which is to keep track of the calls, and I will show you how in a little bit.
+So the solution that Ducas has for this.
+could also be used to… to deal with situations of mega clients with many clients. So we would use the exact same solution, for the system to work in this case, okay?
+So the problem is the following. S3 has a cache.
+Okay? And it, at some point in the past, it read the key K.
+And it hasn't been the cast.
+Now there is a new request that comes in.
+it first goes here, writes TK, changes it to new value.
+goes back here, and then now this calls this, and instead of calling this to find a new value of K, you actually take it from the cache.
+Because these methods here, actually, what we've said is that Newcastle does not put the invalidation on the critical path. If it does, then it will be okay, but then you wouldn't get any benefits. So essentially, by Newcastle dropping invalidation from a critical path, this might be the value that is old. So, let's say…
+In a real execution, a real system, the outcomes of these values would only be like this. If you write, let's say, if you do write key type, then your read
+should always identify. There's no way that it returns something else. But in the new caste system.
+This read could return whatever value was stored before.
+So this is a problem, because now we introduce new executions in the system that were not possible before. So we're not inside. Even if we reorder things, we're not inside the original system.
+That's funny.
+It's…
+Exactly, as one would see some garbage here that it doesn't know what to do, because reasonably, it might assume that I wrote this, so I must read this also.
+S2 and S3 are still fine, exactly. So from their perspective, if they didn't talk to each other, then it's okay. The problem is that they talk to each other through some kind of indirect flow of information, yeah.
+Other questions on this?
+Great.
+So…
+This concludes the point of discussion about correctness. So, correctness from your CAS, we have this reordering that we allow, and therefore we can push the CAS mounts into the critical path.
+But then, what we get is that we have to do something about this diamond pattern, and every time there is… we have… we keep track of some additional information to be able to solve this, and still be able to do it of the critical path.
+So let's now focus on implementation and evaluation of new kinds.
+Newcastle has two components. I mean, it has the CAS, but the cache is just used… we just took a CAS from an existing system, like a Redis cache. It has the Cache manager, which has one thread per shard, per microservice shard.
+And, wrappers, which is a library that wraps all the calls to other services and a database, and intercepts them, and that's something during this interception.
+Its Cast Manager has an input message queue, which is FIFO, and therefore it orders all of the messages that it receives, and this is key for the correctness of the system. So, the Cast Manager is a single thread, processes its inputs in the message queue one at a time.
+And, it, and, yeah, and the events are also serialized using a FIFOQ.
+And the wrappers, essentially, what they do is that they add messages to the queue. So when they're invoked, through request processing threads, when they try to call another service or call the DB, they add messages to the queue. And this is how Newcastle works at the… at kind of, like, how things are plugged together.
+And there's three types of messages that are put in the queue, and this is how we'll start the discussion. The first message is start call, there's end call, and there's invalidate call. And let's see how this works.
+So, the rap is…
+When, before a call, a request, starts to be processed, they mark that a call, happened in a request, and then they check the CAS… okay, sorry. So, before we talk about, about… so let's say we have again this example of front-end backend.
+So before we make a call from the front to the back end, we mark that the call happened in this request, and I will show you why this is an example, and then we check the cache for the result. This is the just checking the cache part.
+And then the interesting parts. Inside the backend.
+When the request starts processing, we first put the message in the message queue of the task manager saying that, this request will start processing now, and we initialize a wrapper, some wrapper state. That's about this specific request.
+Before the request ends, we inform the cast manager that the request has ended, also including this reset, which you will see very shortly what it is.
+Before we read from a database.
+we add the read to the read set for the request. Essentially, every time this request here reads something from the database.
+Let's say it reads.
+key, a key K, we add this information, the key, to the read set. So we say this request has read this information. And then, after it has written, we inform the cast manager that invalidation has happened to the key that it wrote.
+And the cache manager is a single thread, as I said, the threads I… so these are… these are all the things that happens in the wrapper. The wrappers, when they… when a call is happening, they check the cache, and they say that the call happened, and the call is also added to the read set, similarly to the read.
+And the reason is that we want to capture these transitive relationships of read.
+Before the request starts, we say to the cast manager, a request is about to start. Before it ends, we say it's about to end, and we also inform the cast manager about all the things this request led.
+And then when we read, we add things to the read set, and when we write, we inform the cast manager that something has been written to.
+Recustomer, on the other hand now, on this message queue, it keeps a total order of call starts, call ends, and invalidations.
+If a call's results are invalidated by a later night, so it keeps all the calls that have started, and if any call that has started is invalidated, reads from a value that was written to, then it invalidates this call.
+And then what it does is it informs the upstream cache to evict the item from the cache. So if that call was saved in the cache, the cache manager says, actually, this was just modified, evict everything, all the calls that had read this key.
+So let's have a look at executions, because this is very abstract at this point, to understand how this works all together.
+So, this is a very dense slide, but what it has is, again, the front end, the back end. The… we will see some… show here, we have five lines. Let's say that there is no shards, and there is one thread per service.
+This is the front-end microservice thread, this is the front-end CAS thread, this is the front-end CAS manager thread, this is the hotel thread, and this is the hotel CAS manager thread. And we have inter-service communication with a thick… with a solid arrow, and with a dashed arrow local communication.
+So what would happen here is that we make a call, let's say we want to call from Frampton to hotel, and first we check our cars.
+Is this item in the cars?
+No, this was local communication, it's the item is on the CAS.
+Questions about, about the setup, or about this particular first request?
+Top me at any point of this execution if you have questions, while we walk through it.
+Now, we didn't find it, so we go to the… we actually go and make this request. So this is an internet service communication request, it is the hotel service.
+The hotel, before it starts executing, it says to the cast manager, it adds.
+The start of this, execution of this request.
+At some point, it processes, and it does a read.
+And the read, as we said, it adds the read to the reset. Doesn't send it to the customer manager, but just adds it to the reset for this request.
+Later on, the request ends, and what happens when the request ends? We send to the cast manager that the request ended, this particular request, with these arguments.
+It had this reset, it only read ID from the database, the key ID, and it returns hotel info back. And this return, we need to put it here so that it can be saved in the upstream cache.
+This… here, this argument is this read-set summary. Essentially, all of the things that this request read from the database, or all the calls it made to downstream services during its execution.
+And then we also return, normally, the return value.
+Questions so far about this? Does this make sense?
+Yes. So, number 5…
+Is the methods that we sent to the task manager, saying that this request actually ended.
+So, at some point, we told the customer answer this request started. Now we're telling the customer this request ended, and it read all of its keys, a set of keys, ID, whatever other keys it has read, and it also… we also say it's a turn value. We will see why it's… we say it's a turn value also.
+Yes.
+Is the fucking cache erocated?
+Not yet. That's a good question.
+Other questions about this? So far, we haven't updated any CAS. What we've done is that we've returned properly, and we've, we've, you know, we've informed the CAS manager about this request. That's the only thing we've done.
+Yes. Does the cash manager not have to respond to, like, approve that this can be good? Like, that we'd set is not invalidated?
+Okay, good point. So, the cast manager doesn't…
+invalidate things before they actually invalidate it. So, what this says is that this read happened, right, at this point.
+until a write happens to this key, this read is valid, actually. Until someone comes and modifies that ID and writes something to ID that's different, so modifies this hotel, the entry for this hotel, essentially, until then, this is a fantastically good cast result that can stay there and never be modified.
+So the moment the customizer will invalidate, we'll see an example in a little bit, it will… where there is a right, then it will start the process of invalidating.
+Does that make sense?
+But, like, they would have to do a check here to let me go through that there isn't a right for another month.
+It would have to go,
+through a sec here… It does… it does do a check here that there is no write, that's correct. And we haven't seen this yet, that's correct. So it doesn't… it doesn't immediately respond back. That's good. So we haven't actually responded back and said to the CAS. There, there is… there is a case where we might not save to the CAS, that's correct. We'll see it in a little bit.
+Other questions about this?
+This is still precast, I just want you to understand and see, say if you have any problem, any kind of, like, confusion about what these mean, the start and the end.
+And why do we do them?
+Okay, so then… What happens is that the customer manager determines that after this read happened.
+After this finished, there was no ride, there was no concurrent ride happening.
+Because this service started, and there could be other things happening in the system, but there was nothing being written to this, so I will tell the upstream Cast Manager to actually save it. And that's why we also saved the return value. So we tell the App Streamcast Manager to save it.
+And Epstein Cast Manager sets the CAS for this particular value to be HotelInfo.
+And then the next time we make this request, we find it in the cache.
+Questions so far about this flow? We haven't seen invalidations. Questions about this flow.
+Let's look at an invalidation flow also, to get, to get our minds around it. So let's say there is some random request that's happening in hotel now, after all of this that has happened before. Some request goes and writes a new value to this ID.
+we still haven't learned about this in the front end. The front end can still be hitting the cars
+properly fine. And we've said, you know, because of this reordering, from the perspective of this client that fires at the front end, this hasn't happened yet.
+But what happens on the backend is that when this write happens, when it completes, we tell the Cast Manager a write happened for this key.
+And then the Cast Manager goes and finds all the requests that had completed, and it had asked the upstream Cast Manager to save for this particular that had read this key. It finds all of them.
+And it lets all of the apps and cast managers to invalidate the values for these requests. So, for that particular request, it would invalidate to invalidate them.
+And we will delete it from the cache.
+And then for the next time that we do a request for this, we would actually not find it, and therefore go and do the request again.
+Questions about the invalidation?
+Operationally. It doesn't make sense what's happening?
+When invalidating, why don't we also send the value of that key
+That we're invalidating, so we can just then skip the step of having to go back to the hotel's catchment controller room.
+That's a great question. Why can't we do that?
+That's a great question, but we can't really do that always. And why is the case?
+Think about what microservices are.
+There's a knife here.
+Then there's something cast here.
+Can we immediately compute what is stored in this cache by the new value?
+Why can't we immediately propagate the life back to the CAS?
+Any thoughts?
+There's a good chance we don't care. First of all, there's a good chance we don't care, that's a great point, but even if we cared, if I say we always care.
+Why can't we do it? Or what is required? It's not for free, we can't do it for free. There's something we need to do that's not for free. What's the not-for-free part?
+So if you have a cache in front of your database, I want you to think of the following difference. Imagine you have a cache in front of a database.
+And then, indeed, every time you write to this, you can go and update your CAS, because your CAS and your database have exactly the same API. They talk about read of keys, read of values.
+But does this…
+immediately correlate with the little key here? Not necessarily. What we have to do is to rerun the code of this microservice.
+for this call, and all of the other requests that have happened, rerun them, completely, from scratch, with the new value, do whatever else they might do, call other services, they might do other things, and then go and say this, I'm here.
+So even though we know the new value, we don't know what it translates to here. To know that, we would have to rerun the code of the service. So that's… that's not trivial. And it would require… there's an overhead. It could be beneficial sometimes, but not always.
+Do people understand? This is a very important point, actually. Why can't we immediately…
+Go in and validate this back here. Questions for him? Why can't the cache just communicate directly with the database?
+It could, you mean, why don't have the cast manager here?
+Or, or, or, or related to this question that we have now.
+Like, there's this question.
+I mean, even if you can communicate, I'm telling you, okay, we don't hear T5, okay?
+Here, maybe what we did is we didn't just return the 5, but we returned some calculation of 5. We returned the factorial of 5, okay, and we saved this in the cache. How can we know? How does the data receiver know what we returned in this cache? We don't know. You have to run this code. This code could be arbitrary. So… so, yeah.
+Do people understand this? That doesn't make sense as a problem? Any questions about this?
+So there's a trade-off. If we wanted to do immediate invalidation and saving the new value in the cache, we would have to redone the service, because it's arbitrary code, and the database doesn't know what code happens in a service, so that's why we can't do it for free, at least. There is a… there's a trade-off and its trade-off is not obvious.
+Other questions about, about invalidations in UCAS and, and, the Nucas kind of workflow?
+Any more operational questions? Because afterwards, we'll get into, kind of, like, some thorny topics. So, do people understand? And do you have any questions about what's happening here and why it's happening?
+We can… what do you mean, immediately invalidate?
+We do it immediately, meaning as soon as we can. So, here, we say… immediately, we say the task manager, but someone has to know, you know, someone has to keep track of all the classes that are related to this. So, the cast manager essentially keeps this dictionary that says, for each key.
+Which calls depend on it?
+I have to keep this dictionary somewhere, and we keep it in the Cast Manager. And this dictionary lets us know that when this, like, happens, I go and tell everyone to, to invalidate.
+Tell a question.
+This doesn't know anything about the calls the front-end is making. The only thing that this knows is that at some point in the past.
+here.
+Hotel, the front end called me.
+made a request to me. It read key ID,
+And I returned, and I told it to actually cast that. So I know there is some cast upstream that has this value. Now I know that this ride happened, and this light will invalidate this thing that was cast upstream. So let me tell them that it's actually invalidated. So I'm telling them, and then they invalidate this.
+Hotel, actually, this weekend.
+Passion.
+Couldn't everything that we're doing in the hotel task manager happen in the front task manager? This could happen, but there's a problem with this, that there we would have to… we would complicate the deployment of the service, because now, when you have… I'm still imagining in this scenario that, you know, you have a different team per service. Now, in your service that runs on the back end.
+You go, and, you know, you have to…
+you have to modify your service to go and talk to a cast manager ahead. Also, I'm not exactly sure if it is
+Maybe it could be possible, but I would have to think about whether there's a kind of correctness, correctness pitfall, because there is some ordering things that are important here that the Cast Manager here deals with. So the fact that the Cast Manager has this order is very important. So I'm not sure if this could work directly if we did things above.
+Yeah, it could be possible. I just don't see, obviously, whether it would be correct or not, yeah. And it would complicate deployment, because you would have to, in the backend, not talk to your local component, but rather, in your service, do something in the app as that talks immediately to something in the front end, yeah.
+Other, other questions, hmm?
+solve the previous problem? Like, it seems like if you issue the… It does not. The diamond? Yeah. It doesn't solve the diamond. So I'll talk about how we solve the diamond in a little bit. That's a great point. Yeah.
+There'd be multiple, achievable.
+Cash managers.
+There is a CAS manager per shard, so there could be a multi-threaded shard.
+and SARD is, like, standard sorting, partitioning that we've been learning about in the class. So let's say this was started, and this was started. Each side would have one thread for Cast Manager. So for SARD, we make sure to sequentialize everything that happens in the SARD.
+But for the purpose of this class, you don't need to think about the shards. So just think about…
+a single instance, so a single thread of CAS monster per service. That's enough for the purpose of this class.
+If you want to think to learn about sounding, you can read the paper.
+Other questions about the professionals of this?
+Okay, let's go to some thorny topics.
+So, who saves the CAS items?
+So here, as I showed you.
+The caste manager decides to say to the cast.
+And we didn't save to the cache after… at the front end. So instead of saving at the front end to the cache, which could be very reasonable, right? The front end goes and writes to its cache after it gets the response, we save it in the cache manager. Let's see why.
+Actually, to see why, this is the kind of, like, alternative design, where you would have the call, it's exactly the same as I showed you before, the return, and then we save… save them… we are the ones who save the cache.
+This is an execution that is a problem, shows a problem. What's the problem with this execution if we save the caches, in the front end?
+You have to… you have to read, possibly, all of these things. So we have a call, a return, an end sent to the cast manager, an invalidation happening separately somewhere, a delete, and a save.
+What could be a problem here?
+Is it because when we read, we might be reading from our cache, and that might be…
+That might be before the invalidation.
+It's almost, almost that. You're very close. It's something to do with the order, but not exactly when we read it from the cast.
+What do people think? What's this kind of order problem here? This is not a hypothetical. This is… imagine this is a real execution. There is a problem with this execution.
+Exactly. So, there is no guarantee that this will happen, because this has to read the front end, and then write to the database. There might be some arbitrary delay here, because the service is overloaded, and then we write after. If that happens.
+even though this is invalidated, we are keeping it in the cache forever, until there is a second invalidation afterwards. So even though the invalidation happened clearly after the save.
+we are not keeping track of it, and we're keeping the item in the cache no matter what. And so, this is one of the kind of key reasons why we need the sequential order in the five-order in the cache manager.
+So that we do not allow saves to overtake invalidates. So the cache manager is the ground truth for the things that are in the upstream cache, for deleting or updating. So Cache manager is the one who determines this sequential order of things and makes things to make sure there is no kind of overtaking and different order.
+Do people understand this programmatic execution?
+Questions about this execution?
+Great. One more question about execution, about newcast. So the task manager knows all the reads in a call, but not their precise order. So, as I said, we gather things in the read set, and then at the end of the call, we inform the cast manager about the read set. So, if you remember here.
+When the read happened, we didn't see the customer and say, oh, I read this.
+We say it at the end. So at the end, we say, oh, we read all of these keys.
+This is done for performance.
+But what's the problem with the following execution? So let's say we have two threads, so these are two threads of the backend, two threads of the backend, and this is the Cast Manager. And the following happens. We start a request.
+that reads something, and then ends. But that read happens after the rad.
+which invalidates.
+What's the problem with this execution, or something that Newcastle does that's not ideal?
+What's happening in this misexecution?
+This read has started before, after this read has completed.
+What's the problem here?
+What's the imprecision?
+Thoughts?
+Will Cash not have pain in this reset?
+Newcastle will have, okay, and it's visit here?
+So…
+it will… okay, I guess maybe, maybe, maybe there's a little bit of additional context that I kind of, like, gave in a hand-wavy way in the beginning, but since this ride.
+Happened after the call has started, Mucas, to be safe, Can do nothing else.
+but invalidate this request completely, so it cannot… it will not save this request. However, the read happened after the write, so actually it saw the correct value.
+So, even though the rig happened after the ride.
+The custom answer is not able to determine that this is a safe read, because, from its perspective, this ride
+For this request, Happened at some point in this request, so it could have happened after the read happened.
+So there could be… for the perspective of a gas manager, it could be the case that they come in here, the recovered here, we don't know, and then I come in here.
+So, for the customizer to be safe.
+It has to assume that there are happened after the rim.
+No matter is very talented, you have at the end. And this is a trade that Lucas does.
+to improve performance. Instead of sending, for all the reads, a message to the cast manager, it sends it only at the end, but this means that for the rare cases where a write happens together, you know, in the overlapping with the request, we might miss… we might not cast some things that could be casso.
+Okay?
+Do people understand this?
+Also… This is the Cast Manager. Sorry, what is? Oh, S is the start of the convo.
+This is the start of this call, and this call reads and ends. This is one thread of the service, and this is another thread of the backend service. So this one does the request that reads, this one does the request that runs.
+So the request that reads, we just, you know, we don't know exactly when that it happened, we just know that it happened at some point. So to be safe, we have to assume that it happened at the very, very, very beginning, when it started.
+But we know that since we're reading his after.
+Then we are safe. We say we have to divide it with smaller one.
+Okay?
+Yes.
+You're saying the first read that happens before the right still needs to be invalidated, because… The whole call is validated.
+So, so the thing is, this and this, from perspective to the task manager, if either this or this.
+they're the same, right? So the task manager cannot distinguish between this or this, if one recovered here, or if they recovered here. From perspective of the task manager, it only learns about the leads here. So it knows the recovered at some point in between, but it doesn't know exactly when, right?
+So, from its perspective, maybe it could have happened anywhere in this, in this region.
+Right? So, you're saying one read could have happened anywhere in between the two? Exactly, exactly. So, if it happened before.
+It has to be evaluated.
+You become adopted, It doesn't have to be budgeted.
+But since there's nowhere to distinguish, we have to assume it has a default.
+So we assume we have it before, and we always invalidate this code.
+Questions?
+These two cards are operating concurrently, so why does… so couldn't the system just, like, only take, like, the older value and weight, because you already know, having guarantees on whether the writing…
+Good point. So these are happening in the same… in different threads, but in a… in a service that threads for database. And this database.
+could be linearizable, actually. It's your local database. So if it's linearizable, and this happened before this, you certainly see it or don't see it, yeah. So, we are assuming that the database could be linearizable here.
+Great.
+So let's talk about the final thing now, dependency tracking.
+Which is, how NUCAS solves this, is that simply all the CAS items also contain all the visited downstream services.
+So, in the case of the diamond, what this means is that when we save something in the cache here.
+We will say this thing in the class depends on a score, okay?
+And then, its call also keeps track of all the visited services that it has visited while it's going around.
+So, when we get from here to here, and we are going to check this cast, we will see that
+One of the services that this casaden depends on, we actually visited now.
+So, since we visited in this request, this service that this might depend on, we don't even look at this cost item. We ignore this task item completely.
+So, even though this class item is saved here, since there is an intersection between the services I have already seen in my request.
+and the services that this customer depends on, I am not looking at it. And this is a sense, some kind of causality guarantee. I am keeping track of all the things I have done throughout the call.
+And then, if I see that, you know, there is some… some… something that…
+could have been violated by the thing that I did there, I'm just not looking at the cache.
+Questions about this?
+Is that S supposed to be, like, subvert, like, S?
+Visas? Yeah.
+from 3, I test, we also need to depend on S3 as well. Yeah, so… so if we save… if we save the results, this should be S3, I think.
+Yeah.
+Should be a slim.
+Okay.
+questions about Nucas before we jump into a few evaluation results?
+Yes.
+You remember the last time we don't use the app?
+We don't use a casin in this case because…
+The class item in S3 says it has talked to S3 and S4.
+Here, when we go, and we go and pick this class item up from here, we see that we have already visited this far, actually.
+In this request. So we did… we visited S1, we visited S2, we visited S4, S2 again, S1, and now we go to S3. So we visit this S1, S2, S4, S3, and we are taking a class item here that depends on S4.
+So, in this case, we…
+We do not check… we don't check the cast, but we check the cache, and say that the CAS item depends on its score, so we do not use the CAS item.
+Does it make sense?
+We don't use the outside.
+the class item that talks about this read, because I know that in this request, I have visited, I have went back to S4, so I might have done arbitrary modifications to it. I might have completely destroyed all of its database.
+We make a conservative assumption. We assume that if I go here back to this, and if I have touched it, I have touched all the keys of this database. So if I come here, and there is something cast here that depends on S4, I say, better not touch it, because I might have destroyed this database completely. So I'm not even looking at it.
+Questions about this?
+Great.
+Civilization.
+what do people think, there are the metrics that we would like to evaluate on UCAS? And…
+this is a question that is not necessarily important for distributed systems, but is important more broadly. So, I want you to think and tell me all the kind of possible things you would want to evaluate, what kind of things we would want to measure. This is… yeah, if you want to do kind of systems work or systems research, you would have to, you know, this is kind of like the main question, the first question you want to answer.
+So what… what do people think? What do we want to measure in specific metrics?
+with respect to, Nucas. Thoughts?
+The cashier.
+Cast heat rate, yes, that could be something that we want to measure, exactly. Other thoughts?
+write and read latency, show latency, and both for rides and both for reads, that's correct. There is also another kind of bifurcation in the latency, and not just read and write.
+Gotcha.
+That's correct, so we compare if we didn't and if we used, but there's still a bifurcation for the latency. If we use cassing, what could happen? There could be two things that affect the latency.
+when we hit, what's the latency? When we miss, what's the latency? Exactly. So we have cache hit rates, latency for reads and writes, compared to the result new cache, and for both hits and misses. Anything else, what else could this give us? What other things could we care about?
+Think about the Cast Manager, think about all the things that you would want if you want to deploy this in your system.
+It's hard to do.
+10 latency, yes, we include this in latency, yes.
+Other thoughts?
+When would you be, like, happy, okay, I'm happy to use this in my system, and I know that, you know, this is reasonable? What other things would you want to measure?
+There's some bottlenecks in the system, hmm?
+What's, what's the faster other than latency?
+Throughput, exactly. So how many requests can the whole application process in a period of time? That's exactly right. What other things might we want to know? Anything else?
+We are adding some new components in our system. Do we want to care anything about that?
+Hizen.
+Totally, so we want correctness, for sure, we want to validate correctness, that's also right. Anything about the new components, we have a bunch of new components, the cast managers, the wrappers, what could they do in the system?
+We have some caches.
+How many times we have to invalidate the cache? How many times you have to invalidate the cache? So, this is… it is important, like, similar to the cash hit or miss ratio, yeah? Every time we invalidate the caches, what also happens? What are we paying for? We are paying for some things, and we want to know, maybe, how much this cost is.
+What things do we pay for when we invalidate?
+Costs? The what? Storage costs. Storage costs for the CAS, and more things, actually. We ask the Cast Manager. This task manager, we have to pay for it, someone has to pay. It runs CPU somewhere. Cast Manager sends messages, so it also… there's networking costs, associated with it. Also, the Cast Manager is a single player.
+So it can become a bottleneck in the system and not fall back compared to the system, so we might want to care about its maximum throughput. And also, we would want to know, can… does the system scale if you add more shards, or does… are there scalability limitations? And also.
+We want to know, invalidation time, meaning how fast, even though we know that the invalidations are not on the critical path, are they fast, or do they take, like, you know, minutes to invalidate for a big graph?
+Questions about these goals and criteria?
+Great. So now…
+If we look at these three archetypical kind of patterns, a funnel, the chain, and a farming.
+What do you expect in Newcastle?
+How do you expect it to affect each of these three patterns on throughput and latency? What are your thoughts? Which ones of those will have the best benefits for throughput, and which one will have the best benefits for latency? Thoughts?
+For throughput, which one will have the best benefits?
+If you use new cast. And you have some adequate, adequately high CAS heat eras here, of course.
+Thoughts? Which one is the… will get the biggest latency or the biggest throughput benefit here?
+As soon as we put a cast in the beginning, in the front end, here, here, And here.
+Who will get the biggest throughput, and who will get the biggest latency benefits?
+Jaden.
+Which of the two?
+Throughput or latency?
+Amazing.
+Chain is the biggest latency. That's correct, because you can save multiple hops, actually, for chain. So you can get savings, very big savings, because you have a much longer chain with more network. What about throughput?
+Who would get the biggest throughput benefits?
+Fair enough.
+Fanning. Exactly, because this hidden things in the cache here means that suddenly this possible bottleneck back-end service will not be the bottleneck anymore.
+So, here are the plots from our paper for this. So, the red ones are baseline, median, and tail latency, and the blue is newcast. And as you can see, for chain, we get the biggest latency benefits. This is the biggest latency benefit, but for funding, we get the biggest throughput benefits.
+And for fun out, we get some benefits, but they're not that serious.
+Another thing we evaluated is the latency overhead, and this is a slightly different plot, but I want to show this to you because it's an important… it's a classic way to kind of represent results for latency, because… well, you care for all the percentiles, so if you want to show more than just
+the tail latency. You can do a diagram that shows the complete distribution of latencies, and in this case.
+The red, again, is baseline, the blue is new CAS, and the yellow is a PTL infinite, meaning a PTL implementation that never invalidates anything from the CAS, as an upper bound, best-case baseline. And as we can see here, in the… this is, by the way.
+the… the… the dust versus the solid. The solid is zero caskets versus the dust is 60% caskets. So let's care about… let's look at the 0%, all the solid lines. As you can see, the solid lines, the red, the blue, versus the red.
+the difference is tiny, it's, like, less than 1 millisecond, even at the biggest stages, maybe a few milliseconds, okay? So this shows that even for the worst latency, for the tail latency, on the critical path.
+just checking the queue and the CAS mostly adds to you a few milliseconds, in the best case, less than 1 millisecond. So it's a very low overhead system.
+And finally, we also did an invalidation, starting validation time, where we saw that, about each hop in our deployment took about 2 milliseconds to invalidate. So, for a longer chain of 5, it would take about 10 milliseconds to invalidate the cache, because it has to go
+you know, through every cast one of them, yeah, whereas for one, it's only, you know, it's about 2.2 per hop that is added, necessarily.
+Questions about evaluation of new cars?
+Courtney Carson's ending.
+Great.
+This is the final quiz that you will fill,
+Maybe you're emotional, I don't know. But yeah, fill in the quiz, please. And next time is the final lecture, where, yeah, there will be some open questions, future work on distributed systems, what's happening today, compared to what we've talked in this class.
+And, they ask me anything, which you should prepare questions, put them in the form, but also come here and ask in person. More fun.
+Thank you.

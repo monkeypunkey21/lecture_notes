@@ -1,0 +1,588 @@
+Hello, everyone.
+Let's get started. So… yeah.
+Let's get started with today's lecture. Last time, we saw Spartner. So, as always, let's start, with, the quiz questions from last, last lecture squeeze.
+So the first question asked about, through time, and what a node, can know given, through-time timestamps.
+And the question was framed in this way, that it is not true, and the reason is that it says.
+In true time, a node can always know if any timestamp is before or after it. But that's not always the case, because you could have a case where,
+you know, you have two true-time intervals that go like this. So in this case, you don't know, actually, if this is after this, or if this is after this.
+the only way to know is if the latest of one is before the earliest of the other. That way, you certainly know that the two paces are compatible, but if not, you don't know anything about it. Okay?
+Questions about this?
+Great. The second question was about distributed cross-shard transactions, and for those,
+the question was whether these transactions require coordination to implement, and Spanner implemented them, but Azure Storage does not. So the point was primarily about the need to do coordination with this two-phase, two-phase commit, two-phase lock kind of protocols.
+And the third question was, a question about Spanish reads on a specific timestamp. So this was about the final things we talked on in the last lecture, and,
+There were the following points here.
+So… To do leads that, that are part of a strictly serializable transaction, then
+Spanner requires replica communication. That was the first type of, of operations we saw. First, we saw strictly civilizable transactions, where there was this protocol where you send from the leader, from the client, actually, to all the leaders, leader 1 and Leader 2,
+And then they respond with all the eats.
+So this requires, some communication. But what we saw is that, actually, snapshot reads, so reads that are not part of a transaction, and reads that require only snapshot isolation, do not need replica communication.
+And the way to do this was that, for these leads, the replicas might actually need to wait to give before they give a response. So they wait until this time that we talked about in the last lecture, the Tsafe time, to be at least as much as the time t, and then they can respond and provide a response.
+And the final important thing is that, only the leader, so for strictly serializable leads, only the leader can serve them, but for snapshot reads, any node can serve them as long as they wait adequately enough, so that they are… they are… they have the fresh enough results to kind of respond.
+Okay?
+Questions about Spanner, or about these questions, these quiz questions of Spanner?
+Okay, so, today, we will talk about
+Delos. And Delos is another Greek island, and so today's agenda has three different, parts. First of all, we will talk about
+Migration of protocols.
+Then, we will talk about the virtual long abstraction.
+And then we'll talk about DLOS, Design and implementation.
+So…
+to motivate things, and understand why, why, why Delos is, why, why they even built this system. Let's start, with the following points.
+Consensus protocols and systems are a very, very, very, very well-studied domain that is still, though, active, research-wise. And we have seen some of them, Paxos, ReKeeper, Xavi, but there are many more, like Raft, Corfu, and various other kind of protocols and systems that implement them.
+And, yeah, as I said, it is still an open research field, so improvements to these protocols are still very heavily sought after in the distributed systems community, because, any, even tiny, you know, like, single-digit percentage improvement, in CPU time or in communication for a hyperscaler can mean 10%, you know.
+A 10% improvement would mean 10% less compute they need to pay for. And that is a significant amount of, you know, money for these hyperscalers, because they need to purchase this compute, they need to power this compute, they need to maintain this compute, and so on. So they really look for even single digits, even, you know, small single digits, like 1% to 3% improvements.
+These are really important for these hyperscalers.
+The problem, though, is that we can design new protocols.
+But what are the steps that it takes to actually try out a new protocol, a new consensus protocol, in an existing system?
+Any thoughts? What steps would it take? What things would it take to, you know, experiment and try out different protocols in our system? Any thoughts? This is kind of an open-ended question, there's multiple things that could be right here.
+I think that it holds up under certain failures, and… Order.
+That's totally correct. So, first of all, we would want to have a theoretical kind of understanding of the protocol, a reason about the protocol, prove things about the protocol, and, you know, then we would have the adequate confidence to kind of go with it.
+Other things that we would want to do? What kind of things we would want to do to actually, you know, try it out and possibly deploy a protocol on an existing real system? Imagine, like, you are running Spanner, you are running, you know, Azure Storage, and you want to change your consensus protocol. What would it take?
+Thoughts, Hans?
+systems, so, you know.
+So that's a good point also. So, before even designing a new protocol, you would need a lot of data from people to understand, you know, does the existing protocol have limitations, what are these limitations? To then understand how to design a new protocol and whether it will perform better.
+But let's say we already, you know, did all of this kind of, like, design, we saw data, we saw real user data, we tested out some things in, you know, in a test deployment, we proved things about the protocol, what now? What do we need to do?
+There are some real pragmatic things that are not trivial that we need to do if we want to, you know, replace the consensus protocol of an existing system that's actively running in practice.
+Thoughts?
+Well, we just switch it, you know, implement a new thing, and then everything keeps running, no one, no one, no one notices? You have a new set of machines up and running that…
+We all missed in the consensus, and then…
+Once they're all running, we can try to reroute the traffic away from the old set of machines.
+We start them with the correct consensus protocol.
+So that could be a way. So the proposal is, let's get some new machines, they run a new… the new consensus protocol, once they're up and running, migrate.
+But what exactly does the migration mean here? So does it mean that we stop, you know, we stop? How do we… how exactly do we stop between the first and the second? There has to be some kind of manual pause between the first and the second, and that's a great point. That's one of the problems. Any other things that could happen? Even if we have proved that the protocol works, right? Is that good enough?
+Does anyone know of this quote? I think Dykstra said it or something, about correctness of software.
+I don't remember exactly who sent or what the quote is, but the quote is something in the terms of, do not trust the software, I have proven that it's correct, but I have not tested it. So, even though you can prove things about your consensus protocol, that doesn't mean the actual implementation is correct and satisfies the things you want.
+So…
+Let me just give you a few things that one might want to do if they want to, you know, try out a new consensus protocol in an existing system. They implement the protocol. This is a very heavy process, implementing a protocol, okay? They need to do heavy testing ahead of time in a test environment, but then they also want to do testing in production.
+They need to stop the system at some point to migrate to the new protocol.
+Or they need to restart the system with a new consensus protocol. They need to find a way to consolidate the state pre- and post-stains, and how could you keep serving states both pre… with the previous consensus and the post-consensus, and all of these things are actually very, very hard to do.
+And…
+as a high-level kind of explanation of why this is too problematic, imagine that you're running, you know, Instagram or whatever kind of service, you can't just turn it off for some hours until you migrate your consensus. And, in fact, even if you migrate, then you might find some new bug in your consensus protocol, so you might want to go back, or you might want to go fix it. So, there are a lot of these problems with migration that are very serious.
+And so it is very, very hard for existing systems to experiment with different protocols.
+And this is where the DELOS system comes in, and this is… we will talk throughout this lecture. There's a couple papers about this system, but we will focus on the one that was published in OSDI 2020 by some Facebook, then Facebook folks.
+So, the goals of DLOS are…
+And that's how they also frame their paper, to build a new fault-tolerant database, very, very fast, that can go in production in 6 to 9 months, and later, allow for incremental improvements to performance of this system.
+Roughly, this database, the goal is that it will have an equivalent role to Chubby or Zookeeper, okay? A system like Chubby or Zookeeper.
+And to achieve this, they would need the following.
+They're going to be able to do easy, seamless migration across consensus protocols, and this would allow for experimentation, optimization of the underlying protocols, as well as decouple the control and data plane, meaning that, they are… it is possible to make the development of new consensus protocols easier.
+So how do they do that?
+The key, key abstraction at the, at the bay, at the foundation of DLOS is this virtual log.
+So, VLUS virtualizes the log, and this is similar as an analogy to virtual memory in an operating system.
+So what happens is that the application sees a virtual log up in this image, the middle layer, which shows a continuous log with brown, blue, green, and white.
+And, but under the hood, there is different small loglets that are stitched together, and they all have different implementations.
+And the system can transparently switch between loglets. For example, in this particular case, there's a backup loglet, then there's a zookeeper loglet, and then there's a native loglet. And you could do the switches arbitrarily many times, and arbitrarily easily between different loglelets.
+And the application, from the perspective of your application, it doesn't know and it doesn't care. Under the hood, there is different implementations of each loglet, the application doesn't really care about how it is done. From the perspective of your application, you just keep appending to your log, and reading your log, and everything seems to be working seamlessly.
+Okay?
+Any questions about the virtual log abstraction or the motivation that we have talked about so far?
+Great.
+So they implemented the virtual log and consensus in Delos, and this is a database in Facebook, and at the time of writing, it processed 1.8 billion transactions a day.
+And it used this virtual log for application of data under the hood.
+It offers a… the database offers a table API and a zookeeper API to its clients, and the key use case that they mentioned in the paper is managing the metadata for the whole fleet of Facebook servers. So that's the goal of this database that they built for.
+And let's look now at whether they actually achieved the goals that they set out with. So the benefits of the virtual login production are that,
+There is very easy migration, so the first version, which they went from scratch to production in 8 months, just builds around ZooKeeper, so essentially they use the ZooKeeper-based loglet that
+just transparently uses ZooKeeper under the hood, and they were able, in this way, to get from scratch to production in 8 months.
+And then, at some point later, they incrementally implemented a second version, which is called native loglet, and they got 10x latency improvement using this native loglet, compared to their ZooKeeper loglet.
+And also, they have this idea that now all their loglets, far older loglets, they can migrate them to cold storage using a backup loglet, which allows you to have the complete state of the system throughout the history, but you don't actually need to keep that, you know, in an active, high-cost system.
+And each of these logs can be, you know, has run a different protocol, it can be deployed on different machines, and so on. So it allows you to dynamically change deployments to explore even performance trade-offs dynamically in the system.
+So, let's look now at the Visual Log API.
+So how does it look?
+The virtual log, you can imagine as a log space from 0 to infinity, and this is mapped to underlying loglets. For example, you can have 0 to 50 mapped to loglet A, 50 to 150 mapped to B, 150 to infinity to C, and so on.
+And the API has some obvious methods. It has an append, which appends something to the log. It has a check tail, which returns the end of the log, the final position, and a Boolean value, which we'll talk about, and a readNext, which allows you to read a range of positions in the log.
+Append and check, they'll go to the latest loglet, in the, in the log.
+And read next goes to the relevant loglets that hold the whole range that we're interested in.
+Questions about API so far, or the motivation, or the virtual log?
+I guess I'm wondering, how is the virtual log actually different than, like, just having access logs without, like…
+Are we simply just saying he's dividing up the pieces?
+Should I pull up something else that's…
+There is… this is a good question, and there is a few more differences, actually. So, right on the next slide, I will show the first important difference, and then underneath, we will talk about how each lognet actually can run a protocol that is… has less requirements than Paxos. So, it can be a faster protocol.
+Even though the total log offers the Paxos guarantees, so yeah, we'll see how that works, yeah.
+Other questions?
+Great. So now the cool parts of virtual log.
+So far, this is a very standard log API.
+And, in addition, it adds these two operations. A scene, which we also saw in the Azure Storage API, and a reconfigure.
+So, the seal, the goal of seal is that you seal a loglet, and that's important, similarly to Azure storage, because whenever you want to add a new loglet, you have to seal the previous one, so all the previous, non-last loglets have to be sealed before you can add a new one. And the reconfiguration is the operation that actually tells to the log, I will add a new
+loglet to my log. And the configuration is, you know, a strongly consistent operation that can only succeed once, and so one way we'll see how it's implemented.
+So, given this, given this, all of this API,
+what steps does a client… let's say that the client, for whatever reason, wants to change the loglet. They want to change from the Zookeeper one to the native loglet.
+What steps does a client need to do to change the loglet? Yeah, thoughts? Hans? What kind of things do we want to do?
+Given the API we have seen.
+You want to seal everything first, then recompute
+Exactly. So we seal and then reconfigure, similarly to Azure Storence.
+And now, so we seal, in order to terminate the existing loglet, and this now, the sealed loglet does not allow new appends, and becomes read-only.
+And then we reconfigure, proposing a new loglet with a specific implementation. So we propose a new mapping from loglets, from the log ranges to loglets.
+what if… so, but there is two gaps in this, in this, in these operations. What if there are concurrent seals or appends happening?
+After the seal, here. What would we need to do? What problem could this cause? Before we do reconfigure, can we immediately do reconfigure after the seal, or maybe we have to do something else first? Thoughts?
+Seal and try to end.
+Almost, exactly. So, we want to seal, and then check tail.
+to know where the loglet actually stopped. So there is something that we will see later down the line, but we don't… we might see, but the log doesn't necessarily stop at the point that we thought it was before we sealed. So we seal, and then we say, okay, when did the log actually stop? And see… and SecTill also returns to us both the final position, but also, if we have the log, it returns the final position.
+but also the sealed bit. So… so that tells us where's the log… when has it tended, and what's… whether it's sealed or not.
+At the same time, what if there are concurrent reconfigurations? Let's say two clients are trying to reconfigure at the same time the log. What would we need to do after reconfigure to make sure, you know, that, that, you know, to continue the protocol properly, before we can keep writing? Any thoughts?
+let's say there's two clients, one of them says, switch from, you know, ZooKeeper to native, and the other says, switch from ZooKeeper to backup. What would we do then? What would we need to do here to make sure, you know, we can continue appending properly?
+Thoughts?
+Again, we need to check something. We need to make sure, you know, we know what the state is. The difference between these operations… the important thing about these operations, both the reconfigure and the seal, is you don't exactly know what has happened. You attempt something, but then you don't know exactly if it happened or if it finished, and where exactly it's finished.
+So what could we do after we configure?
+So you need to check the tail again to know what is actually the new loglet. And after we know that, then we can go and append our new entries, and everything is fine.
+Great.
+So…
+From the perspective of the clients, the virtual log behaves in the following way. Most of the time, which is the common case, you just do what you would do in a log. You append, you check tail, you read the next. And occasionally.
+When a failure is detected, or when reconfiguration is needed, or some reason exists to change the log, the loglet, you still check tail, reconfigure, check tail, and then you continue appending.
+And all of this gives us a log abstraction that we can build on top, and we can build applications on top that offer strong guarantees, similar to if we had, like, a single consensus protocol underneath, but also can be experimented and modified under the hood.
+Questions so far before we jump into the design and implementation of this?
+Great.
+So… We saw the problem, we saw the goals, and we saw the insights. So now, two questions.
+How do we build a database using the virtual log abstraction? This is the first question we'll try to answer. And the second question is, how do we build a virtual log? So, we'll talk both about what we do above the virtual log. So, there is a virtual log here.
+how do we build a database above it, and how do we build this, this, abstraction underneath? So we'll see both parts of the… of the… of the interface.
+So how do we build a replicated database?
+The components that they have in the system, and the way they would build it, is that they have… we assume we have a set of nodes, and we have an in-memory database library, LOXDB, and we have access to this fault-tolerant virtual log underneath.
+And the goals that we have is to offer strictly serializable read-write transactions and strictly serializable read-only transactions.
+So, how would you build this exact database? I want you to talk to the person next to you. Assuming you have this log that can do append, check tail, read only, read next, seal, reconfigure, how would you build? Come up with a system design that uses the log, uses an in-memory database, and implements and provides this strictly serializable
+read-write transactions, and strictly serializable read-only transactions. And there is a separate flow for the read-write and the read-only.
+Because it only is, of course, simpler to implement. So yeah, take a few minutes, talk to the person next to you, behind you, in front of you, and we'll get back together to talk about it.
+And it's sort of be better.
+request that I need to borrowed money.
+For sure.
+Yeah, so it feels kind of busy, so it's like…
+I mean, I don't think it's enough outside.
+Oh, yeah.
+Why don't we do this?
+feasible.
+Difficult.
+We're becoming perfect.
+Isn't that what makes a recipe?
+The log equipment?
+Goodbye.
+There's 0.15.
+Yes, okay, 10 games are done.
+That's a part of this provides exchange.
+I don't know if he wants.
+By the way, just for context, these types of questions are questions that you could be, you know, and questions that are asked in kind of distributed systems engineering interviews and so on. It's like an architecture question, you know? What do you… you have some components, how would you actually build something using these components? Because usually in distributed systems, it's not like you're going to build everything from scratch.
+But they will say, yeah, you have these existing components, existing protocols, we know how to use them, how do we get to the result that we want, and how do we kind of trade off these requirements, and so on?
+So yeah, I'll give you one, two more minutes, and then we can get back together.
+Oracle Leader.
+Oh, I guess, yeah, it's a difference.
+No, but I just didn't.
+Totally.
+Maybe for rebate to, like, kill it out, like, so that everything…
+I'm gonna mute.
+I don't waste your sense.
+Okay, so let's get things, together. So what do people think? Any observation about how could the system design look? You know, how would you compose the log and the in-memory database library?
+how would you, what would be the flow, or some things that need to be done for the read-write transactions? What could be done for the read-only transactions? Yeah. Thoughts, observations, hands?
+Any thoughts are good?
+Does that… do the zero hunts mean this was literally impossible? It didn't… it doesn't make sense? Or, you know, it's… I don't know, something else? Yeah.
+Any questions for my question? Whether, whether, you know, something that doesn't make sense, also?
+Or if not, any observation is useful, you know. What can you observe? If you had a log, and you had an in-memory database library, how could you actually, what could you do to implement, you know, some form of read-write transactions and so on? Thoughts?
+I tell them.
+Through this log, like, every request, like, read or write, it goes through the log first.
+sad.
+That's the question I'm asking. How do we build it, I guess? So if you had requests that happen as part of transactions, how would we build it using the log and using the database?
+And then, like, if something fails, you can, like, look at the log and, like, try to create the anchor or something, and, like, cool with that.
+So that… okay, so that's… I'm keeping from this that you need to be writing transactions in the log. And I guess let's start looking at all the… at the complete kind of architecture of how they build it, to get a sense. But this is the key idea. You have to write many things in the log.
+So, the database replicas run LOXDB, so they have replicas of the database, and they all run the in-memory LogsDB library. So, it means that in their memory, they have the whole database state.
+And they use data machine replication using the log.
+And for the retry transactions, they have the following flow.
+you append to the virtual log without running anything. So you first, as a client, as a replica, you try to append to the virtual log the transaction, the complete transaction.
+Then, you check tail to synchronize with the virtual log.
+and then you execute all the transactions that we go through with the synchronization, and then you return when it's executed after finding it in virtual log. And why is that important?
+Because…
+you can't just write a transaction in the log and say, I'm done. Because we don't know if, let's say, the last time you asked where the log was, it was here.
+But let's say then you manage to write a transaction, but you don't know if there is 3 things that happen in between the transaction that you just rolled.
+and where you were before. So, you have to write it, second day, and then read everything from where you were before until that point, and execute everything sequentially.
+And then you can finally run… once you get to the TX, well, it could be things even afterwards, and once you get to TX, you run it, then you can return the result to the user. Make sense?
+Questions about this flow?
+It's like a mock.
+Where you then, like, lock, and then the tail of the… like, backtracking.
+That's a good question. Why wouldn't you get a lock? Any thoughts? Why would that be? Why would that be, you know, any thoughts by others? Why would it be good or bad to have a lock? What do people think?
+This is a very reasonable question, actually. Why don't you just have a lock, and then do things, you know, in sequence, necessarily? But could there be any problem with using a lock?
+you would have to do communication to have a lock, and you would have to between the different replicas, to make sure we know who has the lock now, and who can write. And if you are the only one who can write, you know, maybe someone else is blocked, and the requests there are blocked. So what is… what is,
+architectural lounge is that everyone can be writing their request in the log. Very fast. Nothing is stopping you. You are doing appends all the time, and then the only thing you are doing is just, instead of running the transaction there, you just have everything else that happened before your transaction was appended. That's not really a problem, because what you are also doing
+In this time that we are, you know, running these things, is that we are catching up.
+your in-memory database with exactly what has happened in the admit system.
+So you do need to run other things, otherwise you can't even run. You can't even… you don't know what state the system is in, okay? So, that's why you… you want that. There was another hand, was there a hand? Was there a question?
+It's not a very cool.
+It's exactly the same. I guess this question is mostly, how would you build a database using a memory database and a log? That was the question.
+Any other questions about this?
+Great. And then we have read-only transactions. So then, what we… what we do for read-only strictly serializable read-only transactions is that we check the tail of the log to peak a linearization point.
+So the moment a transaction arrives, we check the tail, and therefore, we make sure that we will have seen everything that has been committed before we implement this. And this is very important, because let's say someone writes something and completes the line.
+Then, if we… if we don't do the check tail, we might return stale results. And that's the importance of check tail, that we will not respond until we make sure we are… we have, you know, we have seen everything that we should have seen, or has completed already, to provide this strict shareability, with similar to linearizability.
+We synchronize at this point, similarly to the other one, so we synchronize at the exact same point, and then, we run the read-only transaction.
+Questions about this?
+Why are we bother with…
+getting the data that's logged already called tolerance, these server requests do that.
+And it will not go down, they will not.
+You're too slow.
+Great question again. Any thoughts, David, on this? Why would we want log and a database?
+Any thoughts by why we would want that? It's a very good question, also. And we did touch a little bit upon it on the Azure Storage lecture.
+Let me vegan?
+Different benefits of needing regular law.
+meant to, like, hold one and goes onto. It's, like, totally cold storage. I mean… need to…
+Have some sort of record storage to be able to do that.
+So, I guess the answer is related to what you're saying. I think it does exactly that, though. So, the idea, I think, and I think if you recall from Master Storet's lecture, is that we have the log, what it describes is all the operations, right, that have happened in the database. So, this could be, you know, millions of operations that have been happening for the whole day. So, what we want to do is also have a…
+snapshot, or, you know, like a live view of the database at any point, to be able to share, because let's say someone asks us.
+what are the values of these hundred keys? Do I have to go back in my log and look at millions of operations to understand which keys have which values?
+No. So how we do it is we instead have a live version of the database, and then a log. If we want to set up a new kind of, you know, bring up a new replica up to time, we might want to rerun part of the log, or we might want to copy the state from some other replica, and then keep running the log.
+So, that's the reason. And why I said it's related to your point is because
+The log sensor has this sense of keeping the whole history, and we do not want to have the whole history, you know, in the log, in high, high-cost storage all the time, and sometimes you might want to push
+the, you know, the very old operations somewhere in cold storage. But still, we want a live view, so that we are able to respond fast. Okay? Questions?
+Oops.
+Okay, this would be separated, but, they also propose a way to optimize read-only transactions by batching them behind the synchronization point. So, essentially, if you have… if you have multiple
+transactions have arrived at one replica, you don't have to find a new linearization point for each of them, but you can take them all together, find the single linearization point, and respond to all of them at once, because that's still correct, and then you don't have to do this kind of back and forth multiple times, once for each of these transactions.
+Questions about this, why it works, why optimization works, and so on.
+So this is this part of the… how do we build something on top of a log abstraction?
+Great.
+So we saw how can we build the database using a log, or a virtual log, and a virtual log is really just a log from perspective of an application. That's why this also doesn't need… the application doesn't really need to think about anything else here, and that's the whole point.
+So, taking the classic small break for logistics, I hope you have been working on Assignment 4. And as I said last time, the last lecture second half, will have an Ask Me Anything, and you can put your questions here, but also you should come to class and ask them in person. That's better.
+And, today, I think the SCT survey opened, and it closes on June 6th, end of week 10, I think it's Saturday mornings, or Friday evening, I don't remember.
+Filling it in will really help.
+improve the class next year, so I really… I would really appreciate any feedback that you have. And so there will always… there will also be a 0.5% bonus grade on top of what you already got, in all, you know, in a complete class if you fill it in. So yeah, please fill in the SAT survey, I would really appreciate it. It's very helpful. Yes.
+Questions about… Assignment, ask me anything, or service.
+Great.
+So… We saw the upper part.
+of the system. Let's now talk about how to build a filter.
+There is two underlying questions that we have to answer to see how to build the log. One of them is how do we build the virtual log abstraction, and then the other is how do we build a loglet for the virtual log to use?
+And this, essentially, is what we also said in the beginning, where they want to split the API in control and data plane. So the virtual log implements the reconfigure, which is the fundamental control operation of the virtual log, and then the loglet implements all the data operations. The append, the check tail, the read next.
+And the seal, which is also controlled, but, it's part of the long list.
+So, the requirements of the virtual log
+are that it… so the virtual log, first of all, stores that same configuration. So what it stores, it says, this is the mapping of a virtual log to loglets, these range. 0 to 50 is loglet A, 50 to 100 is loglet B, and so on.
+And it needs to implement the reconfigure operation.
+So, let's think of some goals of the virtual long.
+Does a virtual lock need to be fast?
+Thoughts? Hans, what do people think? Does the virtual log need to be fast for the reconfigure?
+He'd be great what's that?
+Sorry? We should be creating, like,
+Yeah, we shouldn't be creating that very often, exactly. So, it doesn't need to be very fast. It still needs to be somewhat fast, but not very fast, that's correct. It's not in the critical path of a pens.
+Does it need to be fault tolerant? What do you think? Does their configuration need to be fault-tolerant?
+At this point, dancers should be obvious.
+Yes, we need to be fault tolerant.
+But a sub-question to this, should it tolerate many failures, meaning highly available? This is how they define availability here. How many failures should this be able to tolerate? Should it tolerate a single failure, like primary backup? Should it tolerate many failures, like Paxos? What do you think? What would you want here for the configuration?
+Thoughts?
+We would want to implement to support multiple servers being done. This is really the fundamental operation that will be happening if things go bad. So if something goes bad in a single login, let's say we have a login here, and something goes bad here, we realize there's a failure we want to reconfigure, then we need to be able
+to do the reconfiguration with… even if, you know, many servers are down. If we rely on a single server being up to do the reconfiguration, well, you're screwed.
+So, a key requirement, the biggest requirement of the visual log, is to be highly available, meaning that it can tolerate many failures.
+And so they implement this using a metastar.
+And the metastore means, that's how they call it, but it really means it's a pair of values. It's a current chain, meaning a mapping from chain ranges to loglets, and the chain version. And this version is literally just a number. Version 1, version 2, and so on.
+So, the only things they need to implement on top of it is a GET and a conditional write. So, the GET is what's the current chain, and the version, and the conditional write is, write the new chain if the current chain's version is V.
+And this way, only one right among the concurrent rights will win.
+So we have multiple concurrent writes that could be happening time to reconfigure, but only one has to win. So the way we do it is we also provide the current version with a ride. So, if one manages to update it, that means the version will now change to V plus 1, so the next one cannot succeed. So only the first…
+the first configuration succeeds, and then others, if they want to reconfigure again, they would have to get again the value and then try to reconfigure again.
+And the requirement, as we said, is highly available and fault-tolerant.
+So, how to implement this, and how to implement this, is that the original implementation, actually, was using ZooKeeper, a single file in ZooKeeper, and that was to get things running quickly, but then they later switched to an internal, very naive packsource implementation that is slow, but they actually don't care. The only thing they need is that it is correct, and that it stores this single pair, correctly.
+So, that's the implementation of the Metastore, and the reconfiguration. Any questions about this?
+Can't breathe.
+So, what this means is that the metastor has its name, which means it has, you know, this range is 0 to 50, 50 to 100, and the longer that they match to, A, B, and so on. And then it also has a measure.
+Why do we need the measure and the conditional run? We need it because if two clients want to reconfigure concurrently, they both think
+the current version is V. So they both say, let me change the chain that is version V.
+That means that if one of them succeeds and changes the measure to change prime, V plus 1
+That means that the second one cannot, by definition, succeed, because now the chain is not anymore with version. So that essentially guarantees that only the first and a single writer during concurrent reconfigurations will succeed.
+Other questions?
+There's not a feature.
+Operation Zero.
+Yes, it means, it means there would be the whole list of all the loglets, and it would be, yeah, exactly, the position of the loglet, of the big log, 0 to 50, are mapped to the backup loglet, the 50 to 100, the zookeeper loglet, and the rest, the native logit, for example.
+Yeah. So, let's say that your log… like, all your log lists are full, and every time you write.
+They restrict the operations you need to reconfigure goods.
+You don't have any more space, right?
+Oh, you don't have to reconfigure the same affinity. I think it was just an arbitrary number that I put here as an example. This could be, like, a million, whatever. And actually, I think in practice, if I recall correctly, they say that, you know, in a period of months, they maybe had, you know, hundreds or a few thousand reconfigurations. That means that, you know, if they can have, like, billions of transactions per day, that means these are, you know.
+Certainly not in the double digits. There are many, many more operations in the lobby.
+Other questions about, about the Metastor?
+Great.
+So now.
+that we have this metastore. Let's think about the loglet, and let's think about the separation of control and data plane.
+Does the loglet need to implement consensus or lead direction?
+Actually, okay, the answer is it does not need to implement consensual redirection. But the question is, why is that okay?
+Why do you think it's okay to not implement consensus or lead an election in each individual loglet?
+Essentially, do we need to run full-fledged SPAC source for each loglet?
+Why or why not?
+thoughts? Why would that be the case that we do not need to do that?
+Why is that okay?
+We've done some separation, and this separation allows us to do something. So why… why… why is this okay? Why is this… yeah.
+Thoughts?
+I don't… Because, that you, like… Sealed?
+Already than other, like, servers know.
+Oh, somebody has already… Brilliant.
+So they know, like… To maybe, like, wait for a bit, or… They notice really start something.
+Right, so the key idea is that the main control and the main overhead of doing the control is now over, offloaded to the metastore and the virtual logger. So the moment we see, exactly, the moment we see a loglet.
+we can run the reconfiguration on the Metastore, and Metastore has to be highly available, it has to be… make sure the reconfiguration almost always exceeds, you know, with the… even if a lot of replicas are down. But internally, it's logged.
+doesn't actually need to have… need to run pack source, or need to do this kind of, highly available, have this highly available guarantees.
+And the main requirement, the only thing we really want, is that after a seal succeeds, new appends will reject. So, after a seal succeeds, at some point, appends will reject, and so we will be able to, move to the new log and continue properly there.
+they need to be replicated, that's a good point, but they can have a lighter version of replication, and they don't need to run back source, so they can run something like primary backup. That's the key idea.
+Similarly to what we saw in Azure Storage, where the stream layer, you know, LAMP access source for… to do the mapping of extents.
+to servers, but the extent run a primary backup replication protocol. So, essentially, we do not need to do all of the overhead of, you know, having this high availability there, but we can have lower availability, and I will explain how.
+So the CE needs to be highly available, that's very important, because what we want is that we are able to change log. Essentially, if a catastrophe happens, something bad happens, we want to be able to change the loglet, even if half of our servers are down.
+The append itself does need to be highly available. We can run appends always, but it doesn't need to be highly available like the C.
+And I guess… There are two questions. Now, I guess I've already kind of answered one.
+But why is that okay for users, and what is the benefit by not requiring, maybe I've almost answered both, I guess. But, what… why is that okay for users, and what's the benefit by not requiring, Paxos and Leader Election Consensus on the lobby? Thoughts?
+Any, any of the two questions?
+Why is it okay for users? I kind of said it. And what are the benefits by not requiring this? I kind of said it. So, yeah.
+Hans?
+There should be more hands given. If not, there are questions, so do ask me questions, or do participate, yeah. If it's not clear, ask a question. If it is clear, please, yeah.
+Even if the append fails, they can just create a new law firm.
+Exactly. So, that's okay, because if the append fails, and only a single, you know, can only eliminate a single, or even no, no failure, we can just, you know, go and do the,
+the CLN configure. And what is the benefit by not requiring this?
+Again, I kind of said it, so yeah. What's the benefit by not requiring running consensus and highly available cons… highly available protocol for its logging?
+Thoughts?
+Or questions about what we're saying?
+Exactly. So we can do things faster. And that's the main idea, also, behind their native loglet that we will see in this class.
+So, as we said, the original implementation was Zookeeper, this was easy, and they later switched to native loglet for significant gains.
+And they have a backup loglet, as I said, which is on Hadoop Distributed File System. And for the rest of this lecture, what we will focus on is how to implement the native loglet.
+So… Let's talk about the setup of native logit.
+There's a set of nodes which act as log servers.
+And one of them also runs a sequencer component.
+So these log servers has a local on-disk log and a sealed bit, a single bit that represents whether it's sealed or not. And when the seal bit is set, the logger server rejects appends to its local log. So the moment my SIL bit is set, I do not accept any more appends in my local log.
+And then we, some important things about the log is that the native log… loglet does not have gaps, so all slots contain something, some entry.
+And a command is considered to be locally committed, if it has been written and synced to its local log.
+And then there is also this local tail component that describes the first unwritten position in the local log.
+We also need to think about what's the globally committed position, and a globally committed position is a… sorry, a command is globally committed, and operational law, if
+Both it is locally committed on a majority of the log servers, and if all the previously… previous commands are also globally committed, okay?
+And all the log servers have a known tail, which is the global tail they currently know about.
+And this, of course, trails behind the real global tail, because if it was precise, there would have to be continuous communication. So this known tail essentially represents the kind of learner role, what we know about the system and the system position.
+And this gradually progresses, but it always trains the real global trade.
+And he piggybacked his rotating messages to exchange knowledge and know where the log is currently.
+There's a question?
+But is there any, like, downsides to having maybe, like, a bunch of small little bits if, like, the append keeps failing?
+That's a good question. So, and a great point, actually. If you have a lot of small loguls, there are downsides. Every time you do a serial reconfigure, you pay something that's much more than a pen. Because, as we said, this doesn't need to be fast. It's still at the range of, you know.
+10 to 100 milliseconds, but if this happens all the time, that's a problem. So, the key idea, though, is that the moment
+you do, you know, a reconfiguration, you can change completely, let's say, the servers that you were running before. So, let's say you had, like, some problematic servers, you can change them to new servers completely. So, it's rare the case, or it would be a rare case that you actually have to reconfigure continuously.
+If you have a problem, you try to reconfigure once, and someone tries to reconfigure, and if they succeed, then we continue, and everything should be fine, more or less, because we pick new servers to do the work. Does that make sense?
+Great.
+Other questions about this?
+completely committed on a majority of cloud servers, but, like, the previous one…
+If, like, there aren't any gaps.
+That is a… That is a good… question,
+Hmm… that's a good question, actually. That's how they phrased it in the paper. I don't exactly know now.
+I can't exactly think of a counterexample where you have a locally committed on a majority of log servers.
+And, and,
+I think… I think the reason why they make this… this… this clarification is because you could have…
+things, up to some point in different logs, but not in the same logs? Hmm, actually, that's not the same truth.
+I take it back. I actually don't know. That's a good question.
+But if… even if they are… even if they are actually redundant, we… we both… we need both. That's maybe redundant, but still, it's correct. So, you're right that it might be a little bit redundant. That's how they mentioned in the paper. I will take a look and see if there is any reason why they mentioned, or if it's just a kind of typo, or, you know, like, yeah, unnecessary safety precaution.
+Other questions about this?
+Great.
+So…
+native loglet operations. So we're now ready to see how you implement all the things that we said in the loglet.
+So the easiest one is SEAL, actually. So, seal, you contact all the log servers and ask them to send… to set their seal bid. Totally straightforward. If a majority of them respond success, the loglet is sealed, and then future appends will return an error.
+Will all Sikh nodes have the same local tail? What do people think? Any thoughts here? What do people think about this, this question?
+Or questions about how to implement the scene.
+Hans? Thoughts?
+Would they all have the same lockers, Dale?
+Click an office, etc.
+Not necessarily, because even if a majority
+have, you know, have accepted something. First of all, there could be also a minority that has accepted some, some, you know, some tale locally, and then, you know, the local tale of, let's say that all three respond to the scene, so this has this local tale, this has this local thing, this has this local thing. They're not the same, but they are all sin, okay?
+And this is important to keep in mind, because we will have to see how to tackle this in a few slides. So we have to do something to deal with this problem here in a few slides.
+Let's have a look at the panel.
+The append requests are sent to the sequencer, which essentially acts as a primary. That's the key, that's the key, purpose of the sequencer. And the sequencer assigns a position to the command.
+and forwards it to all the log servers. And it considers an append complete when a majority respond successfully. And then it returns success to the client.
+If a majority of servers respond that they are sealed, the append fails.
+And in all other cases, we try after a timeout, until either we are still, or we are successful.
+And during the append, a log server can commit to position n if n-1 is either locally committed on that log server, so it's part of the log, or if it's globally committed on a majority, meaning that the known day is larger than n-1.
+So I can commit, okay, so now I think I see also why, why you need the both requirements for the global community.
+Because, let's say we have… Let's say we are here.
+we are here in the system. We can actually, and we know that the note day is up here, so the note day for the first
+For the first replica, here are one.
+is here. That means that I can actually go and append the next thing here, even though I don't have this gap. I don't have this gap here, but I can actually append because I know the compute system has globally committed up to that point, okay?
+And so, I can commit either if I have that value, or if I know the whole system has everything up to this point, okay?
+And what is the implication of the second thing and this entire thing? What are the implications of this? Thoughts? What, what are… yeah, what is the, what is the effect of this?
+I do need doubts.
+it gives you gaps, but it doesn't give you gaps on the complete log. It gives you gaps on the… on the log layer, there is no gaps. There is gaps at maybe the local log of a replica, but not the log level. The loglet still has the globally committed positions, which are all full. Yeah.
+So, the point exactly is that we might have gaps, and not all commands are stored in no logs.
+Is that okay?
+Could this lead to data loss with faults? What do people think? Why is that okay? Why is it okay to just, you know, let some things leave gaps in the login and just, yeah.
+Could there be a problem?
+be fine, because it has to at least be known by the majority, so there's already a lot of…
+Exactly. So there is a majority of nodes, and as long as the majority is alive, each command will be in at least one log server, because if a majority is alive, you know, the combination of this majority will have at least… there will be at least one server with its position of the log.
+And then the question is, why do they do this? Why is there a benefit in doing this? And not just saying, I will wait until I have also committed. What do people think for this?
+Why would be a benefit of not doing this?
+Thoughts?
+More cost-effective?
+How? Why would that be cost-effective? What would be a scenario where we really do not
+You know, where we get a real benefit by living a gap.
+What's… what's maybe some scenario that we can get serious performance benefits, or, you know, availability, kind of, and latency benefits by not filling in the gap?
+To fill in all the crafts, you would have to wait.
+For longer times. So then, in that sense, it's, like, more time efficient.
+Right, so if you need to catch up, that might be, you know, a lot of operations. So, we don't want slow log servers to need to catch up.
+Always, as long as they can help with the majority kind of thing. So, some servers can just, you know, have some gaps if they're a little bit slower, and we don't need them to catch up to always continue with the protocol. And that allows us to be more effective with the use of our resources, okay?
+Questions about append? Because next we'll move to C. Questions about append?
+The actual, like, client request of…
+Where is it received? Is it by any native language, or is it by the, like…
+Log server that does sequencing.
+That's a good question, and it is only by the sequencer. So all the requests, the requests go to a sequencer.
+And then the sequencer forwards to all the other loglets, and then the other loglets… sorry, all the native loglet replicas, and then the loglet replicas, or log servers, do these operations and append based on this protocol.
+Sergeants never have any gaps, because every request…
+The sequencer might never have any gaps, yes.
+Yes.
+Is there a follow-up to this?
+Now, it doesn't have to be fault tolerant, exactly. We will get to that in a little bit. But that's the key idea of why this is very efficient, and what I said before about the need to not do consensus at its native loglet, but only needing to do consensus at a reconfiguration.
+Any other questions?
+Great.
+So, let's also look at sectane now.
+And this is the most complex of all operations, that's why we let it for last.
+So this returns the global day, And the current seal status.
+How does that work? You send a check tail to all nodes, and wait for a majority of responses.
+And then we follow a state machine protocol, given the majority of responses, to be able to respond to the exact same.
+For simplicity, in the paper in here, we will assume we already see the majority of requests, and no more.
+But in practice, if we had more requests, the protocol is a little bit more complex, but uses the extra responses for better performance. You could also drop the extra responses after the majority, but if you have them, you might be able to get to a result faster. But for now, let's just think of the majority, which will guarantee correctness for our case, okay?
+So this is the protocol, and it has
+It has two parts to it. It has the left part, which talks about the no-sealed case, where no node is sealed, and the right part, which talks about having some or all the log servers, the replicas sealed.
+So, if a majority of the… so all of the responses, we will just… when we say all now, we refer to this majority.
+If all of the responses are sealed, then if they have the same tail, we just return. This is the obvious case. They have the… they are all sealed, they have the same tail, no problem. I just return, and we're good.
+No.
+If they have different tails, the system repairs by copying suffixes across log servers.
+Is this fine with respect to correctness? Why are copies fine and don't lead to any conflicts? Copying around here, positions across the servers.
+why aren't there no any conflicts? For example, why are there no, you know, why is it okay and there's no two things that are different? How… yeah, is there any kind of conflict resolution we need to be doing here?
+Sequencer should have only identified one.
+Exactly. So we have the sequencer, so this gives us a guarantee there is no way that there is a difference being in any entry. We are certainly sure that if there is some position in the log, they all have the same. So we can just copy to repair them.
+So, this repair is the thing that goes from the top right to the bottom right, position. If there is a different state, we repair.
+then if some are sealed, what we do is that we send sealed to all the log servers, and then we retry the sect tail. And this is the transition from the sum sealed to the all-sealed, or, you know, you keep being in the sum sealed until everything is completely sealed in your majority.
+Questions about the, you know, the right part of the protocol, and if something is seen. Any questions?
+Great.
+So now, I want you to think a little bit carefully about this thing.
+We are copying missing suffixes during sectarian, right? So we… during… yeah.
+Could something go wrong because of this? Any thoughts? Could… could there be some kind of problem that we're introducing in the system? Is it totally fine? Is it not fine?
+what happens? So I want you to, to, you know, again, talk to the people around you. Since we have fewer people, you know, today, feel free to, you know, group up in bigger groups, that's okay. But yeah, do talk to the people around you, and think very carefully.
+what could happen here? Is that a problem? Could that be a problem? Does it have problems for correctness? And what are its implications? Yeah, so let's talk about it, and then we'll come back and get back in a few minutes.
+Or ask me questions, because I hear complete signings.
+Any questions before, before I let you talk to the next two? Yeah, ask me questions before, if something doesn't make sense. And then… and then… and then you can talk about it. This is an important… this is an important thing, and it's one of these sucky cases, and this is, again, one of these things that, you know, when you think of institutions protocol, you have to think of these corner cases. What happens then?
+And why does it happen? Is it okay that this happens? Does it violate any of my guarantees? Maybe not, maybe yes.
+So, let's think about this. But yeah, questions about why this happens, and if that's okay.
+If not, talk to the people next to you. Bye-bye.
+Yes, so it's checked till only one can be completed.
+Does technically what? Is check tail only run when things are already sealed? Like…
+It still runs, and it runs properly, but I want us first to focus on this particular problem, and then I'll talk to you about the rest. The rest is very similar, the rest of the protocol. It similarly tries to do some kind of repair, or not repair, but it returns some things somehow differently. Yeah?
+I thought we just said, like a second ago, that is one…
+That's… that's a good question. So, why do we copy the suffixes? Why do we need to do this, and what effects does it have? And if we didn't do it, what could happen? So, yeah, I want you to think about this. So, why do we copy? Why do we need to copy? Thoughts and, yeah, yeah.
+Discussion with the people next to you.
+Whoa.
+It's this time.
+Sorry, the majority.
+Everyone wants to see their sealed.
+That'll be the only hurt.
+concealed.
+So they should all have money.
+The majority of them should absolutely love.
+Which means that everybody… There is, D.
+That was, commit is… At least the majority of them.
+Not necessarily.
+Let's see… attention, but…
+I'm not sure. My guess is that, since we're, potentially…
+Yeah, no, something I was just sitting on.
+And Whole Foods.
+10 seconds.
+It's a good time.
+I guess you're not.
+Yo, this is a good check.
+We have to support.
+Boom.
+Good for us.
+That's always in position.
+Awesome.
+What's this one?
+Yeah, I'd be good.
+Don't request something approved.
+So…
+He doesn't know.
+So…
+What do people think? What… any thoughts about this? Why do we do copying suffixes? If we do copying suffixes, is there a problem? Is there a problem if we don't do copying suffixes?
+thoughts, observations? What do people think? Any kind of thoughts or questions are useful. I want you to… the reason I'm asking these questions, especially for some harder parts of the class, is because if I just go and tell them to you immediately, then you won't necessarily, you know, engage with this more deeply, and this is a complex topic, so that's why I want you to first think a little bit about it.
+So we can ask, you know, questions all together and be in the same ground. So yeah, observations, thoughts.
+Why do we… do we do this? Why… what would happen if we didn't do this? What happens if we do this? Question… points? Observations? Hans?
+I guess the point of stopping it is that, like.
+Or… if there is a suffix, then that means, like, a transaction went through, and then if you don't copy it, then, like, if the majority don't have it, then it's just, like, it's impossible.
+That's a great point. So, if there is something in some notes here.
+And maybe these rooms are not a majority.
+this still means that this transaction could have gone through, and then some node failed from the ones that accepted it, and so now we have a minority, but this transaction went through. So what would that mean if we… if we did not copy the suffix?
+Would that violate any of our guarantees?
+And at least the client would think that it's bigger.
+So the client would think it's there.
+But then, if someone sex afterwards, let's say you said, I paid, and then you think, yeah, I paid, and then later, someone had sex with you, paid, and they're like, no, you never paid.
+This, this, you know, there's no operation in the log. We sing this log, we go to the new log, your payment lost today, you never did it, you know, you're gone. So, that's not good. So that's why we copy the missing suffixes. If even a single, you know, let's say we had a majority of nodes, and this is not grass.
+Then, this is a minority, but it was accepted, so we have to drop it. So we have to copy it in the others to make sure that there's a majority of nodes that have it, so that we can progress, yes.
+I thought it wasn't officially committed until a majority of the arguments accepted in the first place. A majority that accepted it used to.
+And there is some faith.
+So then how would it be lost, because couldn't we move?
+Always, like, the next riot that goes through the sequencer will…
+like, placeholder for that. We are talking about the scene now. So these are great points, but we're talking about the scene, so we need to make a decision. Where does the lock… the locklet end? And the question is, do we end it here, or do we end it here?
+And integrated here.
+do we pick this thing… is this thing, if it's just here, without being copied to the list, then do we actually know, you know, is this something that some node accepted, but not everyone accepted, or is this something that actually a majority accepted? So that's the problem. There's a problem here that we don't really know if a majority accepted this or not. That's why we're also copying.
+Other points about this? This also indicates the problem, actually. What's the problem that's happening here, no? That's an operation that shouldn't be accepted, because minority has accepted it, it might get rid of it
+Exactly. So, this is the… the dilemma that we have to solve here. And this, by the way, there is… this is another kind of, like, classic, you know, tape recorder kind of situation that's happening here.
+this is, you have to have some trade-offs, and what it shows here is to have this efficient implementation that has this tiny little thing. When you seal, sometimes you might have some zombie rights, that's how they call them. And a zombie ride is an append that was not accepted by a majority.
+But was given a sequence number, and was stored in a few nodes.
+And then was fully accepted and committed.
+Okay? So, let's dive a little bit deeper into this and understand what the problem is.
+So the key challenge is that when we want to see, we have
+A minority. If you have a majority, then we're good. We know a majority of things is certainly saved, you know, it certainly was certainly committed. But if you have a minority, we can't necessarily determine
+whether that's because a majority accepted it, but then some of them failed, or it's really the minority that had accepted it, okay? So we cannot differentiate between these two.
+And the difference is between these two statements, I know I committed the command, versus I know that a majority committed the command. And that would require more rounds of communication.
+I don't want to dwell deep into this kind of difference between I know that I did something versus I know that
+Some, you know, many people did something, but
+if you want to know more about this kind of, reasoning, this is… this is, knowledge… there is… there's this, this, the notion of knowledge frameworks that, and you can start from this paper if you want to look into them, that talk about this kind of, statements. I know that, I know, I know that someone knows, I know that something happened, yeah.
+You know whether or not…
+Except that by a majority, your no tail is the same as your local tail.
+If an operation is between the known tail and the local tail, then it's not yet been accepted.
+I thought that was a little plot tracking.
+First person. But, but it could land.
+Right? So the Note. So the Note is a best effort thing. The non-te cannot be used for correctness, because it could be lagging. So there could be a time that we actually think the long tail is here, but then there is things that are accepting the majority, but my Note is still here. So I don't know, actually, that this was globally committed, but I still need to make a choice about what's happening.
+So…
+What we need to make a choice, therefore, between is, we can do either under-approximate, drop the suffix that is not in a majority.
+And this would violate strong consistency, because a command that was accepted was lost.
+Or we can over-approximate by keeping the suffixes, even if something was not accepted. And this is what native doc log does.
+As a result, there is the following contract that the client needs to know and respect.
+If an append fails, that doesn't guarantee that the append didn't go through.
+So if an append fails, you might still need to check the day to make sure that it went through. And this is similar to when you have, again, like, you know, a card transaction online. It might say it failed, but it actually went through, so you have to check, actually, did it go through or not? So, only the tech deal afterwards can give definitive answer after the append.
+The common case here is that the append succeeds, and the append is passed, and the append is correct. But, and if the append succeeds, it certainly succeeded. There's no way we are missing an append succeeded.
+But, sometimes, an append might fail, but still happen in the long. That's a very rare case, but still, we need to know this as a contract from our, you know, above. An append that failed did not necessarily fail.
+But appends wouldn't fail frequently, because an append failing means the sequencer failed, and that happens rarely, and so that's not a common case.
+Questions about this?
+Great. So let's now look at the rest of the tech tail. And this, if none is sealed, and the tails are the same, then we just return the same tail as before. Any details are different.
+We wait until the known tail is larger than the max tail, and then return.
+Why is it important for the non-tail to be larger than the max tail, and we can't return immediately?
+Any thoughts?
+So there is a bunch of… this box tail means the box detail among all the different nodes.
+So, if we have this, this, and…
+And this, this, this, and this, the maximum pay would be this.
+So we would have to wait until our no day also catches up and is larger than this vaccine, so that we can actually return. Why is that the case, and why does it need to happen?
+That means we're guaranteed that everything has been completed.
+And it's, like, now equally? Right. So, a max tail doesn't mean an operation has actually committed.
+A max tail could mean a minority has accepted an operation, but not a majority. So we need to, you know, in this case, we need to wait to make sure it has been globally committed before we respond definitively, this has happened, or if this has not happened. So we wait until the non-tail is past the max tail, and we respond, and this guarantees strict serizability.
+Questions about the sectail Protocol?
+Okay, so let's now go into the area of faults, which we've already started discussing.
+But how many faults can native logledge tolerate with… oh, is the question?
+Not more like… Something?
+accepted.
+Sign the sequence number.
+Not everyone sees it? No, the minority is… is… if we are in between, we are in some kind of intermediate state, where… where we have…
+where the sequencer has received, it has put, assigned a, you know, a position, it has forwarded to the servers, some of them have said, I have done it, but that's only a minority. So, we are in this process of doing the append, but the append is not complete.
+So that's the point where we need to make sure. And so, therefore, we also haven't responded to the client here, the append is done.
+Except if things fail, except if a majority does, you know, except if nodes do fail, and there is no majority to do the append, or if the sequencer fails, yes. Otherwise, it will get accepted, that's correct.
+So, how many faults can Native Loglet tolerate without losing data? This is the first question. How many faults can we tolerate without losing data?
+Without losing data.
+But it has… oh, that's a great point, okay. So if the sequencer receives something, it writes it, and it doesn't have a time to communicate in crisis, it hasn't responded to the client, I actually accepted this append, this is done.
+It has to hear from a majority first. So the only way the client thinks I actually succeeded in attending is if the sequencer got it, assigned the number.
+received a yes from the majority, and then says to the client, okay, I'm done. So, given this.
+What… what number of faults can we tolerate without losing data?
+divided by 2 minus…
+Yes, show the minority. For 2F plus 1 nodes, we can tolerate F faults, and that's, that's like the classic Paxos guarantee that we have.
+How many faults can native locally tolerate to respond to a seal?
+How many replicas can… can… can have… could have died, but can still respond to seal? Pots?
+The same as before. So, as long as the majority is up, the seal can complete.
+How many folks can native drugs tolerate to respond to opens?
+Yes, actually, it's 0. I wrote 1, but it is… but the answer is zero, because if the sequencer goes down, we can't even tolerate this. So, I guess, yeah, you cannot tolerate the sequencer… I guess a single fault destroys your… destroys your… doesn't allow you to respond to opens.
+And similarly, how many folks can it vlog literally need to respond to exact tail?
+And this is the final, I think, question I have on the slide.
+Hands, thoughts?
+How many faults can native logit tolerate to respond to tech tail?
+Thoughts?
+Not clear at all.
+If not, ask questions, or, yeah, can someone share them?
+It's just a majority, exactly. So, it can tolerate the minority faults, and the reason is that sector would try to get the C, you know, with a majority of nodes and response… responses, it can do the state machine protocol and return something. As long as the majority of nodes is up.
+We can keep working in the logarith, and we can sing the logarith, we can respond about where the logarith is, but we cannot add new things.
+So that's the idea.
+You can… you…
+You can support many folds, and not lose data, be able to close the log, and therefore continue to a new log, but you lose the ability to be able to append things while the sequencer is down.
+Yes.
+Because I'm very bad at being consistent at typing. Yes. Other questions?
+Great.
+So we saw also how to implement the native loglet and the log using… the virtual log using the metastore.
+So, to conclude.
+The cool thing about Zelos is that it decouples the control and data plane for replicated machine.
+And it uses this virtual log abstraction that allows you to quickly and simply migrate across consensus implementation, across different loglets.
+And also, the data plane can be much lighter. It doesn't need to implement full consensus, like you implement, you know, normally in a log. And on top of that, Villus builds a replicated database with high performance.
+Questions about anything in the lecture so far?
+Great.
+Please, fill in the quiz, as always, and yes, next time we'll talk about microservices and newcast.

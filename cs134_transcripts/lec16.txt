@@ -1,0 +1,568 @@
+Yes, it was, dear.
+I was online.
+I would assume.
+Nothing.
+Closing.
+No motion.
+The whole point was that they could carry us, so…
+So, hi everyone. Let's get started with this, packed classroom today. So, yeah, hope you all had fun and enjoyed or relaxed during that long weekend.
+And, yeah, let's get started with the quiz questions, like always.
+From the previous lecture on Azure Stardens.
+First, the first question asked about data types and what, each type of,
+storage is useful for, and the answers, as we saw in the class, are that blobs are useful for binary data that is not structured, tables are good for structured data, and with schemas that we can predict and have, and then queues are useful for orchestration or data movement.
+The second question, was about the storage, stream, data storage stream layer, and, the question was about the, its high availability, and, the…
+The answer for this question is that, or at least, there were two points about this question, and one of them is that,
+Azure Storage, the stream layer manages to be highly available due to the append-only and sealing of the extents. So essentially, what the stream layer allows is that at any point, you can very easily write, to an extent.
+And if an extent gets full, you can seal it and then continue appending, or if there is some kind of error, you can seal and continue appending. And this allows for this very highly available and high-performance append.
+The other point about stream layer was that, on the other hand, the extents, make, random access rights slower. So writes to sealed extents need to actually recopy and re-replicate the data.
+So, in Azure Storage, when you do operations that just touch pointers of the extents and do not need to modify the extents themselves, you can do this very fast, because you just need to modify the pointers, and you're good.
+The moment you need to touch extents, you now need to go through the actual data replication workflow, and therefore replicate this data, and so that's why this takes more time.
+Okay, questions about this?
+Great. And the final question was about the partition layer, goals. Which was…
+whether it does sorting or replication. And the partition layer does sorting with these range partitions that we saw, but does not do any replication. All the replication is done at the stream layer, which is this kind of distributed, replicated file system storage.
+The other point about the partition layer was whether splitting a partition requires data movement, and the answer is that it does not, because all of this happens by just changing these metadata pointers. So, essentially, the underlying extents all stay the same, we just modify which pointers points for each partition, and then we can continue with a new partition.
+The moment when you have to load a split or a merge partition, that might require data migration, but the time of splitting, or the time of merging the partitions, only modifies pointers and does not modify the extents, so therefore it is also efficient.
+Questions about the partition layer, or anything about Azure Storage from last lecture?
+Great.
+So today, we are almost at the end of the class. We've… we… we saw your stories last time. Today, we will see Spanner, and next lecture, we'll see Dilos, and then… and then Newcast. So yeah, for today, the end simple. We'll talk about Spanner.
+So what is Spanner? Spanner is… Google Spanner is a system that allows for… it's a distributed database that is geo-distributed, so across the whole world.
+And it started out internally, but it's now offered as a cloud service also to external customers.
+And Spanner started as… or at least the thing, the… the Spanner has…
+kind of like throughout the years, a lot of, you know, papers and blog posts, articles, and so on, but we will focus in this class, in the first paper that introduced Spanner, that talks also about some very interesting core properties of how, it manages to achieve high performance and distributed transactions, in an efficient and cool
+way.
+So, the goals of Spanner, let's as always, start by talking about the goals of the system we're gonna see. The goals are that it's scalable.
+It's multi-version, meaning that in the database, similarly to how we saw in Dynamo, there are multiple versions for each key, and these are useful to be able to serve leads, and we will see how that works closer to the end of the class.
+It's globally distributed, meaning that you have replicas across the globe, across different data centers, and across regions.
+You want things to be synchronously replicated, which means on the critical path, and it supports distributed transactions. And Azure Storage, just for reference, could only support transactions in the same partition. So, Spanner supports transactions across partitions of data.
+Yes.
+media question I have.
+Is it possible for Spanish to be both synchronously replicated and excluded?
+Hmm, good question. This is exactly the whole point of this lecture.
+So, yeah, thanks for asking this. Yeah, we'll see how in a few minutes, in a few slides, but that's exactly the core of today's lecture. How can Spanner do… be scalable, and synchronously replicated, and do distributed transactions, and somehow this works, yeah.
+So, let me just give you some more context about Spanner before we get to answer this question. Spanner, yeah, is SARD for scalability, and each SARD is a Paxos replicated state machine for synchronous replication.
+And replication is important both for availability, and fault tolerance, and also for locality. So, in Spanner, they say that they also allow any replica to serve reads, or not any, but any replica given some kind of requirements that we will see later in the class.
+And yeah, as I said, it was first built to support Google's advertising backend, and it is now offered as a cloud service.
+The key contribution of Spanner is that it supports geo-distributed transactions across sounds.
+So, what are the issues with offering such transactions? What do people think? What's the problem with offering geo-distributed transactions across regions of the world? Any thoughts?
+It was already mentioned a little bit, but yeah. What's the key problem when you try to offer transactions across, you know, replicas and SARS that coexist, that live in different regions and across the globe?
+Thoughts?
+Between servers? Right, so it's very slow, there is distance between the servers, and there requires multiple rounds of communication across the world.
+So… Spanner implements this efficiently.
+And they also provide real-time ordering guarantees, meaning that if a transaction starts after another transaction that has committed, it always sees its value.
+But… Isn't that impossible? Or…
+Totally, totally, totally infeasible. And the key insight that Spanner uses is actually that it uses globally meaningful physical timestamps for transactions.
+And the time zones can be used to determine the transaction order.
+But…
+We have said in this class, except for Jess's lecture, that, physical clockscharization is very hard, and that's still true.
+So, what Spanner… the kind of, like, the key insight under this Spanner's work, and this is also something that was mentioned, Jesse mentioned in his talk, is that instead of
+Saying, I know nothing.
+Spanner says, I know one thing, and that is the bound on the clock synchronization.
+So, instead of knowing, you know, normally what we've been saying in this class so far is that, okay, we know nothing about the physical clock. They could be out of sync, you know, in arbitrary ways, but what if we knew how badly out of sync a clock can be?
+So… Spanner uses this TrueTime API, and this API exposes the real-world clock uncertainty across machines.
+Jesse mentioned that this is possibly, at some point, like, in passing in his lecture, and also we saw in this class the Facebook tau measurements that essentially try to measure how badly out of sync their clocks were.
+So, yeah, the key idea, essentially, behind this is that in most cases, physical clocks are actually pretty in sync. So, in these cases, we can do things very, very fast using these clocks, and in the rare case that they are not, we can detect this and fall back, slow down, and do things properly.
+So, TrueTime API.
+this API exposes the uncertainty across the time among machines, and
+The question is, what can we do with this knowledge? So the system guarantees these geodistributed transactions with strict serializability, and this depends on this uncertainty bounds. So if the uncertainty is large, as I said, Spanner slows down and waits it out.
+An important thing here is that for anything to be collected, we will see in this lecture, uncertainty has to be reported conservatively for correctness. So,
+And then, so, we have to be conservative
+for uncertainty to be correct, and we have to be conservative to be able to be correct. But, keeping the real bound on the tool also small is then good for performance. And based on their measurements, the skew of clocks is almost always below 10 milliseconds, and that is adequate for Spanner to have very good performance.
+Before we talk about, through time, and so far you don't have still the context exactly to understand how it works, I want to briefly go over the overview of the architecture of the Spanner, so that you can then explain through time in detail and understanding.
+So…
+This is the… an overview of the architecture of Spanner, and Spanner has the following kind of… has different data centers. Here, these are different zones, essentially, or regions. There is factions running across them, and then there is, on top of it, a transaction transaction layer.
+The data type that Spanner supports is a key timestamp. Instead of just having a key value mapping, it has a key and timestamp mapping to a value.
+And the multiversion aspect of it comes when we have many timestamps for the same key that live in the database.
+And then the data is split in tablets, which are essentially… this is the terminology for partitions, like the partitions is Azure Storage, or partitions in other parts of the… that we've seen in this class.
+And the partition, yeah, is a subset of key timestamp pairs with their values.
+And, of course, you can put many partitions in a single server, and underneath the system, there is some kind of,
+file abstraction, similarly to Azure Storage, and we will not talk about this. So what we care about and what we focus on today is how we go above, above this underlying abstraction of a file system, and how do we achieve these distributed, strictly serializable transactions.
+Questions so far?
+Great. So let's focus a little bit on the stack, and let's look at one part of the… yeah, one vertical slice of the stack.
+So, yeah, Spanner runs Paxos replicated state machine for its partition. The replicas are across zones, so each replica is on a different region, to make sure that they also have this kind of guarantees against catastrophes on the whole data center.
+And they use some form of access with long-lived leaders and time-based leases. And the leader is elected to do all the proposals.
+The rights always go to the leader to start the proposal, and the reads can be served from any up-to-date replica. And we will see later how we determine if a replica is actually up-to-date.
+So this is… this is the… the… this… this part of the, of the stack.
+So let's now go to concurrency control, and how can you do transactions also there. So each leader has a log table for concurrency control, and,
+Any operation that requires transac- that is a transaction, meaning it touches multiple partitions, or it has multiple smaller operations, it acquires locks.
+So, let's say I want to do an operation that attaches multiple partitions, I acquire logs on all of these partitions, and then I write, I'm able to write to these partitions.
+All the other operations bypass the log table, because they do not meet, this partition… transaction, guarantees.
+This log table is enough for local transactions, but we need one more layer to actually get the global transactions going.
+And this is their cross-zone transactions. So, for local transactions, as we said, the local table is enough, but for cross-partition and cross-zone, we need a two-phase commit.
+So one leader out of the tablet, so we have a leader, as you remember, for each Paxos RSM, so each tablet or partition also has a leader, and then for each… out of all of its leaders, we pick one which is the coordinator of the whole transaction.
+And he's the coordinator for the two-phase commit transaction protocol.
+And each leader has a transaction manager data structure, that is used to take part in this, in this two-phase commit. So there is a coordinator, but all the leaders of the Paxos replication machines take part in the two-phase commit by having this transaction manager data structure.
+The state of this transaction manager data structure is stored also using Paxos.
+Do people have a sense why? Why do we want to store the transaction manager for its replica, also in PacSource? Any thoughts? Why would you want to do that?
+Why is this important? So we have these multiple layers in the system. We have replicas.
+For its partition, then… The partition is replicated in, let's say, 3 replicas.
+They run Paxos together.
+And one of them is a leader.
+And then, if you want to do transactions, Across!
+different partitions. Then among those leaders.
+One of them is picked as the coordinator, let's say this one.
+But they both have this transaction manager data structure, to do… to participate in the transaction. So, why do we need to store this transaction management data structure, using Paxos? Any thoughts?
+Any ideas?
+Does it have anything to do…
+the global synchronization guarantee, and how we can use Kapsos to come to a ton of us about…
+Which state is necessary, and then, apply that to every
+It does have to do with the global guarantees, and to make it precise, the reason is that imagine you are in the middle of a transaction. You are running this two-phase commit protocol, as the one we saw in class.
+And this is not exactly the same as the one that Spanner does, but imagine that protocol. In that case, when you're running this protocol, some node might crash.
+So this leader might crash, actually, in the middle of the transaction, in the middle of the two phase come in. At this point, if the leader only had the transaction state in memory, and not in Paxos, then,
+some other replica would be… would be promoted to be delivered, and it wouldn't know where we are as part of the transaction. So, essentially, any kind of modification or write, also to the transaction intermediate state, we also write it to Paxos. So, at any point, if we… if we wake up, someone wakes up.
+some failure happens. We are able to continue the transaction from the place it stopped. Does that make sense?
+Essentially, the transaction is an effectful process that also needs to be stored using Paxos.
+across every data center, in terms of Google Ads. Every data center that calls this partition.
+So, maybe 3. Yes.
+This… you have to run pctions, though, for every ride, for every transaction, across all the data centers that have… if you do the transaction, let's say that's 10 partitions, then you need to do it for all the regions of all the… that have the replicas for this partition. Yes, that's correct.
+So wouldn't that make this quite expensive if you could access across, like, big network?
+like, connections?
+I guess that makes it expensive, but they offer this strong guarantees. The harder part that they kind of solve is that they really reduce using the physical time, they reduce other types of overhead, but Paxos itself, you do pay for this cost. So, whatever kind of, you know, back and forth needs to happen here for its ride, you pay it every time. And they can… you cannot really avoid this. At some point.
+You have to, do some kind of communication to guarantee that everyone knows about something.
+Yes.
+Other questions?
+Great.
+So now that we saw the architecture, let's go back to TrueTime, and let me explain to you what TrueTime, how it actually works.
+So the two-time API that Spanner uses, has three methods.
+The first method, which is actually the core method of the API, is called TrueTime.now, and returns an interval from earlier, earliest to latest.
+This interval literally means the time on this node, on this server, can be from this to this.
+So, this is a conservative estimate, and we know that the time can never be before the earliest or after the latest, at this particular point in time. Does that make sense what TT.now indicates? How conservative is it? Like, is there…
+It's like you say 99.
+That's a good question. Actually, do not clarify in the paper. I assume that there is some amount of, you know, some amount of 9s, it cannot be 100%, but in the paper, they don't mention, actually, what that is, yeah. But I assume it's very high.
+And the reason they describe in the paper a way to do it by
+by having GPS, using GPS to kind of synchronize the clocks and know the amount of lack of synchronization, and by knowing exactly the sizes of the length of the cables in the data center, and some kind of error bounds by the GPS, you can have a very conservative estimate, but I don't exactly understand how that works, to be honest, yeah.
+For the values of this class, we will assume that this is a conservative, correct estimate, and they can do it, and it's possible, yeah.
+Questions about… about API? Does the API make sense?
+Great. Then we have two auxiliary methods that just essentially use TT now, but in a specific way. TTAfter, with a given time argument, returns true if time t has definitely passed.
+So, what does this mean? For a time to have passed, we must know that TTNow.earliest is more than t, okay? And TTB40, similarly returns true if a time has definitely not arrived.
+So, just to… just to show this here, let's say this side.
+And let's say that this is the… Earliest and latest.
+And this is time 1.
+This is time to… And this is time 3.
+side-in-law.
+ease… DT, DT.After with T1 is true, with this, with these alien names.
+TD before with T2 is true, because this is after the latest, but with T3, we don't know, actually. T3 is in the interval, so we could be before it, we could be after it, but we don't know, okay?
+Great.
+And yes, as I said, the two-time implementation guarantees that the real-time will be in the interval.
+And it's implemented using some form of GPS, and by having a very good knowledge of an understanding of the data center deployment of, you know, sizes of, like, length of cables and everything, essentially being able to very precisely determine the timing, timing measurements.
+this API stands on, like, all the time you don't have to worry about, because what if she's called.
+like, TV.now, or T3H.
+And then, after you say, yeah, it's in my interval, then you send that value to somebody else, it's no longer…
+In your time in the world
+I gotta, you know, make sure that the values they share are not stale out, because time
+Great point, okay, I see what you mean. So, your point is, the third method here, the before, is not really very, very useful, or at least it's useful only at this particular point in time.
+But if any time passes, we could have already escaped out of this. So you're right. And because of that, the way the protocol works under the hood is that usually it waits until we are after some time.
+So, this particular method is not often called to make some decision, but this is the method that is mostly called to make a decision. And most certainly after some time.
+Questions?
+Great.
+So, what can we use this TrueTime API for?
+Remember?
+our classic example of a method. We have two processes, one sends a message to the other, and it takes a timestamp.
+Before it sends the message, and this one takes a timestamp at the moment it receives the message.
+What do we know about T1 and T2 without through time?
+What do we know about T1 and T2?
+Any, any thoughts? What do you know about T1 and T2?
+Without Tutank.
+The two and a half.
+First, I teach you about having that vision.
+Hmm. We know that the receiving happened after the sending, that's correct. But here, T1 and T2 are timestamps. So, P1 took a timestamp.
+Send the message. P2 took a timestamp when it received the message. So these are two timestamps taken at different, different processes. How do we know anything? How can we compare these two timestamps? Can we compare them? Do we know anything about the two timestamps?
+Exactly. So we know nothing. Clocks might drift, and therefore, these could have any relations between them.
+What do we know about T1 and T2 with true time?
+So, given two times, what can we now say definitively about T1 and T2?
+Any thoughts?
+where TT1 and T2 are true time times, not just timestamps.
+We could say that T2 is greater than T1 if the intervals are small enough.
+We could… that's correct, we could say that T2 is greater than T1 if the intervals are strong enough. That's one thing. But we also know something more precise, in all cases, even if the intervals are very big.
+T1.
+You know that, but you also know some very concrete relationship about T1 and T2, or at least some components of T1 and T2.
+You were almost there, you were almost there.
+What's… what's the exact relationship? What's the one thing? We only know one thing, actually, from this, about some components of T1 and T2 true times. What do we know?
+Move.
+T1 dot now is less than T2.
+So, T1 now is, is, is a lens, and then we have…
+This is… I guess this is time, so I will maybe mark… mark,
+I guess if I draw it, then I won't give the answer away. So T1 dot now is really two numbers, and T2 dot now is two numbers. So this is two numbers, actually, with two times, and this is two numbers. What do we know about some combination of these four numbers?
+Or a subset of his four numbers, hmm?
+Yu-you.
+Is that the latest? Pq is after the earliest?
+Exactly. So that's the only thing we know.
+T1 areas is smaller than T2 latest, but we don't know anything else. So what this means is that, this, let's say this, this is the T1 timestamp.
+And then, T2 times sub could be like this.
+Could be, like this.
+The only thing we know about it is that the aliens
+of C1 is certainly before the latest of C2. So, that's the only thing we know. We don't know any relationship between the earliest of the one and the earliest of the other, or the latest of the one and the latest of the other. Does that make sense?
+Can you explain why it couldn't be, like, you put the end bracket, the second one, before the earliest? Because, because this one might be, might not be passively synchronized.
+So the thing with nodes, 7 in the second, is that when it takes a time, we say that the thing doesn't know, it will have some rays, right? This.
+But because in real time, actually, this happened afterwards, then somebody at the latest, if the two time is correct, then someone that the latest is before then. If these two are reordered, then it's a problem. Yeah, so this is the only thing that we know.
+There's nothing preventing process 2 from coming in adequately asynchronized clock. Let's say Process 2 could have a, you know, a huge range.
+That's still okay, but this could not have been before this. That's the only thing we know, because then there would be no… there would be no actual, one of the two would be wrong, actually, the two times. Yeah.
+Yes.
+So, in the previous point, you said that T1 might be bigger than T2. Do you mean, like, the ending, like, T1 dot? In this point?
+Oh, this one says without through time. So I guess… I guess… I wanted to just remind everyone, if we don't have true time, and we just have timestamps, we don't know anything. These two… these two could be related, smaller, equal, larger, doesn't matter, could be anything.
+If you have two times, then T1 alias is smaller than T2 letters.
+Yeah.
+Philip? Is that because it's getting rid of negative clock skew, instead it's just giving a ring?
+It's because it's giving a range, and if we assume the range is correct, we certainly know that, in reality, this happened after this, right? So we know this. There is no way this has happened before this. So if the times, the two-time API is truthful, then there is no way that it could have returned for us this.
+because of the big, then this means that this D1, no matter what, is larger than this T2, no matter… it's somewhere in here, but it's larger than this, and it's compulsion with real time, yeah.
+Other questions about this? It's a little bit… you have to kind of, like, wrap your mind a little bit around it. That's why… that's why I want to reiterate on it, yeah. Any other questions on through time?
+Or on this, on this point?
+Great. So what we know is that we can see the causality, actually, in the timestamps. So if E1 happened before E2, then,
+then the true time at least of one is smaller than the latest of the other one. And this is what happened before, both, you know, in one message, but also transitively across messages.
+Great. Any, any questions about your time before we progress further with spam?
+Great.
+A few logistics points, before we continue with Spanner, just to take also a small break.
+Assignment 4 is out, start working on it, if not already. One reminder, is that, as we have said, AI usage is okay if you declare it. Copying is not, okay? Just keep that in mind.
+And the final point, which is more fun than the first two, is that the last lecture will be slightly different than all the other lectures. In the first half, I will talk about open questions and state-of-the-art and distributed systems, at least
+based on the things that I know and the things that I am kind of interested in in distributed systems. And in the second half, there will be an Ask Me Anything, so you can ask literally anything. So prepare your questions.
+I also have a form that you can use to, you know, add questions there, but also you should come to class and ask your questions, because that would be more fun, okay? So you can use this form to add some questions that I also prepared a little bit and know what kind of questions people are wondering for, but also come to class and ask your questions there. Okay?
+Questions about logistics?
+Great.
+So… We have through time.
+And we will see how to use it a little bit later. But what we want to see now is the isolation guarantees of Spanner.
+So, Spanner provides the following, transaction guarantee.
+They call it, at least, externally consistent transactions, which is also called strict visibility.
+And, they also offer snapshot isolation transactions.
+So, to explain this, let me briefly do a reminder. Do people remember what Sarah's ability is? Who is, who is willing to volunteer, reminding, reminding us what Sarah's ability is about? Yeah. What did Sarah's ability say?
+Any hands, any volunteers?
+Cindy.
+Transactions have to be treated as machine was single-threaded, meaning that anything, all the sub-operations of a transaction, are executed
+Atomically, similarly.
+So,
+This is a classic kind of serializable execution, where we have, you know, transaction 1, get and set, all together atomically, and then transaction 2, get and set for this increment kind of problem we had seen a few lectures ago.
+What about this execution here? Is this serializable? So this is get 2, set 3, get 1, set 2. Is this serializable?
+Hans? More hands.
+More hands. Is this realizable?
+Nope.
+Yeah, you can… it is because you can reorder transaction 2 to the behind transaction 1.
+I mean, that balance of, you know…
+This is not my ability, or I can'
+So… so this is valid, exactly, and we can… we are allowed to reorder this before this. So, CLS ability allows us to reorder them as long as we keep things atomically corrected.
+So strict serializability adds one more requirement to serializability, and this is that if a transaction completes before another starts, then the sequential order has to also preserve this order. And this is called the real-time ordering guarantee.
+And this might remind you of something, linear's ability.
+So, strict serializability is to serializability. What linearizability is to sequential consistency. So, this is the analogy here. Strict serializability and linearability add the real-time guarantee on top of the serializability and sequential consistency, which require this sequential order, okay?
+Questions about, about this, about strategizability?
+previous example, this is not strictly South Rosenia, but this one is, yes.
+If they were overlapping, it could also be, because, similar to linear's ability, you can reorder overlapping ones, but one that finishes before another starts, you cannot reorder, okay?
+Great. So…
+Yes, Panel provides these two types of transaction guarantees, and you can pick for each transaction that you run whether you want snapshot isolation or strict serializability.
+And of course, there are two, because there is a trade-off between efficiency and guarantees. Similar to other systems, they want to allow developers to choose, and if they want pure guarantees, they can run a faster snapshot isolation instead of running the strictly serizable one.
+The central resolution, it's efficient because it doesn't actually need to lock. So the only thing it needs to do is to serve the reads for a specific timestamp. So it has to pick a timestamp, and for that timestamp, serve the reads. And if it serves for a specific timestamp, that is also a snapshot of the database.
+And we'll seek out to actually, you know, determine if we are ready to up-to-date for a timestamp a little bit later.
+So next, we'll start now to look at how, actually, Spanner is implemented and is able to provide these two guarantees here.
+So the setup is that we have, Paxos for each group, for leader election, and this is, in addition to the KB state that, that we are in the Paxos for.
+And replicas also use Paxos for list votes, to pick the leader. And when a node receives list votes from a majority, it knows it is a leader.
+An elise interval starts when a leader discovers it has a quorum, and then when some of these votes have expired.
+And then the list votes are implicitly extended on successful rights to state.
+This is similar to… to what, Chabi did when, sorry, or this is similar to what Sabi did. So, the lease votes can… are extended when we have successful rights to state, so if the leader… the leader gets a lease, yeah.
+Okay? It knows it has a list for some period of time. Then it starts doing… talking to these other replicas, and then it spawns back.
+So that they do rights in the Paxos Protocol, okay? So every time a right is accepted, and is written to state, and is committed, this implicitly also extends the lease of this leader, because everyone essentially knows that this leader successfully proposed the value, and we successfully all committed it.
+So, this is a way to keep the lease going, but also, if near expiration, the leader can also explicitly extend it, similarly to Chabi, where you send these kind of keep-alive messages to extend the lease.
+An important thing here, and a key thing for Spanish correctness, is that you have to have at least this jointness invariant.
+Each Paxos leader interval, least interval, has to be disjoint from the past and from the future leaders.
+Meaning that, let's say we have these two replicas, and this one is…
+is the leader for this period of time, and this one is the leader for this period of time.
+These can never overlap, because if they overlap, this means that both of them think they are leaders for some period of time, and that can lead to arbitrary problems in the system and the protocol.
+So now.
+I want you to think a little bit about and talk to the person next to you, or behind you, to the people next to you, behind you.
+what kind of… how can we use principles that we have seen in Paxos
+And the true-time ideas, to guarantee that these leases are disjoint.
+So yeah, spend a few minutes. This is a bit of an open-ended question, and it's not… essentially, I'm asking you to come up with a key part of the Spanner Protocol, but I want you to think a little bit about what do we know, usually, when Paxos happens, when a ride succeeds, and so on.
+Is there any question before we start talking about this?
+Great. So yeah, start discussing this, and we'll get back together in a few minutes.
+I can imagine.
+We can just talk about next.
+all until my thoughts are aggravated.
+That's the Craig, Craig Wilson, after all.
+Thank you.
+Don't use the big question mark.
+Thank you for points.
+How'd you do?
+That was so cool.
+Good now.
+I've ripped it one time.
+We want to sort out.
+So, what do people think? Any thoughts, any ideas? Any kind of observation, or anything is useful here.
+So, yeah, what can we do? What do we know from, from Paxos and two time? What could we do here to guarantee that the leases are disjoint?
+Not sure about passives, but I guess for a true time, you could…
+Have a… er, you could not assign another lease until… Like, the time of that.
+SART.
+You don't have to be, like…
+other… the current meters, kind of lean, and…
+That's a great point. So this is one of the key observations, actually. So one of the observations is that using true time, we can wait until our NES time is after
+the latest time of the previous leader. So, if we know that, you know, the previous leader has a list for this time, then we can wait until our latest time is certainly after this. So, this way, we will not have, you know,
+overlapping leases. But there's also some other missing piece, because how do we determine these leases? There are different replicas, there's different replicas here, that need to talk to each other, and somehow figure out who has the reason for how long. So…
+Any other kind of observations that people had from talking? What other things do we know, or is there any Paxos principle that we could use, maybe, to find… to figure out something about
+These two, having them not be overlapping?
+You can use Paxos to decide on the next leader, though then you would have to use Paxos to decide on the leader to use packsource, but there is something crucial in doing Paxos here. There's something important about Paxos, yes.
+leader has, and then use that in the calculation, so then your, like, R1 without latest plus the least time
+like, needs to be before the start of Part 2. So, so, you can use mini-pack sauce, and that could be a way. This is not how they do it, but this, this is… this goes towards the heart of the matter. You can use pack sauce.
+to agree between the nodes what the list will be, the list interval, okay? And if you agree among the nodes, then you're good. So now, we will see how they do this without running Paxos at all, but using a key part that is very important of Paxos, the majority quorum.
+So…
+let's see how they do it without running Paxos, using two-time, the exact idea that was mentioned, and the quorum that, you know, is also a key part of Paxos.
+So what we need to know is that we have to figure out a way for all replicas to be able to determine when all the leases, the previous leases, are done, so they can issue a new lease, okay?
+So, the inside one is that each applica obeys a single vote rule, meaning that if I grant a lease at time t, I then wait until
+TT after t.latest plus list length. So,
+Let's say I… I am here, and then I… I give a list here.
+So this is also T. And this T has this… this range. And then let's say this is the size.
+Of the… of the East.
+I am not going to assign a new list until my earliest time.
+surpasses the latest of that time plus the list. So I make sure that no matter what, I'm not gonna make a new, a new list before this time. So I, each replica on its own, certainly obeys the, the kind of, like, disjointless invariant.
+Now the question is, how do we do it across replicas? And here is where the other interesting part arises, which is using quorums. So, if you have quorums for the least votes.
+And for each list you require a quorum, it means that at least one replica will be common between any two consecutive leaders. Because a quorum means that you have a majority of the nodes, so between two majorities, there is always an overlap.
+So this replica is the one that will force the disjointedness through its own time.
+And let's see… let's see how this works.
+Let's say that R1 is the leader, I, and R3 is the leader, i plus 1, and R2 is in both quarters, okay?
+I am asking for a lease, and this is… I take a timestamp, T1, and this one takes a timestamp, T2, here.
+A majority of replicas gave me positive answers, and therefore, I am able to have the list, and I'm keeping my list for the following amount of time, from my earliest
+the earliest time since I sent out these messages, plus the lease length. And this is to be conservative and to make sure I'm not gonna accidentally, by keeping it for longer, overlap with someone else. So my earliest time that I sent this message, plus the lease length, that's the time I'm keeping my lease. Great.
+Questions about this so far? This is just how one node gets the list, the first node gets the list. Does that make sense? How we got the list here?
+Great. Now, here we have this T2, and similarly to here, the one that I drew on the board.
+T2, latest, plus list length is this… is this here, okay, this gap here.
+At some point, Replica faces, oh, I want to be the leader now, and I'm requesting for a lease, for whatever reason, because it thinks R1 is down, or whatever.
+We are not going to give it a vote for it to be a leader until this time.
+So when this time passes, then we will send it a vote, and then this will keep its lease for, similarly to the previous one, from T3 earliest until for the whole lease length duration.
+the key invariant here is that T1 prime
+is guaranteed to be before T2 prime, and this T1 and T2 are, T2, T1 prime and T2 prime are actual numbers, and this is guaranteed to be before the T4 area list, I guess, not just T4. So this is T4 area list.
+And that's why these leases are disjoint.
+So, you can run this math also, you know, afterwards, but because we're using… because this node is in both, essentially, it forces that the list of the second will start after my… my time, and the list of the first will end before my time, okay?
+So there's no way for the leases to then overlap. Questions about this?
+What happened if, or twos.
+an approval of R1's lease request.
+You know, I don't want to receive its, like, visa acceptance until very close to the end.
+That's true. So, if there's network overhead, the list will be small. Actually, I will not have the list for a long time, but things will be correct.
+That's what matters. So, there is no way that I somehow will have the list for longer. It's true, though, that the more network congestion you have, you know, the more these leases might become smaller, but yeah, this is still correct.
+Questions about this?
+on what the… receiver actually receives the OP.
+To start this.
+Yeah, so list length is a constant that is configured in the system initially, but then the actual time that you keep your list is always shorter than this.
+But it's at most this. But it's always harder. This is used, essentially, to determine the maximum amount that the list could hold true for, but the real time depends on, you know, the time you receive your acceptances, and how far this time is compared to the time you sent your message. Yeah.
+In this image, T2… Sets the teacher file when it receives the latest requests from
+On one? Or, like, our two cents for…
+These two primary, it seems to request.
+On the time grabbing?
+So, T2…
+T2 prime is just a… it's just a calculation of, like, it's just related to T2. It's T2 latest plus list length.
+Exactly.
+Yes, yeah.
+Tested it, but I've only got, like, one.
+I don't know, here I saw it received 3, but it's just the other arrows, I'm not showing them arriving to some nodes.
+These arrows, you mean?
+Like, R2 would only receive requests.
+How does it know whether that quest is…
+It doesn't. But what it knows is that if it… everyone knows that at least one will be part of both majorities.
+So, if everyone
+guarantees that they will not give another lease until their first has expired, then whoever that is, we don't know who that is, I don't know ahead of time, Artu, that I will be the one who will determine this disjointness. But there will be, one of the nodes, it will be part of both quorums. So that node
+always will be able to force these disjointments, without them knowing they're the ones who are doing it, but yeah, yeah.
+So R2 doesn't necessarily know that R1 succeeded in being a leader. It just knows I gave my confidence vote there, maybe no one succeeded in being a leader, maybe this is a completely, you know, empty lease, maybe no one got the lease, but I'm not gonna give another vote until this time passes.
+Does that make sense? Yeah.
+Other questions?
+Great.
+So, we saw this, kind of complex. Now things will get a little bit more complex, actually. So, Spyder now wants to provide strategizability for redirect transactions.
+Instinct visibility says there's a sequential order of all transactions.
+And how can we actually do this? The waste funnel does is that it uses timestamps, and it adds monotonically increasing commit timestamps for all transactions. So since they're monotonically increasing, then we can use the order of these timestamps to determine the sequential order.
+Since every transaction has a different monotonically increasing timestamp.
+And they define exactly the order of the transactions, and they also correspond to the real-time order, and we will see how.
+For a single leader, this is pretty simple, right? Imagine you just have one leader, and you don't have multiple leaders. I can generate locally monotonic timestamps, no problem.
+But how do we make sure that monotonic timestamps work across leaders? Any thoughts? Especially given the kind of disjointness, disjointness property that we have, that we have from the previous slides?
+How could we do monotonic timestamps across leaders, having a disjointness principle of the leases?
+Any ideas?
+millimeters descents, just… There.
+Submit timestamp, since they've been joined.
+when Elise… yeah, but you don't… the point is, you don't even know. That's… that's part of the problem, that a leader might die, and the new leader might have never been able to communicate to the previous leader.
+So, the question is, how do I know when did they end? So, yeah, that's the question. That's the key. You're getting… that's what we want to achieve, but the question is how.
+So how can we, if we know that the leaders are disjoint, assign monotonic timestamps across leaders? Is there any way we could do this?
+The start of your lease will be, like, after the other… any other leaders, and you can start the
+Exactly. So, each leader forces Make sure that their monotonic timestamps are inside their lists.
+So, I know I'm leader here, so I'm not gonna give timestamps outside of these range. I'm only gonna give timestamps in these range, and in these range, I can determine on my own how to give monotonic timestamps. That's easy, because I'm just locally deciding it.
+So by making sure that these two are disjoint, we can… each leader can do monotonic, and across them, we can have monotonicity, okay? As long as the timestamps are inside their list durations, okay?
+So we exploited this joinless environment.
+And, yeah, we do this by, yeah, later assigning a timestamp within its listing time.
+So now, let's, let's, go one step further. If they start…
+of T2, as we said, for statisticalizability, occurs after the commit of T1, or the end of T1, then the commit timestamp of T2 must be greater than the commit of T1. That's how you can make guaranteed statisticalizability.
+And there are two rules to achieve that. So, rule one is, that commit timestamp S for a transaction is after the coordinator's latest time.
+And then the other rule that the protocol uses is that we wait until our earliest time has gone beyond S before actually doing the right.
+We will see how the protocol works step by step, but these are the two kind of rules and insights of the protocol.
+Any questions so far? Because now we're gonna see the protocol, which has multiple steps.
+Questions?
+Before we get there.
+Okay.
+So… setup. We have, as we said, disabled groups.
+they have access, they have leaders, and we want to implement read-write transactions across SARDs, across these replica sets, replica groups.
+Rights are buffered at the client until commit, meaning that the client does not do the rights before they hear that the commit has happened.
+So the way it works is that the client first issues leads to the leaders of all the groups.
+And the leaders acquire logs, and read the most recent data.
+So let's see how this works.
+The client?
+says, okay, from this replica set, I want to read key 1. From this replica set, I want to read key 2.
+The leaders acquire logs for these particular tablets or partitions, and then they say, okay.
+And then this is able to read… read the values.
+Is there any issue with this, with this lock here, that you took a lock?
+Any problem when we have logs in a distributed system?
+Thoughts?
+There's a possibility that an offer is one box a week.
+Oh, that is… that is also a problem, that there could be deadlocks, but I guess the question is, how can we have a deadlock? Assuming that the protocol is smart enough to not try to grab, you know, two different leaders try to grab locks in different orders, assuming that they are smart and they can take the locks in the same order. How could you have a deadlock? What else could happen?
+Or what would happen when someone grabs the lock?
+Exactly. So we have some…
+nodes might crash, so we have to make sure that, logs are released even if things, if things crash.
+So the way we do this, is that logs have timeouts. So they are not, you know, forever, and the clients need to send keep-alive messages to keep the logs active. Great.
+When all reads are done, we now start the two-phase commit protocol.
+First, the client sends a message to all the leaders, and this message contains all the rides that they want to do, and they select a coordinator among the leaders. So, as we said, we have, let's say, two leaders, we pick one as the coordinator, we send them all the rights we want them to do in the same transaction.
+On receiving this, the non-coordinator leader does the following steps. It acquires right logs.
+And it prepares a timestamp, T, that is larger than any previously assigned timestamp that it has for transactions.
+And then it logs that with Paxos.
+And then it sends a prepared message to the coordinator. So let's look at this visually.
+We were here, we're done with everything.
+And now, we send the commit message to the two, to the two leaders.
+They grab their locks, And then…
+this is the coordinator, let's say that L1 is the coordinator. So let's first look at what a non-coordinator leader does. So the non-coordinated leader picks a time something T2 that's larger than any previously done transactions, and it then uses back sauce
+So, this would run back towards here to save that I prepared this timestamp for this particular transaction. So now, this replica said, no matter if this leader actually dies.
+here, and some other leader comes back to life, they will know that this is the time some we gave, okay? So, this is… this is important for the protocol to continue even if one does.
+So we prepare it, we ran it with… we ran it with Paxos.
+And then we send this message back to the coordinator.
+At this point, the coordinator does the following things. It also acquires the right logs,
+And it chooses a commit timestamp, TS, that has to be greater than 3 values.
+all of the prepared T timestamps from all the other leaders that participate in the transaction.
+my TTNow latest, at the time of receiving the commit message.
+And all previously assigned transaction timestamps, so that it's monotonic, so that the timestamps are monotonic.
+And then we log, the commit timestamp methods using Paxos. Or if there are timeouts, if something has gone wrong, we can also abort a transaction.
+And then we wait until after this time passes, and then we send the message to the clients and other leaders, and we actually do the right itself.
+So let's look at this diagrammatically.
+We pick a timestamp, and this timestamp, as we said, is larger than this. It's also larger than any other prepares that we might have received, it's larger than the timestamp here.latest, and it is larger than any other committed timestamps we've given for transactions.
+We then commit the transaction, and then we make sure to wait until our time after is also larger than these TS.
+And then, we perform the right, and we let everyone know to commit. And we all do the right, okay?
+Questions about this protocol?
+Operationally, does it make sense? It doesn't necessarily make sense, you know, end-to-end escalator, but operationally, all the steps make sense.
+If not, questions.
+Huh.
+You said, like, the clients buffer a bunch of…
+So that they don't want to miss too often.
+No, I didn't exactly say that the buffer commits to not random often. Sorry, that's actually a great point. The buffer, I use this term, yeah, not in the usual sense of buffering, but rather that the client
+keeps all the rights, and sends all the rights together in this message here. So let's say I have a big transaction, right? And this transaction, let's say it reads from 10 different keys, it writes to 20 keys. Instead of sending each ride separately.
+I first read all the things I need to read, and then I tell everyone to write all the things they need to write. That's what I mean by the offer here. So the client
+does the reading for everything that is in the transaction, and then calculates all the writes it would do, and then says, okay, these are all my lines. Take them.
+Does that make sense? Yeah. Okay. Other questions?
+So what's going on here is that we want to do a transaction that reads multiple keys and writes to multiple keys.
+This transaction?
+That is, let's say, these two replica sets, where we have leader 1 is here the coordinator, and leader 2 is the non-coordinator, but they both are the leaders, the access leader for the replica sets.
+And let's say that, you know, half of the reads are here, half of the reads are here, half of the rights are here, half of the rights are here. So what I want to make sure is that this transaction that has all these leads and all of these lines.
+let's say it's called… it's… it's TX.
+That it happens in the system.
+before that if other transactions are happening at the same time, that we can somehow order all of these transactions using this trickster's ability. So, the way we do this is that we pick a timestamp.
+for each of the transactions, and as we said before, if we can pick a timestamp for each, and these are monotonically increasing, then we can make sure that all the transactions that will have different timestamps, then if we look at this order, this will be the stickerizability order. So, now we are trying to figure out with this protocol, how do I pick the timestamp?
+For this? And then, when do I run the write to make sure that I'm also correct with respect to what I said for the timestamp? Yeah, that makes sense?
+Okay, great. This has to be groked, you know, afterwards also. See, yeah, you can just follow operationally what's happening here. The important things that you need to keep in mind is
+How do we pick this timestamp to be larger than any other thing that would have happened, or might be happening at the same time?
+And that's… that's the one thing. And the other important part of the protocol is that here we are waiting before we're actually doing the rides, and that's important because if we don't wait.
+We might do the rights before this time, so we might validate someone else. So let's say there's a transaction, PS,
+Prime, that has happened, you know, a time before this one.
+If we do not wait before we do the rights here, and we do the rights arbitrarily, we might accidentally do the rights here.
+So we might also invalidate and mess up some other transaction that's supposed to read after us, before us. So some transaction happened before us might see our ads. So the important thing here is how do we pick this time, and how do you make sure to perform the transaction at the right time and not before anything else, okay?
+I'll make sure that, like, no rides happen when we
+Carly, what's the point of prepare? The point of the prepare is that all the transaction managers
+are participating here. So this one is also possibly a coordinator for a different transaction. So I might be the coordinator for a different transaction.
+So I use the prepare and my timestamp T2 to say, this is a safe timestamp for this transaction, because it's after all of the other transactions I'm already executing, I'm in the process of executing, and so on.
+So, all of us, all of the replica groups have to say a timestamp that they consider safe. And then we pick the largest among all of those, plus the largest for my actual time, and the largest of my times, and then we're able to actually do that. Yeah, yeah.
+It's really scalable, then?
+One night, it has to wait.
+For all the non-collinators, too.
+Decide on their timestamps, and then send it back.
+So, the coordinator might be… Basically solving the response while it waits for, like, a round.
+Weird.
+Yes, I mean, it is stalled, so as you had said in the past, Paxos does not guarantee liveness, so you can be blocking. But what Paxos says is that, you know, in practice.
+if you have a majority of the nodes alive, you can actually complete this. So that's the idea, that even if, you know, one of the nodes here has failed, we can still complete this. It's true that there could be, in pathological cases, things can block, and the timestamps
+the least is… the internals can be very big, and so on, and some things can start slowing down. But in practice, they observe that in, you know, in the data center.
+There is, you know, the factory runs pretty fast, the leases are actually… sorry, the intervals are actually pretty small, so in the end it runs, and it runs effectively that, you know, is scalable for their purposes.
+Running, like, say you're the leader of some transaction.
+You take the walk.
+commit tx. Can you, like, do other work for other keys that are… Related to that transaction volume.
+Totally, yeah. So, so this log, that's a great point. So this lock is only for the things in this particular table partition that… so there is not one single lock, per replica group, but there is, you know, maybe this one has a thousand partitions, and each partition has its own log. So transactions that are happening at different partitions can go on, in parallel, completely, completely independently, we don't care about them.
+The important thing is, how do we actually make sure that transactions attached the same partitions are run in order, yeah.
+Great.
+So let's now switch to the other part of the equation, which is, let's say now, this is how you get the strictly serializable transactions with the reads and writes.
+But Spanner also allows the snapshot isolation transactions, and allows you to also serve reads completely without any locks.
+So how is it able to do this, and do this in a way that has a snapshot of the whole system?
+So, to save reads, you have to be up-to-date.
+So, the client can specify at the read a list time T, meaning I do not want results older than T, and list T can be given a meaning based on this
+kind of, timestamp of transaction that the system gives of alternative transactions. So, let's say the client says, I don't want to receive anything older than this IP here. So, anything… any… any snapshot that's older than this, I don't… I don't… I don't want it. I want fresher results, okay?
+So, any replica can now serve this read, but it has to wait to make sure it can actually serve it correctly.
+And… why does it have to wait?
+there might still be things happening in the system that will change values at P. So maybe this replica is still doing transactions that it has not actually completed, so…
+Before… before these are all completed, it can't say definitively what's the state of the database here, okay?
+So the way this works is that each replica has a T-safe value.
+And this T-safe increases over time, and we will see how, and the replica serves any read that is before T-safe. So, the replica waits until its T-safe, has surpassed the T for the read, and then it's safe to serve that read. So how do we calculate this T-safe?
+What are the things, a question to you, that can happen, while we're, you know, while things are progressing.
+to change a value in the database. What kind of things can happen to change the value in the database?
+Let's say we are, you know, we are this leader here, or we are this applicator here, we want to send a read. What can happen? And let's say someone asks for a read for key… for key 1.
+what can happen in the system to modify that key? What will have to happen in this applicant group to modify the key?
+How do the rights get encoded in the system? We have said, in this editor group. When there are rights, how are they encoded?
+How are they kind of, like, captured in the system?
+There's a positive…
+There's… exactly, there's a Paxos log. So, we have a pack source right. So, the Paxos rides are things that can affect
+The file that we have locally for a particular key.
+So, to address this, we keep a timestamp, T paxos, and this T is the timestamp of the highest applied Paxos line.
+And this doesn't decrease monotonically, as rights are applied in order. And we know because of this that if I have applied this particular transaction.
+right, this TX here, because of fixed resibility, there's no way I'm gonna, afterwards, go and apply this transaction before it, because of successability. So if I have applied the transaction TX, I have certainly also applied all the previous ones.
+So because of that,
+If we make sure that we… T-Safe is at least as large as the last transaction is committed, we are… we are good. So T-Safe is at most as highest effective.
+But we're not totally done, this is one part of the equation. And the other part is the pending transactions.
+So… We might also have some transactions prepared, but not committed.
+But the value that we will actually get might be committed before this. So what we also want to keep in mind is all of the,
+all of the prepared, but not committed transactions, and their timestamps. So…
+if you… if you remember here, you can… you can prepare a transaction, you pick a timestamp, and you don't know when the commit will happen. So, I also want to make sure that I'm not going to serve anything when I have… I can serve things only that are after the latest preparer has happened, because this is, again, a monotonically increasing timestamp.
+So, the way we do this is that we make sure that the… the… the…
+We have another component, in addition to TPAC SOS, which is the TTM. And this TTM is the minimum of all the prepared timestamps minus one, or infinity if they have no prepared timestamps.
+And then, we make this safe to be the minimum of TPAC source and DTI. So that means that access system progresses.
+We are committing transactions, we're preparing transactions, and we are able to serve things after some kind of safe boundary, depending on what transactions we have already committed, or what transactions we're processing at this particular point in time.
+Questions about this? This is also complex. Unfortunately, this lecture is kind of complex, and there is no way to kind of get around this. You have to also, you know, sit down and grok, grok this a little bit on your own. Questions about this, and whether it makes sense, or whether it doesn't make sense? Yeah.
+Everything makes total sense. Any questions that comes to mind, you know, like, whatever, whatever comes to mind about typically serializable transactions, or… or the, or the reads.
+I guess, recapping, I think the important things to keep in mind is that…
+That's how I would structure, I think, kind of, like, the high-level reasoning.
+Spanner?
+Using the least disjointness guarantees that transactions will have monotonically increasing timestamps, okay?
+That's understood by everyone. Is there any questions on this? Using the list disjointness, we can make sure to have more tonically increasing timestamps for all transactions. And this, on its own, provides strict traceability as long as we respect the time that we give to the transactions. Make sense?
+Now, the question, and what this kind of reading safe tries to answer, is how do we make sure to respect these times that, you know, leaders are assigning at any point in time? And the way to do it is that we do not answer
+things and queries about, like, in our very, very recent horizon. So, in our very, very recent horizon, where we still haven't committed, we still… we are still preparing things.
+we are saying I'm not going to respond to anything in this horizon until this horizon passes, and I make sure that I have committed, and I have run something before this horizon, so then I can actually go and… inside this horizon, so I can actually start and respond. So essentially, it's broken up in two parts. How do we give the times?
+In a constant way, and then, how do I expect these times while executing the transaction? Because I need to execute a transaction, to read some value, and return some value to the user, okay?
+If we have two…
+I don't know if I'm understanding you right, but if we have two transactions, one that started before the other, but one of them just, like, the one that started before committed way after than the other. So, like, that second one, it commits first, so then we update TTM,
+with its… I guess, like, start
+Because we know that one already.
+You mean we modify TPAC sauce, maybe? Or TTM is only for prepared, not committed.
+Okay.
+Oh.
+Yeah, yeah, yeah.
+So, the thing is, any transaction or any ride, Has… will, in the end.
+have Paxos write also, either a commit, or a write, or a write without a transaction. So this, we keep track with this, with this value. And then, the only thing that we want to, in addition to keep track of, is also the prepared transactions that are in progress currently. So if there are things happening in progress, and they might or they might not commit, and I don't know when they will commit.
+I only know they will come in after the prepared timestamp I gave them. So, essentially, what I'm saying is that, I give a prepared timestamp here.
+I know
+that this transaction, there is no way, no way, it will commit before this prepared timestamp. There's no way that the timestamp of this transaction, the final timestamp of this transaction, will be here.
+Right? We know this, because we saw how we pick a timestamp.
+To be after the repair, no.
+So we know there's no way the transaction will actually be put here. So this means
+I can actually answer things in these veins. I cannot, though, answer things here. Cannot answer for this. Cannot answer.
+Because I don't know if this transaction will be committed here, or here, or here, or here, but I know it was going to be committed before here. So for this time, I can actually answer.
+Does that make sense?
+Okay.
+To recap, and start to take steps back.
+Spanner provides stickers ability for distributed transactions.
+And it also does this while being efficient, and the way they do this is by tapping into this clock uncertainty, and using the clocks to make decisions about when the transactions actually happen, without having to communicate to decide this.
+And in the early periods of high clock uncertainty, standard is slower, but it's still correct.
+So, as long as the time… the true time is conservative, we get correct results. But maybe we're slower while the times are… the ranges are larger.
+There is an efficient two-phase commit protocol that they do, knowing the clock uncertainty, and then they also are able to efficiently serve reads without locks, knowing the clock uncertainty.
+And the key technique is that we have to wait until TT after, often, to ensure that we have passed a specific time for sure, that there is no way that a specific time is before our existing time.
+Spanner today, Spanner was, since this paper in 2012, it has been continuously evolving, and there is, you know, other papers that I said that you could… you could take a read at if you are interested in the development of Spanner. And the more time passed, the more and more focus they had on SQL, supporting a wider variety of queries.
+I think I found that the same system tends to handle more and more use cases.
+And the reason is, that the hard aspects of system engineering, are actually getting reliability, monitoring, resilience, so Spanner does all of this well.
+So, essentially, it makes sense to keep extending.
+this database support more and more things, since it's so, you know, battle-tested for reliability, monitor, resiliency, even though, you know, it's not ideal, maybe, to do SQL, but because it does its core very well, they are able to build a full-fledged SQL system on top of it that performs,
+Well.
+This is the end of today's lecture. Please fill in the quiz, and yeah. This is wrong, actually. Next time we'll talk about Velos, not microservices and UCAS.
+Including?
+Yeah.
+Any questions? I've been going through the slides again, and then doing the worksheet discussions again. Are the… is the final exam going to be similar to…
+the worksheet question styles, or, like, how is the best way to… I think it will be… I don't know, like, it's not like it will be the same, but the idea is that we are… while the works are being developed, we keep that in mind. There's no guarantee that, you know, if you're… yeah, yeah, but the idea is that they are similar in style, yeah. Not that they're, like, significantly easier than the labs, but, like, the labs involve a lot of, like.
+looking up and… So, so the exam will actually have two components. We have components from worksheets in the class, and also from the lab.
+So you have to understand your lab implementation, so you have a partner, and you did things half-half, you need to talk, and you don't know exactly what happened, because then we also had questions about the labs. For the lab section of the exam, is it, like, writing code, or just understanding? Not writing code, understanding how to… What was actually happening. Okay, thank you so much.
+Anything else?
+So, I don't know if you've done this, but I guess where in the… I don't know how to say, like, the stack of, say, your application, would this kind of fit in?

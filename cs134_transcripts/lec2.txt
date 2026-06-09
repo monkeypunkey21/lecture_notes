@@ -1,0 +1,489 @@
+Do you think it's possible to, like, dim some of the lights so we can see the screen better? It's, it's, yeah, sure.
+But it's the…
+I have a pleasure.
+That's what I… No, that's okay. Yeah.
+And now it's on the website.
+No, this works.
+Okay, hi everyone. I guess we can get started.
+So, yeah.
+CS134, Lecture 2, let's get started.
+Before, starting with this class, I wanted to just iterate that, the class is interactive, so ask questions, I'm happy to explain things on board, further, okay?
+And let's start before, yeah, with today's agenda.
+So, first of all, today, we will talk about
+Market News.
+Some of you might have heard about it.
+Then we'll talk about, like, client-server models.
+We will start to think about faults and how to tolerate faults.
+And finally, we will look at clock synchronization.
+So let's get started by looking at an example of a computation that we might want to use a system like MapReduce for.
+So, imagine you are a genomics biotech company that generates personalized DNA reports for ancestral analysis, among other things.
+Okay, sometimes that doesn't work very well, but in any case, when you want to run such analysis, you have to collect this genome data from a lot of users. And each user, you might have, you know, megabytes of data, and then you have millions of users.
+The goal, when you want to do such types of analysis, is… yeah, an example of such an analysis could be to analyze all of this data to identify what genes could show susceptibility to some particular disease, and so on.
+There's other kind of scenarios that could be useful for a MapReduce kind of workload, and I'm first giving you the scenarios, and then we'll go into how MapReduce actually works. But the other scenarios that motivate, systems like MapReduce are Google's, websites, so…
+the main kind of first use case of Google was to rank web pages for how likely they would be to be relevant to users. And the way to do that, they did that by analyzing all the web pages, all the web, essentially, and doing some kind of statist… some kind of analysis on it.
+Another type of use case is selecting ads for different users, and this requires analyzing clicks and actions from billions of users.
+And finally, things like system diagnostics. So, analyzing system logs for a big data center, data transactions, and this could be, you know, data that goes, again, the terabytes to even petabytes kind of, sizes.
+So, what's the common pattern of all of these applications? The common pattern is that we have a lot of data.
+And the problem when you have a lot of data is that you cannot simply use just one server to put all of this data, because you cannot feed it on one server, or on a machine. At the same time, processing this data on one machine would also take forever, because a machine cannot scale as much to process all this data in time.
+So what we want is distributed storage and distributed processing, and that's where MapReduce enters the picture.
+So, let's first think about some Desirable properties for distributed processing.
+So, what do you think? What could be some things that we might want for distributed processing?
+Not a central statement.
+I'm sure that the state is, like, delightful.
+So, we would like to make sure the state is divided across. That's a good point. I guess it's more on the perspective of someone who is implementing such a system. So, if we take a step back and think a little bit more, what do we want as users of such an application? You know, what kind of properties do we want from an application overall? Yeah, thoughts?
+Little overhead in distributing it in… Lauren actually getting the results.
+Little over here in distributing the data, that's, that's a good point, yes, correct. Other thoughts about properties that we might want from this?
+Like, data consistency?
+data consistency. We certainly wanted our… by data consistency, I interpret this as we want our processing to actually do what it was supposed to do, and get the correct result, yes?
+I guess it saves what other people said, but lack of race conditions. Lack of race conditions? So, yes, I mean, that's also some kind of concurrency, consistency, state issue, but what kind of, like, performance properties would you want, or, you know, how would you… if you were given this task, you know, and you were, like, an architect kind of role, what would you say you want for this application?
+You wanted to scale to a lot of users? Yes, yes? Other thoughts?
+Yep, low latency and high throughput. Low latency, high throughput, yes, let's keep that.
+I was just gonna say, like, also scales with how much hardware you have for, like, processing and storage. Right, so it scales both to handle the load, but also, if you can throw more hardware at it, you can get more performance. That's great. Other thoughts?
+What could be a thing that you might care about if you have, you know, if you're running this computation on hundreds of machines?
+Thoughts?
+Individual jobs can run on cheap machines, maybe? Individual jobs can run on cheap machines, yes, that's a good question.
+You want some redundancy for faults, you could see it on the board. Great. So, yeah, these are some great, these are some great points, and let me, let me, like, summarize these points, the way I've also written them here. So first, we want scalability, and that means throughput, that means that the more machines we have, the more we can scale, we can handle our load. Great.
+We want full tolerance, so we want to, even though machines might be failing, we want to still make progress in this computation, and be able to actually complete it.
+One thing that we actually want to have also from such a kind of, like, system is for it to be simple. So, as you saw before, here, we have all of these different use cases.
+So, how can MapReduce support all of these use cases for different applications? Does each of these kind of, like, developer… application developers need to rewrite from scratch the whole distribution logic? So, one thing that you want from such a kind of, like, framework is simplicity. So, if you're a programmer and you want to get this kind of distributed computation, you don't have to worry too much about
+Low-level things.
+And finally, you also want to think about, I guess this is somewhat related, again, to simplicity. You want to be able to handle a lot of types of applications, because otherwise your thing will not be useful. If you make it and it targets one application, then you might as well have just made the application well. Make sense?
+Great.
+What about latency?
+Thoughts on latency? Someone mentioned latency.
+Thoughts on leadership? On this particular… Framework and applications.
+Think about these applications here.
+How much do we care or do not care about latency, VIN?
+for Google and Facebook, they want to be able to, like, generate, like, their page, like, very quickly. In order to do that, they need to have the data, for example, to, like, generate, like, tap into, like, certain results. And so, to take into consideration, like, our plan I need on our page, you know.
+That's a good point. So, all of these companies do need to return the results to you as quickly as possible, because if they delay, then you're going to leave. You're going to drop the site and not do the actual thing you wanted to do. So that's a very similar thing. But are there any other… are there any other thoughts, I guess, in the room about the latency?
+Could, like, break the web pages, like, asynchronously.
+You don't need to worry too much about latency.
+Right. So one thing that MapReduce explicitly claims that it is a non-goal of MapReduce, and that's kind of like an understanding of the community also on how you can actually run these workloads.
+The number one thing is that you cannot have everything when you implement an application. You cannot have, you know, high throughput, low latency.
+best fault tolerance, you know, something you have to sacrifice something every time. So…
+The thing that MapReduce chooses to sacrifice is actually latency. And why is that the case?
+MapReduce is used for these batch jobs, and this means that all of these applications can actually run on the back every night, every week, and then store these results somewhere, store the latest rankings, store the latest best ads for a user, store the latest, you know, analytics from the diagnostics, and then when a user needs something from them, they just pull the latest results. But the results are complicated.
+computed, you know, in a synchronous kind of bot way. Does that make sense?
+So that allows us to kind of get away without having low latency, because adding that 2 in the mix will actually make things much harder.
+Great. So.
+These are the properties, this is what we want for distributed processing. So let's now think of a… of a strawman kind of solution for our… for our, for these properties.
+What if we partition the data across many servers, and each server processes local data? Problem solved.
+Why won't this work for the application that we talked about above?
+For example, for web rank, for web page rank.
+The properties that you're looking for is the outcome of a result of, like, each of these…
+processes, like, becoming, like, coming at one place, so you don't have, like, a centralized place where you evaluate
+Right, so yeah, I guess to make this application work, that's how I interpret your answer, at least, to make this application work, page rank, you actually need to analyze across web pages, not like I can just look at 5 web pages and then say, okay, I will rank them, because how do I know how they rank with all the other web pages? So, all of these applications actually need
+To do processing across the entire data center.
+Okay? And there is a lot of inter-data dependencies. On page log, you need to rank all the pages. For 23andMe, you need data from all users with a certain gene to evaluate susceptibility to the disease, otherwise you cannot make any determination.
+So, based on this, we will now talk about MapReduce. So, MapReduce is a distributed data processing paradigm, which was introduced back in 2004, and it was popularized by the Hadoop Open Source Framework.
+And MapReduce represents two things. Represents a programming interface for data processing jobs, which has a map under reviews.
+And then, a distributed execution framework that they implemented together, which was Hadoop and an internal kind of MapReduce framework at Google, where you get scalability and fault tolerance. So, the programming interface.
+satisfies the simple and general kind of properties that we had in the bottom of the slide, and distributed execution Framework handles the scalability and the fault tolerance, okay?
+So let's look at an example of a MapReduce execution.
+So let's say we have, a set of keys and values, and this is, in general, from our producers, we'll be thinking always about keys and values, so each data item will have a key and some value. So we have all of this.
+We will then partition these keys and values in some arbitrary way, usually the way we do it to satisfy, kind of, like, the property that was mentioned by one of you.
+is to actually process and do this partitioning across the machines, so if the machines already have partitioned data in some way, we don't move it around. Let's say this is already what exists in machine 1, machine 2, machine 3.
+Then, we apply the map computation to its partition, and we get back some kind of results. For example, here we get AB, WP, and so on.
+And then what happens, and this is kind of like the most expensive and the most, like, important part of mapping use, we coalesce. So we take these partitions.
+And…
+partition them now by keys. So we take all the A's, A here, A here, A here, and we get them together. We take all the C's, we get them together, all the W's and all the Y's, and we get them together.
+And then we run a reviews on each of these kind of, like, groups of subsets of the data based on its key. And then we get some outputs.
+What if you're… during the coalesce space, your single key has, like, a section of so many values that it's not possible to, like, do it in, like, one?
+device, the one system, how would you then handle that?
+That's a good point. So the way… actually, the way MapReduce does this is it cannot do it. So there is an assumption that your machine is big enough to handle its key. The assumption here is that keys are orders of magnitude more than your machines, actually.
+So, the fact that there are orders of magnitude more means that you can probably write your, you know, do the one key computation in one machine. But that's a good question, yes.
+Other thoughts?
+Questions?
+Very wooden pass?
+This is not a specific task, so I'm just giving you a general kind of, like, architecture of how MapReduce works here. So, MapReduce, assuming you have any kind of map, and any kind of reduce, I don't know what that is, you… this is the custom, the custom kind of, like, computation. This is how they would be combined together to get a computation. So I'm showing you more how the data would flow inside the computation. We'll get to a specific example also.
+No initial slides.
+Other questions?
+Great.
+I guess on the few slides, we're going to cover it in the next slide. So here's an example. So, let's say we want to do word count.
+So… Here's a way to do word count with MapReduce.
+You have a mapper, That, for its key and for its value.
+for each word in the value, let's say value could be a whole, like, a little article, a little piece of text, a little block of text, you split all the words, and then for each word, you emit some result. That is, a key, where the key is the word, and the value is just a number 1, okay?
+So, given file names and file context, these are files, you have to essentially, for each of the words, a little tuple. Word 1, word 1, word 1.
+Then, we have abuse.
+And then it views…
+So, the goal for this computation is to do a word count. So, to count for each word how many times it appears in a set of… in a set of files.
+So what would the reduce do in this case? The reduce would get, as I showed you before.
+All of them.
+Toppers with the same key.
+And do something with them. So… so how should this reduce work? Any thoughts?
+State the length of bellies.
+The, the what?
+the length of values, yes, actually, that's a good way. So, I guess you can do it by the length in this case. Oh, actually…
+I guess you can do it in the length, in this case, because they are all one, and you know they're all one. But you could also have some kind of… that's a good point. You could have an approach, and this is how it is implemented here, that you actually sum the values. And this, I guess, could work if you don't admit one per word, but you could even do some pre-aggregation here. But that's a good point, you can just do the length.
+Great. So we get for each word now, all of the values, and we are done, essentially. Then we meet for this word, that's the number that we have.
+So let me now show you an execution of this, on the board, and to get a complete kind of pitch.
+But let's say we start with these two files. This is file bar, and this is file 2. This has the full bar, full buzzword inside.
+So this is the first stage.
+We partition the data. Let's say these are the partitions already. One machine has this file, this machine has this file, so we don't need to repartition the data. When I apply the mapper.
+So when we apply the mapper to this, what do we get done?
+Any, any, any notes?
+For both of 1, we call a 1 and more common one.
+Great. And then we do the same thing for this.
+These are the partitions. We're still in the partition, partition, phase, and, and here we have 2,1,
+Boss… Common one.
+worth… Oh, no one.
+Now, from here, we coalesce.
+And what would coalescing do. We would get all the pools, let's say, all the experts, let me.
+I guess this, goes straight here, but let's… let's jump here.
+So we get V… One, We get, food.
+One, and full.
+One, we get… bar.
+One. Buzz.
+One, and world… Wow.
+After this, we run the reviews for each of those, and so we get the output for each of these V1, full-proof.
+And so on and on. So this is how…
+This particular example would work, given the kind of framework that we showed before.
+So now let's look at a more complex example.
+Page run. So…
+The goal here is to compute a rank for a page as the average rank of pages that link to that page.
+We assume that there is an initial rank that we have for each page based on the previous analysis. Let's say we do some kind of, like, ad hoc analysis before, and we have some initial rank. So the first stage of the mapper gets a web page in its contents and its rank, its previous rank. And for each of the… for each web page.
+P that W links to, so we find all of the links that W has towards P's. We output P, W, and W is rank.
+So, this is the linked website, this is the link care website, and WG's rank is the one who… the link is wrong.
+Then the reduction takes
+these types of tuples, with the key being the first value, so the P. And so, for each P, essentially, it has all of the pages that link to P, and all of their ranks.
+And so it computes the average rank of all of these pages, and that's how you get page rank. At least the kind of simple page rank algorithm that Google used to run.
+And the way to get this is also you repeatedly rank this kind of analysis until the ranks converts. And once the ranks are not moving anymore, you're done, you have the paid rank.
+A point worth noting here is that you can compose many MapReduce stages. So you have… here, you learn a map and reducer, and then again, MapReducer, iterating until you're done. So this kind of… this kind of, like, pipeline from MapReduce happens again and again and again in some computations.
+So let's now look at, another computation, which is…
+joining. Joining tables based on user identifier. So, let's say, that we want to have… we have some kind of, like, class, tables.
+And we have some students, we have their grades in different assignments, and then we want to say… we want to follow the students that did better in the second assignment, and congratulate them.
+So, we would get these two tables as inputs, and then we want to get this table as output. How could you do this with maps and reduces?
+Thoughts?
+Talk to the person next to you, introduce yourself, and then start discussing this, and then we'll get to this on the board.
+Yes.
+No.
+That's fine.
+For this, I guess, why don't use that?
+I also don't.
+Great. Let's start… let's start getting the discussion back.
+So, what do people think? What, how can we do this with MAP? Any views, thoughts, ideas?
+Even just a simple idea, you know, if you… if you reach any conclusion for any possibility result, you know, whatever, whatever you discussed, yeah, feel free to read… to get your hands up, and yeah. Hands, hands, more hands? Hands? More thoughts?
+More hands?
+You're not.
+For the first child?
+For the second webinar.
+botus.
+producers.
+Processing it to see who…
+Mr.
+Great, so just, just to, just to repeat what you, what you said,
+the mapper, essentially, just produces the same exact thing that is called as input. So the mapper gets some input, produces the same output, so in this case, the mapper would get the
+0001 Nancy row, and just spit that out as an intermediate. It would get this, and it would spit that out. So, you just use the mapper, essentially.
+to create the key to… so that you are then able to go to the second coalesced state, and let the coalesced states do the hard work for you. So once you get the coalesced states, after that, you would have, in,
+So, you would let the call states get you, essentially, the join of the UIDs, or the key. And then what you do in the reducer, you would have two values for its reducer, and then you find which one talks about the name and which one talks about the grades, you do your control flow to check the… if the grades have increased, and then you output.
+Make sense? Thoughts? Which step are you checking if grade 1… if grade 2 is greater than grade 1?
+in the mapping competition, or in the key? Or, sorry, in the production? That's a good question.
+Thoughts on this? Where would you check for that? In the middle between math and reading. Once you go to the math space, then you do the immediate computation, and then you coalesce it.
+So, so, in between, there is no in-between, really. There is the map computation, the map function, the induced function. Thoughts on this?
+I was just gonna say, go through the grades table first, then compare grade 2 and grade 1, and if the grade 2 is greater than grade 1,
+Steal that name for us.
+Those people that need it.
+That's a good point. So, I guess the answer is both could be done, and though there is performance, there are performance differences. So, if you do the mapping over the grades table first, and you first check the grades, then you can at least not throw out a lot of intermediate values for all the students who do not have better grades. You would still have to do the other thing for the other table, because here you can't predict
+Ahead of time. And the point of mapper is that you don't have this other kind of state, other than the mapper, other than the user. So, the mapper here would have to go and do the emit no matter what, on the name table. But I guess you could… you could just skip half or, you know, however many students have not improved in the assignments, in the… in the… in the second. So you could do the filtering in the mapper to do fewer intermediates or interior.
+Thoughts? Questions?
+Is there any, like, rule of thumb on where you want, basically, like, more of the workload on, whether it be, like, reduced steps as an asset? The trade-offs are usually… so usually for these computations, actually the biggest kind of overhead, is here.
+And this is called the coalesce or suffer states, and almost all distributed processing work that is, you know, happening, or not almost done, but a lot of the distributed processing work that is happening is actually focused on how can we get this to be implemented as fast and as efficient as possible.
+So the more you can get rid of data before this happens, the better, usually. So, yeah.
+In the map phase, you could just directly figure out, which people's scores increase.
+And then when you're reducing, you just, like, keep… Included.
+both, like, entries. When you would reduce, in this particular case, this would be like this. If you do the mapping, the filtering before, you would end up with these two… these two boxes. One of them would just have
+0001 Nancy, and the other would have these two tuples, Leslie and 6070. So the reviews could say, if I have one topic, that means the grade is not improved, so I'm just not gonna do anything.
+But if I have two tuples, that means the grade has improved. So then I can… I can actually print out the… the message. We're assuming that the functions don't have any side effects, but in the same model, can we just have, like, things like lambda functions, or, like, functions that can… that, like, map some input, or…
+those… what does that help you, like, in between math or videos to do the computation more? Like, in the same program model, that have, like, additional computations left after math?
+So… but these steps would be… would they… would they reduce, or would they do map? What would the steps do?
+after you take your original data and then map it, so now you're in the map phase, on that map data, you want to perform additional computations that are still functional, so there are no side effects. And then you reduce that process later. Okay, I see what you're saying. SugarSync?
+Okay, I guess, I guess my answer to this is that you can, as we said before, do many stages, and what you're describing as essentially is the following. Why don't I do math?
+then another map, and then in blue. And that's actually fun.
+I would say you can run as many maps as you want. You could put them all in the same map, you could have them separate, but as long as the data is not moving from the partition, you can just chain the map together. Yeah, that's a good point.
+Other thoughts on this, or questions?
+Excellent.
+So, let's get back to our execution, now that we've seen how MapReduce, the functions, and the programming interface works, and let's look at this execution.
+When can a reduced task start executing? Thoughts on this? What do people think?
+Other hands? Other folks?
+Any thoughts? Maybe when… it doesn't have to be where all the A's, all the C's, all the W's are done, we're just, like, if all the A's are done, you can start reducing, all the C's are done, start reducing, so not waiting until the entire thing is done.
+That's a good point. Any additional thoughts on this? Yeah? I guess my question is, like, if we're trying to, like, start or reduce before the state ends.
+how do we know, like, how do we have a guarantee that the data we're reducing is, like, unstable equivalency?
+So, I think the answer is a combination of these two. So, we want to do this as early as possible, but the alias is actually only after we have heard from everyone completely, because the last tuple of the last straggler could be the A tuple that we care about. So we cannot really start processing before we have heard from everyone in the caller states.
+So that puts this kind of synchronization barrier in the system, and you wait until all of this is done before you can start running anything in the reviews.
+So we cannot run and reduce tasks until all map tasks are finished, to ensure that we have all the given values for a task.
+Great. So let's get back to our… yeah.
+You can get keys, sorry?
+The same group, different things, it doesn't matter if you have all of them.
+So, how could we make this rule for word count? Let's say you start process, you run the red use, the reduces this function, right, that I showed you before, that, that looks like this.
+So, when will I… when will I call this function? That's the question. With what list of values?
+You could, like… But we…
+Okay, that's a good point. So there is actually… there is ways to… and there is systems out there that are called stream processing systems, and they are trying to do this kind of thing, optimize this away, by… by allowing data to flow through the system, but then you have to also write your reduce in a different way, because now your reduce is not a function that takes all of your box.
+But, you know, you have to get incrementally new values and be able to do something with these new values. So this makes the programming paradigm harder, but it actually allows for better performance, and indeed there is a lot of stream processing systems out there that, yeah.
+All that fell to other questions?
+Great.
+So, let's get back to our desired properties for distributed processing. We said we want scalable. We got it. MapReduce, you can run mapper on every machine that you have data, then you have them to do the coalesce, but then you again run Reducer on, you know, separate machines that have the keys.
+It's… so the more… the more machines we have, the more scale we can get, actually, here, because we can run mappers, and it uses in parallel.
+Very simple ACP. The programming model is very, very simple, and you need to have no expertise, you just need to understand what do I do with this map, and what do I write in distribution, then I can chain many of them together to get my computation.
+And finally, it's widely applicable, because it doesn't make any kind of assumptions about your computation, other than you can write everything in this kind of stateless paradigm.
+What about fault tolerance, though? Hmm.
+So, this is, a more, a kind of, like, control-style diagram of what, how MapReduce, works.
+And the thing to keep in mind about this diagram is that we have here all of the data, the initial data. We have here the intermediate results after the mappers. This is the coalesced states, this is the worker that does the reviews, and this is the worker that does the map.
+So the key node here that we need to keep in mind is this master node. So the master node has the following responsibilities in MapReduce. And this is important to keep in mind, because also in the first assignment, that's part of what you have to do.
+So the master assigns these MapReduce jobs to workers, given the program, and given some knowledge about the initial data.
+It keeps track of the status of all the tasks. So, is this working done? Is this working done? Is this working done? And then based on this, it can actually run a computation.
+And it also keeps track of machine failures. So, let's say this worker actually, you know, crashes this machine, then the master would determine that, and make some kind of… have some kind of logic
+To rerun this computation and get the result that we want.
+Taking a small break from MapReduce, the first assignment is out, it was out yesterday. It's due for April 10th. It has three parts, sequential MapReduce first, then Distributed MapReduce, and then fault-tolerant MapReduce.
+start working on the assignment, I would suggest, and also go to discussion on Friday, because they will start working on assignment, on the assignment, so you can get some, important kind of info, especially starting out.
+Also, do look for partners for the next assignments, and partner check is due, Friday, for 11, okay?
+Any questions on assignment, logistics?
+Do we need to be… this is a discussion as a partner design?
+That does not matter for now, but for the following of assignments, I think you should just go, you know, you should make sure to go the same discussion, because otherwise.
+I mean, I guess you could… you don't have to, but I think the later we go, the assignments become harder, so part of the discussion will actually be about how do we actually implement this thing. So, if you're together, then you can discuss together with the TA and LAs to get this.
+You mentioned that if you attend the first three discussions or four discussions, because you threaded, but what about the later one? Can you just take this discussion?
+So, so the point, the point of the first three, the credit is that you, you go to the first three, and hopefully you like it so much that you keep going to the rest. But, you know, we didn't want to make, you know, credit for all the discussions, so the hope is, if you like it enough, you keep going, but at least try it, so get some credit to try it. That's the idea. So the more of an incentive to try it out.
+Any other questions? Logistics?
+Great.
+So let's get back to this, and before we actually see how… so we see in detail how MapReduce does the fault tolerance here, but before we see that, I want to
+provide some kind of background and fundamentals on how do we think about these diagrams, and how do we talk about these kind of systems more broadly. So you see that there is two types of arrows here. So there is these arrows, they're kind of dashed arrows, or dotted arrows, and there's also some
+some black arrows. So, what do people think? How do these arrows differ from each other? Do they have any difference? Is there… yeah, do they do the same thing?
+Pro… clearly they're doing the same thing, because they have different… they look different, but what's the different thing, yeah?
+Folks?
+Botted ones, like, over the network.
+Both could be over the network.
+Good point.
+One of them seemed, like, logical, the other one seemed like more operating systems, like.
+Like, the system for something?
+That could be, that could be. I think we need to teach that a little bit more, yeah? More thoughts?
+The solid one seems sequential.
+And then the dotted ones could happen anytime during the day
+Mmm, so there is this, this again goes, gets closer.
+Right, so I guess…
+these two arrows, and I think this has to do, again, with kind of, like, the sequential versus parallel nature, but yeah, usually we call those control and data. So there is control arrows and the control plane, where essentially we are controlling how the computation is happening, what's happening in the protocol. So we tell someone, wake up and do something, or, you know, or we send a message that tells someone to stop doing something, or we
+inform something has happened. So these are the control messages and control arrows.
+Then we have the data arrows, which talk about data flows from one to the other. And these actually are not necessarily between two computational components, like the control ones. So controls only have to happen between computational components. There has to be a process or a thread, something sending this control. But for data, you could also have them between
+A computational component and storage. So I can be pooling data or pushing data, okay?
+Thoughts, questions on this?
+I saw on the slide, you… when you were assigning the one this year, why did we use, like, instead of using the same local read or write that we could have used, like, I think in the assignments we were using RPC, but you used the intermediate files as the…
+the mediator between the math and reviews, instead of, like, just using our people to build their data on the job. So why do we have this? Yes.
+We will get to this version.
+Any other questions?
+Great. So these are the controls, these are the data analysts
+Let's now look at another important thing, an important abstraction we will need throughout the class, which is the client and server model.
+So, a key abstraction, and now we're moving to the second, kind of, part of the lecture here. A key abstraction
+for the control plane in distributed systems is actually this client and server model. Secondarily, it's also used sometimes as part of the data plane, because there is a request and a response, and this could contain data, but primarily, it's meant for control. So you have two components.
+And you…
+The client sends a request, asks the server to do something for it. Either do something stateful, return some result, and so on.
+The server is implemented usually listening for requests, and when one arrives, it processes this request and returns a response. You can think of this, you know, a web server backend is one type of, like, client and server.
+And the client just makes the requests to the servers, please give me the HTML of this page, thanks.
+A particular way of using this client-server model is remote procedure calls, RPC,
+Which is a common protocol for client-server paradigm, where the servers offer an API of methods with specific signatures, and the clients remotely invoke the methods with arguments, and then wait for the response. So it's almost like a function call, but when you make the function call, you go from the client to the server, the server computes some code, and then you get back the response.
+But as a programmable… from the programmer's the client's perspective, it looks more like a function call.
+And many real-world frameworks, provide this RPC, provide RPC support, like gRPC and Thrift, and yeah, this is a key abstraction assignments, but more broadly also in distributed systems.
+Questions?
+Great. So, this is the, an RPC, an example of an RPC interface.
+And here we have a service, or a server that's called greeter. It only supports one type of method, which is called say hello. It gets a hello request and returns a reply, and the request just has a name. And then the reply is just a string again, and so you would just say.
+send your name and get back a hello, hello name, hello name. And that's what this kind of interface abstracts away.
+So the only thing you essentially need to know, if you're a client here, is this is what the server will offer for me. So now I can actually go and write code in the client that does not assume anything else about the server, just that I can make these calls, and I will get these responses.
+So, the server, as we said, whenever a request arrives, it processes the request, and then returns a response.
+Does anyone see any problem with this implementation? Thoughts?
+Is everything okay? Is this good? Would you use this to make a, you know, make Facebook? Facebook's front end?
+More hands? Yeah, on the back? Maybe some requests might take longer than we don't know.
+Some requests may take longer or may fail, okay? What kind of implications does this have? What are the, you know, what's the next problem after this? What if some requests take longer? I mean, yeah.
+Maybe a request comes when it's processing, another request. Right.
+So what's the implication of that?
+it gets missed.
+Well, it could get missed, I guess I haven't really clarified here how it works, but let's say it doesn't get missed. Let's say it arrives, and we just… it just waits for the other one. What's the problem? You?
+I was about to figure something out. I was like, there could be a lot more clients than the server can serve, so we might need, like…
+That's, that's, that's exactly, I guess, the composition of your, of your, of your answers. So, essentially.
+when you get a request, you process an internal response, that means you are blocking everyone behind you. You… a request arrives,
+You start crossing with another question arise.
+You just have to wait for the first request to be suddenly processed until it's actually closed. So imagine if I'm receiving more and more requests, so all of them will have to wait
+for all the time in which we process all the previous requests before they start being processed. That means that the latency will take a big hit, and all of the requests will see this kind of, latency increase, just because of the queuing.
+So this cannot scale, that's the idea.
+So, the solution is to use threads. And some approaches to use threads are to use, for example, a listener thread that receives the requests, and for each of those, it spawns a new thread to handle that request.
+Is there any problem with this implementation?
+I still might get too many requests for this one.
+Discipline surgery.
+I guess that's true. So, you still have a scalability issue that, you know, you have to do this locally, but let's ignore… let's assume you have, you know, a big server. There's another problem here, actually.
+No business.
+You could have race conditions, that's a good point also, and assume that now we have a stateless server, but in general, that's also a problem. Are there any performance problems also with this implementation?
+Maybe the listener thread could get overloaded with a lot of requests in the first place?
+That's a good point. So the listening thread does… we do make an assumption here that the listening is really a very cheap thing, so listening is, like, much cheaper than actually doing the processing.
+Reserve, processing power.
+The manual hub?
+Oh my god.
+They might not have a lot of uptime, meaning,
+Yeah, I guess, I guess, I think it's, it's almost… I think you're almost getting there, but yeah,
+I feel like that.
+So I guess, I guess that's how I understood that what you were getting at also, that essentially you have a lot of threads, and now you can completely overwhelm your system. And even though, you know, I spawned, like, 100,000 threads here, because I have 100,000 requests, now they all contend for the resources, so still everyone takes the latency hit.
+So what happens usually in practice, or that's, like, a more standard approach, is to use some form of listener thread that then puts requests in a queue, and then you have a fixed thread pool that picks the requests. Of course, there is problems here with distribution, there is an assumption that these are stateless, and also, there is still a fundamental question of what happens if we get more requests than what we can take.
+But we will leave this for later. I just wanted you to get a sense of, you know, what is kind of, like, what are the trade-offs here of threading, okay?
+Questions on this?
+Great.
+So let's get back to fault tolerance via the master loan.
+Let's say we run this computation, and oops, this crashed.
+So, everything else cannot happen, so we are crossed here.
+So, what now? What can we do now? Well, Hadoop is able to tolerate these worker failures, and it uses a very, very simple trick.
+So… The trick is to actually save intermediate output between all of the different map and reduce stages.
+So, how would that work?
+Thoughts? How could… how could saving the immediate output work here? What will it give us?
+sends it to a centralized,
+Right, so by having everything in disk, what you get is that if you fail, then you can simply restart this task.
+pick back its data, and you have no problem, you can just rerun the task, and then keep going. So by saving all of the intermediate results on storage, it exists somewhere, and then we can do… we can run the computation and get fault tolerance.
+Great. So… Let's get back to the synchronization barrier.
+Is there any problem with this now, you know, now that we have dose of bulbs in the mix?
+Any, any problem that people can see, can, can see here?
+Maybe if something fails with the security firm.
+Right, so if you fail, actually now you get to… you get a penalty on performance for everyone. So every time someone fails here, you cannot progress with the quality states until you get them back up. So the… I guess the fault-tolerant performance of MapReduce has this kind of problem that
+Any failure on the map states can actually block everyone else from proceeding with idios.
+So this is a very, very, very kind of, like, simple first kind of,
+Contact with faults.
+But by the end of this course, I want you to… I think one of the key outcomes from this class is that whenever you see some code.
+The goal is to think, what if…
+What if a process crashes? What if a message is dropped? What if some other service crashes that we don't know, you know, outside of our system? What if a message is delivered twice? What if a message is corrupted? So, the way to build these kind of fault-tolerant and reliable systems is to first imagine all of the types of faults that can happen.
+And think through what would happen in your system if they happen. So, a key thing that we'll be doing throughout this class is to going through the motions of, okay, we have this kind of system that we want to build, or this thing that we want to do, and we start thinking about all the things that could go wrong. And then if we show that anything that could go wrong, we're able to tolerate it, then we're good.
+Yep. I just had one question, like, I'm not sure, like, why can't we just, like, as soon as you get two new things for our list?
+You process it, you get the third thing, process it with the new thing.
+Instead of, like, us having to wait forever.
+That's a good point. So you could actually… and there is also ways to have nary, NRE. So now… actually, no, binary or smaller, smaller kind of redactions, and have reduction trees. So here I showed you this kind of thing where you run the reduced on everything, but you could imagine that even for a single… for a single ET, you could have reduction trees.
+you would have to rewrite your computation to not be exactly like this, because now you have to be able to tolerate not just a list of things, but, you know, some lists of things, but it is possible, actually. So you can also deal with this this way, yeah.
+That's, like, probably dependent on the tasks there, which…
+Yes, I think, I think that not all tasks allow for an arbitrarily good kind of, kind of
+tree-based reduction, but it is feasible, it should be feasible, but it's true that actually not all tasks offer… imagine if you wanted to do a short, let's say. So how would you do a short, right? You would do a short in the mapper, and then in the reducer, you would do a merge.
+But then you could run arbitrarily many mergers, but then you do duplicate computation, because some keys you have already seen, but you are again going through them, again going through them. So indeed, it's not an obvious kind of trade-off, but it is possible, yes.
+You mentioned that, you can't really start the coalescing, process until everything has been mapped, but there are, like, some cases where you could start coalescing ahead of time. So, like, what are the current cases?
+where you could start early versus you can't start early? I think the key idea is if you can somehow split your computation, and we won't see that in the class, but… but if you split your computation in a way that you can process input events from the mapper, one in smaller chunks.
+either by breaking the reducer in a tree, or by having a streamable reducer, then you could deal with this. But in the assumption we're making here in the class.
+that the reducer takes this list, then you cannot. But yeah.
+Other questions?
+Great.
+Hmm, I gave away the… yeah. So, what's the problem with this, actually? So, I guess you saw it. It's a snail. It's very slow, because you have to write all of your data to the disk every time that you do any kind of computation. You do the computation, you write the disk. You do the computation, you write a disk.
+And… The problem is that checkpointing is slow.
+And what this… what this is meant to show you is more that there is no freelance here. We cannot, you know, we cannot have both full tolerance and performance here, and this will be, kind of like, repeating… you'll get bored of hearing me saying this, you know, you cannot get everything, you cannot get everything, you have to sacrifice something. Here, we're sacrificing some performance.
+because… and we get to write to disk, which is expensive, and it's orders of magnitude worse than writing to memory.
+There are some solutions, not full solutions, but there are some solutions, and Spark is a system that came out after MapReduce, and kind of addresses this problem of storage by having a linear system of data. We won't get into this, but
+no matter what, you have to make some kind of sacrifice, and all of these systems make some sacrifice on some particular property, and they make it slower to get something else to be faster. The kind of, like, the point of system design is how can we find the cases that matter the most.
+And not sacrifice those, and sacrifice the ones that matter the least, okay?
+So now we have the desirable properties, scalable, fault-tolerant, simple, widely applicable, great.
+Is there any other problem with this thing or two? You know, I tell you all of this, is there any other problem other than the ones we've talked about? So we talked about, you know, faults, yeah, thoughts, any other problems with this particular
+Pault tolerance kind of, scheme?
+The fault tolerance. What if the master fails? Yes. So, what if the master fails? So, if the master node fails.
+Can we start a new master and resume the execution? Thoughts?
+This could keep track of state from the previous disaster.
+Right, so somehow, you have to keep track of the state from the previous master, and make sure that you have stopped at a very concrete step, and then, you know, you can make this work. So we have to checkpoint that after every step that the master takes, save this to disk, and this is a lot of work.
+An alternative solution, and this is what we will look at throughout the class also, so this is like a kind of, like, introduction to what we'll see in this class, is to replicate the master state to tolerate failures.
+So what… what could this look like? Let's say we have two masters now, and they both… we have two workers, and the masters have the following state currently. One and two are done, and we are… we haven't done three and four.
+Okay, sorry, no, the green one means that we have assigned these tasks, but we, you know, we have not assigned 3 and 4. So this now says, okay, done with task 1. So we say run task 3.
+I guess the caller should update here. And now we say to master 2, I assigned Task 3 to Worker 1.
+And then here, we say, oh, I'm done with task 2, and then we say run task 4.
+Is there any problem with this kind of replication here, replication scheme? Any thoughts?
+Does this work?
+If the, communication from M1 to M2 gets delayed, M2 could also tell Worker 2 to start class 3 by accident, and then you would be doing delta look group.
+Right, so if the Worker 2 finishes the Task 2 before M1 manages to inform M2 that, you know, Task 3 was done, Worker 2 might assign Task 3 to Worker 2.
+And let me show you this problem a little bit more broadly in a kind of, like, replicated bank account setting. So let's say we have two replicas of your account, in New York and in LA,
+And then there is a client here in Seattle that wants to deposit $100, and then the bank admin here says, okay, let's add the interest. It's the end of the month or the end of the year, let's add the interest to this account.
+They do it.
+And then they also sent, you know, to the other replica to get the computation to work.
+Shit. Okay, this doesn't work, actually. So now the replicas are inconsistent, they don't have the same value, they will never get back to being the same. They're forever diverts.
+So, how can we ensure that replicas are in sync?
+The way is that we apply the updates in the same order across all the replicas.
+And why is that useful? We can model its replica as a state machine, And so, given…
+identical initial states, we start on the same state, and we apply all the updates in the same order, in all the replicas, then we will get to the same final state, because we will apply A, A, A, C, D, A, A, and then we're attached to. So if we… we just will have to make sure that we apply the updates in the same order in all the replicas.
+And the replicated state machine, each of them runs copies of the, essentially, of the state machine, and we do this across servers, across data centers, and so on.
+To make sure that if something crashes, the other one is working.
+The kid's balance is doing this efficiently, and this is one of the things that we will also see throughout this class, how to do this efficiently, or with good fault tolerance guarantees.
+And, one thing I want you to keep in mind here from, is that there is a difference, between states and events, not in this setting only, but in general, in the distributed system space. So let's say we have, these state machines, and we…
+Even… sorry, even though we say we want to… we want to replicate the state of the state machines, what we actually want is to replicate the sequences of transitions.
+So, this is strictly more expressive and expensive than keeping the state.
+And why is it… is it more expressive? Any thoughts? Why do we… if we replicate the whole sequence, it's more expressive than just keeping the states of the machines?
+Essentially, like, now, instead of originally, we had, like, 4 states, but now, like, we want to keep track of, like, all the state transitions, and you could imagine that, like.
+It would blow, like… exponential visibility.
+So this answers the expensive. What about the expressive?
+Thoughts on the express button? This will allow you to have, like, a transaction history.
+Like, roll back.
+Yes, yes, so this is… this is… this is a similar instance of the same, of the same point. I guess my question is.
+ease…
+what can you do by keeping the states that you cannot do? What can you do by keeping the traces, the sequences, that you cannot do by keeping the states? There are many ways to arrive at one same state.
+So there are… there are exactly… so if you have the exact sequence of transitions, it allows us always to reconstruct the exact state. But if you have a state, we do not know how the system got here, and that might or might not be important. So there is, later down in class, we will see how this distinction actually sometimes is important, and it makes… it makes a difference, okay?
+And yeah, an example here is, let's say we both are in R1 and R2 here. One of them could have gone like this, and the other could have gone like this.
+That doesn't always matter, but sometimes could matter, and so there is distributed systems work that keeps track of the whole sequence because of reasons that need these additional expressions.
+And, yeah.
+So, let's think, how could we actually implement such a replicated state machine? One approach could be that, given a list of received updates, order them based on the time of receipt. We receive, you know, updates, we timestamp them, and then we order them based on this.
+Does this work? Any thoughts on this?
+Might have received updates out of Word.
+But we have… you have timestamped them, so… You keep the timestamp.
+Out of order, where, I guess? Maybe, maybe, I guess we can… okay, maybe I see what you're getting, yeah? What… does anyone have additional thoughts on this?
+I guess what he was trying to say is the sequence of receiving them might not say the sequence of sending them.
+And that's where they can get out of it.
+Right, so I guess… yeah, I guess, okay, reiteration of the approach. What if we keep a timestamp at the order of sending? Sorry, not the order of… not where we receive, but where we send. Let's say the clients actually put the timestamps. I need to correct this in this slide.
+the client's timestamp when they're gonna send the updates. So, before in the example that we had to do the deposits.
+So, before I send the deposit, I take a timestamp.
+I take a timestamp, and then we send them together, and we give this timestamp to the machines. Is there a problem now?
+Good luck.
+The clients might have synchronized clocks. The clients might? The clients might not have synchronized clocks. So…
+A challenge is that clocks are not always in sync across replicas, across machines, and so multiple updates can arrive at different machines at different times, and we don't want to pick the order based on the different clocks, because then you could have, you know, this completely messes up your,
+Yeah, your computation. So… Let's now see how do we get,
+Or, let's see, maybe some talents about clock syncing. So, how can we clock sync? We could use the GPS broadcast, but… and this can be actually pretty accurate, up to the microsecond scale, but then the problem is that it is power-hangry, and it does not work indoors.
+Another approach could be to correct the SKU based on a reference clock. So let's say we have a set of servers, we ask them a time, and they tell us the time.
+Is there any problem with this?
+Oh, you don't know the latency, so…
+You don't know the latency. Exactly. So, in addition to possibly having clock drift on a single server, you still do not know the latency. So, even though this sends you a timestamp, here you don't know if… what kind of time elapsed in between the two, and that's a problem.
+So, this is part of, you know, these problems are addressed by the NTP protocol, and here is, and now we see a key algorithm that underpins NTP and helps you address this problem.
+So, you have a client,
+that, sends a request, timestamp, at the point of send, T1.
+And then you have a server that timestamps the request immediately when it receives.
+And then, before it sends out a response, it again keeps a timestamp.
+And finally, the client timestamps immediately upon receipt.
+Given these four timestamps, I want you to discuss with the person next to you, and think, how can we use these timestamps to determine the time at this point here? Assuming this is the reference time, how do we have the correct time here?
+start discussing with Riplex Studio, and we'll come back and discuss about it.
+But I don't think that is.
+Okay, let's start getting the discussion back. So, what do people think here? Are there any thoughts? Even just simple thoughts here, on, you know, can we get even anything here with these numbers?
+you know, can we get anything close to what the actual time is here at T4? Thoughts? Hans?
+Any, any thought is good. If you have thought of anything, yeah, raise your hand.
+More hands, more hands!
+more… Yeah, more?
+If the latency is different in each direction, I don't think it's possible. That's an important, that's an important observation here. So if the latency is different in its direction, this is not actually, good, yeah. Other thoughts? Hans? Now that we have this observation.
+I guess if you assume the latency is, like, symmetric, which I guess can't guarantee it, since, like, the T1 and the T4 are all under everyone, like, the same clock, and T2 and T3 are on the same clock, you can get, like, the time lapse for the total request after T from, like, T4 minus T1, and then the server's, like.
+work time of T3 minus T2, and then from taking the difference of those time elapses, we get, like, the total network travel time, and the assumption is, like, if you have, like, assuming that it's symmetric, which may be no guarantee, you just take the difference, and that's 2 times, like.
+another travel from the difference from T3 to T4 is the…
+One half of that number was Charlotte plus 4.
+Difference in the clocks, and just kind of… Professional.
+Great. So, I guess, given this assumption, which is a very important assumption on this particular algorithm, then you can do exactly as you said. So, you have four
+you can compute… you can… you know this elapsed time, you know this elapsed time, and I think you want to compute… you can compute the combination of T2 minus T1 and T4 minus T3, but you don't know how much is it.
+So if you assume they are roughly the same, because you can send these requests very quickly, and, you know, you assume that your network hasn't completely gotten destroyed in between, or, you know, it didn't recover from a hard kind of, like, overload situation, then…
+you can do, this kind of, this subtraction. So essentially, from the total, Remove this.
+And what is left is 2 times the network latency.
+So, essentially, we can then set
+the clock to be T3 plus half delta, which is two times the network latency, and given this, if we assume that these are roughly the same, then we can get a good enough time, and this is how Crystal's algorithm works.
+I have a question. Now, time by itself, there's, like, a very interesting quantity where the precision can be, like, hybrid, but, like, how do you take into that account? Like, you mentioned, like, with GPS within, like, 1 millisecond accuracy.
+With this method, like.
+When you're doing the computation, if you want to go to, like, nanoseconds or, like, something even more smaller, like, super small time difference.
+like, you cannot synchronize time at all at that point, right? You cannot, that's correct. So, what we will actually see,
+in… in the next class is actually what can you do without physical time here? So how can you actually get some kind of ordering without physical time? And this is how we are going to go, in the next lecture. Yeah? So are we… what we're doing is we're taking the average of the two, like, measured, deltas to kind of say, like.
+an estimated of, like, what, like, the delta should be? We can, we can very precisely calculate the sum
+of the request latency, and so then, if we assume that they are roughly the same, then we can put half, and then based on that, we… we get… we get the precise time. But if that was 10 times the, you know, 10 times longer, then we would get, like, you know, we would get… we would get an error down in… in… in this kind of delta area.
+Great.
+So yeah, next time… oh, sorry.
+The different masters would have the same.
+So this does not actually answer the order question. That's… yeah, so the clock… so we did say, you know, I lied a little bit. The way we need… we want to do ordering, and I said maybe we can do it with physical clocks, but actually throughout this class, we will see that physical clocks are not that great, and we will actually use other types of clocks to get ordering, yeah.
+Like, I'm sorry.
+the message, and then the master does a border because I understand. Like, even if it becomes out of order because they're plot is small, the two masters be synchronized?
+That is a good point. So the point, the point raised was that if the client's timestamp, then even though you have,
+That is a good point.
+So, yeah, I guess, I guess that's true. So, so there is… okay, so, so, so the point that was mentioned is actually an important point, that if you have… if you have times.
+IN.
+the separate clients, even though… They might be unsynchronized.
+There is still a way to order the local times of each of those.
+So, actually, we're gonna use this important property next time, but another problem, actually, that I didn't mention here, but I need to mention next time.
+Is that sometimes clocks, With synchronization, physical clocks, Can also go back.
+So, because… because of latency problems, sometimes you have… you have clocks that could go back and forth. So…
+Essentially, what you really need is a monotonic way to get the time. So if you are guaranteed that I can get monotonic time.
+And then I don't really care which one of those happens first, then I'm good, because I will do them in a specific order, but I don't… I don't care about exactly what order, what order it is. But we certainly want monotonic clocks, that's a good point. So, yeah, does that make sense to everyone? So, if the clients actually
+get their… get their clocks, and even if they're not able to be synchronized, as long as they have monotonic times, then they still… the servers would process in the same order, because
+You know, they're not synchronized, that means maybe this is lagging behind one minute from this, so the requests from this always look like they arrive faster, but… but that doesn't mean that there's still… there's still constant order, so that's a good point, yeah.
+Okay, so next class, we are actually going to see how can you do logical clocks, and to not even have to use any type of physical clock and deal with this kind of complexities of physical time and synchronizing physical time.
+Before this.
+I would really like you to scan this QR code and do a post-lecture mini-quiz. So this is mostly to make sure that, you know, some major points from the class went through. So yeah, please fill this in.
+And yeah, once you do this, you're free to go. Next time, we'll see the logical clocks. So, yeah, thank you very much.
+It's a very great question. I was just wondering if there were any updates on the.

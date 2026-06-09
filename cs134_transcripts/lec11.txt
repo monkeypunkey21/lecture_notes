@@ -1,0 +1,396 @@
+Okay.
+Hello, everyone!
+This is, Distributed Systems, Lecture 11.
+And as you might notice, this lecture is a different format. So, it is a Zoom recording, so before we start, because I'm traveling, or actually, I will be traveling when you will be watching this lecture, so…
+Before we start, I want you to grab your favorite beverage or snack.
+get cozy, minimize distractions, put away your phone. I will still ask questions throughout the lecture, and I really encourage you to pause the video on questions and think about them before proceeding.
+And I'm not going to cover any of the Lecture 10 quiz questions today, but I will actually do them… we'll do both the Lecture 10 and 11 quiz questions once I am back.
+So…
+Let's get started with the lecture. So, so far, we have seen, we saw, in the previous lecture, we saw real-world consensus with Sabi and Zookeeper.
+Now, today we'll go back to foundations for, for, for two more lectures, and we will talk about,
+weak consistency. So, so far in the class, we have seen the concept of strong consistency, both in the class where we're talking about consistency specifically, but also in primary backup replication, consensus protocols, and so on. But today, we will talk about weak consistency.
+So, today's agenda, we have to… we'll cover four different topics. We will first start with the CAP theorem. we will then talk about eventual consistency,
+We will,
+do a detour and talk about system correctness in general, and finally, we will talk about conflict-free replicated data types. No conflict.
+So, Consistency so far.
+As I said, so far we've seen protocol systems for strong consistency, and what are the examples? Have you… do you… do you… what examples come to mind to you from class? You could pause the video now, and think about the question, and then proceed.
+So, examples that we saw in class so far include Layer's ability, which we saw that… where we saw it in primary and backup replication, as well as Paxos and Xavi.
+And almost linear's ability, which is the… or at least this linear's ability, quasilinear's ability that ZooKeeper, provides.
+And we've also seen sequential consistency and causal consistency in the class with consistency concepts.
+The problem with strong consistency is that it needs consensus if you want to have fault tolerance in your system.
+And consensus also means blocking.
+So, and slow consistency requires order.
+All of these things, mean that it is very expensive.
+So, in this case, let's say we have a system where we have replica 1 and replica 2, and we have client 1 and client 2, and this client sends some updates to these replicas, and as you see, they arrive in different orders.
+which updates should the replicas commit first? What do you think?
+So, before answering this question, let's talk about, the CAP theorem.
+So, the CAP theorem is a theorem that was introduced in 2000 by Eric Brewer,
+And the foundation… it's a foundational theorem in distributed systems, and what it talks about is that there is… there are three conflicting properties in a distributed system. There is consistency.
+Which is a safety property. There is availability, which is a lieness property. And then there is partition tolerance, which is, which refers to unreliability.
+The point of this paper is that you cannot have all three of those together.
+So, safety versus liveness… essentially, it crystallizes the safety versus liveness trait of, again, in an unreliable system, but focused on consistency.
+Where else did we say that?
+Do people remember?
+Yes. So we did see that impact source consensus, consensus more generally with FLP, and primary backup.
+So the CAP theorem setup, let's, let's, we'll focus a little bit on the CAP theorem now and try to explain how it works.
+So, the setup is that we have replicas in different network partitions that cannot communicate.
+So all messages are dropped.
+This means that the replicas on the left here and the replicas on the right are completely partitioned. There is no message that goes between… that can go between these two replicas.
+And these partitions are transient and changed across time.
+Where do you think this setup is actually relevant, and it is useful in practice?
+So, the setup is actually very, very useful in the context of zero replication. So imagine you are, you know, these big hyperscaler companies that have, you know, data centers across the world.
+There, it is possible that two data centers, for some period of time, or, you know, two partitions of data centers, are not able to communicate at all with each other for a period of time.
+And therefore, there is where network partitions become relevant, so we have to think about them as a key assumption of our system.
+more broadly, or more intensely, let's say, the context of mobile NEDs is even worse, because in that case, imagine you have data centers and you have, you know, mobile IoT NEDs devices.
+There, these devices have actually intermittent connectivity, because you might be going through a tunnel, because of their devices, they are much more faulty, so there, the problem of partition becomes even heavier.
+So…
+Given that, we know that local partitions are a very important assumption in real distributed systems, and then we have consistency and availability as two things that we would desire from our distributed system.
+The theorem says that you cannot have consistency, availability, and partitions altogether.
+And coincidence is defined as correct results, while availability is defined as guaranteed response. And let's set up the proof skits here for the system.
+For this theorem.
+So we have replicas R1 and R2 dot up to Rn that implement the register, X. And we have some partitions where the partition 1 has only replica 1, whereas the other has everyone, every other replica, partition 2.
+This means that all messages from R1 to all other replicas, and from all other replicas to R1, are lost.
+And let's say we have a client asking replica 2 to get the value of the register.
+What could happen here in the system?
+Since there is a partition, there's actually two different worlds that could have happened in the system. There's one world where client 1 has talked to R1 and asked to set with value 1 to the register, whereas client… there's another world where a client asks, their install to set value V2.
+What is the problem here? Do you notice a problem here?
+So, the problem is that there is no way to distinguish between these two worlds, no matter how long we wait, actually.
+There is no way, even if we wait an arbitrary amount of time, and that's where availability is essentially, you know, we do not have it, so even if we wait for arbitrary amount of time, consistency will not… we can't… we can't provide, we can't distinguish between these two, these two worlds.
+So, essentially, what we need to do is we either need to respond, we either need to respond immediately with the wrong value, or we need to wait for arbitrarily long amount of times until the error partition is resolved to be able to actually find the correct answer.
+So…
+Given that, we now know, and the CAP theorem approves, that we can only pick two among these three, consistency, availability, and partition tolerance.
+Which two would you pick in this case?
+Think about this a little bit. Which of the two would you pick in a system, if you were a system designer?
+So, to answer this question, let's look at examples of the CAP theorem in things we've already seen in the class.
+So we see Paxos, and then… which stood of cap does Paxos pick, actually?
+Thoughts?
+So, Paxos says that liveness is not guaranteed here. So, Paxos does not guarantee liveness, it picks consistency and partition tolerance.
+What about FLP in consensus? The FLP theorem, where we have an asynchronous network and unreliable processes?
+Which two of the… of cup does that pick?
+So, again, FLP says that consensus is not guaranteed to terminate. Hmm.
+Also, we have split brain.
+So, let's remember this primary backup case, where we have a client, we have a view service, the view service is a partition with,
+Laplicatu, and, which is the backup. And then the primary is in a different partition.
+And the view… the view service in the backup have changed to the View 3, whereas the client and the primary think they're still in view 2.
+So how does consistency, availability, and partition tolerance map to split pane? Take a moment to think about where does consistency, availability, partition tolerance apply here?
+So, consistency is that the client sees the latest value in the system, availability means eventually responding to the client, and partition tolerance means to tolerate partitions, meaning, yeah, the system can actually support partitions.
+While still working.
+Which stood as primary backup pick?
+Thoughts?
+Well, backup… primary backup picks, again, consistency and partition tolerance. So, in this case, it will, the client
+Might… if it's actually partitioned from everything else, it might not get a response, but it will… it will certainly make sure to get the correct, it does not violate the correctness of the response.
+So… We saw that a lot of the examples in practice that we've seen already
+Sacrifice liveness, and keep consistency and partition tolerance.
+In practice, what people choose between is usually this, so consistency and partition tolerance, which is slow, and it means consensus, primary backup, sacrificing liveness, but… or, alternatively, they drop consistency.
+But systems very rarely or never drop partition tolerance, because that would mean that a real system, a real distributed system would not be able to work in any case when you would have… when you would have some kind of network partition, which are common in practice.
+So, understanding this, I'm gonna ask you, like, two questions now, to think about in the context of the CAP theorem.
+When an applicant receives a read or write, when can it respond without violating layer's ability?
+Meaning, when we're in the first case, where we have the CP, we do not want to violate lensability.
+Thoughts?
+Pause if you want to take some time.
+If it is in a majority partition, so there is no way for a replica to respond without valid integrability if it's not in a majority partition.
+And that's, that's specifically related to Paxos.
+Second, how can a replica always serve clients?
+We have to drop consistency in this case.
+So… Building on top of that, before we talk about this, this,
+this AP here, AP choice, where we drop consistency. Let's focus a bit more… let's talk about an extension of CAP, which is called PASSLC, which was introduced by Daniel Labatt in 2012, and it extends CAP
+to, to have another kind of dimension. So, it says, if we have a partition, then we choose availability versus consistency. So, if the system is partitioned at that point, we choose availability or consistency.
+And if the system does not… is not in the context of the partition, then we choose latency versus consistency. PAC, ELC. PAC, ELC.
+Why is this distinction between the system being in a partition versus not being a partition important? What do people think?
+Well, the answer is that one of them describes the common case of execution.
+this one, versus this one describing the rare case of execution. And this is an important thing in systems in general, because we want to design our systems to work well in the common case, and to not degenerate completely in the rare case. But in the common case, they certainly need to perform in their optimal form.
+So, partitions happen, but they are not the common case.
+The common case is that no partition happens, but still strong consciousness is expensive.
+So, this parcel C gives us four categories of systems.
+There is a PAEL system which prioritizes availability and latency over consistency, always, both in the case of partitions or not partitions. And there is examples of systems out there in practice, early Dynamo, Cassandra, and React. They are all versions of systems that do PAEL.
+Then we have PCEC systems, which are consistency at all times, always strong, and these include MySQL, Postgres, and Bigtable.
+And then there is, there are systems that fall in the PAEC, where there is a partition, choose availability.
+but else choose consistency. So essentially, in the bad case when there's a partition, we still do not want to sacrifice… we still want to answer eventually, but in the general case, we want to answer, but slowly and correctly. And the example of such a system is MongoDP,
+Then there's also PCEL, when there's a partition, choose consistency, else choose latency, but these are a bit rare in practice.
+The important thing to keep in mind about the Pass and C is that CAP is not just about partitions.
+But, slow constancy means sacrificing latency, even outside of partitions.
+So,
+So, yeah, the important thing I want to keep in mind from these two theorems is that CAP shows that you have to sacrifice consistency or availability to be able to tolerate network partitions.
+At the same time, even outside of the context of network partitions, there is this trade-off between latency and consistency. So you can either have high latency and consistency, or low latency and violate consistency.
+So let's get back to the point where we talked before, where we said drop consistency. We said… we choose… there is a system that shows availability and partition tolerance.
+But what does it mean exactly to sacrifice consistency?
+So we have an application, we have a bunch of replicas.
+Does it mean accepting any outputs that the application might give us, with application giving us some garbage, and we're like, okay, that's fine, that's an available application? Hmm. That sounds a bit sketchy.
+So, let's look at, let's start to understand what exactly we mean by this. And the key that I want you to think in mind is in the order.
+So, a question that I asked before is which updates should the replicas commit first here? And what do you think about this?
+Well.
+The actual question that you want to be asking is not this, but rather, what if the order of the updates does not matter?
+Hmm.
+How do we get there, though?
+What are some updates where the order does not matter? Any thoughts?
+So, there is some examples of order-independent updates, and one of them could be if we split the state of registers among replicas, so let's say we have a couple of registers, we have an X register and a Y register, and we put one in one replica and the other in the other.
+So, if you split the set of registers, the clients can contact any replica.
+Then, we essentially have order-independent updates, because the updates for each register will go to one replica, and therefore, across replicas, there's no way we'll have a long order of events.
+so, building on that, and extending this concept, we now can talk about eventual consistency.
+So in eventual consistency, if we have no new updates, all replicas will eventually converge to the same state. So that's what we want, that's what we mean by eventual consistency.
+Do you think that this is a safety or a lieness property to talk about here, if no new updates or replicas eventually converts to the same state?
+So, actually, this is the liveness property.
+Available constraints cannot be violated with a finite execution trace.
+And, let's look back at this example here. Before, we have these clients doing these updates.
+This execution can become consistent eventually, given more messages exchanges and so on, for them to determine which one to run first.
+Even… even for arbitrary updates.
+But…
+Given these two executions, one of which we have sets, that we have split the partition, the state of registers, and the other where we have arbitrary updates.
+Even though we said it's a liveness property, a vessel constant C, there is some difference in these finite races.
+How can we explain this difference here, actually? So what exactly differentiates between these two executions here?
+Thoughts?
+So, there is something that actually differentiates, and the thing that differentiates is that replicas that have a concept of strong convergence, so replicas that have delivered the same set of updates have actually equivalent state.
+Is that a safety or a liveness property?
+Other people think.
+This is actually a safety property, so it completely differentiates these two traces. If the replicas have delivered the same set of updates, they should also have the equivalent state.
+So, strong eventual consistency, which is an important condition that we will talk about in this class, is a combination of strong convergence, the safety property, and eventual consistency, the lieness property.
+In the past 15 years, there has been a lot of research in this area.
+And many industry systems choose this instead of strong consistency, especially in the zero-replicated setting, where partition tolerance is very, very frequent, and latency across data centers in the geo-replicated setting is very expensive.
+So, is there no cuts? Is strong capacity consistency so good? We caught consistency and availability using the safety part.
+Is there any limitation of strong eventual consistency? What do people think?
+Yeah, so actually, strong eventual constancy is heavily application dependent, so application must be able to tolerate disorder to be able to handle strong eventual constancy.
+Can the following applications tolerate it? Let's look at a few examples, and you think whether each one can tolerate or not.
+So, a bank application that supports a transfer and an interest. Does this tolerate, disorder?
+No, it does not, because if you get a transfer first and then a second, you know, when I get balance, for example, you might temporarily see that you have balance in your account, but actually you did not have balance, because something was reordered, so you might be able to pay for something, whereas you don't have the…
+The, the, the balance in your account.
+Then let's think of a social network, where you have upload posts and get friends, for example, APIs. Is that data tolerate disorder?
+Yes, this can actually tolerate disorder.
+Because you don't necessarily care, you know, about the order of, you know, uploading posts, getting your friends, that's totally fine. You could see that you have some friends, but don't see their posts, and so on.
+Great.
+So let's look at a more practical scenario, or a more concrete example scenario of an application.
+Let's say you want to build a photo-sharing web service that's deployed in AWS.
+And let's say you use an eventually consistent Amazon S3 for storage. Amazon S3 is a key value store, where you store, you know, you have some keys, and then you store a value for its key. And let's say you use it for 3 different types of storage.
+for photo URL to image the actual binary of the image, for album name with a list of the photo URLs for this album, and your users, to say the users, where for each user you keep the number of photos and the list of album names.
+And the storage API offers a get and a set, where the get gets for a key the value, or you set the key and the value.
+Great.
+So…
+Think now, I would like you to think, what are some problems that your application must cope with due to this eventually consistent storage? So think that S3 here is eventually consistent, a strong eventual consistent, meaning that, it will, it will eventually have consistency, but does not guarantee state consistency.
+What kind of,
+What kind of problems will your application that you develop on top of it actually have to deal with?
+So the problems with eventual consistency are,
+That you have to deal with.
+there is lack of referential integrity. First of all, the total sum of photos that you have here
+Might not always be equal to the actual sum of photos in each album, because there might be a case where you first update the album, and then the username, and in between, these are reordered, so someone might see, temporarily, some kind of inconsistent result there.
+there is that updates might appear… may appear to be lost. So if you initialize album 1 and add photo 1, and then you read albums 1 content, add photo 2, and then you read albums 1 content and add photo 2 prime.
+Then, I'll eventually have only photo one, and photo 2, if, something, if these two happen concurrently.
+So, there is these and other problems that can appear with benzone consistency, so you see that it's actually very hard.
+to program on top of an eventual constant store, and make the application correct? Because you now, while you write your application code, you have to think defensively, and think of, okay, this could happen, this could happen. How can I make sure to present those in the user in a way that is understandable for them, or prevent some of these problems?
+So why is Amazon S3 even useful at all?
+The reason why Amazon SD is very useful, and it has been very, very, very successful in practice, is that it offers two types of, important, of two reasons. First, it offers a read-off-the-right consistency for the initial put.
+So, the first time you put some data in S3, afterwards you will always see this data. So, for this data, it has some strong consistency. So, the first data that you put in, you get strong consistency for this data. Everyone will read it.
+At the same time, most data is right once on S3. So, S3 is a store that is expected to be used in cases where users write some data inside, then almost never edit it.
+and then read it very frequently. So in this case, even though we have eventual consistency, the ST is very useful, because the main use case that we have is that data is written once.
+Okay.
+So we have seen a little bit about, cap, parcel C, which show the trade-offs in a real system, and we talked about eventual consistency.
+Let's now briefly talk about logistics before we continue with the rest of the class. So, if you're not done with assignment tool, which you should have, except if you're taking late days, be done very, very, very, very soon.
+And Assignment 3 is already out, so start it as soon as possible, because the due time is actually less than Assignment 2, and it's not easier. So yeah.
+Make sure to start Assignment 3, finish up Assignment 2 as soon as possible, and go to office hours and discussion, because then you can ask questions to our amazing TAs and LAs to get ahead on the assignment.
+Great.
+So… Let's talk about the virtual consciousness in practice.
+There is all this application issues that we saw with eventual consistency, as the examples that we saw in the S3 example.
+So, how are things in practice?
+Let's look at a consistency study at Facebook, now Meta, from a paper that they published in SSP 2015, where they actually measured that to understand consistency at Facebook.
+So,
+The context of that paper is Facebook TAO, which is their social graph database, which is a database that holds all the Facebook social network, with people, where nodes are people, groups, pages, and then these are follows, is friend of, authored by for posts, and so on, tagged, and so on.
+TAO is an eventually consistent database.
+And the goal that they had in this paper is to check if in reality, in practice, Facebook tau is actually linearizable.
+So, before we talk about that, let's take a side quest and talk about system correctness more broadly.
+So, how do we check that the system is correct? What ways do you know to check that the system is actually correct? Thoughts?
+Originally, the way the checklist system is correct is to run the system on some inputs and inspect the outputs.
+That means trying out, you know, it is equivalent, analogous of, you know, trying out in a chemical laboratory, and tasting a little bit of everything, and seeing, okay, it seems to be fine, I guess, it looks okay, you know, the system seems to be working, that sounds okay, right?
+So, actually, what… so this is how things, you know, started with correctness, but… but now we have many, many, many, many more, many ways to actually, check system correctness, starting from this inspection, or, you know, simple, running on a few inputs.
+To testing, monitoring, model checking, up to deductive verification. And many more ways that fall somewhere in between these methods.
+So let's look at some examples of these methods so that you can have a sense of what are some ways to check the correctness of your system.
+So, given a system, let's first talk about testing.
+We understand the sessions and checks on the system.
+And then we generate inputs and configurations for the systems.
+And we run the system and see whether all the checks pass for all the inputs and all the configurations.
+What are the pros and cons that you think of testing? What are some benefits and some, you know, drawbacks of testing, compared to other correctness-checking methodologies?
+Well, the pros are that it's very lightweight, and very easy to add to a system, it's black box, and it's actually fully automatic, so there's nothing you have to do other than, you know, pick your inputs and configurations, where there is ways you can also pick those at random, so… to be fully automatic.
+The cons are it has very limited guarantees.
+So testing does not provide any guarantees, but rather just says, all the tests that I run, it works. Another problem is that the inputs are synthetic. So often for testing, the inputs are generated either randomly or through some way that the user thought, but they are not actual production data.
+So let's talk about the second collector, second method, which is monitoring, or runtime verification. Given a system.
+We create a monitor system.
+That reads logs of the target, or trace of the target system.
+And, then we run the system in production.
+And we check the monitor output on whether the system satisfies some kind of property that we want to satisfy.
+All production inputs.
+What are the pros and cons of monitoring or random verification? What do you think, compared to testing and compared to other correctness methodologies?
+Well, the pros are that it's lightweight, very easy to add to a system, again, it's black box, again, we don't need to do anything, know anything about how our system is implemented, and again, it's automatic.
+The cons are that it has limited guarantees. Actually, another pro is that it uses actual production data here, so this is… I should have changed that. This is also production data on top of testing.
+Cons are that actually it has limited guarantees, and it has production overhead. Okay, actually, I realize now this is actually problematic. So this should have been production data, easy to add, black box, automatic, but it has production overhead.
+Which is opposite of lightweight, actually, and it has limited guarantees compared to testing.
+Compared to other methodologies.
+Similarly to testing.
+Great.
+So let's go to a third way to check corruption of the system, which is called model checking.
+So in model checking, we model our system as a state machine.
+And then we come up with a set of properties. For example, the system never reaches a specific state, or eventually reaches a specific state.
+And then we systematically explore all the transitions of the state machine, and ask if they satisfy the properties.
+What are pros and cons of this, of this Modet Singh approach? What do you think?
+So the pros are that it offers actual guarantees for the system, and it is automatic.
+Now, the console becomes that it becomes a white box method, so you need to model your system as a state machine. You need to understand exactly how your system maps to a state machine abstraction. It's actually very expensive, because you have to systematically explore all the transitions of the state machine.
+And it has finite guarantees. So it has some form of guarantees compared to testing, because it is systematic and exhaustive.
+But these guarantees are not for the full extent of the system. They mix and bounce. For example, you say, if I earn my system for 100,000 rounds, or, you know, with 10 replicas, but you don't have guarantees, that are…
+That go across, the finite boundaries.
+So, and finally, we will talk about adaptive verification.
+Elect verification, you create a model of your system.
+Manually. And you come with a set of properties. For example, a system never hits a specific state again.
+And then you construct an actual proof manually that your model of your system satisfies these properties.
+What are some pros and some cons of these approach? What do you think?
+So the pros are that it has very strong guarantees.
+The cons are that it requires significant manual effort, and it, again, is a very white box approach. Your proof has to actively talk about how your system is implemented, and to understand and be able to prove that the properties, do hold.
+So, to sum up, let's look at all of these, all of these different, methodologies, and,
+and… and, like, a table of showing all of the… all of the different, the differences. So testing… so we have, in the beginning, we have more automatic approaches, and then close to the end, we go to more manual approaches.
+Our first approaches are more black box, lower overhead, some of them have low overhead pre-production or post-production.
+And the guarantees, though, the guarantees become harder. They become stronger the more expensive and the more manual an approach becomes, and the more white box.
+So, there are examples. This is an important… why I want you to have this knowledge in this context is because in industry, it's more and more common for people to want correctness guarantees that go beyond just checking inputs and outputs, especially for distributed systems, especially for companies that run systems and services that have to have very high availability and consistency in practice.
+So there are very, many, many examples of systems that fall somewhere in this, in this,
+and a spectrum, and are used very heavily in academia. An example is TLA+, which is a model-taking system for distributed systems. There's also P, a language for testing and model-taking of distributed systems that's very heavily used.
+And there's definitely with the verification tool, but with some forms of automation, so you don't completely manually construct your proofs.
+And there's also a rock and lean, which are deductive verification tools that allow you to get the full, the full, powerful kind of verification approach, but with some manual, proof effort.
+Note that LLMs are actually lowering the bar for detective verification, so the landscape might change, and we might see more and more in distributed systems, detective verification, so I would heavily encourage you to, you know, take classes, even outside of this class, and read on correctness for systems, and in particular, verification and model checking.
+Great.
+So, this completes this side quest of system correctness. And now let's get back to you as a built-in Facebook style.
+So how do we check that TAO is actually linearable? Any ideas from people? What do people think? How do you think people did it in Facebook?
+The answer is that they used monitoring.
+So the benefit of monitoring is that it has real-world executions.
+And so they gathered 12 days of execution traces and logs.
+and use those to monitor the system.
+Do you think this has any performance implication, gathering 12 days of execution traces and logs? What do people think?
+Is this feasible? Does this have performance implications?
+Well, this would actually be extremely, extremely heavy, both for storage and for performance for Facebook. So what they actually did is they sampled. So they used one out of a million events, to minimize impact on their actual production infrastructure.
+And they counted a total of 2.7 billion requests.
+And this is a breakdown of the requests here. So, you have, the high-level statistic of all of this in millions. So, the system has,
+Vertices, sorry, out of the requests, 900 million talk about vertices, and 1.8 billion, a million talk about… 1.8 billion talk about edges.
+Most of them are reads, as you can see here, and fewer of them are reads. And the number of objects, this is the millions of objects that these requests talk about, the unique objects that they talk about.
+So, how do we know checkliness ability using a monitor?
+Any ideas? What do people think?
+So, the way we do it is that we generate logs for each processed request. We generate the start time, the end time, the arguments, and a result.
+And we can check then, given this information, whether the execution is an apple. So, whether there exists a linearization that explains an execution.
+So, we take this execution, we monitor it, we have the complete execution, we have the start and end time, so we know which events overlap and which do not, so we also know which events we can reorder to actually explain the execution and find the linearization for it.
+Great.
+Let's talk now, though, about some theories related to this process of checking liability.
+Let's say we have a set of servers that process requests and send logs to a monitor.
+The monitor section has ability by reordering requests to a sequential one, to a sequential trace.
+Do you see an issue here, based on our methodology? We say that we gather the start, the end, the end time, and the request output, and then we try to see if we can linearize it. Any issues?
+Hmm.
+Clock synchronization.
+So, how can we compare times on different machines? These traces will have start and end times across machines, and these are not synchronized, they are known to be impossible to synchronize machines, physical times across machines. Hmm.
+So what they did at Facebook is that they measured the 99.9 percentile skew of clocks across applicants to be 35 milliseconds.
+This is… essentially, this plays the role of an almost worst-case skew.
+And then they over-approximated. They used this to over-approximate all comparison across machines by 35 plus 35, and we'll see how this works later, to… to not have a thread to validity.
+Do you see any issues with this?
+Well, an issue is that they might miss some illegibility violations.
+because of this available approximation, some violations that they report are actually not true. Sorry, they might not report on eligibility violations because they might think that something that is not a eligibility violation,
+there might be more violations, but all the violations they report are actually true, assuming that this over-approximation holds. So, if they report a violation.
+Since they reported after they had already skewed the clocks by the maximum amount, then this means that, this violation is certainly going to be true.
+And issue two is that
+a reported violation might not have been an actual violation, so actually not both of them cannot be true here. So, let's… let's see, actually, which one of the two is true. So, the results that they have in their execution.
+So…
+This is the percentage of objects. First of all, let's look at… let's look at all of the traces of the system. And, we have,
+requests and the objects, sorry, we look at the results of execution based on objects. So we see the percentage of objects that have no write events, or no read events, and the percentage of objects that have both reads and writes.
+The percentage… why is this… why is this separation important? So we see here that, you know, for objects, 75% of objects, do not have any rights, and 70… and 70%
+4% of edges do not have any rights. And similarly.
+the, yes, and for reads, 30% of objects don't have any reads, and 21% of objects don't have any… edges do not have any reeds. Why is this separation important?
+The reason is that objects with both rights and reads CAN exhibit violations.
+But objects without any reader and any rights, there's no way for them to exhibit any violation, because you would write their value, but if you don't read it, how can you actually observe that the execution for this object is not linearizable?
+So, given this, the final results that they found is that only 0.0004% of reads violated linear's ability. Only 0.004% of the reads violate linear's ability.
+This is despite their system actually being eventually consistent.
+Wow, this is a very low result, right?
+And they also, as we said, they use this upper bound approach. And this upper bound approach does the following. It says that,
+They use this timestamp expansion methodology, which essentially says that if we expand the timestamps by, on both sides, by 35MS, which is the 99th percentile SKU,
+This means that we assume that events have taken so much longer, right? So by expanding them, we create more overlaps within events. So when we have two events that actually,
+When we have two events… so here they give both an upper and a lower bound, right? So when we have two events that do not overlap, but then we expand them by 35 milliseconds, then they will have an overlap, so it means that it's more likely that we will be able to linearize the execution.
+So, in this case, they show that if you expand, expand the…
+the requests by 35 milliseconds, you make sure that all of the events that you find
+actually, so you find the lower bound of linearizability. Let's say some of these might actually be over approximation of linearizability. So we might have something that are actually non-linearizable, but they might have been, because it might have been the case that timestamps were different, and so they were overlapping.
+On the other hand, what is also important to have is an upper bound. So on the left side here, what they do is they take the request, the request,
+the request, and then they reduced them by 35 milliseconds, meaning that they check the case where both clocks were skewed the other way.
+And so they say, let's find what's the worst amount of illnessability violation that we could have, assuming that things that might look overlapping might not be because the clocks are all terribly skewed at this point.
+So, the upper boundary liability violations that they found is 0.003, so an order of magnitude more than the previous ones. But what are your thoughts on this?
+It is a very pessimistic upper bound. This upper bound assumes that all clocks are skewed the wrong way
+by 35 milliseconds every time. With 35 milliseconds is the 99.9 percentile
+skew. So it's a very, very, very bad daily skew, and we assume that all clocks are skewed their own way by 35 milliseconds every time, so then we say, if that was the case, how many would be all the liability violations?
+So, even in that case, the reliability evaluations are actually very few. They are… so… so users most often see the correct results, except in these kind of rare cases, 0.003%.
+Great.
+So, as we see, the better consistency study at Facebook, even though the system is eventually consistent, in practice, there is very few violations of layers' ability.
+Is that good enough? What do people think?
+So this depends on the application, actually. For the social network, it's actually okay, because we never even care to have liability, in theory. But having it is a plus. But for a bank, it's not okay. So then you cannot violate liability, even for 0.003%, because that could mean a transaction might go through that it shouldn't have gone through.
+So, let's now switch back to eventual consistency, now that we saw that in practice, even though a system might be eventually consistent, it actually is mostly strongly consistent, except for very rare cases.
+And now let's talk about convergence. You remember strong convergence that we talked about? So, strong eventual consistency has both strong convergence and eventual consistency. And strong convergence says that replicas that have delivered the same set of updates also have equivalent state.
+Do we have… do you see any issues with this definition?
+So this does not say anything about the resulting state. It just says that the replicas have delivered the same sort of updates have an equivalent state, but what the state is does not say anything.
+So we could have a strategy that orders all the updates arbitrarily. For example, takes the hash of all of them, and then orders these hashes,
+So we need to think about a way to actually have conflict resolution. So even with strong convergence, this doesn't mean our system behaves the way we would want.
+So, let's take an example of a counter for… for… to see how can we resolve conflicts among conflicting updates.
+And we have a counter that holds a single integer value, let's say.
+And we have the following operations on the counter. We have an increment operation that increases the value of the counter by X, a decrease operation that decreases the value of the counter by X, and then a get that detains the value of the counter.
+For conventions, we only care about the writes, so we omit the reads operations from now on for the rest of this class.
+So, how can we guarantee convergence for this service, actually?
+What are people's thoughts?
+What's a way to guarantee conversions for the service?
+Well, the operations actually commute fully.
+So, the state can just be the counter value.
+So we have, we can have replicas where they call the value of the counter, and then, when they take an operation, they just execute it.
+Does this satisfy store convergence?
+What do people think?
+Yes, it does, because as long as the replicas have seen the same updates, then they will sound exactly the same state, because all operations commute fully. So you can, you know, you can run increment first, and then decrement, and get the same value as running decrement, and then increment. Excellent.
+So this satisfies local methods. Let's look now at the register that holds a single integer value, but has a set operation, and a get, but we only care about the set here.
+How can we guarantee convergence for this service? Any thoughts?
+These operations do not commute.
+So what does convergence mean in this setting, exactly?
+One option is to let the client decide.
+and that… the way to do this is actually through a multi-value write step, where the state contains all concurrent writes. Let's look how this could work. So we have some replicas.
+How could you do this, and would that satisfy stone convergence? Think of a case where we have a multi-value register, where instead contains all the concurrent writes. Does this satisfy stone convergence?
+Well, the way we would do this is we would have a set of all the rights, of the concurrent rights, and then we would add these rights to the set, so at the end, the state would contain all the concurrent rights, so here, both 1 and 2, and therefore, it would satisfy strong conversions.
+And then clients would have to have a custom conflict resolution strategy, whatever they want, some kind of, like, maybe largest right wins and so on, to be able to actually determine what is the correct value of this register now, given all of these concurrent rights.
+So… Taking this concept from the multi-value register further and extending it, we have conflict-free replicated data types.
+So this generalize the notion of well-behaved data types that provide strong eventual consistency, and the reason why they're important is because, in general, this is not easy to implement strong eventual consistency.
+So entities are useful as a framework to implement services that provide strong financial consistency for specific data types.
+And users can design their own data types based on the CRDT principles, or use existing CRDTs out of the box.
+And CTVs are actually very popular in the industry, from Apple, Facebook, SoundCloud, and so on. And some examples here at the data types.
+are registers, counters, sets, and lists, and the main initial motivating use case was collaborative text editing. So the main kind of motivating use case was they built a CRDT for collaborative text editing that represents a document that people can write concurrently on.
+And if you want to see an overview of CRDTs and CRDT data types, example data types, you can look at this overview paper by Nuno Pregoza on conflict-free duplicated data types.
+Great. So, certainties, now that we saw roughly what, you know, an overview of them, certainties… let's look at an implementation. So, certainties guarantee strong events of consistency as long as the same updates have been delivered to both repos.
+And it's still instantly implemented.
+There's operation-based synchronization, And a state-based organization.
+They're equivalent behavior-wise, you can get the exact same behavior from both, but one or the other might be easier to implement, depending on the data type, or might perform better.
+So the operation-based one, is, where replicas broadcast all of their updates to all other replicas.
+An example is a counter in the register we saw, where, you know, you broadcast all the updates to everyone, and then you can actually get a CRT through that, because just by running all the updates, you have strong convergence.
+And the only thing you have to guarantee is that updates must commute. That's the only guarantee you need to have. Whereas for state-based, the way you do it is that you have a merge function that can merge two states.
+And let's show, let's see, let's dive a little bit deeper into state-based entities.
+Periodically, state facilities, each replica broadcasts its state S to other replicas.
+And to get that, to be able to implement them, we need to implement a merge function that merges two states in one. So, after this periodic broadcast, the replica is able to merge two different states and get the final state.
+And replicas execute these minutes every time they receive another replica stay.
+So what is the merits for the multivalued answer? Thoughts?
+What's the match for the multivarger register?
+It seemed to the Soviet Union.
+What's the mess for the ink deck counter we saw?
+Is it addition? Actually, addition does not work, because it leads to wrong count.
+So let's look now at… and what is it to not count? Because if you think about this, and if you try to write an example in your mind, if you just add, you might miss increments or decrements, or you might double count, actually.
+So, you can think of this as an example, on your own, but now we will look at the actual correct state-based increment-only counter.
+And when we look at the increment-only counter because the increment-decrement is more complex. So let's first start from increment only.
+So, one way to implement it correctly, and I'm saying one way because there is… for all data types, there is multiple ways to implement them correctly using certainties, as long as you provide these guarantees for the merge functions or the commuting, if you do operation-based.
+So what do you think is a way to implement an increment-only counter using a state-based merge method? Any thoughts?
+So the way to go is to use the intuition from vector clocks.
+So, you have in your state a list of counters, one for its replica.
+And, then you get… you get returns the sum of all the counters.
+And the merge is just the element-wise max.
+The reason why this is important is because the problem when you just add
+both increments and decrements in an increment only in a counter, and you don't consider the counter for each replica, is that you might double count. So every time, let's say your replica 1 has 1, and then you, you know, you match with replica 2, replica 2 now has 1, too. But then you remedge from replica 1, and now replica 2 has 3.
+So, if you keep doing it, you will keep getting replica… double counting replica one's number every time you go there. So you want a list of counters, for each replica, and a max so that you do not double count other replicas.
+For more, and the full increment-degreement counter, you can check this blog post that actually talks about this, but we will not see this in the class.
+So…
+Recapping, what we saw today. We saw CAP, we saw PassLC, we saw that there's a trade-off between store consistency and availability in the context of partition tolerance, and we saw that we always want to be able to tolerate partition tolerance. This is an undeniable truth of distributed systems.
+Then we saw eventual consistency, what does it mean as a consistent notion, and then we saw, in practice, on Facebook, how frequently the eventual consistent service is actually not strongly consistent.
+We talked about various ways to check the correctness of a system, and in the end, we also talked about CRTTs, which are a way to implement strong eventual consistency.
+A reality check now, before concluding this lecture, is that in the recent 5 years, we have been seeing a shift back towards stronger consistency, actually.
+so S3 is now strongly consistent. This is a recent, a few years back, an announcement.
+And the reason is that application developers are not expected to understand how to work with inconsistency, because it leads to several bugs, and then application developers actually complain to databases, developers about what actually behavior happens in their system.
+But how is this shift, back to strong possible? What about performance? Aren't we losing a lot of performance? Does this make things prohibitively expensive?
+What do you think?
+Well, actually, networks are becoming faster and more reliable.
+And also, the critical path, therefore, becomes the single machine and a single data center. So, given this change of networks, actually, stone consistency starts becoming, again, a more relevant performance-wise thing. Of course, with eventually we'll get better performance.
+But this trade-off of having developers being confused with what exactly they're getting from the database is hard enough that companies do not want to actually have to bother about it, and so they focus on strong consistency instead.
+Given that, I would like you to fill in the post-lecture quiz, please, so that next time we can look at, actually, your questions. And next time we will talk about scalability with various solutions. Yes, and I'm looking forward to seeing you next time. Thank you.

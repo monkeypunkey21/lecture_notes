@@ -1,0 +1,577 @@
+Aww.
+Well, when I think about… Sorry? And I was thinking I was missing something.
+Okay, hello everyone, let's get started. I just uploaded the slides also for whoever wants to access them on Brilliant Learn. Thanks for reminding me. So yeah, let's get started with the third lecture.
+So…
+Before we look at the third lecture's material, let's go back and look a little bit at the quiz that we… that I gave out on Lecture 2, and in particular, the questions that people had the most trouble with.
+So, the first question that we asked was whether two different reducers might process two items with the same key.
+And the answer is false.
+And the reason why that is, if you look at this diagram that we… that we showed also in the previous lecture, after the map states.
+The coal states happens, and
+things with the same key are grouped together, so only one red user is running on items with the same key. There is no way that an item with a key A can end up in any of the other buckets.
+Okay? All of the items in the key A will end up in the bucket in the first bucket, the items in the key C, in the second, the key W in the third bucket. So this caller states guarantees that there is no way two different reducers might process items with the same key.
+Make sense? Questions on this?
+Some of you got it wrong, that's why I want to make sure that, you know, there is no, yeah?
+Like, that job gets assigned to a different computer with that counter.
+I guess that would count, and I won't ask Sats a question, you know, in the exam to kind of trick you. It's more of a, you know, in this good case, yeah, it doesn't happen. You're right that, you know, if you had, like, some fault, maybe you would end up giving it again, that's a good point. Yeah, yeah.
+Oh, yeah.
+Let me see… Boom.
+Great.
+Other questions?
+Great.
+Question 2.
+The second question was asking whether the RPC is part of the control or the data plane. And the answer is mostly control, but sometimes data. Some of you said both, some of you just… just control.
+The question about data, which is some of you… the thing that some of you did not actually get, to get… to get a sense of it, think of, like, a service like an LLM service.
+Where you, you know, like, like OpenAIs, it's ChatGPT.
+There, if you do an RPC to such a service, you both tell it, okay, now do something for me, but you also send the input data in this RPC. So often, you do send all of the data that you want for the computation in the RPC itself. That's why we say it's both controlled and part of the data plane, okay?
+Great.
+And finally, for questions 3 and 4, the first one was,
+which nodes of mapping your system can fail? All, obviously. All of you got this correct, almost. And then the second question was… the final question was about Christian's clock synchronization algorithm. And the point was that this algorithm can synchronize clocks within seconds precision.
+And that is… the answer is it depends.
+And the reason is that
+If the network delay between the send and the receive, if you remember in Christian's algorithm, there was this discrepancy that if the send is much longer than the receive.
+If this is longer than AC, then this is an error in the synchronization. So if this error is much larger than one second, then the clocks might not be synchronized with the second's precision.
+Make sense?
+Great.
+So… Today's agenda.
+Today, we will see, we'll talk about
+clock properties.
+We will then talk about causality.
+We will then talk about Logical landmark clocks.
+And finally, vector plugs.
+So let's recap a little bit, what we talked about last time. We have this mapReview setup, and we left things off when the master node fails.
+And we said that, how do we handle this as a failure? Can we just restart the master? Not really, because you would then lose all the state of the task execution status. So we need to checkpoint after every step, and that's too much work.
+An alternative solution is to replicate the master to tolerate failures.
+And then we gave this example with the bank, the replicated bank account, where there is two different transactions happening in different parts of the world, a deposit and an interest.
+And if these two transactions happen out of order, then you end up with slightly divided account, account information.
+So the thing we had concluded last time, was that we only EPICAs must apply all the updates in the same order.
+And, we talked about this concept of a replicated state machine, which is a… essentially, we want to replicate
+And have each of the replicas run a state machine kind of algorithm, and then if all the state machines run the exact same steps, they should then… they should be at the same state at all times.
+The simple approach that we talked about, is to… that we could possibly order events based on timestamp of receipt, but this is hard because of clocks, queue, and drift. And synchronized clocks is also hard because of the unbounded network delay that we also saw in Kristen's algorithm.
+So, before we actually think of what a solution for our problem is, and what can we do, let's think about what do we need from a mechanism here.
+So, what do we use timestamps for? What do people think? Any thoughts? Why do we use timestamps in a, you know, in code, in a system?
+Thoughts? Why do we need timestamps? Timestamps?
+Maybe it's one, like… Kind of, like, doing, a task at an interval.
+A task and an interval, exactly, yeah. Other thoughts?
+Aluminium monotonic part of events.
+Hmm, linear monitoring… you hit the exact right terms, but I'm not sure, you know, exactly. Yeah, so linear moronic alternative events, I guess you mean if an event happened before another event? Yes.
+I guess these are, these are,
+These are roughly the two… I guess the way I have them written out here is usually we want to say an event happened at a point in time, so the class starts at 4, the item in the browser cache expires at a specific time, the log message was printed at a specific time.
+But then also we want to measure these intervals, which is the kind of, like, relationship between two things. Also, the class duration is so many minutes, the execution time of the program is so-and-so seconds.
+So there's… there's a few types of clocks that we could use in a system, and there's the, first of all, the time of day clocks.
+And these tell you the real time, and they're synchronized through NTP, the Network Time Protocol, which builds and uses some algorithm at its core, like Christian's algorithm.
+So imagine we have a process, We print the time.
+We sync the clock, because NTP runs behind the scenes, and then we print the time again.
+Is there any problem with this? Any thoughts?
+box view.
+clock skew, how could that manifest? Yes. Thoughts by other people?
+How could the clock skew cause a problem here?
+How did they talk with it.
+Right, so you could go back in time. So, you might have a clock that, you know, all of these issues that we talked about, the clock sterilization, this might say it's now 3 PM, this says it's now 2.59 PM.
+And this is the problem. So…
+time of day clocks work, but time can sometimes jump back and forth, and there's actually an interesting bug that was reported at some point by Cloudflare on how, you know, like, time, time issue can cause, like, very serious bugs in a big distributed system.
+Okay, so we have time of the clocks, but they have this problem.
+Then we also have monotonic clocks.
+Monotonic clocks only go forward, and for example, an example of such a clock in Python is, you know, you can use it, like, time.motonic, and almost all, you know, like, languages, and you have some kind of functionality for a monotonic clock.
+The problem with those monotonic clocks is that we can't actually compare them against machines, because these clocks run separately for each machine, so there is no concept of, you know, comparison between them.
+So let's try to understand and categorize a little bit how the different clocks that we see work. So we have the time of day clocks, and these do not work for durations, because of these issues with clock skew and so on.
+Monetary clocks work for durations, but they don't work for point in time, because we can't compare.
+What about time of day clocks? Let's look at another example here that's between two processes now. Let's say we have two processes, process 1 and process 2. They both have a value X equals to 0.
+And, let's say that their clocks are slightly out of sync.
+And let's say that P1 stores X equals 1 here, and then lets P2 know that X equals 1 at this point in time.
+The problem here is that at the same point in time, at 3pm.
+These two clocks have actually an inconsistent state. So, if we check what happens in the system at 3 PM,
+P1 has X equals 0, P2 has X equals 1. So this is, you know, the clock does not really work to give us this kind of understanding of the system globally. So yeah, let's go back and rethink of our requirements now, and what we really want.
+So what we really want in a distributed system, and the only thing we care about, really, is the order between events to be the same.
+So let's say that the order for an event A is given by a function CI of A for a replica, i.
+And let's say that we want Ci of A to be smaller than CI of B to mean that A is ordered before B.
+So I want you now to think a little bit for this RSM case and distributed system. What kind of properties could we want from these… from such a function that we might design for a distributed system?
+Introduce yourself to the person next to you, have a brief chat, and then we'll come back and talk about it. What kind of properties do we want for the system from this function?
+Perfect.
+You know, they cannot tell us so quickly.
+Why do you sell me that conversation?
+Okay, so let's, let's start getting it back here. So, so yeah, what do people think? What kind of properties have people discussed? Like, what… what… what do people think we want from these CIs?
+Yeah, thoughts?
+Kans? Morgans? Morgan's?
+Morhans?
+We all discussed, more hands?
+The function should be injected so that, like, each…
+order number is unique, so there aren't any ties between ordering. Great, so there aren't any ties. I guess we can call this maybe a total order. Every event is ordered between each other, yes. Other properties? Again, hands, hands.
+And on that note, let's say two events happened on…
+different threads and start at the exact same time? That's a good question. We'll get back to this later. That's a good question, yeah. Other thoughts?
+there's, like, multiple vertical clouds, then, like, I guess, like, it's kind of, like, something like this, then they should all be in the same, but, like, they should all have the same vertical. Correct. So, all the CIs, so for all CI and CJ, they should agree for all the events.
+You also, huh?
+Sensitivity.
+Tensitivity, right? So we need to have some kind of sensitivity from this, yeah? Any other thoughts?
+Anything in relation to the real world?
+The actual time that all of these events have doesn't necessarily matter, like, as long as all of them are independent.
+Put off the board here.
+So, okay, that is an approach, but I guess that's, I guess, the connection with the real world. Do these CIs need to relate at all to the real world? So let's take this and talk about the three properties here.
+So, there is the agreement. We have… we agree on this, all the replicas need to agree on all the… on all the ordering between the different events.
+There's total order, so for all events, we need to have some form of, you know, some form of order between them.
+And finally, I would say we also want accuracy. So if an event A happens before an event B, then it's good if the clocks actually also represent that. So if A happens before B, it's good if also the clocks show that this ordering happened.
+Thoughts about these properties?
+And we'll get back to the total order point later.
+PI versus CJ. We don't have to worry about… Light.
+what, like, replica J thinks, quote-unquote, like this, like, boring index or result looks like, as long as it compares in itself.
+So the thing is, if we can guarantee that whatever clock, clock mechanism we have satisfies these properties, then the first two, I guess, the first, actually, then we don't really need to care about all the C, all the I's and the Js, all the replicas agree, so it doesn't really matter precisely. Yeah, yeah.
+What if two different nodes process something at the exact same time? Like…
+You see what I'm asking about? Yes, yes, I mean, this is the same question I was asked before. In real life, there is no such thing as exactly the same time. I mean, you know, you could always find, I don't know, something happened a little bit before, a little bit after, but we'll get back to this a little bit later. Yes.
+Great.
+So, given these properties, let's now go to the main… one of the main ideas of this class, and I guess… I guess it's the main idea of this class, because it is underneath all of the techniques that we will see today. So.
+the idea is of logical clocks, and this was introduced in a paper by Leslie Lampard, where essentially the key idea is
+Forget about the real clock time, we don't care about actual time, we only care about the relationship between the events, and then let's find a way to associate the events with some logical time that has nothing to do with real time.
+And this logical time also preserves this happens before relationship. So if an event happens before another event, then the clocks also represent this.
+Okay?
+So, let's look at… let's look at an example before we dive deeper into how this works. Let's think we have these three processes here, and these events… all the dots are events here, so this is an event that happened, this is an event, this is an event, this is an event, this is an event, and those are messages that are sent across them.
+Which events here happened before with other events?
+So…
+Yeah, I guess… yeah, so… so when do we say that an event happened before another event? I guess that's the question that I'm asking. What are people's thoughts? Which, you know, which of these events relate happened before another, and how do you know that this is the case? Hans?
+Oops.
+They're in, like, the same machine, and, like, A is clearly before B, but if they're in different machines, because B causes a seat, then we can know that B's before C.
+Right, so if they're in the same machine, and a dot is before the other dot, and it happened before, for sure. It was in the same process, in the same machine, we can order them. Then, if
+they are… they are related by an exact methods arrow, then they are also… they are also related. So, across processes, if C is a message receipt of B, so B, then B is before C, because B is the send of the message that C receipt.
+And in the same process, if A occurs before B, then A is also, happened before B.
+Is there… is that all? Is there anything else?
+What do you mean by the message received of the…
+So… so this… this event here, I mean, in this… in this kind of system model, the way we present things is that B indicates the sending of a message.
+And C indicates the receipt of this message. So, B here, send a message, we mark this as an event, and C receive this precise message, so we mark this as a receipt.
+Yeah.
+I don't know if that answered the question as well.
+Is that enough? Are we good?
+Say, like, P3 had some event that happened before the… would you be able to order that at all? Like, I feel like you probably… you couldn't… because you didn't receive any message receipt before that.
+That's a good question. So, the way we defined before in this particular system model, and in distributed systems more broadly, usually, is through this relationship, and the reason is that
+if something happened in P3 before, you know, before E, but has no relationship, has nothing to do with all these other things, then, you know, why do we actually…
+care to order it with them. It happened completely independently, it didn't… it completely ignored these other events, so why do we need to order it? So yeah, that happens before. Really, we try to… we tried to capture this kind of, you know, it certainly happened before, and also, I guess we'll get to a little bit of the causality aspect of it a little bit later, yeah.
+Any, any, any, any, any, any idea from anyone on what is missing from here? This is a pedantic point, but yeah.
+Something is missing.
+We're missing transitivity. Someone said this before, but if A is smaller than B, and B happened before C, then A happened before C. And this is something that we always need to keep in mind.
+So, through that, we can also order all the events in this… in this diagram, A is before B, which is before C, A is also before C, and so on. A is before D, C is before D, and so on.
+Usually, these diagrams, we call them spacetime diagrams, and this is a way you can find this in the literature.
+And, yeah, the spacetime or Lampert diagrams, we also call them Lampert diagrams, visually represent this happens before. So…
+Here, I guess, yeah, based on these three rules, does A, did they happen before Z? Thoughts?
+Hands, hands?
+Yes?
+Yes. Does F happen before E? Do thumbs up or thumbs down.
+F before E.
+Thumbs up or thumbs down?
+F before E, more thumbs.
+More thumbs!
+Okay, no. So F, not happened before E. Because there's no way to kind of relate them. F happened before G, but there is no way to relate G with E, or, you know, anything before F with E.
+Or some things before F, with E, but there's no way to relate F with E.
+So…
+Before we continue on our main kind of, like, goal here to implement RSM, which is this, let's quickly go and have a little side quest here, and talk about causality, to also answer the question that was mentioned before here.
+So why… what exactly are we trying to capture when this happened before, here? So…
+what we want to capture is that, yeah, if A happened before B, I guess, A could have caused B, but B could not have caused A, for sure. Not, not the could here.
+In other words, if A caused B, then certainly A happened before B.
+So, the important thing that we care about in distended systems is preserving this causality. So, and this is important to provide guarantees that do not surprise users when they interact with the system. Sometimes we have these three kind of users, Alice, Bob, and some other user.
+And Ali sends this message, Bob's message, to Bob and C, and they broadcast this message.
+And then Bob says, I'm very angry with Alice, to sing. And then she's like, what the fuck?
+So… so then, okay, actually now, when this arrives, they're like, oh, I get it, okay. So this is… this is a causal anomaly, and this is one of the things that we want to preserve with… with these clocks, and this is an important thing that we want to preserve in general, in… in distributed systems. So… so…
+Happens before, we define it using causality, as kind of like this, this, as its foundation.
+And, and, building a little bit on that, we have…
+we have different… I guess, yeah, I think, I think building on that is the network models. So.
+then, in this… in this particular thing here, the question… the question to ask is, why did Alice's methods delay so much to get to C, okay?
+So the reason is that we have different types of models that we can use to talk about the network.
+And, one type of model that we can use to talk about the network is the synchronous modem, where we say there exists a value, n, such that all messages are delivered in less time than n. Let's say n is 1 second.
+And then there is an asynchronous model for the network, where we say a message can take an arbitrary amount of time to be delivered.
+So, question to you is, which of these two do you prefer to implement your system on top? Any thoughts? Which one is easier to implement your system on top?
+There's no one.
+I guess this is…
+I guess it depends what we mean by Israel, maybe, and maybe I need to be a little bit more precise. So…
+If you assume the synchronous model.
+it's actually easier from the perspective of the developer, because you say that the network will always send the messages in up to n seconds. So with timeouts up to n, you're always certain that something has been delivered.
+But, the problem is it's actually not realistic. So, even though it's easier to assume a synchronous model and write an application assuming a synchronous model, in reality, that doesn't hold. So…
+what we actually have to do is to assume the harder model and build our application in a robust way to be able to deal with all the possible things that could go along with the asynchronous model. So, in a way, the synchronous model allows strictly more behaviors than the synchronous model. The synchronous model only allows that message will be delivered until N. But asynchronous, they could be delivered anytime.
+So, if we… if our system Can actually,
+If ASM can actually have some guarantees under the asynchronous model, then all of these guarantees also are implied and hauled for free from the synchronous model.
+So the thing that we usually do in disability systems theory is usually to assume this asynchronous model, which is typically worse assumption, so then if the system is actually synchronous, then we get these… the same guarantees for free, okay?
+What do you want to involve other things?
+They're just define that.
+Sometimes you have to block, and sometimes you have to block for arbitrarily long time, that's correct. Or you have to sacrifice something. We will see cases of that throughout the class, actually, even in more complex protocols, yes.
+There is some impossibility results that come from this model.
+And it's similar to… it's similar to the problem that we saw in the first day of class with the fireworks show, right? So in this problem, you don't know if the messenger will be able to arrive, so you cannot even agree on the common time. So, this sequence model is actually pretty hard to deal with and leads to impossibility results, but this is what we can assume from real systems, so we cannot actually do something else, yeah.
+Thoughts?
+Questions?
+Great.
+Hmm, the answer came with a question. But in some practical settings, this actually is too pessimistic. So, a case where this is too pessimistic is, let's say, a data center where you control very tightly the network between, you know, a couple nodes, and you have someone checking these wires, making sure that these wires are correct, then this assumption might be too pessimistic. But if you think of a geo-distributed setting.
+across, you know, regions, across data centers, this is the assumption that we have to work with.
+Okay?
+Questions?
+Yeah, so for the rest of this class, we will focus on the asynchronous network model.
+And this concludes this kind of causality and network model, side quest.
+So now let's get back to replicated state machine. So, how can we use this happens before relationship and logical clocks to ensure consistent ordering of updates in the replicated state machine?
+So the objective of the Lampert clocks is to associate all the events with the time, CA,
+And then to satisfy this, if A's happened before B, then clock A also is smaller than clock B.
+And then we want to order all the events at all nodes based on this clock time.
+So, the labor clock algorithm
+Need to satisfy this condition, and given… and would want to have a value for all of these nodes here.
+So, my question to you now is.
+what are some valid clock values associated with each event here, and what is an algorithm that produces these values? So talk to the person next to you, and think, how can we give numbers to these, to these clocks here, to these values here, such that we satisfy this condition.
+And we also have a protocol to do this. What's that kind of protocol to do this in an automated way? Not just for this particular example. So yeah, talk to the people next to you, and we'll get back in a couple minutes.
+I haven't know, bro.
+Oh my god.
+Very interesting.
+This could be a little bit of a riot.
+Okay, so, let's get, let's, let's get, let's get some, some ideas in.
+So, how… what… yeah, what could be some values for these… for these events here? Yeah, thoughts by people? What could be some values for… for, let's say, B, let's say?
+Or, yeah, I don't know, do people have any thoughts?
+Share any thoughts that you might have from this… from this discussion?
+Can I ask a question? Yes. Are the… so you said physical time is going down, but are those clocks, like, safe?
+Like, are they all on the same scale?
+I guess. We want them to be… to give some numbers that are the same type of numbers, yes. Because right now, just from the understanding.
+We know that E is before C, and that E is before F, but we don't have much context of how, like, A and D are related, but we don't have much context on
+F as B, for example, because if we could shift off something and they still might… like, we know F is before C, but we don't really like tripping the other ones, so if the talks are all saved, each…
+letter can have an associated physical time that it's corresponding with, but if they're not synced, that won't work. That's a great point. So I guess they are not really in sync, and let's try to get a little bit, like, deeper into this by looking at maybe the algorithm, and then we will get to… yeah, and feel free to ask more questions now that we'll start doing the algorithm.
+So… so… Let's say that we start each of these processes with a clock.
+eventually we start all at zero, okay? Each one has their own clock. 0, 0, 0.
+Every time an event happens, we increment our clock. So now, C of A becomes 1, okay?
+And then C of… C of B, for process 1HUP goes to 2.
+Then we send the local clock with all the messages, also, okay?
+And now my question to you, based on this kind of thing, is what could be a time for C?
+What could we do as time for C here? Thoughts?
+Thoughts?
+A three, yes. So, we could do 3, possibly. So, on receiving a message, we could actually increment the time, like we've done until now.
+But let's look at the rest of the example now. So let's say we start the same thing running on the… on P3, so we have 1, we have 2, now we have 3, oops, now we got… we got stuck. So we have 3 and 3, so that's a problem. Any thoughts on how we could solve this?
+Maybe, like, make it dependent on B, like, D plus X or something.
+Like, I guarantee the methods of store.
+Yeah, what's… what's this plus? That's the key thing, yeah. How do we add? What do we add? What do we need to add here?
+That's exactly like the intuition, yeah. Can you just use another number that's bigger than 3 and 2, like, so 4? Right, the number has to be both bigger than 3 and 2.
+So we use the maximum of the local clock and the message clock, and then we add one to it. So as long as we are higher than the maximum of both of these clocks, then we're good, okay?
+Questions about this algorithm, at this point, and how it works?
+So this algorithm, based on this… on this question before about synchronicity, it's not… the clocks are not synchronized, actually. So the clocks…
+Here, they only say something about,
+you know, there's nothing relating here, F2A necessarily. But, you know, we gave some numbers to them.
+And we managed to, you know, the summary of what we wanted to do, let's get back to the summary, what we wanted to do is, we wanted to associate all the events with the clock time.
+We wanted to satisfy this. If something happened before something else, then the clock is also smaller, and therefore, if A causally leads to B, then we also want that to be represented by the clocks.
+But are we done here?
+Let's look at the design properties that we have to understand. So we wanted all replicas to agree on an order, we wanted to have total order, and we wanted accuracy, which we can describe as this happens before, property.
+So, do you notice anything wrong with this? Any thoughts?
+the one on P1 and P3.
+which one happened first, or, like, the 1 and 2. It's, like, ambiguous. Right, so there is no total order. So this is not a total order here. That's the thing where we haven't yet satisfied from these initial properties that we set out to satisfy.
+So we don't have a total order.
+And what we have from these clocks is actually this partial ordering, where A and D are in 1, B and me are in 2, F is in 3, and C is in 4.
+But we need to total ordinance.
+So
+Yes, before getting to this, let's look at the other… at one limitation of Lamper clocks, which is that not all events are related by happens before. So.
+Here, A and D are not related, like happens before. So these events are actually concurrent, so we can also write them as A parallel to D. So the problem with Lampert clocks is that,
+you know, these two might have the same value, or might have, you know, even different values, but even though they are concurrent. So let's… we'll get back to this in a minute. But for the total order part.
+How do we ensure total learning at all the replicas?
+So this is a way to total order nose. Put A before the D, the B before the E, and then F, and then C.
+But there's also another way. We could also swap D and A, and then E and B.
+So…
+The thing we need to really do is to break the ties in the same way at all the replicas.
+So, how could we do this? Any thoughts on how could we do this?
+Something that is, like, understood by all of us is, like, categorizing arbitrarily by a plus number, where, like, earlier…
+Right, so if you have a kind of global, globally tie-breaking rule, like the process order is the, the, you know, also is used to order things, then we can actually, we can use the… we can order things across, that have the same kind of clock value.
+So the insight is that two events at the same process can never have the same clock value.
+So because of this, we cannot break the ties by appending the process number to its event.
+So, when we timestamp an event, we use the clock and the process number.
+And then we say that a clock and the process number is smaller than the clock and the process number of another event and process when
+Either the clock is smaller, or the clock is the same, and the process is smaller.
+Make sense? Questions on this?
+Sorry, what, what? I guess the assumption is that, those P1, P2, T3 were in the same machine, they were just processes without the setup, but it wasn't a separate machine. They could even be in separate machines, yeah.
+Oh, I see, I see, I see. So I guess… so I guess this is a proper… a process ID that is not the same as necessarily the PID that the operating system gives us. But imagine you have a similar system where you have some software processes running in different systems, and you have a way to name them, okay? And everyone knows everyone else's name, or number, or index. Then this is the index you would use. Not the PID from the OS, that's a good point.
+So you have to have a way to give them some index that is unique, and we can assume that this is possible, yeah, for different processes.
+You can just initialize the beginning, yes, exactly.
+Other questions about this?
+Great. So this gives us some guarantees and a deterministic total ordering. So for any two events, we get either CA is smaller than C or B, or either CA smaller or CB smaller, for any two events A and B.
+Great.
+So we satisfied all of the… all of the… all of the properties that we had before. Any questions so far? Any questions about the Lampert clocks, or the properties that we had? Yeah, or anything up to this point?
+Great.
+a quick break before we continue with the vector clocks. We… the assignment one is due on Friday by 10pm. You should have started working on it, ideally.
+We will soon send out some forms so that you can declare your partner for assignments 2 to 4. It's advisable that you find your partner before even these forms are out, find your partner, and then when the form is out, you can immediately declare.
+And the Thursday lecture is canceled, it's already on the schedule, but for people who haven't checked, it's canceled, so worker assignment one, I'll have some travel that I cannot… that I cannot skip, okay? Any questions about assignment?
+Partner declaration, discussions, or anything like that.
+And go to discussion this Friday also.
+Great.
+So let's get back to the problem that we had before of concurrent events.
+So, recall the replicated bank database example. We have a client in Los Angeles, depositing $100, and then an admin in New York adding 1% interest to an account.
+The clients send the updates first to their local replica, and then the goal is to apply the updates in the same order at both the replicas.
+Applying effects in a different order, we saw could lead to inconsistent replicas.
+So, how should we do it? We just use the Lampert clock order to apply all the replicas and updates to all the replicas.
+A key thing we need to keep in mind here, and a key kind of, like, insight of this idea, of this technique, is to place an event in a local queue, so whenever an update arrives, we put it in a queue, and we can't always apply it right away.
+Then we sort this queue by the increasing clock number.
+And then we apply, at some point.
+And the question is.
+When can we actually know and be sure that we can apply the head of the queue? So if, let's say we have a queue of some events, and the first event has a clock too, when can we apply this 2.2.2?
+And the two being the time, and the second two being the process identifier. When can we apply this event? Any thoughts?
+One, like, all… Following.
+Parts of the transaction are fully complete.
+Yes, when everything is fully complete, but how can we determine this? By just looking at the clocks.
+So there is… we are in a distributed system, we have a bunch of processes, our queue, the first event, is 2.2. When can I know and be sure I can actually go and apply this now?
+this event.
+We might apply this event?
+Apply this event, I mean?
+let's say we have this… the events are these requests by clients, the request is a deposit or an interest, so literally performing the update, so adding the $100 to the account, or adding the interest to the account. So that's what I mean by applying.
+Is it when you have received all the process IDs of, like.
+of events, at that time before your process ID?
+Essentially. So, like, you know that nobody could be still looking on it before you. Right. So the idea is that if we know all other nodes have sent us, do not have anything earlier than the thing we have in our queue, then we can actually apply it, okay?
+So let's look at an example to understand this. So let's say we have these two replicas. This is 2.1, starts at the clock 2.1, and this starts with 7.2.
+And then the client makes a deposit, requests in LA, and we timestamp this as 3.1.
+Here, the admin adds the interest in New York City, and the timestamp is as 8.2.
+Note, we do not apply these events at this point. We just received the requests, and we have not applied anything yet. We just timestamp, timestamp the requests, okay?
+Then, we send the event to the other replica, so we say, okay, I got this update with 3.1, and I got this update with 8.2 here.
+We receive those, and we add timestamps to those based on the methodology we saw before. So here we say 9.1, and here we say 9.2.
+Because we do the max of our clock and the, and the other clock, plus 1, okay?
+So what next? What can happen next, now that we have… now that we have these numbers here?
+What can… what can proceed in the system? Any thoughts?
+Now you have some sort of good ordering to apply that transaction, and then just, like, do the thing that's on the queue for each option? Who can do which update? That's… that's… who can do an update here? This is exactly the right thing that you're saying, but more concretely, who…
+Can apply an event here now.
+And what event?
+Thoughts?
+Can anyone do anything here with this knowledge of these clocks?
+And the timestamps of these events?
+Right, so the client in LA can apply the deposit because they have heard from R2
+An event that's timestamped 8.2.
+So they know that certainly R2 doesn't have anything before 8.2 that they have not told us about, and they also, therefore, do not have anything before 3.1.
+So the fact that we know that our replica 2 is… has gone beyond 8 means that we can now go and apply 3 here. Make sense?
+How does R1 members at, like, R2 hasn't also set, like, some earlier, like, timestamp, it's just in flight, and they just arrived out for it? That's a good, that's a good question. And, I think I have a slide for this.
+I hope I do. I certainly have it in this or the next lecture, but the key assumption here,
+Yeah, I don't have an example. So, so I got to the next one. So, so the transaction here is actually something that we call powerful queues. So, so, there is this property that we can assume from our queues and our network queues, that there might be
+Slow network, but… If I receive
+Something from a specific… from a specific, process.
+Then, I have also received everything before.
+So we have this usual expectation from queues between two participants of FIFO, first in, first out, and this can't usually be guaranteed by protocols like TCP. The problem is usually that we cannot have this kind of assumption across nodes. So if you recall the problem that I showed you before, also here, with Paris and Bob, the problem was
+Noted that there was two processes, and they did not… they were not the same, the same message between two processes, but rather…
+that…
+Alice sent something to Bob, and then sent something to C, and their network was actually slow. But nothing was arrived, and… but if Alice sent something else, you know, to Bob too, the first thing would have arrived before. So we make this assumption about 500, that's a very good point. Does that make sense to people?
+I'm not allowed to add this slide here.
+So, what can we do now? What can happen at this point?
+Pulses?
+The 2.1 and the two are referring to the same law.
+like, the same scale. Yes, so we are… we are currently in a… we are assuming that we are both… this process all run in the same kind of distributed system, and they know they're using this clock to compare things, yes. So R1 knows that R2's setting after
+Already, because 8 points is actively took 1. It's not…
+Yes, exactly, because we're using the protocol that we described in the Lampert clocks. So this protocol, there is no way for… that there will be any skew, because we know that R2, beyond this point, it will only increase its clock, actually, because it will follow this protocol. That's a good point. So, what we're assuming here is that everyone knows
+that everyone else is running the Lampert Clock protocol. So, we don't… we don't… we don't assume… we assume that they… they don't exactly that protocol, yes.
+No, it doesn't make sense to people?
+Questions?
+What is the next thing that can happen now, at this point? What's another thing that can happen? How can the system keep progressing?
+There's two more things that can happen.
+Can the replica one do anything else? Thoughts?
+It could also be… tell replica to exam with deposit, that's correct, but before even exchanging any other information, what can happen before exchanging any other information?
+Right, it can also play the 8.2, because it knows that anything else that R2 is going to send it will be after 8.2. So, it also knows that I don't have anything in between 3.1 and 8.2,
+R2 doesn't have anything between 3.1 and 8.2, because they sent me 8.2, so that means that there's nothing else in between, so I can apply both of these events safely.
+Yes.
+There's, like, another…
+That's a good point. So, I guess, collecting all of the assumptions that we have here, three assumptions so far. We know all the other epicas.
+We know that there is five order between the replicas, between each pair of replicas, and we know all replicas run Lampert clock. So these are the three assumptions we're making.
+Questions and other, other, other thoughts?
+What other thing can we do here before exchanging any messages?
+Can't R25 be one?
+R2 can also apply 3.1, because R2 knows I am ahead of 3.1,
+R1 hasn't sent me anything before 3.1, and is all going to send it to me, because we have FICO queues, so I can safely apply 3.1.
+thoughts, questions by people? Do… does everyone understand here why this… why this was safe to apply this tool, or is there any other kind of missing assumption here? Or any question? Yeah.
+This is just, I assume they are in some kind of clock time, yeah. They both run this protocol that we described before, so they run this precise protocol, yeah.
+Questions? Other questions?
+Pardon?
+Do you know not to…
+But, you know, to use the fact that it was 3.1 is odd, or was it the 0.1 that it used? It used the fact that this was below 8th.
+that 3 was below… 3.1 is below 8.2. That's what it used.
+as long as it's not… okay, so the thing that R2 knows at this point to apply is that
+3.1 is the earliest methods from R1.
+Right? There is no earlier message than 3.1. So that's… that's one thing that we know. So there's nothing… there's no way suddenly we're gonna hear from R11.1, okay? That's the one thing it knows. And then the other thing it knows is that
+I certainly have gone after 3 here, so there's no way I will generate an event before 3.1. So I can just safely apply, because there's no way anyone in the system will generate an event that will be before 3.1. Does it make sense?
+What you just said, like, you're certain that no one will generate an event before 3.1, like, does its clock skew, like, prevent that? Like, how is this…
+Like, bypassing clocks. These are… that's a great question. So this is the precise reason why we don't want to use physical clocks. These are not real clocks, these are the clocks that we described with this precise protocol. So this is…
+This is the way that we generate these clocks here. So this, this way, I guess,
+This way here, with this protocol, the Lambert Clock Protocol. So we know all of these… all of these processes run this protocol, timestamp the events like this. Is there any way for these clocks to go back in time? No, there's no way.
+So, and we know the three properties that we… that we have from them. We know that they have total order, we know that they all agree on the order, and we also know that if something happens before something else, they also have this time. So we can use these properties to kind of,
+do this, these updates safely. Other questions or some more hands? Ask, ask away, ask away.
+Who's the work?
+Sorry?
+Didn't that?
+Explain.
+Yes. So, so these, so these, these clocks do not actually guarantee that the real timing of things between things that do not interact at all will be present. So the client in New York and the banker in… sorry, the client in Elaine, the banker in New York.
+do not communicate with each other. They're just, you know, they send these events in the system. So, from their perspective, they're just waiting here. They're waiting for their… for their deposit to actually be done in the system. So, we reordered them, maybe, under the hood. Maybe… maybe this, actually, they clicked… clicked the button first.
+But since the Lamper clocks are like this, it was executed second.
+Yeah.
+Saying that, like, dude, like… Because we actually need 9.1, and then we actually need 9.2, right?
+We execute, sorry, sorry, we execute 3.1 event with time sum 3.1, and then with 8.2.
+Like, in real life, there's something…
+But what did we say it happens before, really? It happens before is something that we can actually determine it happens before. If someone, you know, in the other side of the universe does something at the same time with you, you know, if you don't actually interact with them in any way, then we don't have to actually guarantee this. The only case where this becomes a problem, and this is a fundamental problem, again, with actually all of these protocols.
+in distributed systems, and this is another fundamental assumption that's being made, is that external clients do not have a bypass channel. So, if actually the banker in New York picks up the phone.
+says they are talking with a client in the lane, they say, I click interest now, and then the other one says, okay, I click this now. Then, we might violate it, but we assume that they don't have any kind of bypass channel outside of our system. Yeah. So we only care about comments before that we can actually see in the system.
+She's assigning those numbers for themselves? Yes. For the whole system. For the whole system. Then, like, how do you know they both assign the same number?
+But how can they assign the same number? This one always assigns numbers with this process identifier, and this one with this process identifier. So this is the thing we added to the protocol to make it work, yeah.
+And if we both have the same, like, event number, then would they certainly… we wouldn't have, like, an actual, like, query based on those, like.
+I might see something.
+So, so, could, could you, could you, so if, if, if the same client does two things, or, or…
+physically, like, Apple.
+once, the New York person does the interest, like, I might expect myself to have, like, end up with $110, right? But if both of them have the same, like, exact number at the same time, so, for example, if it's, like, two ones in LA, but also two ones in New York for the interest, then I might see the 10% interest…
+Yeah, even if they have… even if they have, you know, different times, you could see that. So even if, you know, here I said, like, the counterexample that I said for my kind of case is that, let's say you
+this… the interest is done first in physical time, it was done at 3 PM, and then… but it has 7.2 logical time. But then the LA thing happens at 3.1, but then it has this 2.1. So then, even then, this will happen second, even though it happened in physical time first.
+Yeah.
+as a user from this, the packet that clicks the interest here does not actually see the response to their interest until things are applied, actually. So they don't hear back from the system until things are applied, so they're waiting at this point.
+Maybe I have some thoughts that the interest is happening at my curriculum, I know that I did by the default, yeah, I still might see a different quarter, I expect, right?
+I mean… I mean, then you will have to give them the… you will have to… so, okay, that… I guess I see your question now. So the question is, what do we do with the physical time? Like, if we report the physical time to the users, that might be consistent. So there is actually ways to report the physical time in a consistent way, and that is
+You can report.
+here, not the time that they clicked to do the transaction, but the time the transaction was actually done to them. The physical transaction was actually done. So usually, this is also when you use your credit card somewhere, right? You don't expect that the transaction succeeded when you start the transaction, but when it says, transaction succeeded.
+So in this case also, you might say, apply the interest, waiting, okay, transaction succeeded, maybe something else happened before or after in the system, I will know afterwards when I will look at the log, yeah.
+We don't care about the ordering, because we don't care if it's, like, aligned with real life. Why do we bother with this complex algorithm, instead of just saying, like, do the one with the lower process ID first?
+It's the user, they don't actually see, and… But then we would have the problem with happens before.
+So maybe for RSM, I mean, for this particular case, it does work, but then we have the problem with the happens before, that then we have no kind of guarantee that things that happened before actually have any… any correspondence with the… with the actual… with the clock, with the clocks. Yeah, that's a good question. Yeah.
+Other questions?
+Yes.
+processes, and it's all just… It'd be, like, forever, they're actually doing something.
+That's, that's, that's a good point, and there is…
+I guess I will get to this in a minute. There is more things that we can discuss about this later, and we will discuss later in the class, but I will get to this precise point in a minute, yeah.
+Other questions? Other questions?
+Oh, so…
+Back to, like, the Alpha Bob situation, those three machines, so that we couldn't reply just perfectly, like, we couldn't apply 3.1 if another machine… we only knew it was at, like, 2 or something. We'd have to wait for that to finish. So essentially, you're, like, each machine is stalled by the slowest time. Even has a bunch of, like, updates, you can't… you can't apply those until…
+So, like, one of the machines at slow time.
+Totally correct, and it's the same point as was mentioned before. So I guess the question now is, what can happen now? Nothing. So we have to wait before applying the interest in that particular replica, and we have to wait for exactly this kind of thing to be satisfied.
+So, I guess, let me go on this, and then we will answer more questions if there are. So, replicas have to wait until they hear a higher clock number from all the other replicas.
+So how can we reduce the time between receiving and applying an update? Any thoughts on this? What can we do to get this, you know, better? Because now, I mean, these might have to wait
+Until there is another update arriving in LA for it to proceed. Any thoughts? What can we do?
+Instead of waiting for, like, some event to happen.
+Right, so we can have some kind of timeout situation and periodically ping all other nodes to sync our clocks. So the way this would work in this particular example.
+is that at some point later, we say, okay, now I'm at 10.1, and now I'm at 10.2.
+We increased the clocks, by the way, here, because we sent something, okay?
+So, we say this, and now, at this point, we know that R1 is certainly beyond that point, so we can also apply the interest, okay?
+Questions?
+Questions on the… on the periodic, kind of, on… on this, on the rest of the… on the… on the rest of this figure, and the one we explained before?
+Would that what? Sorry, sorry?
+I mean, it is a network, some network overhead, and there is, again, we'll see later ways to reduce coordination throughout the class on things like that, but it is something that we certainly have to do, and I mean, even with 20 nodes, sending, like, an empty message with a clock every now and then, it's not really that, that heavy, but you're right, it's network overhead, yes.
+Other questions?
+Great.
+So… Let's now go back and rethink the total order.
+So…
+Do all events need to be ordered with all events? We… this was brought up throughout the class today, but can you think of an example where two updates actually do not need to be ordered? Yeah, can you think of such an example? What are some cases where two updates do not need to be ordered?
+Thoughts?
+They don't… they're saying, like, there are two different balances.
+Yeah, there are two different balances, so update to two different accounts.
+can be reordered, actually. We don't care about the order in which we apply the things to them. Any other thoughts? What else could be? On the same account, what could you do, possibly, and still reorder?
+Right. So, deposits also, we don't care about the order. Why is that? Because they commute. So, commutative operations can actually be applied in any order, and we are allowed to apply them in any order and get the exact same result.
+So… What we actually want to do, and then…
+what is a, you know, what's a way to kind of, like, encode this is with causal ordering. So we only care, to order
+the events that are causally related with each other, or the events that affect the same kind of thing. So, in the case, for example, there is an… as an example, you could think of Facebook posts. So, we only care to order
+You know, if a post is a response to another post, but we don't care and sell it to order posts from two different accounts.
+So, causal ordering often suffices.
+And in this case, yeah, we only care to show, for example, the comments if the post is visible to the user. And with Lamper clocks, this is the problem and why we cannot actually have this, because in the Lamper clock, if A happened before B, this implies that the clock is smaller, but the converse is not necessarily true.
+So if this happened before, if the clock is smaller, does not imply that it happened before. And as we saw before, it's possible that they are actually concurrent, okay?
+So as we saw even in this… in this case here, it's not true, necessarily, that 7.2 happened before… it happened after, sorry, that this event arrived after this. It's just that they are concurrent, and we don't have any way to order them. So Lampert clocks cannot order things that have not…
+do not have this kind of, relationship, with messages between them, okay? But they still give some time that is not consistent with the happens before relationship.
+So.
+What is a way to determine a precise partial order of events in a distributed system?
+And this is not just useful for RSM, but it's also useful for many other things, like debugging distributed systems, testing them, monitoring them, and so on. In general, when you want to describe very, very precisely what's happened in a distributed system execution, and know the precise order, or lack of order, concurrent order, between different events.
+So the way to go about this is that we can label each event with a vector that has N clocks.
+And the number of the components of the vector clock are actually the number of the processes in our system.
+And the interpretation of this is that CI is a count of all the events in process I that causally precede E.
+So let's say we start all the vectors here with 0, 0, 0.
+what are the clock values associated with this event here, and what is an algorithm that produces these values? And before we get to discussing this, are there any questions on the setup that we have so far? So now we want to come up with a different algorithm, not Lambert clocks. We have a different representation.
+Where we have a vector of times. What is a way to put a sign
+clock values to these events that satisfies everything a wrapper clock did, but also gives us this partial order. So if the events are actually concurrent, we want them to be concurrent.
+Questions about the setup?
+Okay, feel free to discuss. We'll get back into 3 minutes.
+That's the mission.
+Why don't remember maybe even…
+Okay, let's, let's start discussing together. So, what do people think? What are some ways to put values, or yeah, what kind of ideas do people have? What kind of thoughts? Yeah, dance? What kind of values could we put in these events?
+Any, any, any insight is, is useful. Hans, what have you all discussed?
+Any thoughts, any interesting observations? Yeah, Mohanz? Moorhans?
+Morehans?
+Hunts?
+More, more…
+You all discussed any interesting observations that you might want to share with, yeah.
+Do people want more time to discuss?
+So, like, for example, they can just be 1, 0, 0, and 3 from whichever process we're dealing with. B could be 200, but then for C and P2, you would have to do the same thing that we did with Lamberts, where you have to do the maximum. So, right now, P2 is at 0, but P1 has,
+also 0, 30. So then you would just do the maximum, and then add 1. So it would be 210, and then you would just keep doing that. So what would C be, you said? 2, 1, 0. Okay, that's, that's, that's, yeah, this is, this is a great way to go about it, yeah? Any other…
+Okay, so… I'm just wondering, based off the previous, slide, it says, like, C sub I is a counter that's not his eye that constantly perceive me, right?
+So does that mean, then, that A would be…
+considered 000, and B would be considered 100.
+A would be considered 000, and they could be… could you repeat this? B would be 100, because A is on the same path, so the BK pattern.
+So we won't… we won't suddenly, as you're saying, to use the counter in a way that… that shows the progress in this particular process. Yeah, yeah, yeah. Is that… does that… does that answer the question, or does that go… yeah, yeah. Or is there still…
+We want A to be represented as 0, or as non-000?
+I think you can pick either. Yeah, yeah.
+Yes, sir.
+That you would have,
+That's a good point. So yeah, I guess, no, you cannot pick either, no. So you increase the time, yes, that's a good point. So we do need to increase the time. So let's, let's get to, let's get to the actual algorithm. So…
+We start the vectors at 000, as we said, and there are the following rules for updating. For each local event, increment.
+the local entry, by 1, exactly as we did for Lamport, but only for the local entry, okay? This answers, I guess, the question of, can you have the first event be 000, or do you want it to be 100? So, every process increments its local entries for its local events, okay?
+And then, the interesting part is if a process J receives a message with a vector D1, D2, D3, blah blah blah to DN,
+It sets its local entry.
+to be the maximum of the local plaster remote clock and increments. It's, it's, it's local entry by one, okay?
+Let's look at it as an example, to make it clear.
+So, we apply the local update rule, and we get 100 here.
+We apply the local update rule, and we get 200 here.
+Then we apply the message rule.
+We send 200 here.
+And here, we say, okay, I get 20000, I do the max of my 000 and the 200, I get 200 from this max, and then I increment 1 on my local clock, okay?
+So every time I process an event, I increment a local clock, but also when I receive a message, I do a merge, essentially, of the two clocks, to the maximum values.
+And then we can keep applying this to get 220, and then 22… and then 001 for this, and then here, before the increment, it would get 220, and 001, which leads to a maximum of 2.
+2, and 1, and then we would increment the 1 to become a 2. So now we have a 222.
+Questions on this?
+So why does it matter, like, if you do 000 in the beginning versus 1-0 in the… The thing that matters is simply that the first event, you start with 000, but the question was.
+do you put… do you assign A to be 000 or 100? And the point was, if you assign it to be 000, then A and E will have the exact same value.
+So, that's not correct. So we just first increment, and then up, and then… and then mark the event. That's awesome.
+Why is E001 and not 1-0?
+Because E and P3 has not received any message from anyone.
+So, P3 is locally grinding away, starts from 000, says now 001. I don't know what everyone else is doing in the system, yeah. So for each column and, like, processes, vectors, you've met, set it to the max, what it is, and whatever.
+But is there ever a case where what it already has will be greater than what it is?
+what it already… Only for its lo… actually, yes.
+That's a good question. Yeah, what do people think? Are there any cases where you could have the local be bigger than the other one? Thoughts?
+Thoughts?
+Let's say, like, process 3D.
+It has a bunch of events, and it's, like, 005.
+And then process 2, send a message, put on the…
+0, 1, 0, and stand up and prefer.
+Oh, I guess… Yeah, that would be a difficult person.
+Yeah, but… but I think… I think the question was for different columns, right? Not for the same column, necessarily. I mean, there's… there's no way… okay, so the thing we know for sure is that if we come from processes, when I hear from some… let's say there's another process in the system.
+This is blah blah blah, and this is also blah blah blah.
+If I hear…
+This is PI with speed Z. If I hear from PI, there's no way I have a higher clock for I than I. But maybe I have already heard
+A thousand times from everyone else, and this one has not heard from anyone.
+So, I know for a fact that I would have higher numbers for everyone else, but maybe not for that. Yeah, so I guess the point is, we don't know who has the freshest information. We just know that one of them has the freshest information, we just want to make sure we have the union of the freshest information, yeah.
+What limitations of network clock is this trying to address?
+the total order. So, now let's go… I guess, okay, are there any other questions with this, and the protocol, and how it works?
+Great. So… Let's talk a little bit about what vector clocks can do, and also compare with Lamper clocks.
+So this is how we can compare two vector clocks.
+We can say that VA is equal to VB when all of the values are the same. That's not very interesting. We also can say that VA is smaller than VB when, for all the values, for all the different rows, for all the different columns in the vector, for all the different cells in the vector.
+We are smaller or equal.
+And we are not… we are not the same, because this just would allow… the smaller or equal, the equal part would also allow the equal to go through. So we just want to make sure we are not equal, and everything is smaller or equal, okay?
+So how can we tell if two events are concurrent? Thoughts? What do people think? When are two events concurrent with vector clocks?
+Can't we say that?
+Same value for the local blocks?
+The corresponding columns for the promises.
+If they have the same, if they match, that could be, they could be concurrent, but there's also a more, a more, like, a more general way to say if something is concurrent. That certainly works also, though. So yeah, what's the general way?
+Right, so if one of them is bigger, and one of them is smaller, then we know this actually cannot be compared. There is no strict ordering between them. Something… so something happened, so let's say I have, like, some processes here.
+E1, P2… And then people… performed.
+So this, we have… 2… So, water.
+1.
+Zero, zero, right? Because it's… 1000, 11000, 1100, and this one is…
+0, 0, 1, 1. So this, these two events
+This is bigger on the first two, this is smaller on the second tool.
+So that means there's no way to compare them, actually.
+So, the vector clocks, essentially, what they make sure is that if there is a chain of events and messages that links things, they will also… this will manifest in the vector clocks, so it will become apparent. But if there is no chain, no kind of message chain that follows, then there will be no way to compare them, yeah.
+Okay.
+certain columns are greater than other columns, or… By chain, I mean methods change, actually. So there will be methods, and connecting these two events, because one of the events knows at least as much as the other, because it has higher numbers in all of the clocks. Yeah.
+What do you mean by two events being converted?
+In the process, it's a single event, rather than Agent.
+on the process… sorry, could you repeat the question? What do you mean by two events being concurrent?
+And then what was the follow-up?
+So, so, so we mean concurrent based on this happens before relation that we have. So, if… the question that we tried to address with Lampert is, was this converse rule? So, it was this thing here. Oops.
+Lampert guarantees that if A happened before B, with our definition of happens before, which is distinct with the process and the messages, then the clock also represents this disorder. But.
+If the clock is smaller, this does not mean that the actual values happened before.
+So the thing is now, there was some loss of precision with the Lampert clock. We keep the one side of the implication, but not the other side. But now, by adding this additional information with the vector clocks, we retrieve this information that was lost,
+That was lost from an output clock, yeah.
+Is there a follow-up question?
+I mean, I just… I guess,
+By concurrent, we mean their timestamps are exactly the same. They are not the same here, actually, the timestamps. They're 1100 and 0011, so they're not the same.
+But, like,
+user point of view that it happened at the same time. They happened at an incomparable time, actually. That's, I think… okay, I guess, so… oh, so your question was more, what do we mean by concurrent?
+So concurrent here, more means not they happen at the same time, like, at exactly the same time, but they happen at times that are incomparable from the perspective of the user. They could be the same, they could be a little bit unordered, but from our perspective, it's as if it's the same. Yeah, yeah, yeah.
+Any other questions on vector clocks?
+Okay.
+To confirm you understood everything in this lecture.
+please, fill in this, this Google form, so that we can also next time go and address if there's any open, open question. And yeah, next time we'll see, how to do snapshots. Yeah, so feel free to fill this in, and then you can head away.
+So, you have filled out the form, right? Yeah. Yeah, so I have sent out everyone who filled out the form to the admins, and they, they, they…
+are starting to give out PTEs, and continuously asking them to add more. They're monitoring who's drop in the class also, so it's up to, kind of, like, the, you know, lack. If enough people drop that the PT people can get the PTEs, then you will get the PTE.
+I mean, I don't know if there is. I think for now, I think some people have already gotten, it's really… I mean, at the moment, you probably… if you haven't received an email from the admins, you don't have a PDF. That probably means, so…
+They will send email, yeah, exactly, exactly. So they will let you know.
+Yeah, then I'm like, we got a PT through, like, assignment ones.
+They still do assignments. You can already start Assignment 1, correct?
+You… the assignment one is… is… is already… is up on… is up on the… on the class. Oh, the one sales. Yeah, on the JAST website. Also, if you… if you want, if you want to… when we do it, ask me, both of you can ask me, and I can put you as observers in the Blue England class, so that you also see announcements. Yeah, yeah, yeah, yeah.
+So, just in case, like, if we look at PTE after, should we still, like… If that happens, we will figure it out, but…
+if you… you should… you should have already… I feel, you know, if you are planning to take the class, we try to finish the assignment before that, because it's not hard anyway, the first assignment, so then when that… when that happens.
+You know, you can just immediately
+tell me, okay, Orlando Piazza, you know, this happened, we'll figure out a way, you know, we're not dependent on it. No worries.
+Don't…

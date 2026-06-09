@@ -1,0 +1,691 @@
+Yes, thank you.
+If everything's off, you know, I just didn't know it.
+Okay.
+Jesus says, random.
+What a good knowledge goodness, we know.
+Everybody wants to do it wrong in a lot of sense.
+That's what he told me.
+This thing will stick.
+Not instant.
+That's all we have in truth.
+It's not here publicly.
+You better just soliciting it.
+So, hello, everyone. Yeah, let's get started with Lecture 9. And as always, before we go and talk about this lecture material, let's look at the Lecture 8 quiz.
+And, in particular, let's look at the first question, which asks the following.
+How can we prove that the system satisfies a safety property? And there is four possible answers to this. By showing that the finite execution trace of the system satisfies the property, an infinite execution trace, or by showing that all finite or infinite traces execute, satisfy the property.
+So, before we talk about this question,
+Let's… let's take a look more broadly on the… and recap the concept of a system satisfying a property.
+So…
+What do we mean by that? So, we often want to know and reason about a system that we have implemented, or we have, you know, described and have a protocol of, and we want to reason about whether such a system behaves in a specific way.
+We usually do this by defining a property that we want the system to either satisfy or not satisfy.
+And then, in order to show that the system satisfies the property, we want to show that all of the traces that the system can be observed from the system are subset of this property.
+And to show that the system does not satisfy the property, we want to instead show that there is at least one trace of the system that does not satisfy the property.
+So, given that, the answer to this question is the following. Since we want to prove a distance satisfies a safety property.
+the first two do not apply, because they say that we saw that a single execution tracer system satisfies the property, and that's not enough to prove a property, it's only enough to disprove a property. And then it has… the following two are correct. And so there's two points from this question.
+The first is that we need all the traces, but the second is that all the finite traces of an execution are actually a subset of all the infinite traces.
+So, if we have an infinite trace, it contains all the finite traces in it, too. So, if we can show that the infinite traces work, then the finite traces also work and satisfy the property. Does that make sense? And are there questions about this?
+Great. Next question was about properties of consensus protocols, and before I give you the rundown of this particular question, I want to clarify that this is a bit of a trick question, and I made this in the following way to get to the following point.
+there is a difference between the properties of the consensus protocol, and that's what we also saw in last lecture. So we first talked about the consensus as a property and as some kind of abstract problem, and then we talked about Paxos, which is one way of implementing consensus.
+So, this question, in particular, asked for the properties of consensus protocols, and then mixed and threw in some things about Paxos, and some things about consensus.
+So, the second and fifth are not properties of consensus, but rather they are only properties and have to do with Paxos, this specific protocol. But the other three are the properties that we discussed that we want from Consensus.
+Make sense? Questions about this?
+Great.
+And then the last question. So, I think, this was… most of you got this right, but yeah, just to… just to recap it, we want to… we asked some questions, some true or false questions about Paxos, and the following things are true. Once a majority accepts the same value, consensus has been reached.
+So that means that from that point on, we cannot… they cannot change their mind in the system. The second thing of this story is that acceptors can affect the values proposed by a proposer. We saw an example of that happening in the last lecture. And…
+The second point is not actually true. So, if a single learner hears about an accepted value, then consensus has been reached. This is false. Why? Does anyone have an idea? Why is that… why doesn't that hold?
+When could a learner hear about an accepted value, but we have not reached consensus?
+Hans, thoughts?
+If it gets deposited greater than whatever.
+And because of that, and for learning capacity here.
+Maybe something value comes up there at one point here to be a woman, so…
+That says it's not going to be interesting.
+Right, so a learner, paraphrasing what you said, a learner, an acceptor, maybe let's say an acceptor even better, at some point might accept a value.
+That does not mean that every acceptor, or a majority of acceptors, have accepted the value, but it's possible that a single learner, or a minority of the learners, have accepted the value.
+At this point, they broadcast to everyone, to the learners, oh, I've actually accepted the value. Therefore, a learner might hear about an accepted value from a single acceptor. That does not mean that the majority of acceptors have actually reached concepts.
+Okay?
+Questions about this?
+Great. So, in today's class, we will see the following things.
+First of all, we will understand Paxos, hopefully.
+Then?
+Oops. Then, we will, talk about FLP,
+you will, you will, know what this is, in, in some slides from now. Then we will talk about, replicated state machine with factions.
+And finally, we will talk about, efficiency
+and optimizations.
+So…
+Getting started, recapping what we saw last time, we talked about consensus. We talked about consensus is this, this kind of protocol that's given a set of proposals. We have a set of, some kind of system that decides, and everyone in the system agrees on the same value.
+And we thought Paxos is a fault-tolerant protocol that solves the consensus problem.
+And let's recap the protocol now. There are three rows in the protocol. There is proposers that propose the values, there's acceptors that accept proposals, and there's learners that just learn about the consensus, so that's their only role.
+And a key part of the protocol is that there is two rounds. So there's a prepare round, and then an actual accept round in the second phase.
+And let's recap the two rounds. So…
+Phase 1 starts with preparing, and proposers send prepare N to all acceptors. The value N, as we had said, is unique.
+and higher than previous N, that this particular proposal has used before. As we said last time, it has to be unique, and it's easy to get it unique by just partitioning the space among the different proposals.
+And we don't want it to be higher than all the proposal values, because that would require some form of coordination, too. So, we just demand that this is higher than the previous ends that this particular proposal has used before.
+When executors receive these methods, these prepared methods, they… there is three things that could happen. Either they have previously promised a higher proposal, so then they say, no, that's not correct.
+Maybe they have already accepted some proposals. In this case, they sent back a promise with their previously accepted proposal.
+And in the third case, they have not, you know, this is not a hire, they have not promised higher, they have not accepted anything, so they just reply, promise, with a particular number that was asked for them.
+And then we have the phase two accept, where proposers now, once they hear from the majority of acceptors, they are ready to actually proceed to the accept phase. And at this point, they collect all of the promises that they've forgotten, especially if they have accepted values, and they use the higher
+accepted number, NA to pick their proposed value.
+And then they send an acceptance request to a majority or all of the acceptors again.
+And then the acceptors, when they receive this, they check whether they have promised a higher proposal, and if yes, they ignore the message or say failure. And if not, they reply, accept it, and send that to all the learners. And then they say for themselves, okay, I know that I have accepted N, and with value Val.
+Questions about the protocol?
+Great. So here we have an example execution. We have a proposal here, a proposal here, and three acceptors here.
+So…
+We have the acceptors here, and they have… these two on the left have values 4 and 4.
+So we do this prepare here, and what happens now?
+Thoughts by people?
+Let's walk through this, let's walk through this, through this, through this execution together. What happens at this point?
+Hans?
+it's important, let us make sure we all have… we all have the same, you know, understanding of the protocol, so that we can then proceed and try to understand the protocol. And this… there will be… there will be some… some challenges there, so yeah.
+5, 5 is greater than 4, so then they would accept it.
+They would accept it, or…
+Maybe something else. Close. So the number is a bit bigger.
+But what would they do?
+They would promise, not accept. So, so, they first promise. What happens now?
+Yep, bye.
+Who's, who sends the accept?
+Right, so the proposer reads the milestone, it heard from a majority of acceptors that they promised 5, so therefore… okay, I guess I have a different execution here. But yeah, you're totally right. So, let's…
+Yeah, let's say there was, at the same time, a prepare from P2 with 4. What would happen now?
+And then we'll get to that acceptance that you said. What will happen at this point?
+Thank you for… 82.
+Exactly. So A3 promises 4, A2 cannot.
+And then, as, as we said, Proposer 1 accepts, 5 and, and their proposed value, X.
+These send back some acceptance messages.
+And what happens now?
+So, we got back the acceptance messages, From, from this tool.
+And P2 doesn't know about it, so P2 sends a prepared 6. What happens at this point, at A2 and A3?
+Hans, more hands?
+I think, 83 will promise 6.
+But then A2 will… I remember send and accept with… 6, but the value X.
+Because a consensus was reached.
+Okay, so, so, so there's, there's a few things. Let's, let's, let's, kind of, partition all the things you said. So, you said A3 sends promise 6, that's correct. So A3 is able to say, send promise 6. A3 has not heard of anyone, they, they just, they're happy with this. At the same time, A2 sends
+Not an accept, but a promise.
+with 6 and their previously accepted value, but they are not sending this promise because the consensus has been reached. A2 does not have… has no idea that the consensus has been reached. The only thing that A2 knows is, oh, I have accepted this value. Whether there's a consensus or not, I don't care. I'm just responding with this because I have accepted this value.
+Okay, questions?
+And what's the final step after this?
+Hans?
+What happens after this?
+What does P2 do at this point?
+Let's say it wanted to propose value Y. That's what happens here.
+More hands?
+Pulling the button, and sending 76 all my house.
+it would send… accept 6 comma X, and the reason is that this is… this is already… someone has accepted this value, so it will aggregate these values, find that X is the highest one that has already been accepted, send some accepts, and everyone accepts X, and we're happy.
+Questions about this execution?
+If, let's say, we have, like, 5 A's, so A1 through A5, and, each of the proposers only sends the prepare signal to two relevant A's.
+Then, is there a sense that, there could be some sort of
+That's a very interesting question. I will get back to this in two slides. Exactly that question.
+That thing ain't pretty odd.
+Here, at least, yes, X is the value that they agree on, exactly. When do they agree on X? When has the consensus been reached in this, in this, in this execution?
+Hans?
+The red circle, exactly. So, what happens after this is just the protocol completing, and everyone getting the information that consensus has been released. But here is the point that consensus has been reached. After this, there's no way something else will be proposed the next, okay?
+So… Questions, more questions before we get to…
+This is the value of X. It had nothing to do with 5 or 6. Correct. The consensus is the value X, exactly.
+received, let's say, one acceptance back after it is closed. Is it gonna just wait until it potentially receives more acceptances, or will it start if it gets a new
+Request to start sending out.
+That's a good question. So, in general, the protocol does not actually… I guess we will have some discussions related to this, like, roughly halfway in this lecture, so maybe let's keep the question until then. Yeah, more questions about the protocol at this point.
+The only reason why people knows that it has the speed… So it's just…
+The exception nodes in his memory.
+The thing is that everyone in the beginning of the protocol knows how many acceptors there are.
+So we know there is 3 acceptors in the system. There's not going to be more, not less. So the moment I hear two, I know that's a majority. So that's an assumption of the system. We know exactly how many nodes play in the acceptor, etc.
+Other questions?
+Excellent. So… Now comes the hard part.
+So, why does Paxos work?
+Actually, nobody knows. okay, actually, there's a huge literature. There's a lot of papers, blog posts, videos trying to explain why Paxos works.
+explaining how the protocol works, proving parts of it, and so on. And actually, funny, funnily, even Leslie Lampert published a follow-up paper to the original paper, and the follow-up paper is called Paxos Made Simple.
+And it has a rates-based abstract that literally just says this. The Paxosa algorithm, when presented in plain English, is very simple.
+so yeah, this was published because people were complaining that it's not an easy problem to understand. So…
+Let's convince ourselves.
+Dropbox works.
+So, what does one do to convince themselves or someone else that the protocol works? What do they have to do?
+By induction or some other medical technique that for every possible
+Right. So, prove that the protocol works. What is the first step to get there?
+We think about what could go wrong in the system.
+And this is very common… a common kind of, like, paradam in distributed systems. You have to think of all the ways things can go wrong, and no matter what, to even get to the point of a proof, we first need to have a sense of all the ways that it could go wrong. Because if we have… if we were to do a proof, we would have to do a case analysis over all the ways it could go wrong, and show that in all of these cases, things are actually fine, and there's nothing wrong.
+So, for this class, we will mostly focus on the what-if analysis, and on finding what could go wrong. So, let's look now at two executions of the practice protocol, and think about them.
+So the first execution, this is a little bit differently structured than the previous diagrams I showed you. There is Proposer 1, Acceptor 1. Proposal 2, Acceptor 2, Proposal 3, Acceptor 3. And the following thing happens in the protocol.
+So… We prepare, everyone sends a prepare.
+to one acceptance. We hear back a promise, They send and accept.
+And then they get an accept back.
+Think about the execution for a little bit.
+We also have another execution where the following thing happens. We start with some prepares, we promise back.
+we accept.
+And then, a question to think about is, could this system actually
+leads a consensus on why. How could the system, with this or slightly modified execution of this, now leads a consensus on why, actually?
+So, I want you to… Talk to the person next to you,
+and you know the drill, introduce yourself if you don't know them. And start thinking about these two, these two executions. What happens in the first execution? Is it okay? Is it not okay? What about the second execution? How could the system reach consensus on why, even though, you know, we are taking some of the steps in this execution here? Like, yeah.
+Start thinking about this, and then we will, we will get back to talk about it.
+Burke movies.
+Oh, there we go.
+I think that now we could try to be careful at its promises, especially given the sight of the movie.
+That was your incident field.
+The point says that we saw.
+Yeah.
+Yeah, I guess that makes sense.
+You're not trying to get through the areas that you wanted at the top 10.3 on the block be that low.
+I think we'll happily there is.
+Just in order for us to get products, we have.
+So you just want, like…
+Well, let's concert.
+Like I mentioned last time, but in practice, one machine… Okay, like I said.
+Can I just, like, healthcare signing?
+Any with us in verse.
+Yeah, I think you can't do that.
+Okay!
+Let's, let's start discussing. So, let's look first at the first protocol, at the first execution here.
+And, I showed you this execution that goes like this.
+So, what's happening here? Observations, thoughts about this execution, hands.
+Hans, Hans, what did you discuss? How does this look, you know, correct? Problematic? Yeah, what do people think? Hans? More hands?
+Morhans?
+well, you did not ask me questions about the protocol, so you also, so, you know. But, you know, more hands, more hands, observations, whatever, whatever it is, you know, whatever you, you observed, you talk about, whatever you talk, something, something, you know, there's something interesting happening with this, clearly. So, you know, even, even what, what is the interesting thing? More hands, more hands.
+Does that mean you only need more time?
+More hands.
+A few more. Let's get to 10. 1, 2, 3, 4, 5, 6, 7, 8, 9? Oh, no, we don't have 9.
+Two more hands, two more hands?
+Even an observation is useful here.
+Okay, we got it.
+No, isolated. Delighted.
+They're all, like… Like, accepting things without… Thank you for excitement.
+So there is this weird thing here that everyone has accepted something different. Other observations. That's a great, very good observation, yeah. Other points we want here, from the previous hands, or new hands, yeah.
+It's not possible to send that accept or, like, propose if you haven't gotten processed for the utility.
+Right, so this execution is clearly wrong. So in this execution, we have a state where everyone has accepted a different value in a way that is completely… there's no majority, what do we even do at this point?
+But the thing is that, actually, proposals only send and accept if they hear back from the majority. So this is actually an impossible execution. Paxos does not allow this to happen, and this is exactly linked to your question before, which was, what if we have 5 and we send to 2?
+So, if we do not hear back from the majority, we cannot send accepts. So, we… we are certain, at the moment that we send from the accepts, that we have heard back a promise from a majority.
+Questions about execution or more observations?
+We wanted to change those.
+so that it actually followed the rules of practice, then, we would say, like, the second and the third ones would not send Texas, and the first one…
+Like, the first preparer would have to wait.
+for other people to send messages? Actually, everyone, at this point, all three proposers, Proposer 3, Proposer 2, Proposal 1, no one can send and accept. So they all either wait, they send prepares, they… yeah, whatever they do, but they cannot proceed.
+So they either wait, or they… or they send… they send, they send new repairs. We will see… we will see a little bit of a discussion of what one can make as a choice at this point, but certainly they cannot send accents. So it's not allowed at this point to send accents from everyone. No one has heard, no proposer has heard from a majority of acceptors a promise.
+So, no proposer can send an accept.
+Questions about this, or thoughts?
+So… the city is… The only way that…
+One of the proposers could send and accept is if you get a promise from
+2 out of the three acceptors. Correct, correct.
+In this case.
+And each proposer only hears back from one acceptor, so it's just kind of…
+We are just stuck, the protocol cannot… it will progress, there is ways it will progress, multiple different, you know, alternatives to make it progress, but certainly, no one can send or accept, so this is, like, the illegal step here from everyone.
+And I guess, let's say, hypothetically, that, the acceptor 2 sends promise 2 to Proposer 3.
+Acceptor 2. Well, it can't send 2, it would have to send 3 if it had… so to respond to Proposer 3, it would have to hear from prepare 3.
+To send… so to send promise 3 here, if it actually sends one.
+So, the accessor can't on its own decide to answer to someone else, but if this proposal actually also managed to send a message with propensity to this one, then it would send the promise to me.
+More questions, more thoughts about this execution.
+Then could we send the prepare 2 from Proposer 2 to Acceptor Creek?
+Yes, yeah. So originally, what we said also in the system is that we try to reach as many of the acceptors as possible, but this could have happened if, let's say, all of the other messages got lost in the network. So, yeah, and only one reads each, but yeah, what we would do normally is we try to reach the majority or all of the acceptors with the prepared messages. Yes.
+Is there a case that the system never makes progress and never gets to a consensus? We will discuss this later, yes, that's also a good question, yeah. Other questions?
+Great.
+Let's look at the second execution.
+So… How could the system here reach consensus on why? Thoughts, hands.
+Or observations, you know. What things could happen here? What, what kind of, yeah, observations, thoughts, hands, hands?
+Is this even possible?
+Is it possible? Yeah, what… 1, 2, 3, 4?
+More hands, more hands.
+Okay, okay.
+He, too, sends, prepare 6 before everyone seems to accept no.
+Decide on a new value 6.
+P2 sends? Yeah. Sense what?
+Prepare 6. Prepare 6?
+So, an important thing here is that this has to actually be dropped by the network. If this is not dropped by the network, it actually reaches A2, then we have a problem, because then we have already reached consensus. So, the first thing that needs to happen is that this has to be dropped by the network.
+And then, we send prepares with the proposal tool, and then, with 6, we get back the promises, we accept 6.
+And then, what does this actually mean? We need this consensus here.
+But, A1 has accepted X.
+Will it change its mind?
+What happens here?
+Hans?
+What do people think?
+Does A change its mind? Is that legal? Is it allowed? Is that even possible? Will it happen?
+For the, like, entire system to reach consensus, A1 would have to change.
+It's, like, value too wide.
+And, like… Conceptually, that's fine, because, the majority of the acceptor is already an accepted clients.
+Right, so… so… actually, A will change his mind, A1 will change his mind, and for the whole system, there is consensus, this is important, and also this is actually important for, for, for another reason, too, so…
+Acceptors, we never said that acceptors cannot change their mind, single acceptors. And this is important to be able to change your mind, to actually reach consensus, so that you don't get stuck in a space where there's no way, you know, there's no way to progress. And we'll see some examples of this later.
+So, the only important thing that we said is that once the consensus has been reached, then the system cannot change its mind anymore. That does not mean a single acceptor cannot change its mind. Once a consensus has been reached, the system… the complete system cannot change its mind, and it cannot accept a different value.
+Questions about this?
+We totally wind up.
+So what would happen here is that P2, or, you know, P1, might send again some promises to everyone, and then it would hear back the new accepted value, and then it would propose and accept to A1 also, and then A1 would actually accept at some point, yeah.
+And again, how A1 would…
+So, let's say Proposal 1, at some point, you know, hasn't heard back, and it's like, okay, let me prepare something else. So, they prepare 7. So they send 7 to everyone, and they hear back from A2 and A3,
+Oh, promise 7, but promise 7, comma, tuple, 6, comma, X.
+Oh, sorry, 6.1 Y. And therefore, they would propose and accept back to the, to the, to A1 with this. And actually, let me, yeah, I guess, I guess, let me, let me, let me clarify this with this. So, in this particular
+here, you can see that even though an acceptor might have already accepted, they don't care, actually. The only thing that acceptors say here is, did they previously promise a higher proposal? But if they have not promised a higher proposal, then they can just
+It saves their accepted value, and they don't care what they had accepted before, okay?
+So, yeah, other ques… someone else? Yeah.
+That… that question kind of…
+goes with the acceptors, where did I previously promise a higher proposed value? That's for… from the specific proposer, right? Not from…
+In general? Actually, this is in general. Yeah, so this is… this is… I have, locally, this NP, and have I promised a kind of proposal for anyone? If so, I'm not gonna accept this. This is stale. This is… this is too old, for me. So that's the only thing that I accept or checks before they accept.
+Blend.
+Can we always guarantee that the proposer's numbers are going to be roughly the same?
+like, one isn't just astronomically higher than the other? That's a good question, and practically, you have to find some ways, and in the assignment also, you might have to deal with some ways to figure this out, so you might have to do different kind of tricks to get to a point where, you know, they're always kind of balanced, but yes, yes.
+But they still have to have numbers, proposal numbers. So they're still generating these kind of numbers. And I guess the question, the way I understood it, is that
+if someone… if this is proposing, preparing numbers like, you know, 1,000, and this one is still at 6, 1001, and it's still at 6, so then this would have to keep incrementing for a very long time until it actually reach this number. Yeah, yeah. So this is more of a practical consideration of how to get to a consensus faster. Yeah.
+Great.
+So, the important thing I have from this example is that acceptors can change their mind. And, yes, we only said that once consensus has been written, them cannot change its mind, but an acceptor is allowed.
+And the question that now you might have in your mind, but then if the consensus consensus their mind, how do we actually guarantee that one consensus has been reached? Which is something that
+the acceptors don't know about, actually. So, the acceptors do not know when a consensus has been reached. The system cannot change its mind. So, that's actually part of the tricky execution with Paxos. So, an acceptor can change their mind.
+they do not know when consensus has been reached, but at the same time, the system cannot change its mind once the consensus has been reached. So there's some… there's some kind of dissonance here with… between all of these statements.
+But… and we want to look at that, actually, but think about it at home. And it's important for the assignment. So this is kind of like the, you know, one thing that
+pops up from the… after knowing that they can change their mind, why is it still correct? Okay? Questions?
+So… Does… do the ex… once consensus positive reach. To… the acceptors…
+broadcast that, like, change to Egypt. Hand the acceptance Broadcast, like, that change to…
+To other acceptors, or to whom? To whom?
+Yeah, I mean, to other acceptors, to the repairers.
+They do, but they don't have to. That's the point. So they only have to broadcast to learners, and learners are the ones who know when content has been leads, but I think a reason why it's important to think about Paxos in this decoupled way, where you have preparers, acceptors, and learners as separate entities.
+Even though in practice, it stone plays all three roles, is to understand that even though the acceptors never
+gets to a point where someone tells them explicitly, consensus has been reached, still… and they can change their mind.
+still, they… the system does work, and that's a little bit unintuitive. So then, does the accept… the acceptors ever
+no explicitly a consensus has been reached. Not in this version of Paxos, which is the kind of, like, theoretical version of it. In practice, as we said, proposers, acceptors, and learners play the same… play all… all nodes play all three roles, but yet the acceptor component itself do not know consensus variants. That's correct.
+And they do not need to, but still the protocol works, okay?
+Great.
+So… Now that we have
+Any more questions about Paxos, actually? Yeah, other than the ones that we will… people have asked, and I said we will talk about in a little bit.
+So what is the first thing to say, like, if an acceptor changes their mind, it does not, like, change the fact that consensus has been reached, because if they change their mind.
+like, it doesn't affect the overall. So, somehow, both are true, exactly. So, both, the system cannot change its mind, the complete system.
+Once a consensus has been released, but…
+individual acceptors can't change their mind, and some of these two are reconciled, and that's, that's the kind of, like, the, yeah, the trick here. So then, if an acceptor changes their mind, that means they're part of the mindful.
+That, that is, that is a possible implication from what I'm saying, yes, yes.
+Other questions?
+Great So, let's get back to what we want from consensus.
+And we had 3 properties that we started with when we talked about concepts that we want.
+We want termination. It's correct person eventually decides on a value. We want agreement, all correct persons decide on the same value, and we want validity. The agreed upon value must be one of the proposed values. Does facto satisfy validity? Thoughts? Hans?
+satisfy Linden.
+Kans, Morrans, morphans, morphans?
+Yes, it does satisfy what it…
+It does, it's fairly trivially, because it doesn't propose… no one proposes a value that was not there. So that's the easy one, and that's the one that we had added the last time, just to make sure, you know, that we don't have a trivial consensus protocol, satisfying consensus.
+What about the second one? What about agreement? Does it satisfy it?
+More Hans? Hans? What do people think?
+We'll eventually validate to get all the votes.
+Right, so… so at some point, there will be everyone, all the correct processes will have the exact same value, and we saw a way that even if someone is in the minority, they can change their mind and have the same value.
+So, as we had said before, these two are the safety properties. So, Paxos provides safety. Acceptors can only pick values proposed by proposers, and acceptors propagate their accepted values to proposers, making sure that the same value is accepted by everyone.
+What about termination? Does termination? Dermination of this fight? Bounce?
+Is termination satisfied? What do people think?
+More hands? Hands?
+Your stimulation satisfied?
+Maybe let's do thumbs. So, thumbs up if termination is satisfied, thumbs down if termination is not satisfied. Up, satisfied. Termination, down does not satisfy termination.
+Satisfied does not satisfy. Satisfied does not satisfy. Up for satisfied, down for not satisfied, is the question, yes.
+A non-craft process, that's what we will say, yes. Thumbs. Satisfied termination does not satisfy termination. Satisfied termination does not satisfy termination.
+I see some up, I see some… there are more, more thumbs, more thumbs. What do people struggle with?
+You can just say your thoughts, you know, like, it's… no one will judge you for this, yeah. So yeah, what do you feel? Like, you know, sounds like it satisfies or not? What do you think?
+More thumbs, more thumbs!
+It's really close to half, actually. Okay, that's interesting. So, so…
+Termination is actually, as you had said.
+this is a rabid demon dog or something. So, it's a hard liveness property. And it actually does not satisfy it. So, what is the counterexample? What is a counterexample for not satisfying liveness?
+But, sorry, I shouldn't argue that? My question is, wouldn't it have to satisfy, like, then there wouldn't be consensus? So they all have to agree in the end.
+They have to agree this does not say that eventually they will agree. It says that
+If they agree, they will agree on the same value. If they say we have agreed, they will agree on the same value. But this is, eventually, they will actually reach that point where they will agree. So, so yes.
+So there might be a case for one still deciding, and they'll never decide to keep going forever. That's, that's, that's, that's the… we want a counterexample that shows this, essentially, yes. So, so, Hans, again, for counterexample.
+This partitioned, like, one of them is partitions so that it can't talk to anyone else on the network?
+That's a good point. So, someone could be partitioned, and they might never hear from anyone, and that might mean, you know, then we can never, we can never, it's… we can never progress. That's a good point. There's also a case, though, where everyone is communicating, and still you don't have blindness. Thoughts about this?
+Is it possible?
+Generally sage breath.
+We're trying to, like, close and promise, and it's never reached the majority, because, like, every step stage is constantly getting…
+There is no composer that's able to say that.
+So, so, your point was, if I'm not mistaken, that
+Some… someone does not hear about… So, like, the idea is that we never…
+like a majority of the accepted.
+That is… that is… that is an important part of the argument, but… but why and how? Even if no network issue, no crashes.
+Think of a case where you have two proposals, and they keep hearing values.
+And, before they get the, accept that, accept from the closer, the acceptors would basically reject the other… so it would basically be some kind of…
+At the late 21.
+So there is exactly this live lock case. You have two proposals, and, proposer one.
+says N0 completes Phase 1. Proposal 2, right after this, starts and completes Phase 1 with N1 larger than N0. When this one tries to do a phase 2, it gets its action.
+It retries with a higher number. This now tries to do accept, and it gets rejection.
+And this can go on indefinitely. So there is an infinite trace here. By the way, what did we do here? To verify… not to verify, but to show that Paxos does not satisfy termination, we came up with an infinite trace.
+So this trace is infinite. If we don't continue this infinitely, we can't solve that life is satisfied. So we say… and this keeps going for an infinite amount of time, and that's why the protocol never, you know, in this particular execution, will not reach consensus.
+Okay? Questions about execution, and whether that makes sense.
+Isn't this, like, virtually… Let me pull up the app.
+It's impractical, correct. But still, at the protocol level, when you prove things, you want to have some kind of guarantee. So there, you do… we have to be, to be honest and precise that this actually does not satisfy lines in reality.
+That's a practical way to solve it, and we will talk about this in particular, and yeah, there is certainly ways to address in practice, but there is always a counterexample to liven's.
+you know, when you have a counterexample, that doesn't mean, this is catastrophic in practice, but it just means we are precise, and there is a way that the system could go into this loop and never exit. It's very unlikely, but it's still a case, it's still a potential, yeah. I saw some other hands somewhere.
+Or no?
+Question, hun?
+Great. So… The problem, and why we are at this stage and at this point, is that
+We have two phases. So, between… once proposals prepare and accept phases, we can… someone can come in and swoop our previous prepared phase and change and update the NP of the acceptors.
+So, the problem here, fundamentally, is the two phases.
+So, what could be an alternative design? Maybe we could merge the two phases, and then the proposer can send the proposal and accept messages to all the acceptors in one phase, and then if it does not hear the majority, it retries with a higher proposal number. But they don't do two phases. So, instead of that, they do propose.
+5X, and then they wait for an accepted, except it'll just accept 5X.
+Is there any problem with this? Talk to the person next to you, behind you, in front of you, and let's get back in a few minutes. What could go wrong if we made the two phases of Paxos in a single phase? We have proposed and accept… promise and accept in the same phase, to avoid this liveness problem?
+Talk about it, think about it, and then we'll get tested.
+I'll speak to the addiction.
+It's set back inappropriate.
+Oh, no, like, the issues that after this.
+It's already accepting them?
+Close it.
+I don't know if that circumstances.
+No, that would be important.
+A majority of government involved.
+So, what do people think? What could go wrong here? Why, you know, why doesn't Paxos, you know, or could Paxos have a single phase?
+Thoughts? Hans? Is there a problem with this?
+Observations are useful.
+Hans. More hands.
+More hands? We only have 3. More hands, more hands.
+What do people think? Observations.
+Is that okay? Is that not okay?
+Two more hunts?
+Let's go for one more.
+How Ford now, I think.
+1, 3, 4. Yes, one more, one more.
+I see it, okay.
+Do you propose to place the same number?
+But different centers and standard values, but… So…
+So that's one way things can go wrong, actually. So, let's say proposer 2 proposes a different value here.
+Option 1 is that A2 changes its mind.
+So that could be one thing that we could do, right? A2 might change its mind. In this case.
+Is there a problem?
+with this?
+Is there a problem?
+Each consensus and then change your mind.
+Right, so there was a majority that had accepted the value, and now they changed their mind. So, problem.
+So, let's take the same example, but another option. A2 does not change its mind.
+So then… A3 only hears from… sorry, P2 only hears from A3.
+And then this says fail, with X.
+Is there a problem with this?
+There you go.
+Train both seems like.
+Yeah, yeah, there's history in the column, yes.
+But ideally, place… Be able to change his mind.
+So, so, could, could, could you, could you repeat the, the, the argument? The idea is that we basically…
+Impressing.
+the phase post. We, like, basically say, like, stay together close. It doesn't matter.
+So, I think there is a problem. Yeah, so sadly, the compression has led to a problem, but what is the concrete problem that we have here? So, what's the problem if we know? We do not change our mind when we hear back from someone.
+So… Correct. It would only hear there exists somehow.
+And it'll never change in size.
+Right.
+So, a problem with this, exactly because of that, is that everyone could suddenly accept and get stuck with a different value, and the system cannot progress, but it's actually stuck in a worse way than before. So, if we send this a silly way, everyone, if we don't change our mind, we're just stuck now, and we're just at this point where, you know, we have accepted something different, there's no way to reconcile this.
+The system is just stuck, and there is no way also for those to know that the system is stuck.
+So… We are stuck.
+So… Why do we need two phases?
+As with the library, the libraries problem is partly due to the two phases, and the alternative design would be to match them, but then we would actually have problems with safety.
+So, what actually happens with consensus is that
+These three are properties, not that consensus algorithms need to satisfy, but actually consensus properties are… consensus algorithms try to satisfy.
+And I want to bring your… to remind you of this problem that we saw in the beginning of the class with the fireworks, where there's two towns that want to have a fireworks show, they need to agree on the time, messengers get lost in the fog, and there is no way for this protocol to actually end.
+T1 says, let's do the show then, okay, let's do the show then. But you can still not progress, so you cannot really reach consensus, in this way.
+And there is a very fundamental paper that is called the FLP paper because of the first names of the three authors, Fisher, Lynz, and Patterson, which actually proves this, that it's impossible to have distributed consensus with at least one faulty process. So what are the precise, what's the precise setup of this paper?
+We have a binary consensus problem, agree on 0 or 1, we have an asynchronous network, and we have one unreliable process. The asynchronous network is very important, because we do not have any kind of way to know whether, you know, some kind of bound on when a request will have arrived to someone else.
+And given this, actually, in this paper, they prove that termination is not guaranteed, so it has to be sacrificed.
+So…
+in practice, so, so, Paxos satisfies into safety, does not satisfy the liveness, as, also, also not violating this, this, you know, as follows also by this, by this paper, on the impossibility of consensus with one faulty process.
+So, can we do better in practice? What do people think?
+There was mentioned some way to kind of do better in practice. Are there other thoughts on how can we do better in practice?
+Votes? Is there any way to do better in practice? Are we just… yeah, or no?
+Pull that time off, like… After a certain time, like, when you don't have a certain… process.
+Like, if there's any update that you essentially don't do…
+You could maybe do, like, some sort of, like, heuristic analysis, and then just, like, crash that process or something, like, post-crash.
+Right, so building also on the point that was mentioned before, you can have some form of timeout, which is a random period, or, you know, like an exponential backup or whatever, so that you don't retry at the same time with other proposers.
+Another thing you could do is you could use predetermined order of proposals. So, maybe a negative response from the acceptor also includes the idea of a proposer to whom the acceptor has committed.
+Alternatively, you could try to elect a leader to propose the request, and therefore, if you have a leader, there is no way that someone can always, can always, you know, can in practice be the one who proposed, and there's not this… we avoid this livelock problem.
+The important thing to keep in mind is that Paxos is cooperative. So, yes, in practice, there is ways to address this, but fundamentally, and at its core.
+there is this known result that there is no way to get consensus, get all three properties, the safety and the liveliness properties together for consensus. Questions about this?
+Great.
+So, let's now see and talk a little bit about the fault tolerance of the protocol. So, how many acceptors do we need
+to have in the protocol, to handle F acceptor false. So let's say F, number F, of our acceptors fail, how many acceptors do we need to have in our system so that we can still, for Paxos to work?
+That's fine.
+2F plus 1. So, in this case, we still have the majority, so if F out of 2F plus 1 fail, we still have F plus 1 that can agree, reads a majority of consensus, and proceed with the system. So, we can tolerate
+A lot of failures. And what about proposers? How many proposals do we need for F faults of proposals?
+It's F plus 1. All but one can cross, we just need one proposal to keep going.
+Questions about the tolerance of the protocol?
+Great.
+So, let's take a little break from Baxos before we move to RSM, and I will remind you that Assignment 2 is due on Sunday.
+And if you're not done with the assignment, you have to go to, office hours of discussion, or you'll face this kind, okay? So, I warn you, you know, you have to go to office hours or discussion. And Assignment 3 will be posted soon.
+So yeah, go discussion if you're not done, okay? This is a threat. okay. Another point that I think is worth bringing up, for, for,
+the assignment is that, as we said, and this is still true, you're allowed to use AI in any way you want, but you have to write explicitly when something in the assignment. And how you use it does not affect your grade, but we care about the fact that your code is correct.
+But, one thing I want you to keep in mind, and remind you, is that,
+the exam will have a significant, or at least a non-negligible, portion of hard questions on the assignments, so if you do not understand your solution, then you might not be able to answer these questions. So.
+the conclusion is that, you know, like, when you go out in the world, and you become an engineer, and you do, you know, you implement some system, you can use AI, but you still have to know what you're doing, and whether it satisfies the specification of what you were given, and, you know, you should be able to argue about it, and so on. Okay?
+Questions about assignments, or AI policy, or something else with respect to logistics?
+Great. The next thing I want you to… the final thing I want you to, I want to bring up before we continue with RSM is that you might have met our amazing LAs, Alec and Peter, and,
+That could be you next year. So, if you're enjoying the class and would like to teach these concepts to others, you can sign up using this QR code for the LA mailing list, and this is not for a CS134-specific LA list, but a general learning assistant list, and, you know, get information on how to apply for the LA program next year. You should also talk to Alec and Peter and ask them whether they like this, or whether maybe they hate doing this, or maybe
+you shouldn't, you know, you shouldn't scan this QR code at all. Okay? Questions about the LA program?
+Great.
+So… We talked about Paxos. We understood Paxos, somewhat. We saw Paxos cannot satisfy liveness and safety together.
+And what we have is that among several concurrent proposals, we have a way to pick one and agree, in a system of nodes about which proposal we all agree on.
+What's left, to implement a replicated state machine?
+How can we use this… this insight to build up against that machine? What else do we need?
+Or what's the… how would we use it as a building block?
+Any, any kind of, like, high-level observation of this? What… what… remember, the replicated state machine is, you replicate the state machine, and then you process, requests, in the same order, and then the state machines, keep the same state all the time, because they process the requests at the same time, at the same order.
+So yeah, what do you, have to do to implement replicated machine user practices?
+Thoughts?
+What do we need?
+How could you use this component to implement an RSM?
+Or what do you even want to do, I guess, in RSM, or… yeah.
+Any thoughts?
+I should ask the question, what you should propose at, like, every step.
+So, so that's… that's a question. What do you, what should you propose? And I guess…
+Maybe,
+I guess… I guess the answer that I'm looking for here is that we need… the thing to do to implement RSM is we want a way to apply… to have… we have a bunch of updates, incoming updates, right? And then we want to have the same consistent order of applying these updates at all replicas.
+So, using… so, given that as a goal, and having Paxos as a building block, how can we actually implement a replicated state machine? Who plays what role? What are the proposals? What are the proposals, acceptors? What exactly do we do? So, yeah.
+Talk to the person next to you, behind you, in front of you, and let's get back in a few minutes and think about how do we get to the point of RSM with Faxos.
+No, our citizenship, right?
+arbitrary.
+A map requires notes.
+I don't… There we are missing.
+Thanks, that's clear.
+Well, I mean, so I guess what is this package?
+Or, do you get consensus on what surveys?
+Otherwise…
+Okay.
+let's get… let's, get the discussion started. So, yeah, what do people think?
+observations. What can we do here? How can we use Paxos to implement RSM? First of all, yeah, any kind of observation here is important, because we're trying to build… actually, this question, in its… to answer it fully, is essentially homework 3.
+Okay? So you cannot answer this question fully, even, you know, in a few minutes. So, any kind of observations on, you know, what could we do for this? Any kind of intuition, how can we use this building block to do something? Yeah.
+What do people think? Hans? Any observations, like, about what we have already, what we don't have, what we can use this for? Yeah.
+Thoughts?
+I see one hand, two hands.
+Rigans.
+More hands? Observations, not solution. Solution, as I said, it's homework 3, which is very, very hard, actually. So, so if you have the solution in a few minutes, yeah, I think that would be pretty cool, but pretty unlikely. So, so yeah, observations.
+what do we even need to do, you know, at the first kind of, like, yeah, what kind of things do we need? And do we need to build on top of Paxos? How can we use Paxos?
+3K steel? Let's get to 5, let's get to 5.
+Do we have 4? Do we have 5? Yes. Give me 2 more hands.
+Any ideas?
+Born.
+One more?
+5. Okay, in the ads? Yep.
+Is he good, like, for the accessibility that they're trying to agree on, would you have that be, like.
+A next update.
+Right, so you could have an update, be the purchase value. What else do we… any other thoughts from the hands? What kind of things did people think about?
+I was just thinking, let's just put the whole FSM on the pixel, like… In fact.
+state you are in, out in your dispatch state, and what were the exact messages that were there. I know a huge memory constraint, but, like.
+You'll get extreme consensus.
+That's… that's a good point, actually. You could possibly agree at every step about our exact complete state. So that's also… that's also an alternative. It's not agreeing on the next thing to implement, to run as an update, the complete state. Yeah. Other thoughts? Other… other things that people had in mind?
+Or did the rest have exactly the same thoughts?
+Okay, so let's use this, let's use this, this kind of, this, this, this intuition, and let's start building, a high-level overview of how can we build a replicated machine with Paxos.
+We start with a set of replicas, okay? We know we have that, even for primary backup.
+And the goal is to agree on a sequence of requests to be processed.
+All the replicas play all roles. So, proposer, acceptor, and learner.
+And the abstraction that we will use, and you will use in Assignment 3, is the abstraction of a shared log, meaning that each replica has a copy of the log
+And then, together with consensus on every cell of the log, we will put one update on needs of the cells. We agree on a shared log of requests. And we use consensus
+to, yeah, agree on each slot in the log. So, this is the way we are, you know, you could do this for assignment 3. There is indeed a way to get to the, you know, to… to a correct implementation also by
+agreeing on the complete state of the system, but that would require much more memory. So yeah, this is a classic kind of way of using a log to order things, and then just agreeing on the order of the items in the log. Questions about this?
+At the high level.
+Great!
+So, what will happen is that you run… you run consensus for each of these, there will be a bunch of proposals for each of these, different nodes will say, okay, let's run this update, let's run this update, and then gradually, things will start agreeing, okay, let's run the interest here, let's add a deposit here, let's run, you know, something else here, something else here, and so on.
+So, a question to you now, given this, is when is a replica ready to apply a request for slot I?
+let's say we have a slot I. When can we actually apply the request for a slot I, or a request for slot I? Thoughts?
+Think about Paxos, think about the roles of the different, you know, proposals, etc, learners. When can a replica… when is the replica ready to apply a request for a slot, and actually apply it to its memory, apply a deposit, or an interest, and so on?
+the decision won't change. Right, when you reach consensus? And how do we know that? How does an applicant know consensus has been released?
+I guess as a lender, if it receives, like, a majority count of… acceptable.
+Right, so if a learner… each replica, remember, is both a… it's a proposal accepted, and learned. So, if a replica, as a learner, hears from a majority of replicas that they have accepted the same request for slot I, then it can actually go and apply this, and apply it to its memory.
+What happens if an incoming request arrives when another request is pending, and we're still waiting to agree for that? What happens in the protocol?
+Or what could we do, I guess, to deal with this case?
+So let's say we are trying to agree on slot I, and then we get, you know, we have some requests that we are proposing, but then we get more requests. What do we do?
+Do we drop these requests? What do we do?
+Like, come from all the slot.
+We could push them off in the next slot, and so we could put them in a queue, exactly. So we can put all of our requests in a queue, so we have a bunch of requests that are coming in, and we put them all in a queue, and then we always propose the first
+request in our queue for the next slot. And we try again and again until we can actually get our request inside a slot.
+Are there any issues with the log?
+and log management? Can you think of any performance issues with this log, or, you know, any issues in general?
+What's happening as the system is running?
+Thoughts?
+Any performance problems with this log?
+Since we have to do it, like, sequentially, nothing can run concurrently, so it's just all the throughput is going through that one log, so if multiple requests come…
+It'll be just a backup of…
+For sure, for sure, there are… there are… there is performance problems with respect to this, which is that… and we will see, actually, in the final part of the lecture, how can we deal with these particular problems, or at least improve them. But yeah, these are certainly… there is some kind of
+You know, we have to… this is an avoidable problem. There is, you know, incoming multiple requests, we have to run them in sequence, so there's, you know, there's no way to kind of completely parallelize the situation. Yeah, so there's some scalability issues. Anything else?
+This log is, you know, we are, we are running, we are running for days, weeks, we are running. So, what's a problem that could appear there?
+Thoughts?
+Yeah, very large.
+The log can get very large, so we also need to think about the garbage collection strategy for this log, and how can we actually remove things from the log once, you know, we know that things are okay, done, there's no need to go behind and go back to that point.
+So…
+these are all, you know, some initial kind of overview of how to implement every caseistic machine with Paxos, and you should, you know, through Homework 3, you will figure out all of the kind of, like, small, nitty-gritty details about how to make that work, and make that correct.
+So, let's get back a little bit to, you know, comparing this with primary backup, because initially, that's why we started, right? We said we have primary backup, primary backup works, but we proposed this new Paxos thing. Do we get anything from this? So, in primary backup replication, you have a client.
+This is the primary, and these are the buttons.
+You talk to the primary, the primary talks to the backups, great. You send back, we are good.
+Now, in Paxos, you have the replicas, where all our proposed Acceptors and landlords.
+And you talk to one of them, they all talk to each other, and then they kind of make an agreement on, you know, what kind of requests to put in which order.
+Are there any benefits of Paxos that you can see at this level of architectural benefits and performance benefits compared to primary backup? What do people think?
+It's more fault-tolerant, that's, that's, that's a very important part, yes. And I guess, how is this, how is this,
+Yeah, I guess this is… this is the main… this is the main benefit of Excel, is that you only need a majority of the replicas to be up, not the primary or the view service. So you essentially get rid of this hierarchical problem that you had with primary backup, where you have the centralized view service, and you need all of your replicas, you need
+certainly your view service to be up, and you need your primary app, or otherwise you have to do this viewed change protocol. So, Maxis, if half of your network has completely died, the system can completely continue working for, you know, properly, until, you know, until the majority dies.
+Any downsides of Paxos compared to primary backup? Thoughts by people? Are there any problems?
+Just, like, a primary doctor we'll need to learn.
+Right, so perhaps that's another round of inter-replication.
+In the best case, it adds one more round. In the worst case, there is this live lock issue, there is… yeah, so in the best case, we had one more round, so we doubled the rounds of communication, but in the worst case, we can, you know, wait arbitrarily long with the live lock situation.
+So, these are the trade-offs, and there is reasons in practice to choose one or the other, yes.
+I mean, this is, like, crazy, no, like, you have to wait, like, for a good amount just to, like, get the… to reach the service that you want to send.
+So, can you just, like…
+add, as we were originally discussing, like, add some, like, time boundaries, so that, like, something crashes in back source, and you get, like, some sort of thing.
+Even if you had a timeout, you get some immediate result, but still, you're not guaranteed that you're progressing, right? Because if you time out, you… let's say I send promises out, prepared, prepared, no promise. And then I say, okay, if I don't hear back in 10 milliseconds, I will send another prepare.
+That doesn't mean we will progress, actually. We might keep sending repairs, because things might be delayed in the network. So, in general, there is a fundamental kind of trade-off of
+fault tolerance and performance. Why… why do people think this is preferable in some cases, or in industry? Yeah, or, you know, I don't know, yeah, what do people think? Because this is really, like, we are doubling, essentially, the communication cost.
+to get additional fault tolerance. But why is this important?
+election results between different LLMs.
+I like that you also have LLM examples. What's, what's the, what's the exact, the exact example? So, like, if, like, if you have, like, multiple LLMs, and you want to see, like, which one deserves to be, like, the best quoting agent, you can have, like, different kinds of algorithms.
+that determines whether some LLM is a very good holding agent or not. I am not sure exactly how I see this, you know, being exactly relevant to this question, but, but, yeah, I mean, yeah. So, other thoughts? Other thoughts on this? What… what… why do we want to… why is this…
+Why are we good with sacrificing this to get this?
+Why is this important?
+Yeah, you want to have a single point of failure. If you're a huge company and you have, like, you know, thousands of servers, you don't know which, you know… there is no good server that won't fail. All the servers could fail.
+So imagine you're Facebook, and then your complete infrastructure is just held by a thread, this one server that does a few service. And if that server crashes, or, you know, someone unplugs it, you're done. Facebook is down. So you… there's no way you can survive with this, so that's why you have to use protocols that are much more fault-tolerant compared to ones that have a similar point of failure.
+Just curious, like, why there's no centralized service needed, because doesn't the client still need somewhere to find…
+They can talk to anyone, actually, because all the replicas can propose.
+So the client just knows that they have, like, an exhaustive list of, like, people to check in with? Yes, exactly. So they can, they can, they can ask for a list of every, all their replicas, and then they can just send, points to them.
+So it's in order to change the number of machines in the number.
+to change the number of machines in the network. There is ways to change nodes. We will not see them in this class, but yeah, there are ways and protocols to do that, yeah.
+Can you explain more about his question, like.
+How does the client have a list of all endpoints it can't hit, when it doesn't know which ones are available?
+Also, they might be changing.
+It can try… so, so, we will not see the way they change, and there are ways, but… but I, I, yeah, I'm actually not up to, up to, you know, up to date with this literature of how exactly you find when things change, but if you have, you know, if you have a set of replicas and you know what they are, you can just try all of them, exhaustible, every time.
+If one of them responds, you're good. You don't care which one responds to you, actually. As long as one of them says, you know, as long as
+one of them says, okay, I'm, you know, I'm processing a request, or you have… you tie this one, then you tie the other one, and so on, so yeah.
+I mean, you could… you could… I mean, we have already made an assumption that we know… so imagine you're a company, right? You know literally which machines they are, which IPs they have, these five machines that you have in your service, right? So they have an IP address.
+And you can just give this IP address to Shaman, add these IP addresses, and then they can get them from there. You can have a view, you know, a bunch of casing view services that have this information.
+But… but this information doesn't change, so you write it once, there's no… there's no need to agree on it or anything, it's write once information.
+DHPC. Sorry? An IP change for DHPC?
+Yes, I mean…
+So, yeah, I guess there is practical considerations possible to this, which we won't get in, and I'm not sure, you know, I have answers for, you know, all the practical considerations of the stack of where this goes, but for sure what I know is that this information is static.
+you know it, okay? You have this information that these are these five nodes. Now, given that information, you can always just
+Heat up all the nodes for this, yeah.
+Great.
+So, Paxos has two execution phases, as you had said, so… and this is part of this problem. So let's now try to see some ways to actually improve this. So, let's try to think of some ways to improve Paxos' RSM Paxos performance.
+So let's think of our goals and solutions.
+Packers can just choose a value among a set of proposed values.
+RSM needs to apply many updates in consistent order.
+Can we do better here compared to the solution we talked about, which is, you know, pick one, and put them all in the log? Can we do better? Are there any ways to do better? Thoughts?
+Are we solving the right problem with this architecture we talked about?
+Or are we restricting ourselves unnecessarily?
+You're right.
+Based off of most true descriptions,
+what you do with RSM would be you apply updates with the value that you get from Ponzos.
+onto… All the, like, nodes of the replicated state machine.
+So, like, they're solving different things.
+there is something… so we are solving the right with respect to correctness problem. So we are… we are here using Paxos to make a choice for… for… for the next update in this log, and then we run the log. So we are solving the correct problem with respect to correctness, but there is…
+There's something that we have kind of restricted ourselves in, performance-wise.
+So we pick slots in the log.
+with Paxos. Could we do something different?
+We want, with RSM, to apply many updates in consistent order.
+Could we… could we use Paxos to make some different, consensus for something else other than one slot of the log?
+He lit.
+Can we partition the logs and then try to, like, do some sort of ordering there, or see, like, what things are… can be processed in parallel?
+So, so, so you, you, you said a few things here. You said parallelized execution in the log, but also,
+make patches choose multiple slots at once. So…
+I guess that's kind of, like, a solution for this problem, and the way to think about it is… or one way to kind of, like, reach this goal is the following. Let's say we have this execution. Prepare, promise, accept, and we get accepted. There should be another accepted here.
+What has happened at this point? What does P1 know at this point?
+Do we know taxes?
+We know it's the consensus, but it also knows… I guess maybe this question is a little bit too vague, to be idealized.
+So, the thing that Tiwan knows, actually, is that it has a majority of acceptors on board with it. So, the majority of acceptors has actually accepted its value, so they are here with us. And we talk to them, and they, you know, they have already trusted us. So, what can we do with this? We can jump straight to Phase 2 in the next round.
+So we could have a way to kind of continue proposing accepts here, and still be correct. And we're not going to see the details of this in practice, but this is the key idea behind multi-multipaxos, where,
+Once a value is accepted, we then jump straight to phase two, and then we can immediately skip the prepared phase, and we skip a round of communication per proposal.
+And that's correct. That's a protocol that has been shown correct. We will not see the details in the class. You also do not need to implement this in the assignment, but it's important to have this idea that there is ways to kind of batch
+Things, or, you know, get more for… get more bang for our buck with the same kind of communication.
+And, yeah, this is very heavily used. A recent example is Amazon DynamoDB, but there's also other many examples of, you know, systems that use some form of multi-pack source.
+And,
+A question here is, what if we have another proposal? That the other proposer actually sends, prepares, and gets back promises.
+So, Proposal 1 loses the streak, right, in this case. So, they cannot keep proposal accepts, because the next time they do accept, they have lost… they have lost the account, so they will be… they will get a failure back.
+So, a question to you is, how much worse is multi-paxos with respect to performance, in the worst case, compared to Paxos? How much worse
+Of are we here with respect to communication?
+In the worst case. I think over here, like, we are assuming that, like, if somebody's, like, sending words, like, requesting, but assuming that they would, like, change sending it, so you would, like, have this concept of, like, speaking better again, of worseness.
+when it would be like, okay, this guy cannot make a streak, this guy cannot make a switch, and then it keeps on going. So you won't have smacks, therefore you are getting out of. At first, get them back for both of them. Exactly. So, worst case, we are exactly the same as the original, so we're not making the worst case worse.
+And that's… that's a very desirable property of an optimization in general. So, this is not always possible, but when it's possible.
+to improve the best case, but do not make the worst case worse. That's kind of like the golden grail of optimization. So, in this case,
+Yes, multi-pack source, in the worst case, does not have worse performance than there is the pack source.
+Questions? High-level questions about this?
+Why is it not sending the office?
+6, and this is 5. Why doesn't A2 send?
+Things come along with…
+So this is a… there is… multiple practices works in a different way, not exactly the same way as the original, so that's why I'm not going into the details here, and you are not also required to go over the details for the exam, or the assignments. But there is… the protocol has to change to make this work, because now we have another kind of sub-round thing of, I am now keep proposing different values, so then there is the
+There's a different way to kind of, the protocol has to change, so it's not exactly the same protocol.
+Yes.
+Here, the main thing I want you to have is the intuition that there is a way for Paxos to be improved, have the same worst-case performance, have the same correctness guarantees, but, in the best case, get rid of
+Half of the communication labs.
+Okay?
+And now, another question is, could we do even better, maybe an alternative kind of way to bot's things? What do people think?
+Think view service. What other thoughts do people have about view service? Or, you know, what else could we do here? Instead of this kind of way to batch, is there another way to possibly batch things?
+You service on the back source?
+Yes, with this, let's take this a step further, so what could this mean? What, what, what could we do to essentially use, use this intuition to get rid of some communication?
+Only additional consensus, the only consensus that would happen is among your servers, the ones that are your, like, service providers.
+And Paxos would just guarantee that you get, like, the right primary thing that we need.
+separate their contract?
+Well, that's our implementation to have now, though, that we have without a Vue service, so where does the Vue service come into play, I guess?
+So, you said view service on Paxos, so what's, what's the way to add a view service? Or what could we add as a view service, or, you know, what could we do with additional view service here to bat's requests?
+This is gonna… maybe, like, to prevent losing the streak, you have some notion of, like.
+the person who proposes kind of the primary view. You just keep running with that until it balanced using the new service.
+So… so this, this is a way that is very similar to this, and essentially you have this way of knowing who is the primary, but… but I want… I want us to kind of forget about, a little bit, you know, to think of a completely different approach, go back to original Paxos, and
+nothing about multipax source, and how could we do… what could we do with a Vue service in addition to the system?
+Pushing the consent somewhere else, hmm?
+How much can I do?
+Then, backup and service, definitely Facebook under your imposer.
+of a bolt.
+Right, so… so one way to kind of, like, use this, use this view service information is that instead of using consensus to pick the values that we're doing now, so we're saying consensus, pick a value. Consensus, pick a value, okay?
+What we can do is use consensus for leader election, or to decide on the view. So, we use consensus, we decide on the view, we don't have a view service, though, we just agree on the view.
+And then, work like primary backup. Now we can just do a single round of communication every time. Because we have agreed on the view, and there's no view service. We all are the view service, together.
+So we can push consensus to be not about the values, but rather about who proposes. And there's protocols out there that… this is more of a leader-based Paxos.
+Where you essentially maintain a sequence of views instead of a sequence of values. And clients submit proposals to the leader, always, and the leader always is at the accept phase, essentially, because there's no… there's no contention.
+What happens if the leader crosses in that case?
+Thoughts?
+In both backflows are then.
+Invoke factors again, and then you run… you decide the new view.
+How do we determine that the view needs to change?
+In the view service example, the view would communicate with everyone and make this determination. What do we do here?
+More hunts?
+Nope.
+Like, you're trying to see when we need to, like, re-elect a new
+new, or, like, a new person who signed with Westcroot?
+As soon as you receive from, like, a client that that guy is not alive anymore and it's there?
+We could just, like, have some sort of, like, message that would be passed to everyone that the guy is dead, we need to elect a new…
+So we have to learn from someone, either through the clients or by talking to other replicas all the time, that, you know, the leader has not responded for some period of time, and so we have to rerun the view, the view protocol, the consensus for the view, or there's also alternatives with some kind of lease or validity period, and we will see something like that in the next lecture, actually.
+I have one more question, but I will take it, because I feel like we're also getting close to time, and I've asked you so many questions. So, there's a drawback also compared to leaderless Paxos.
+And the drawback is that the leader may be far from the client.
+So now, we are… we are essentially in a geo-replicated system. If we have a leader, that means, you know, if my leader is in Brazil, then all the requests have to go to that particular node. So, we have this problem that with a leader protocol.
+All of the requests go somewhere, and that somewhere might be far.
+So you have to kind of, like, keep that into consideration also.
+How, like, guarantee that, like, you would always get a leader planning?
+Don't like the…
+Yes, so the same problem exists. So, this is a good… this is a good question. The thing to keep in mind is, we do not… there is… no matter what we say, no matter all the practical solutions we come up with, we will improve performance. The fundamental limitation of liveness stays. There is no way to guarantee liveness. The only way we can guarantee is that, you know.
+Like, with practical luck.
+we will, you know, get away in practice from this bad execution, but there is no, you know, guarantee that every execution of the system will actually guarantee. This is a fundamental theoretical limitation that we cannot avoid, okay?
+Great. So, let me just quickly recap and talk to you about the consensus protocol landscape a little bit. So, there is
+Multipac sauce.
+there is various alternatives of consensus other than Alpexos, like view stamp replication, there is ZAB, which is part of ZooKeeper, which we will see next time, a little bit. There is Raft.
+Which is similar to Access, but simpler. And all of these protocols actually agree on a sequence of values, or have a leader… leader-style protocol.
+Just to get a sense of how complex the landscape is, again, there is a paper that came out in 2015 that talks about the differences of many of these protocols and terminology, and tries to reconcile, you know, what are the differences, what, who gets what better, and so on, and so forth. So this is a very complex landscape.
+Any final questions from your Paxos and the Paxos landscape, the consensus landscape?
+Great.
+As always, please fill out the quiz, and yeah, thank you for your time.
+Yeah, so I get audible document here.
+So… If there's anything… Can we derive the number of, like, spurs per octopus?
+So, this number derived from the fact that, like, we need to go from the proposal to the acceptor, and then from the acceptor… where is this two? Two points in the, in the… well, I guess, yeah, there is two points in the proposal, in the, in the protocol, where you talk about
+Well, we talk about, the majority.
+If we do not hear back from the majority.
+We cannot even say, as a proposal. So, we certainly have to have a majority to be a liar.
+I could be able to do anything without talking. So, essentially, what it says is that…
+So, we can tolerate one for…
+And if you take this, take this formula, you know, for every podium, that gives you 2F plus 1. So this is F, this is S, because it has F plus 1, so in total, it's 2F plus 1. Yeah, so these are the alive, alive?
+And then so all of them have to share. No, it's to progress, yes. Okay, and then the same idea for the proposers, like, the proposals is simpler, actually, because the proposals, as long as there's one proposer who keeps trying.
+They will make it. Oh, I see. So then there's no, there's no problem with those. Okay.
+And also, earlier I had a question about, like, if there can be ties. So, because of Paxos's rules about, like, you can only send the accept message when a majority, like, agrees, this means no ties can ever exist, because you have to wait until
+a majority. Correct, correct. So, so, so actually, also the kind of, like, correctness argument for it also has to do with this majority. This majority is part of the correct argument, and then.

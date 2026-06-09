@@ -1,0 +1,621 @@
+No, but I'd like to do it next time.
+tree length.
+diesel.
+Okay, Ryan, if I respond, don't worry about it.
+Seriously.
+No, excuse me.
+Are you ready?
+What about the salad?
+Well, if we do.
+Let's get out of the map a little bit.
+Awesome.
+No, yeah, it's the same notes in general.
+I'm sorry.
+activation.
+Okay.
+Hi, everyone. I guess we can get started.
+So…
+Yeah, before starting today's lecture, where we'll talk about consensus, actually, let's do a brief revisit of consistency models, based on the feedback, especially for causal consistency.
+So, some context about consistency before we dive into the topic itself, again, is that
+Consistency, consensus, all of these, all of these kind of concepts in the theory of distributed systems, they're sometimes unintuitive. So, even, you know, the expectation should not be that after the lecture you should have all the context. That does not mean you should not give me feedback, but afterwards, I think you should expect to also have to look at these concepts and try to understand by looking at executions, understanding why they are consistent or not, what do these definitions mean.
+And so on.
+Still, I think the cosmoconsist definition actually was a little bit hand-waved, so let's get back to it, and actually try to define it a little bit more precisely, and hopefully this will make things clearer.
+So.
+to precisely… first of all, the causal causes is defined in this paper, which is from 1995, and, the…
+The way to define it properly is that there is two types of, happens before relationships between events.
+Two events, if an event precedes another event, then they are related by happens before, and this is this red arrow here, okay?
+And then, if a get leads the value written by a set, then they're also related.
+Note that a GET can only be written from a single set, right? Or the initial value.
+So then causal consistency is that for every client, there exists a linearization of all of its operations, plus all writes in the trace, that preserves the happens before.
+Note here, There exists a linearization for every client, so there is no global linearization across all clients, okay?
+Great.
+So…
+Having this definition in mind, of these two relationships, now, first of all, is there any question at this point, about the definition of causal consistency?
+Any question?
+Great.
+So having this definition in mind, which is shown here.
+Causal consistency is weaker than sequester consistency, and the reason is that there is no global order. Every client has their own linearization of the events, so their own order of the events.
+But what about the leads from? So we have this relationship here.
+Why does sequential consistency actually… for causal to be weaker than sequential consistency, it means that sequential consistency always preserves this order.
+What are your thoughts about this? Does anyone have an idea why sequential consistency respects this read from order, or why not?
+Thoughts?
+I have, like, mobile order that I must.
+The same for every client, unlike… puzzle.
+So global order is one side of the story. So, there is global versus multiple orders, and that's for sure one way where it is stronger, because if you have a single order, then you can also have an order for its client, whereas an order for its client does not necessarily mean the same order. But there is something else also here that is a little bit missing, which is
+why does this global order actually preserve this, right? Because you could imagine, the claim I'm making here is that if
+An execution is sequentially consistent, it's also causal.
+That means that if an execution can be sequential constant, I find a global order, these edges will also be preserved in this order. How is that guaranteed, and why? Thoughts?
+Maybe it's not, yeah. That's what people think. Observations? Questions about this, even?
+Seems like…
+What I think especially this is, like, there's sort of, like, blocks of, like, overlapping things that we could, like, shift around as needed. Like, the blocks are still gonna be, like, separate. So even if I reorder things, like, this thing that happens before with this room is, like, still gonna be preserved.
+Just because I do not have to shuffle, like, the exact ordering that he makes around.
+Okay, so that's true. It will be presented with a specific reason. So… so we have… let's say we have two clients, right? And one of them… and they have these two boxes, this is a self, this is a get.
+This is client 2, and this is the reach from.
+So, in sequential correlation, we find the global order. Why are we… is it a guarantee that the global order will always order the global order that explains the execution.
+we'll always order the set here before they get. Do we have any guarantee for this? I'm like, you can. I don't think you can reorder our beds that, like, have, like…
+One of them has been writing the Saiyan…
+I guess, like, memory block as a read, because then that, like, changes the semantics of the program and something? Exactly. That's the point. So, when we… when we find… when we find this global order, we don't just say, I want to find a global order. A global order could be any global order. We say we have to find a global order that satisfies the sequential semantics.
+And to order this fine sequential semantics, if I actually read the value of a specific write, I have to be after that write, because otherwise I would have read a different value. So if it reads 2 here, because it sets 2, if I moved this before, this wouldn't get 2.
+This would get zero, okay? So, essentially, this order is always guaranteed by the requirement of sequential consistency that we preserve the sequential specification of the object. Does that make sense?
+Great. So, the sequential constant total order always respects the read from.
+And that is because, we have to explain this order through a sequential specification. And the sequential specification itself will have to preserve this, because otherwise it will give us trust. There's no way that a get is before a set, but reads this set's value. This would not be an explainable sequential order, okay?
+Questions about causal consistency.
+Great.
+So let's get back to Lecture 7 squeeze, and we'll go through all the questions. The first one was a question about guarantees of specific consistency models.
+And it asks whether a consistency model guarantees a sequential total order execution. I think all of you got this right. Linearsability and sequential consistency do require a total order execution.
+The order of causal-related events is preserved. All three of them satisfy this, because linear's ability is strictly stronger than sequential consistency, which is stronger than causal consistency, which actually preserves this.
+And a read always returns the value of the latest completed write. And for this.
+Let's look again at this execution that we saw in the previous class, which is that we have a set in a client that finishes, and then another get starts right after this finishes.
+So, if the set completes before the get, only layer's ability guarantees that this get needs to read the set value. So, only layer's ability actually guarantees the real-time order. If something finishes in real time.
+Before something else, it has to… the later event has to actually see its effects.
+And all other consistency models do not make this guarantee. So, in both sequential consistency and causal consistency, we're allowed to move this, meaning that, you know, this get could also, have returned zero.
+So let's now briefly reiterate the relationship between the consistency models, and as we said, learnability is strictly stronger than sequential consistency, which is strictly stronger than causal consistency.
+And in general, that means that if a system satisfies the, you know, one of them, it also satisfies the ones that are weaker. So that, in general, a direct implication we can have. A linearizable system is also a CNCC. A SC system is also a CC system, okay?
+Great. And let's also correct the point about compositionality. So last lecture, I showed you this execution, and I asked you, is the sequential consistent?
+And the answer is yes, because we can move this get before the set, so we have set0, get0, set 1, sequentially consistent.
+Similarly, this one, we can do the exact same trick, move the get before the set, and then we have the green ones, set, get, set0, get0, set 1, and that's fine.
+And then I asked, is this call execution a C? And I wanted the answer to be no, but someone found the bug. And actually, it is still a C, and the way is that we can just move all of these three after this. Okay.
+Okay, so this is a bug. But then, this is the actual execution that showcases this problem. So in this execution.
+Is the quadrant constant? Well, I told you, it's not. Why?
+Why do people think this is not sequentially consistent? Can someone point to the reason why it's not sequentially consistent?
+Any thoughts?
+At least, like, for the green portion, between the two gets, you're always going to be setting Y to 1.
+So your first set, Y to 2, has to either come for the first get or the second get, but it can't be for both.
+So, this one, or the first set? Could you repeat the statement? So, we have to get.
+Yeah, it gets that both return to 2, but there's a set Y to 1 in the middle of 9? Yes. And so, reordering the first set Y to 2
+it only, validate either that first GIF or the second GIF.
+Right, so what we want to do, based on this reasoning, is to move this gate behind this set, correct? If we move this gate, if we manage to move this gate behind this set in the global order, we are good, right?
+Does anyone agree with this point? We have a set 2, get to. If I manage somehow to move this get before this set, I'm… I'm done. This is explainable for wise.
+Correct.
+So, similarly, I need to do the exact same thing for this get, for the blue one, right? So I have… this has to be run before this, and this has to be run before this, in the global order, right? That we have to have to explain things.
+Why do I say here that there is a cycle of which event goes first?
+Why is the cycle… where is the cycle made?
+What completes this cycle? What's the cycle about?
+The program?
+The local order, exactly. So, I want to put this before this, I want to put this before this, I want to put this before this, and I want to put this before this.
+So there's no… there's no way. We found a psyche of requirements of events that need to be put behind each other, and there's… so there's no way to kind of, like, resolve this cycle. Does that make sense to people? Because… so we… because we found the psyche, we now disprove sequential consistency for this particular execution.
+Questions?
+Why didn't fight.
+you were to reorder the event such that you set Y to 1, and then set Y to 2, and then do both gets, and then do the same for the green.
+That could be a possibility, so we could all… but this also creates a cycle. So we'd have to do this is before this.
+then this, I guess, similarly, this is before this, but then this is before this.
+And then by going there, this is before this. So again, we kind of, like, find another cycle.
+So this would also be a SIP.
+Gwen, yeah? Would this be costly?
+Would this be cause or consistent?
+Hmm, I didn't think about this. Please think about this, and let's all… let's all try to answer this question.
+So, what are the events you want to have in the one below, right? Let's look at one of them. So, or the one above. We want to put the set, set to.
+set X2, we want to use GETY2,
+We want to have, set Y1,
+get X to…
+and also the sets in the global order. So we also need to find a way to add this to set Y2,
+And… Said, X1.
+So these are all of the events we want to create an order for, for the top client. Can we create an order that satisfies this?
+So the only things we are seeing here, are…
+There might also be a reads from here, by the way. Is there a reads from? So this gets…
+This gets… this get actually sees this, so…
+this GET sees this, and no gets sees this. So can we make… can we make another order out of this?
+I think we can, actually, right?
+We put this… Then we put…
+With this and this, and then we put all the rest.
+That seems like an order to me. It satisfies this relationship, so I don't see any problem. I think this is causal consistent.
+Does that make sense to people?
+Oh, for… going back to sequential… sorry, going back to the sequential consistency, how are you allowed
+to reorder things.
+you're allowed to order things without violating the client local process order for sequential control. So, in other words, one client… you can order… you can order the execution of the clients, but you can't execute… you can't reorder the execution of the events within the order. Correct, correct.
+Is that the same thing for causally consistent?
+Coastal constancy also were not allowed to reorder for the same client, correct? We saw this with the… yeah.
+I think how you got that.
+per possible.
+I got one order for Client 1. So what I got here is that I need to create an order of all the events of Client 1, plus all the rights. So I gather all the events of Client 1, and I gather all the rights. And I then start creating this… this happens before relationship.
+First, the local, then this local, then this has to have red piece.
+So I… I draw an arrow between those. So this is… might happen before a relationship. So whatever order I have to create has to respect this.
+Because this has no cycle, I can actually create an order. There is an order. There is multiple orders, actually. Because the only thing I have to guarantee is that this is before this, this is before this, and then these are somehow before… the first one is before this.
+And so, so, yeah,
+We need to make sure that…
+the set X1 is not between…
+the set X… sorry, yeah, between the set X2 and the getX2?
+There's the next one, we don't care where it is.
+Wait a minute… we can push it to the end, this set, I guess. Otherwise, otherwise… We…
+We have to push it either at the end, or in the beginning.
+Or before, before this, to make this work, yeah.
+Wait, how are you handling setY1? Like, don't you have to push that after get Y2?
+It is after.
+But then, how did you get, like, get X2 to be… Like, after set exploit.
+Get X2 is after set X2.
+Okay. And then, and then I can move these two before in the beginning. I can take these two sets and move them in the beginning, actually. That's the easiest way. The easiest way to just take these two, and move them before and everything transfers. And that's okay, let's fine. But then, wouldn't that violate, like, client 2's, like, in fellow order? Client 2, we don't care. How do you… these rights are not violated.
+This is what we care about, client 2. Client 2 will have a different order. That's the thing you need to keep in mind. So, client 1 has this order, client 2 will have a different order. So, there's not the same order in both, okay?
+But with causal consistency, you know, like.
+Every client can have a different order that they see.
+Okay?
+Okay, final question, because we have to move also to consensus, which is equally, if not even more hard.
+questions. And you can… you can grok this… now that you have the definition, you can just look at the definition, just follow the definition, and the definition will give you the answer to whether you can… you can… you can reorder this or not. Even if it doesn't make intuitive sense, use the definition.
+Questions?
+Great.
+So… Overview. We talked about strong consistency last time, and this time a little bit.
+Now, we'll talk about consensus, down here, and prepare. This is harder than consistency, I'm sorry. So today's lecture requires you to be as focused as possible. We'll go through some protocol that's kind of hard to understand, and even harder to kind of, like, understand why it's correct.
+So… Today, we will talk about, consensus.
+We'll talk about safety and liveness.
+And we will talk about Patrus.
+Or Paxos.
+By the way, it's hard, but it's actually pretty fun of an algorithm. and it's… yeah, there is reasons why it's hard, and I guess we'll get that in this lecture and the next lecture.
+So, let's get back some context a little bit, remember where we were. So, we had figured out of ways to use logical clocks to order events.
+Then we used primary backup replication to replace, to be able to handle some failures. So when there's a failure, we can change the view, and we can create a new primary, and we can keep processing requests, and so on and so forth.
+So…
+When is a replicated machine using primary backup unavailable to serve requests? Bring back, in your mind, all the primary backup things we've seen, and let's answer this question. When is a replicated machine not able to serve requests in the primary backup protocol we've talked about? Hans, thoughts?
+What things can happen for it to become unavailable?
+Maybe if the backup just turned into a memory, it needs to, like.
+Correct. So the backup has not actually… has not managed… has switched the view, and it hasn't managed to hack, yeah, to the… for… with connecting with all the backups and to the view service, correct? Other reasons? There's… there's a couple reasons why this could be happening.
+Obviously, they just both pay off at the same.
+Right? If, if they both fail, yes, correct. Is there anything else that could fail?
+There's a network partitions, yeah. What else could fail?
+Thoughts? The view service. So, yeah, exactly. We could have a syncing, waiting for the sync, we could have the backup being connected with view service, but not the primary, split, like, the partition. We could have the view service be down, and all of these reasons are reasons why the replicating machine will be unavailable to serve requests for either temporarily or permanently.
+The core of the problem here is that we have a hierarchy among the nodes, okay?
+So, the question is, how can we make the replication machine tolerant to network partitions,
+ensuring that operations do not block, even if some of the machines are unavailable. So the problem here was that even though a single machine was down, the queue service, the whole system is not able to progress. So today, we will see a protocol that even if
+half, a little bit fewer than half of the nodes fail, but the majority of the nodes is alive, the protocol can actually still respond. So if you have, like, 5 nodes and 2 fail, you can still keep responding, and still be correct, okay?
+Questions?
+Great.
+The analogy here, that is a way to think about this, is that there's a friend group, you and your friends, need to decide on where to travel.
+And, you know, you are offered offline, not on your phone, or some of you mute message chats, you know. The common case is that not everyone is looking at the chat the whole time, and that's what we expect in a distributed system with multiple nodes. Some node will always not be offline. They will be crossed, they will be network partitioned, and so on.
+So, how do we decide where to go?
+The goal is to create a protocol that ensures that despite only a subset being active at any time, if a destination is chosen, it will not be overwritten.
+Meaning, the chat, the people who mute the chat won't be able to complain about destination one day before the trip, okay?
+So, this is consensus, this is the consensus problem, and this is what it guarantees. Let's say we have a way to run a protocol among all the friends, and then if the protocol completes, then the destination is chosen and cannot be overwritten.
+And this is called consensus.
+And a simplified view of this is this here. There is a couple proposals. For the purpose of this class, we will just look at a binary proposal between 0 and 1. So always, for this class, for the purpose of this particular lecture, we will worry about whether to pick between the numbers 0 and 1,
+We have a bunch of proposals.
+That get… some of them get some of the options, or decide, based on some kind of arbitrary way, which of the two to propose.
+And then we want to end in a situation where all of them return zero.
+Okay?
+Or one. And there is… the thing we will talk about today is this… what happens in here. How do we get to a state where… what do they have to do so that at the end they all agree? We chose zero together, okay? Despite failures happening and so on.
+Question?
+The circle represents an actor, or a node in the system, a machine in the system, a person, and so on, yeah.
+Great.
+Before we talk about consensus and how to do… how to build it, let's talk about what we can do with it.
+So, consensus is a very powerful building block for distributed systems.
+Do people have any ideas on what can we use it for in the context of this class, and more broadly? What can we use this powerful building block here to do? Can you think of some things that we can use this? If you have a way for, between a set of nodes, despite failures, to always decide on the same value.
+What can you do with this? Thoughts? Hans?
+So, really, that's primary.
+You can decide on who to make the next primary, that's correct. Other thoughts?
+What other things you can do?
+Cool.
+Blockchain? Exactly. Blockchain is built on top of consensus protocols, yes. Other?
+In the context of a replicated state machine, what could we… what could we agree on, also, instead of the primary? Anything else that you could agree on?
+Stated.
+the state itself, or a way to kind of, like, reframe this is maybe the request to process, the next request to process. So we all agree, we're going to process this request now.
+And so, yeah, these are some… these are some… some things. A set of notes, in addition to what you said,
+They can agree on who holds a lock for a period of time, or who is the primary. They can agree on which nodes are alive and reachable in the system, or they can agree on what financial transactions have happened, which is exactly a cryptocurrency and blockchain.
+In our case?
+We have a set of replicas that continuously receive client requests, and they agree what is the next operation they should execute. And that's the replicated machine that we will implement.
+In this lecture, we will not focus on how we build this, but I want to give you some context before we look at consensus on why this is a useful building block.
+So, one thing before looking at consensus, as I said, this consensus is part of the foundations, so it's like, we will make some assumptions about the protocol also, and the whole point of it is that it's a simple, simple, in quotes, clean protocol that gives you these guarantees that we want, but then in real life, systems do different things, and we will see about that in a few lectures.
+So, what do we want from consensus?
+Before talking about this, let's go on a side quest to talk about safety enlightenments.
+So, you must, of course, remember traces. We saw them last class, and this class. A system can be defined through a set of execution traces, as we said. So, you have a bunch of clients, you have a system, you observe.
+This boundary, you get this kind of execution traces, and then you say, okay, each one of those
+The set of all the things that I can observe from the system is the specification of the system.
+So we often want to know that our system behaves in a specific way.
+We want to know that it satisfies some property P. And as I said in the last class, this is essentially the subset, the subset property, so if all the system traces are inside the set of the property traces, then we say that we satisfy it.
+How do we show that the system does not satisfy a property?
+What do people think?
+Correct. So we just find the counterexample trace. When you find a trace that does not satisfy the property, the system does not satisfy the property. But if you want to prove that it satisfies the property, you have to show that all the traces are inside satisfy the property, okay?
+And there are two types of properties.
+There are safety properties.
+where no… I guess there's multiple types of properties, but there's two types of properties that we will care about in this class, and afterwards, you know, the others can often be defined in terms of those, but with some more complex machinery. But…
+These properties that we will care about are safety and liveness. So safety properties talk about the following thing. They say, no bad things can happen in the system.
+And the system essentially means that the system can never reach an undesirable state.
+What is a way to kind of…
+What's a counterexample to a safety property? The safety property says a system will never reach an undesirable state. Thoughts?
+What's a counterexample? How do we disprove a safety property?
+Yes.
+You can find a trace where it is, I would say no.
+Exactly. So we find a trace, a finite trace, that… where the system reaches a desirable state at that precise point.
+Then we have liveness properties, where good things happen eventually. So the system, for example, makes progress eventually. What's a counterexample of a liveness property? Thoughts?
+Sorry? A deadlock could be a counterexample, but I guess, yeah, a deadlock is a counterexample, correct? This is a special case, though, of counterexamples. There's always cases where we don't have a deadlock, but we have a live look. When is the counterexample that shows a live look?
+Or a situation where the system, you know, violates the lime's property without actually going into deadlock.
+an infinite. That's the important part. So we need an infinite trace that actually… so usually you find it using a loop, so you determine a loop in your system, and you say, my step enters this loop, and then it does not X from this loop, but the important part to keep in mind here is that if you want to disprove
+a liveness property, you have to find an infinite trace of the system. Otherwise, any finite trace, if you show a finite trace, then someone can say, okay, what if I extended it 10 more and actually then satisfied the liveness property? You cannot disprove liveness without an infinite trace, okay?
+An important thing to keep in mind about safety and blindness properties is that safety properties are easier to prove, check, and guarantee, and most of the work on verification and formal methods on distributed systems focuses on those, and
+And then liveness properties are very hard to work with, and it's… and it's really even state-of-the-art kind of, there is research happening now trying to improve the machinery we have to prove that the system satisfies liveness properties.
+So, in general, and in this class, we will, I guess.
+We will keep that in mind throughout this class, because it will be relevant here, but also more broadly in the context of distributed systems. These are easy to prove, these are very hard to prove, okay?
+Questions about safety and likeness?
+Okay.
+So… Back to consensus.
+What do we want from a consensus algorithm?
+Talk to the person next to you. What might we want from this? Start talking about, you know, before we even talk about the protocol, what do we want this to do? So, discuss, and then we'll get back together and gather all the properties that we might want from a consensus algorithm.
+Yeah.
+Thank you, and that's what I want to do.
+That's really hard about it.
+Oh, no, no, that's all this.
+So, let's collect what you all have thought about.
+So what would we want from a consensus algorithm? Hands? Thoughts? Hands from more people? What kind of properties you might want? More hands? What have you discussed? Observations?
+Morgan's?
+We discussed something. What are the properties we want from a consensus algorithm?
+Something, something, Hans, Hans.
+like, all the nodes will agree on one thing, even if, like, someone were dev, or some of them would take a while to respond. Right, so all the nodes will agree on one thing, that's correct. Another problem that we might want?
+Well, okay, I expected this answer, okay? So, the thing with safety and liveness, actually, is that they are not properties themselves, but they describe properties. So, a property is a safety property, or a property is a liveness property, but safety on its own means all safety properties, so that is a little bit abstract.
+Yeah,
+algorithm. We want it to be, like, fast in real time, and we want it to also be deterministic, like, we want a reason why we take a certain, like, outcome.
+And… You don't want to just say, like, oh, there was a black box, you just ended up one.
+That is maybe something that we want. Usually, I think in consensual algorithms, we don't
+I don't… as far as I know, the classic ones don't require this, but I could see there could be cases why one would want there to be a reasoning or fair… fairness kind of principle on how you pick. But in this particular case, we don't worry about fairness. That's a good point, though. Normally, if the proposals actually have to do also with, you know, with competing
+competing agents and competing kind of, competing interests, we want some fairness, but here we just assume proposal is just random, like, what kind of color will I put in, I don't know, what kind of color will I paint something on, or yeah.
+We do want them to eventually reach consensus. Correct. So we do want them to eventually reach consensus. So if we gather them together, we said, we want them to all agree, and we want them to eventually finish, and we could want some fairness property. We will not worry about the fairness property, but it's actually a reasonable point.
+consensus, like, there is some…
+non-zero amount of time that a system kind of takes to reach that, and then I was curious, like, what happens to, like, client requests that are being processed in that time, and then what happens for, like, invalid client requests after consensus is reached?
+So, so this is… this is a bigger discussion that we'll talk about in the next lecture. So now, for now, we'll just abstract away all of the requests, abstract away everything, and before we understand anything, let's understand how do we even build this little block here?
+we will agree how to build this block today, and next lecture we say, okay, now we have this block, and we know how it works, so now let's think about requests. So we'll come back to this in the next lecture. So, you very well identified two properties here. We want termination.
+And what type of property is termination?
+Thoughts?
+It's a liveness property, boom. And then, and then agreement, which is that all of them decide on the same value.
+What is a consensus protocol that satisfies both of these properties?
+That is simpler than Paxos.
+I think majority vote.
+majority vote.
+the, majority vote doesn't satisfy, but there is a question of how do you actually do the voting, because to do the voting, you have to exchange messages between them. I'm thinking about something even simpler than this. What's, like, a very simple protocol that satisfies these two properties?
+On the back, yeah.
+Just output the same values.
+I output the same value every time. So you can always pick 0, no matter what people propose. So even if 0 was not proposed, I don't care, I'm gonna pick 0, right? So this, this actually works.
+But… This is not what we want. So what other property do we want, actually, from the consensus algorithm?
+value which should actually be useful? Should be useful, meaning proposed. So the agreed upon value must be one of the proposed values. I can't just pick an arbitrary value every time and just, okay, call it a day, okay? So now, with these three properties, we know what we want to achieve, okay? Any questions about the properties?
+Okay, so we are ready.
+So this is us.
+And this is, Paxos, okay? So, we start gradually, kind of, fighting this thing and see where we get.
+So, the original paper, of, of Paxos, was introduced by, was written by Leslie Lampert, who kind of thought of this as a kind of mythical story of a Greek island, of Paxos, which is a real island.
+where there's some legislators, and there's a current law that they want to pass, but the legislators travel all the time, and that's how the paper is written, actually. But this protocol is actually used very widely in the state today, and essentially all of consensus that is used now, even if it's called by a different name, like Raft, or, you know, there's Zookeeper, and there's other types of consensus.
+A lot of it builds on the foundations of these protocols, and it's considered the foundational kind of consensus protocol.
+And, the way it works is that there is three processes, three types of processes. There is proposers with proposed values, there is acceptors, which contribute to choosing among the proposed values, and there is the learners that lend the agreed-upon value.
+In practice, in a real system, each process or node of our system will play all three of the roles. But to simplify and to understand the protocol at a kind of, like, abstract level, we will assume that each process plays a single role. So we have some separate proposals, separate acceptors, and separate learners, okay?
+And then the process can persist some amount of data. In particular, the value they have accepted. And we will see how this applies a bit later.
+An important thing also is that they know the number of acceptors before they start, and that is to determine the majority. And essentially, Paxos does something like a majority vote, and once a majority has agreed on a value, then you know that value is the value you will accept as a system.
+So, the key ideas of Paxos,
+one of… some key ideas are that the system might not always come to consensus in a single round. So, there is a protocol where all of these… all of these different processes exchange messages, and it might have to run for multiple rounds.
+But at some point, it will reach a consensus, and then we will know that once the value is accepted by the majority, no different value can be accepted in a later round. So the protocol closes, and once the value is accepted, no matter what other messages are sent, there is no way for a different value to be accepted.
+Okay? Keep that in mind, that's a very important property of the protocol.
+Questions about the kind of, like, build-up of the, of the protocol?
+Great.
+So…
+An overview of Paxos. We have three phases, in each round. We have a prepared phase, where a proposer sends a unique proposal number to all acceptors.
+And then waits to get a commitment from the majority of them. This is not the proposal itself, but the proposal number, okay?
+Then we have an accept phase, where the proposer sends the proposed value to all acceptors, the actual value that they want to propose.
+And then it waits to get the proposal accepted by a majority, okay?
+And then the learners discover the value, accessed by the majority, and are just there as observers in the system to essentially say, okay, a consensus was reached. That's the only thing that the learners do, actually.
+So, the phase… phase one of Paxos, so there is the prepare phase, accept phase, and learn phase. So, let's start from the prepare phase.
+A proposer sends, prepare, and with the proposal number to all acceptors. And this value has to be unique.
+and higher than the previous N that this proposer has used before.
+Why do we need this, this, here?
+Thoughts?
+Why do I qualify this here in order to say, you know.
+It's kind of no previous genes that have been used before. Thoughts?
+Why is this important?
+Let's just say we were to use a number that we used before.
+That could imply that we would propose a number that we already
+That's a great point. So, so this is… this is true. So every time I have to use a higher number, and… and this is subtle. We have to use a higher number. But my question here is more targeted to literally the word this. Why do we want this?
+this. Why, why are we, why are we… why don't we just say higher than the previous N? In general, it has been used in the system before, across all proposals.
+Why is that… why is that not feasible, or why is it not desirable? What do people think?
+It's hard to synchronize that number. Precisely, if we wanted a global higher end, then we would need consensus. So, if we need to run consensus to choose the largest number, then it beats the purpose of running consensus. So, we don't want to run consensus to run consensus.
+So, we have a way to actually make this work just by picking higher numbers for our proposal.
+What about uniqueness? How can we guarantee uniqueness?
+Across proposals? Thoughts?
+The decimal.
+Yeah, so we can use… we can use, these joint proposal numbers, meaning that each proposal has its own kind of pool of numbers that it picks, even a node, for example.
+Thoughts about this, or questions about this particular part of the protocol?
+What's the difference between the total number versus the value that is actually
+we will… we will see throughout the protocol, but there is a difference, that's very important. So the value, this number, is used to essentially
+determine who wins the proposal, but the actual value is the value that is picked, but the value doesn't tell us anything about who wins. So we have to have this number to determine who wins, yes.
+That's a good point. So, this is one of the assumptions that we make in the beginning, that we know the number of acceptors and proposers from the start. And there is ways to kind of modify the protocol to have this, but for this class, we will assume we know. We have two proposers, three acceptors, and that's it. Yeah.
+Yes. Does the use before just refer to proposal numbers, or is that a replay?
+I mean, like… Like, agreed on numbers.
+It means use numbers from this proposal, actually, yes. So this proposal will use a larger number than the previous one it has used. So essentially, the proposal, the old proposal will always pick, like, 1, 3, 5, 7, 9, blah blah blah, the other one will pick 2, 4, 6, blah, blah.
+I don't know.
+But could you explain the question, but again, why… important. So this…
+is important, because if we remove this, and then we just said higher than the previous N that has been used before in general.
+Then, we would have to determine globally what's the higher end. So, to determine what's the highest N globally, we would have to run some form of consensus.
+So we would need to synchronize and determine across all the nodes, okay, what's the highest number you've all used, what's the high… and then we would agree somehow on this number, then we would use the number. But this would require a lot of coordination, essentially running consensus, yeah.
+Great.
+So here, throughout this class, we will see, we will look at consensus in this particular, with these particular diagrams, and the proposer, we will have, like, arrows for the proposers and the acceptors.
+And the acceptors, we want them to be a node number always, and that's… that's important for the number of fails that we can tolerate, but we will see about that… worry about that later.
+So, the way the protocol starts, the proposal says, okay, prepare.
+5. 5 is the highest number, let's say it has done things before, it sends 5, that's fine. And now we go to the second part of phase one, which is what do the acceptors do when they receive such a message. So when an acceptor receives a prepare end message.
+it gives some local state that's the NLP variable, and if that N is smaller or equal to the previously promised higher proposal, it says, actually, I'm not accepting this prepare. I'm not preparing. Prepare failed.
+If not, so if this is the largest, if n is larger than NP, then we reply promise to this prepare with the same number, and we set our local promise number to be that number.
+Questions?
+We'll come back to this little asterisk a little bit later.
+So, we add these, these, these numbers here now, 4 and 4.
+Hey, good.
+In this case, A1 will ask itself, have I previously promised higher?
+What's the answer? Has a previously promised trial, what… how will I run this protocol here? What will I do? Will it respond prepared failed, or promise, in this particular case?
+Hans, thoughts?
+It will promise 5 because this is higher. Similarly, A2 will promise 5. Great.
+This is an important milestone in the system.
+We reached a milestone where a majority of acceptors have promised On a proposed
+Number, I should have said to you.
+Not volume.
+On a proposed number.
+This means they can not accept, from now on, any smaller proposed number from now on.
+And we will see what accept means a little bit later. After milestone 1, we switch now to Phase 2. So now that we have this.
+The proposal one has its milestone, and it's now ready to switch to the next stage.
+And as I write here, we've only discussed numbers so far, and not values, other than my typo in the previous slide.
+So… Phase 2. The proposal now, when it receives a promise from a majority of acceptors.
+It sends and accepts N, this is the number it received.
+End value, with its proposed value, to a majority of acceptors.
+Again, there's an asterisk, which we'll come back to later.
+So, we do this, we send the accept to the acceptors.
+No.
+What do the acceptors do?
+On receiving an accept.
+They ask themselves, did I previously promise a higher proposal? So, is this end that I must accept?
+lower than my NP? If yes, I say accept failure.
+If not, I reply, I accept this value, actually, and then I set my accepted, number to be N, and my value, my accepted value to be val.
+Have… has A1 previously promised higher? What will A1 do here? Hans?
+Thumbs up if A1 will accept, thumbs down if A1 will reject this. A1 accept, A1 reject. A1 accept, A1 reject.
+More thumbs.
+A1 accept, A1 eject.
+Anyone accept?
+Hey, one inject.
+A few more thumbs. Anyone accept?
+They wanted to…
+Great. So, as most of you said, it has not promised higher, so it will actually accept.
+And it will send message, okay, I accept this with X. And similarly, A2 will do the same thing, and
+Now, what has happened in this particular point in time, after this? What has happened now?
+Thoughts?
+Observations? What has happened here?
+Majority of sectors have accepted the same value.
+Right. A majority of acceptors have accepted the same value. So consensus was reached. After this point, there is no way for the system to change its mind. The system has now accepted
+these values, okay?
+So when it's the second execution milestone, a majority of acceptors have accepted the proposed value.
+This means… That there is no going back. The consensus cannot be revoked now, no matter what happens.
+And let's know any questions about this particular part of the execution?
+That's a good point. So, in reality, in practice, we would always broadcast to everyone, all of the messages, but the protocol does not actually require us to do this, and even if a majority receives the messages, we can still proceed. So.
+In reality, you would always broadcast, but why I left this empty here is just to show you that even with a majority of, you know, of acceptors working, you can still reach the consensus. So this one, maybe all of the messages were dropped, and A3 never managed to receive a message. Maybe it was partitioned, and so on.
+Other questions?
+Algorithm part to the acceptor.
+Those two, just to check if the…
+promised is the higher the next? There's a little bit more to the whole protocol, yes.
+So, sorry, I'm just… I'm looking through the slides, and it says,
+for the accept phase, and then, like, did I previously promise a higher proposal N less than NP?
+on phase one, it says, the same, subtext, but with N less than or equal to. So…
+1 of, like, n less than or equal to…
+Which one should be less than or… should this also be less than or equal to, or is… No, because this here, if n is equal to NP, we're actually good. This is the thing I have promised, actually.
+So… so the previous one, we don't, because if I get the same promise for the same number, that's kind of weird, but here, I've already promised, I accepted, I promised that number, so now I receive a question to accept it. So, the equal… I guess maybe… maybe it's easier to show this the other way around, to essentially say here, if
+If n larger or equal than np,
+then, I'm actually then accepted.
+You'll have to, no matter what, by the way, for this protocol, you'll have to sit down after class also and think about, you know, all of the different steps, and why it works, and convince yourself it works. There is a lot of things that might go wrong. We will see some of them in the class, this and the next, but this is something you have to do anyway. Why is this necessary? Why is this necessary? What could happen if this happens? This is kind of like the thinking you have to be doing.
+But, okay.
+Other questions about this, in the minds that we have reached. A1 and A2 resume processing requests as soon as they release?
+Accepted. 5.
+I'm the…
+We will see this next time, but as a hint, since this question has arrived more than once, once
+actually, the consensus was reached, actually, a little bit later, when we know a consensus was reached, because now, no one knows the consensus has been reached, actually. It has been reached, but I guess only this… only this person knows here, the proposer has received two accepts.
+But at the moment, someone knows, oh, I've received the majority of accepts, actually, let's go to a little bit further, and then I will come back to this. Just the next slide. Yeah.
+This is how the majority of them have been accepted.
+The consensus is it's here, at this point, because the majority have accepted. The promise is not consensus. Here, we don't have consensus, actually. But once P1 receives, like, 2 out of 3 promise, 5?
+Is it? I don't know. We'll see, we'll see, we'll see. We'll go through some of this kind of negative thinking a little bit later. It might or might not be, we'll see.
+So, when it's the second execution milestone. Here, a majority have accepted the proposed value.
+This means that there's no going back. I think that's the important thing you have to keep in mind. Once this is reached, there is no way the consensus can be revoked, no matter what happens. The value is saved, it's done.
+So let's now talk about the lanyards and the third room.
+And the learners here, we have this, we have milestone 2, as we said. At this point, when this has actually accepted, it also broadcasts to all the learners that I accepted.
+And then this broadcast to all the learners that I accepted.
+The moment… so we add this broadcast to learners in the protocol, okay? So, if we send accept, we also broadcast to the learners, I accepted this.
+At this point, we reach the third milestone, which is that the learner knows that the consensus has reached. And this is a milestone that's local, per learner, but the learner knows… the learner won here.
+and the learner to here know that the consensus has been reached, has been reached. So there's… and here, similarly, the proposer also knows this here, that the system has reached consensus, so there's no way to turn back. So exactly that point is when your system, and in Assignment 3, you will have to
+do, run the actual request, because we are sure there's no way this request will be taken back, so if we have agreed on a request to run, we are now able to run at this exact point, when I know I have received two requests, two acceptances, from the majority… acceptance from the majority of the acceptors.
+Questions?
+Murders with the A1.
+Because P1 is the one that realizes that's majority.
+So, so this is another way to do it. This is the way that the protocol was proposed in the first system, in the first paper, and this is kind of like the foundational way of Paxos, and that's why I'm teaching you the original here, because
+you know, in interview questions, in general, people might expect that you know exactly, you know, how Paxos works, but there is multiple modifications. In real life, what happens in real life is actually that every node in the system, we have five nodes or three nodes, is both a proposer, actually, proposer, acceptor, and learner. So each node plays all three nodes at the same time.
+So a node proposes to itself and all other nodes, a node accepts
+Compare… similarly, so it's also an acceptor, and also learns immediately from itself and other nodes. So essentially, this is how you do it in practice. But this is how the protocol was presented in the original paper.
+No questions.
+What if booking part of the A's, like, we set a value, You will not be shooting.
+That's a good question. So, what if only one of them accepted, and this message was lost for A2? What would happen then?
+If only the first one accepted, and the first one, this message did not arrive, actually.
+This would actually broadcast to the learners.
+Will… will a learner reach milestone 3, or no?
+Hans, what do people think?
+It won't necessarily… We don't have any excuse me.
+Right. So, even though I said I accepted, and I sent it to everyone so that they know, that doesn't mean the system has the consensus. I accepted the value. Who cares? Maybe the majority accepts a different value. Maybe you're part of a minority. So, that doesn't mean the system has its consensus. Once a single value is accepted by a single acceptor.
+Other questions?
+In that case, with P1, like.
+Yes, so now we'll see exactly what happens in that case. Yes.
+So… We reached the 10th milestone, which is a local milestone. Someone knows that the consensus was reached. Great.
+This means that I cannot proceed with the agreed-upon value, as we said, and run the request, or do whatever I want to do with this value. If we agree that, you know, this transaction will be processed, we process the transaction, and so on.
+Yeah, remember that usually everyone plays every role in the real implementation of Access.
+Oh, before… okay, let's take a little break from Paxos, and let me briefly talk about Assignment 2.
+If you have not started yet, start now, okay? This is non-negotiable, okay? And go to discussion for troubleshooting. So, assignment is hard, so if you have not started, start immediately. It took me four times the time it took me to do the first. So, yeah, I mean, take for me what you want.
+Go to discussion, okay, and start the assignment. Thank you. Questions about assignments, and logistics, and so on.
+Great.
+Okay.
+So, we are not done, and that's also following this question. We have the asterisks, and we have to see what happens if you know. How do we complete the protocol, actually?
+So… We are here, we sent the first prepares, we got the first promises, everything looks good.
+There is another proposer in the system, though. And this proposal now says, prepare for.
+What will happen here?
+This… it sends this to A2 and A3. A3 sends promise form. What will A2 respond to this… to this prepared form? Thoughts?
+Kans?
+On the button.
+projection, since it already promised a higher value.
+Correct. So, this is failure, this is rejection. I'm not accepting this, I'm not promising this number.
+Then, Proposer 1 continues, accept, grade, Accepted, great.
+Where is this milestone?
+What will happen now?
+I guess you don't know yet. I have to give you the new protocol. So we have the… we go back to phase one of the protocol, where we had said this about the prepare, but now actually we realize that there might be a case that we send the prepare, but someone has already accepted, and we haven't talked about this before. So we talked about what happens if someone has promised, but what about if someone has accepted already something?
+So in this case, we ask the following question.
+We first said, have I promised higher. If yes, respond failed. Okay, easy. If not, have I previously accepted any proposal?
+If yes, we send back… promise, but…
+This promise contains the number that I was asked with, prepared and promised them.
+But it also contains the previously accepted value.
+So here, NA and VA.
+So it doesn't say I promised to you with what you think, but I promise to you, with your new higher number, which number has to be higher, because otherwise I would have failed here, right?
+So, your number is higher, so I do promise higher to you, but I also tell you, actually, I have accepted already 5X, okay? Just so you know.
+And, therefore, what should the proposer do now, this proposer 2, in this particular case, now it has received this?
+Previously, we saw that if you just receive your promises, you go on with your acceptances. What should the proposer do now that it has received, 65 comma X here, 5 comma X, that this was accepted? What should the proposer do? Thoughts?
+More hands? More thoughts? Questions?
+Does the composer now…
+Send, except with the previously proposed number, instead of the one sent.
+So, exactly, the proposer now, instead of using its own proposed value, it will actually find, take all of the previously accepted values, because it could have received multiple previously accepted values.
+then it sets each value to be equal to the one with the highest NA, the highest number of accepted.
+Out of them. Yeah, otherwise it uses its own value.
+And with that, it actually sends and accepts to a majority of acceptors.
+What does this mean?
+So, yeah, I guess what happens now, in this case, based on this protocol? Thoughts? What's the message that's exchanged here?
+With this protocol, we have arrived here. What happens?
+Hans?
+Thoughts?
+It will send and accept, actually, 6X, because it still uses its own N, but it uses the accepted value, the has accessed, but it does not use the oldest, the oldest NA, but it uses its own, proposed line.
+Great.
+Then everyone says, oh, great, accelerated X6x, no problem.
+Why do we even want to continue at this point? If we have received that, you know, someone has accepted a different value than the one we want, why even continue the protocol and not just call it a day?
+Why do you want to continue from here? Thoughts?
+Why don't we just stop at this point and say, oh, someone has accepted, forget about it, I'm not even trying to do anything here.
+Sorry, could you go back and explain how…
+Like, I understand that you paused the 6 now, because the only reason you were able to see X is greater than the clock. Yes.
+And then I understand that you have to have the 6 and the 5 comphex from the accepted. Correct. So just then accept the 6 comphex.
+Because we said that if I'm phase two of the proposal, I receive a promise from the majority of acceptors.
+Promise 6, promise 6, 5 comics.
+If any of them contains a previously accepted value, in this case it does, 5 commikes, I said.
+my value to be equal to the one with the highest accepted… so here, 5, because that's the highest of the already accepted values.
+That's the only one in this case.
+Otherwise, I use my value. And then I use this value, so in this case, this X instead of my Y.
+to send and accept to the next ones, but I use my N.
+That's the difference. I use my end, but already it's the previous accepted value.
+The… that you've added.
+After it would need to accept 5X, wouldn't they send that to the learners? The learners would already resume with 5.
+The learners… good question.
+the learners and the consensus, the actual client visible consensus, only cares, so whoever is using this system and this block, only cares about X. They don't care about 5 or 6.
+So, what they want to agree on is whether I will run request X or request Y. Whether you accepted request X or Y with number 5, 10, 1000, I don't care. I just care that you accepted X. So, the moment everyone accepts… sees that there is multiple acceptances with X, majority of acceptances with X, then we're good.
+If some of them are with 5, some of them are with 6, I don't care. I just saw multiple majority X, so I'm good.
+That's over there.
+X represents one proposed value here, a request, essentially.
+No, X has nothing to do, that's why it's… I wrote it as a number, as a… as a letter. It's a completely different spatial, could be whatever you want, strings, keys, values, requests, crypto… cryptocurrency transactions, whatever. It's, you know, it's something.
+This… the proposal number is the number that we increment, that we use to run the protocol, but the thing we care about externally is only the values that are chosen, which are the 011 in the beginning, that were shown as cloud kind of limits.
+Questions?
+Great. So why don't we continue? Why don't we just stop?
+the acceptors.
+Promise and mistakes.
+So, like… He too needs to tell her about this, otherwise it's not gonna accept anything to me
+It would not have been accepted 5 because it seems good.
+So…
+The problem here, exactly, is that we want to continue… I mean, I'm just paraphrasing this to make it more direct, but what you said is essentially that you want somehow this acceptor, acceptor 3, to also be able to accept the same value, because they've no problem 6, so how can they actually accept X also?
+And the answer is, we want the proposals to be able to complete a consensus that, for some reason, it has been stay… it has been left at an incomplete state.
+So, let's take the example that we had before, but actually, let's think that these
+That these methods here the first 5X to A1 actually is deleted by the network, it doesn't align.
+That means, and afterwards, proposer one also crashes. There's another scenario. This method is dropped, and this crashes right after it receives this. What happens here? The system has completely stopped. So what we want to have is that a proposer, another proposer, can come to the system, say prepare 6,
+Get some promise on something that has been already accepted.
+and complete the incomplete confidence protocol, and actually force also 3 to accept here. So now, finally, we have both A2 and A3 accepting.
+So we're not… we don't… the system doesn't stay in an incomplete state where some… some acceptors have accepted something, and then… and then the rest do not accept the same thing, okay?
+Does the proposer advance if it hasn't heard from anyone for some amount of time? The proposer?
+Oh, so here, if it hasn't heard any, anything, if it hasn't yet failed or promised or accept? That should go to 6.
+Each one of those, essentially what happens with the proposals is that the proposals are continuously trying to propose… propose higher numbers to get the protocol to complete. So if they don't hear for a little bit of time, they will restart, they will rerun. For whatever kind of, like… you might have any kind of heuristic, I want to complete the protocol. This means
+The protocol is not complete yet, I will still keep sending, keep sending, keep sending, until at some point the protocol is complete.
+Questions?
+Just to make sure that A2 and A3 would send the accepted messages to A1 and B1 also.
+A2 and A3.
+Send the accepted messages, the accepted.
+they would broadcast it to the learners, yes. So the learners would be here, I don't show them here to have space, but they would also say to the learners, immediately when they do the accept, they would say, oh, I accepted, yeah. And so the learner, at some point.
+here, would let know this was accepted, because two nodes accepted it, no.
+You, you, you, I mean, in a real protocol, yes, but here, no, we don't broadcast to anyone else. We only broadcast to the learners, actually.
+Questions?
+The important thing here is where it's, again, milestone 2. That's the important thing to keep in mind.
+So we need milestone 2, and we need consensus.
+Questions about the protocol, so far?
+Great.
+So…
+The summary of Paxos is that we have three phases for each round. We have a prepared phase, the proposal sends a unique proposal number to all the acceptors.
+We then wait to get a commitment from the majority of acceptors, a promise that they will accept our value. They are ready. Then we have an accept phase, where the proposer sends the proposed value to all the acceptors, and then we wait to get the proposal accepted by a majority.
+The learners then discover that they're validated by the majority, and the moment they learn, one learner has heard from the majority, they can actually progress and do whatever they're supposed to do. So the learner is essentially the clients of the system, who want to use this little block and do something with this knowledge, okay?
+So…
+This concludes this lecture for Paxos, so any more questions from your side, ask them now, before we conclude, because next time, I want to…
+I want to start a bigger discussion, which cannot be started and blocked in the middle, about the correctness of the consensus, and then how to use the implementer SM.
+So… Questions about Paxos at this point in time?
+Right.
+Although, that would solve for the tax difference.
+So, each proposer has a different value, possibly. But the thing is that here, this one, it could have Y, but because it got this promise.
+Actually, now, no matter what it was going to propose, we propose X.
+For… in this example, when, like, P1 first sends the two accepts, but one of them, ends up getting dropped, but let's say A1 and A2 still send their accepts to the two learners.
+And then the learners figure out, oh, the majority chose
+and they keep going forward, but then the proposers and accepters are still, like, deliberating which one to go forward with.
+How does… will it just figure it out, and then when it gets another… Acceptor,
+Like, acceptor message, it'll just… Decline it, kind of, because it knows it's a duplicate.
+So, there will, like, another accept message, or another what message?
+Yeah, so, like, the two accept messages from P1 get sent, and then from there, A1 and A2 send the two to L1 and L2. So now they know that
+they agreed upon as well. Correct, yes. But then…
+the A1 and A2, the two accept messages got lost to P1.
+For A1 and A2, the toxins got to loss to P1. Correct. Yeah. So then, like, P1 and P2 don't know that there's been an acceptance? Yep. Will the learners just go through that, and then when another consensus is made, it'll get rid of it because it's duplicated? Great question. So I want… I want to stay a little bit on this. So your question is.
+After we've disappointed, these messages are dropped.
+They, the proposals, will continue doing stuff. And you mentioned, and I want to be very precise about this, you mentioned that when another consensus will be made.
+there is no one other consensus. The consensus has been made already. So the only thing that will happen after this point
+is that the proposals will complete the protocol, so whoever has not already heard will also accept X. But there is no way, suddenly, for a majority to now change its mind and go to Y.
+So the only thing that happens after this is, how can we complete the protocol and make sure, okay, everyone knows that X is the K, X is the absolute value? That's an important point, and yeah.
+Other questions?
+Is this, like, a minimal consensus algorithm?
+By minimal, you mean minimal? Like, messages between…
+Good question. We will see, we'll talk about…
+If it is minimal or not.
+I mean, minimality with respect to, you know, like, constant, for example, maybe you don't want to be sending all of these prepares, maybe it exists, but it's minimal with respect to the rounds it takes, in some way. Yeah, we'll see that in the next lecture.
+Other questions?
+Yes.
+So, does the acceptor know what's done?
+the acceptor?
+Everyone keeps running the protocol. Always. They don't stop running the protocol. It's just that at some point, after some point.
+messages will stop being accessed, because everyone will know that consensus has been reached, so no one will care to do something else. So, they will still run, and consensus will always run while they receive messages. They never know. The acceptor actually never knows I'm done. The acceptor knows I have accepted, but they don't know if
+what the rest of the system is doing. So the acceptors are always ready to respond to promises, to acceptances. If they have accepted, they respond to promises with their previously accepted value. If not, they just prom… they accept with promises with an empty promise, with just a number.
+Questions?
+Yes.
+I guess, what's the purpose, then, of, like, the accepted list?
+What's the purpose of the accepted message? Meaning, the second round, or the message itself.
+the message itself, because, like, I guess, like, why is it…
+Matter for a proposer to know that, like.
+I should stop saying the photos if the learners are only, like, content. That's a good point. This is how the reason protocol is presented. You can't actually say, in reality, I,
+for these kind of constant questions, in the sense of, you know, should I have sent something, or no? The protocol is more meant to be simple and understandable, rather than, you know, optimal. So, we are sending maybe possibly more messages than what we need here, but in a real system, what you would have is, as I said.
+a node is both a proposal, acceptor and a learner. So that you wouldn't send something to the same node, you would just send to everyone as a learner. So, yeah.
+Yes, or… So, if the… Yes.
+no consequence. So, if two have accepted, that's the magic of the protocol, that at this point.
+No matter what, if these meds are dropped, if everyone dies after this.
+The consensus has been released, and there is no way to revoke this. There is no way for the system to change its mind.
+Even magically, without anyone else knowing, at this point on, there is no way, there is no kind of counterexample where the system can change its minds and say, okay, now there will be Y.
+Yeah.
+Yeah, so, like, I guess, like, on that point, like, I don't really get the intuition behind the… let's say you, like, accept, like.
+like, majority minus one accepts a message, and, like, majority, like, why do we, like… or in some ways, why is this not locked in?
+We will further understand this next time, but note, you're not alone, in the sense that, you know, no one understands Paxos, okay? Or at least, you know, people claim to understand. No, okay, some people understand, you know, you can understand it too, but it's a very complex protocol, and there is actually a ton of literature.
+after the original paper, trying to explain the protocol, and why it works. Yeah, yeah. So the initial one we will build next time. For now, the goal is
+to understand why… how the protocol works. And then next time, we'll come back, we will look at the protocol steps, and then we can convince ourselves why it works. But yeah.
+Other questions?
+So…
+We have a protocol for consensus. Next time, we will see why it's correct, and how to use the replicate state machine. So now, could you please, in your post-election quiz?
+Yes, thank you.
+Thanks, Karen.
+To the stream.
+Alright, so they're in Minnesota.
+Yeah, I bet.
+Bills annoyances in the footer choices.
+I'm just waiting for you.
+I think the website is in Delaware.
+It can't be virtual.
+I will show the book.
+I think so, for me.
+So right now, we're always looking…
+It'd be awesome to be able to see.
+This right there.

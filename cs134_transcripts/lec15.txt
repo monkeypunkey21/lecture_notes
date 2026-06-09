@@ -1,0 +1,724 @@
+No longer.
+Oh, that's fine.
+of, in my recital, and…
+I would love to say… You know… Well, Tim always goes, right?
+Well, aside from the screen papers, Do you have one?
+Could you spot him, please.
+Hey, that's great.
+I'm very thankful.
+Hello, everyone. Okay, let's get started, with today's lecture on distributed systems. We're getting close to the end. We have, I guess, yeah, today's lecture on Azure started, then one lecture on Spartner, then one on Dilos, one on Newcastle, and then the final lecture.
+So… Yeah, let's start, as always, with questions from last lecture. So…
+The first question asked about Hindi Kandov.
+And, the question asked whether hinted kind of improves durability and fault tolerance guarantees by relaxing the requirement that data is stored in the end successors.
+If you remember what he… I guess, let me just briefly remind you what hidden kind of does. In a setup where we have N equals 3 and W equals 3, which means we want all three nodes to write the data before we respond success for a query, for a write query.
+And let's say we are writing key, the key K here, so B, C, and D would have that key. If I've node is, for some reason, temporarily unavailable, we would then write that key to E.
+And then he would, at some point, try to reach… periodically try to reach C, and when C is available, he would write back to C.
+So… He kind of does improve durability.
+And the reason is, and the way to understand this, is that without it.
+We have two kinds of alternatives. We can either block until the node is reachable, in which case we completely lose any form of availability in our system, or we would have to return without hearing from the failed node at all.
+In the second case, we would actually worsen the durability guarantees, because it would have a W equals to 2, so that's why, in this quiz question, you know, the answer is correct, is true. So, it kind of does improve the durability and fault tolerance guarantees of, of the data.
+Does that make sense to people.
+Any question about this, or any kind of in general?
+I'm asking because some people got this wrong, so I just want to make sure there is nothing pending. Yes.
+I'm based on successors, and it did handoff, it's still, like, eventually when the node actually goes back up and go.
+Right, correct, correct, correct. The key thing, though, is that what Hill says is, instead of just forcing the system
+to have… to pick these three, right, as the… as the… as the nodes which will have this data and will satisfy this W equals 3, what we say is, okay, pick one… someone else also. So we are relaxing who is the set that holds this key. That's the main thing that it does, temporarily.
+So, so later down the line, C would actually have the data. Yeah.
+Questions?
+Great.
+The second question was about Merkeley trees, and many questions about Merkeley trees. So, let's just take them one by one. There were questions about equivalence and non-equivalence. And Merkeley trace can actually be used to determine whether two datasets are equivalent in a single check.
+So, if a check… if the check, the top check succeeds, this tells us that the whole data set is equivalent. So, the Merkeley tree actually can immediately show us that two datasets are equivalent.
+Therefore, this is wrong, because they… I mean, I guess it's not log n, but it's actually constant, the time to determine equivalence. The problem is about null equivalence, and that's where, essentially, the method is also become very useful, because instead of checking all the keys one by one, we can go and check these three structures, so in the end, it's, O log of n.
+So, to find incompatibility, by going down the tree with this algorithm that we showed last time.
+And you cannot find the precise incompatibility in constant time, because you have to go down the tree. So the first sec, the only thing I can tell you is, are the trees equivalent or not? If yes, we are done. If not, we have to follow the log n kind of algorithm to go down the tree and find the precise incompatibility.
+And finally, the final question was about recomputing them every time a new key is added to the set.
+Questions about metal trees, and about this, yeah, any questions about mykle trees?
+We actually, we can do it every time.
+But, like, do it lazy to let me ask for the difference between the two.
+That's a good point. So, I guess it's not specified, at least I do not remember, but you're totally right. If you check periodically for Mercileters anyway, you don't check the Mercury trees every time you add a key, I don't see why you would actually do this computation
+at every key, but you would have to do it before you do the next set. So I guess maybe this is a little bit too… too strict, but for the mentalities to be correct, if you add a new key, you have to recompute them. I guess that's the point of this question, yes.
+Other questions on Michael Thris?
+Great.
+Then, there was a question about gossip, the Gossip protocol. So, Dynamos Gossip data lookup, the question said, is always better than the finger table-based lookup in a consistent hashing ring.
+And the answer is false, because, you know, as we discussed last time, the finger table approach is better, in the worst case, because of the, of the logarithmic kind of,
+Complexity, but… the gossip…
+In the common case, when not many nodes are being added, when the nodes communicate very frequently, the gossip works very well. In the worst case, though, the gossip could take time up to linear, because you might have to actually go and read all the nodes until you reach the actual node that has the data. So, the gossip does not have good theoretical bound, but in practice it works very well.
+Questions about gossip? I think most of you got this correct, but any questions about gossip?
+Okay, and finally serializability, which, which I think was the one that most people got wrong, and I want to just, stay a little bit longer on this. And it may be because also the lecture was kind of tied close to the end. So.
+The, the first two questions Asked whether linearizability or serializability is a stronger collector's condition.
+And the answer to this is that they are actually incomparable.
+They don't talk about the same type of operations. So, there is, there is some people in online who can find discussions trying to kind of, like, equate or, you know, create comparisons between all of them, but as they were originally defined.
+These two corrective conditions do not talk about the same type of operations. So in her ability, what it talks about is having multiple clients.
+And having operations on these clients.
+And then it just talks about how can I order these operations? Just order these operations. Serializability, on the other hand, talks about sequencing of operations, that sub-operations that are all part of the same transaction, and the relationship. So…
+See, liability also has some notion of order, but… but more… more importantly, it focuses on this idea of atomicity, whether you run all of these sub-operations in an atomic tank.
+So, essentially, that question was mostly a trick question, because there is no comparison between these two, and that's how you should think of it. If someone asks you, you know.
+how can I think about coconut operations? Then you'd go to correct and conditions, like serializability. If someone asks you, how can I think of the correctness of transactions, then you go to isolation warranties, and serializability, and so on.
+Questions about this?
+Any questions, or any thoughts, or any… yeah, anything that's not totally clear?
+Okay.
+Then, the next… the next part was about serializability and snapshot isolation relation, and these two are actually comparable. And serializability is a stronger correctness condition. And why is that the case? As we saw last time with this example of the blue and green and green and blue and flipping,
+Where we have, only two types of values. One transaction flips blues to greens, and the other flips greens to blues.
+serializability allows these two final states in the system. Self-station allows these two, plus one more.
+Since snapshot isolation allows strictly more executions, and strictly more final state, it is weakened, because essentially that's… this means that
+Silizer beating!
+allows a set of executions, and then substance isolation allows a strictly bigger set of executions. So, yes, the idea, based on this, the idea is that substance isolation is weaker than serializability.
+Questions on this?
+Okay.
+So, Let's get to today's agenda.
+So today.
+We will talk about two things. First of all, we'll talk about cloud-based applications.
+And second, we will be talking about the system that is Azure Storage.
+So, the lecture, before we get to Cloud Native, the whole lecture is structured around Azure Storage, and Azure Storage is a system that is running in production in Azure since 2008. The paper describing it, which we're also gonna follow for this lecture, was presented at SOSP 2011. And the cool thing about, and why I think this is an important paper to
+and a system to teach you is… it's a kind of, like, overarching system that captures a very, a very big variety of applications, and it has this nice architecture of multi-layered, of multiple layers, and each layer takes care of something, and so the complete system can do, you know, each layer can take care only of one thing, and then the complete system does something very big.
+Because of that.
+So, to understand Azure Azure Storage, we will first talk a little bit about storage types. So…
+Azure Storage supports, actually, and is built to support multiple storage types. So this includes blobs, blob storage, which means are structured files with binary data. It's meant to store tables, which are structured with a schema, where each row is a data item, and also queues, which are used for message delivery.
+Any ideas from people on what kind of examples could fit into each of these categories? So, do people have any thoughts of examples?
+Yes, correct, yeah. So, S3 is also blob storage, yes. So, thoughts by people on what kind of things would we want to store in each of these, or where would each of these three be useful?
+Oops.
+Right? So blobs could be exactly binary data of, you know, audio, video, media, like, arbitrary text files that we don't really want to think about how to structure them, or what exactly they structure. What about tables and queues? Do people have any ideas?
+I mean, like, the temperature reading, everything.
+So, yeah, exactly. Queues are very useful for this kind of streaming applications, or to connect two components together. There's a component that produces data continuously, and then there's some other component that consumes this data, and they're useful for this. Other ideas for tables or queues?
+Well, tables we've seen, I guess, we also saw in the last class, so tables are SQL tables, for example, for whatever, user profiles, business data, but do people have any other idea about queues, and what queues could be useful for, other than just for streaming?
+like a pump-sub system, right? Because you can just, like.
+have one, like, added to one table, then I have an obligated to other tables, so I'm able to develop a message to everybody, so…
+Yeah, so PubSub is also part of, like, the data plane kind of streaming use case. But can we think of anything else, like, in addition to data, data movement around with the queues? Is there anything else that you could be doing with queues?
+Maybe, like, pops up for events, or, like, notifying…
+So, so, I guess PubSub can be… PubSub is a form of queue, by the way. So, so PubSub, for… I think the important thing in what you said here is the events.
+So, queues can also be used to orchestrate workflows. So, you can create large workflows of compute components where they're composed together with queues. The queues can either push around data, like, you know, log data, or whatever kind of data from a table, changes to a table, but could also just be events. For example, a user made the request, and this request kind of
+flows through a workflow through queues, okay? So it could also be used for control flow, not as data flow.
+And,
+Based on these storage types, now I want to take a little bit of a step back and talk a little bit about
+how applications are often built these days. And this is in contrast to in the past, where, you know, very frequently an application was built as a complete monolith. These days, they're often built as compositions of services. And some common patterns to do that are having, let's say, input and output data using some blob.
+So, let's say your application, you know, ingests input blobs and tries to do something with them.
+Then, you can use SKUs to orchestrate your applications of services, and then you can put intermediate and final analysis or structured data on tables.
+And then you have, you can have compute in various forms in this kind of applications, in VMs, serverless, compute-specific services, and so on. By the way, how many people here have heard of serverless?
+Okay, so, about half. So I guess serverless, serverless is this… is this kind of newer paradigm where, I guess it's not that new anymore, where… where the provider, instead of giving you a VM,
+to run to, you know, you rent a VM from a cloud provider, and then you run whatever you want in that VM, you just give the provider your actual code. Let's say a function that does something in response to an event being processed. So then the provider is responsible for,
+spawning VMs for this function, killing the VMs when there's no load, making sure to maintain these VMs, and so on. So, essentially, they offload the deployment responsibility to the provider.
+And so, let me show you an example of an application that I could build with these types of data, like blob, queues, and tables, and kind of various types of computes. So, you can think of, for example, an ingestion service that tries to do some analytics on, you know, like tweets on Blue Sky, RX.
+So, you can have a crawler that kind of crawls the website and gets a bunch of
+tweets, it puts them in blobs, because it doesn't care to really structure them in any way, and then you have… you can have some kind of serverless, or a VM kind of service that picks this data from the blobs, and based on some kind of table of, you know,
+annotations or auxiliary information, or metadata, annotating these tweets, passing them on with a queue to a different kind of service that expands the links, for example, and then passing them on to another one which scores these tweets based on some usefulness to you, and based on some kind of other table, and then creating new blobs that then you can… your clients can search, for example, someone else can go and search with another
+service application on the other end, okay? So…
+the idea here is that, and what I think is interesting to keep in mind is that
+Yeah, there is this notion of composition in these applications more commonly these days.
+And, what we usually call these compositions, in, in,
+in the literature or out in industry, people usually call them workflows or orchestrations. And, you know, there is various types of patterns and structures that you could have for these workflows, you know, like fun-out patterns, there is fanning patterns, there is timers, there is various types of those.
+And this is happening together with this kind of push towards a more service-based cloud infrastructure, where everything is provided as a service. So, you have a bunch of storage services that completely offer you storage functionality, where you do requests, but you don't care about deployment.
+And similarly, compute that also you don't care about deployment, but you get things like Lambda or Azure durable functions or functions, and you can get with those. Compute without worrying at all about
+which machines are running, you know, what do I do when my load increases, and so on.
+Questions about this kind of paradigm, and about cloud native applications, the different types of data that you can store in them, orchestrations? Any thoughts, questions?
+Great.
+So, what are the implications?
+of this cloud-native setup. What are the pros? What are the cons? What do people think? Any thoughts?
+Both a pro and a con is you depend on other people for your archivism, for the vast majority of
+like, the underlying functions of your application. That's good, because it means you have to deal with less.
+It's bad because… If the software that you rely on is not reliable, that
+would be a question, but it's basically out of your control. That's a good point. So there is… you rely on others, which is good, because you do less, but also you rely on them, which could be problematic, exactly.
+sticky business model, which is, like, they try to basically, like, provide a service, and they can always lock you in to, like.
+Of basically the suite of services, which may be unnecessary.
+Additionally, it's, like, it's hard for you to, like, translate across, and so if your business needs to shift, or you're beginning to shift, it can be a little harder to move across to a different platform.
+Right, so I guess services, exactly, that's a good point, is that there is no standard for many of these services. So what many of these providers started to do is that they give you, you know, a very good service that can work maybe for your existing use case now, let's say an image recognition service, and then you're now buying into this image recognition service, and exactly how it's meant to be used, you pay it, and now if you want to do something else about this.
+have to possibly architect your exact… your complete application. Also…
+this workflow… the ways to write these workflows are also not standardized. So, also, this is a way to get locked in, because if you write, you know, in the specific workflow language of each provider, then it's hard to actually go and describe these workflows in different providers. Other thoughts about pros and cons? What do other people think?
+Are there any other benefits? Are there any benefits also from the side of the providers?
+One, it seems like the AWS East one just last fall, like, because of a simple, like, DNS issue, like.
+All… every company that relied on that infrastructure just couldn't operate for it a day.
+That's a good point. That's a little bit more broad, and not just about cloud-native applications, but about, I guess, any application that needs any form of cloud, but you're totally right. If you don't run things on-prem, then if you're using, you know, some infrastructure, it's similar to the previous point, you know. You rely on others to do some work for you, which is good, because you don't do that work, but then if they are not reliable, then you are getting the hit.
+Yeah. Other thoughts about pros and cons?
+I think the provider's perspective, it lets them, I guess.
+like, load balances requests for multiple users. Instead of being some sort of very inconsistent load, it would be, like, relatively more consistent.
+That's totally correct. So, a benefit to a provider, and that's why providers are, you know, really got behind this serverless idea, is that now they can say to you, you pay per invocation, so when you have lambda, you pay per invocation. Every time you make an invocation, if the lambda runs for, like, whatever, 10 seconds, you pay, you pay something per second and per invocation that you are running. But.
+That means that the provider can, behind the scenes.
+Have a single machine that runs, you know, a bunch of different serverless workloads, and when others die, they run those there, so they can multiplex, and they can do cost savings on this, and then, you know, you… and you pay some extra on top of this.
+And the negatives, so the positives that I have written also are, you know, you don't deal with deployment anymore, you don't deal with management, you don't deal with operations.
+And the providers can multiplex. But the negatives are now that, the biggest negative, actually, or at least the way I've written this here, but all the negatives you also mentioned are also related of the reliability, but it's also about
+the code and application itself being very scattered, and scattered also means you are more locked in, a specific provider, but yeah.
+It's scattered, it's hard to analyze, it's very hard to determine what are the end-to-end guarantees of such an application.
+correctness or performance guarantees, because you now have to reason about all these different services, and what their performance guarantees are, what their correctness guarantees are, and there is not even good language to be able to do this. So this is kind of like an open research area. So I think I want you to keep in mind from this is that, in general, we are moving beyond this kind of monolithic and more towards this cloud-native application engineering.
+Which has its own problems and benefits.
+Fire debate. But there's also, like…
+I guess, like, you have technically, like, your security guarantees, because if you use, like, for example, like, an AWS, like, PC tool instance, or you have, like, a VM that does your work, and you need to terminate it, you have, like, no real way besides, like, AWS, like, promising you…
+That every… all the data, all the memory you provide, that that's… that you provide on it's definitely been wiped out. And so, oftentimes, if you want to rerun an instance.
+Like, you basically have to commission more and more, which can get more expensive.
+Right, so that's a good point also. Security is a very big problem, and this is also when you do VMs, but also when you do serverless, or when you do, you know, when you use, like, cloud storage, because now you don't know if there is a security vulnerability, and, you know, Dynamo or S3 is holding everyone's data. Can you lose your data through that? Who knows? So, indeed, there is also security vulnerabilities and security issues when you centralize all this control of compute.
+And data. That's a good point.
+Yes. I think that's capitalizing also, like, allows me to have greater security in some ways.
+They can do stuff like BBCs.
+It's not all in one, like, how you, you know, there's data validation by building anymore.
+I mean, that's one benefit if you keep everything in the cloud. I guess, for all of these things, there is trade-offs, because, again, maybe you can say that, you know, the engineers, security engineers of AWS, they are paid a lot, there is a lot of them, so maybe they are going to do this better than, you know, my tiny company, who wants to hold data. So, you know, there is still this kind of trade-off of
+I give something to someone else, and now I don't have to deal with this, but they have to, so if they mess up, I also take the hit, but maybe they're good at it, so maybe they won't mess up. So, yeah. But also, as you said, centralization for security and privacy, I guess, has some benefits, because your data can just stay in a specific cloud setup and not leave from there at all. That's a good point.
+Any other thoughts about cloud-native applications?
+Great.
+So, this was more meant…
+not necessarily very tightly connected to other storage, but I just wanted to give an, you know, an overview of how things are changing, because, you know, in this class, we learned a lot about foundations and even systems, but even these systems don't necessarily talk about the whole story of an end-to-end application, so that's why I wanted to give, you know, like, a high-level idea of what does… what do end-to-end kind of distributed applications look today.
+So, back to Azure Storage. Let's think… let's first talk about the requirements that Azure Storage has.
+Windows Azure Storage. Yes, so yeah, Windows Azure Storage, I guess that's how they were coining it in the first paper, so that's why this is like this in the slides. So, back to Azure Storage.
+First, let's look at the requirements. As always, with our systems, let's look at what they want to achieve, and then we will look at some ways that they use to actually achieve what they want.
+So, first of all.
+One of their main goals is strong consistency, and from their perspective, this is essential for easy use. In fact, if there is no strong consistency, the clients do not know what to expect from this, and we saw, you know, this debate, there's this debate with, you know, like, events of constant stores, and strong constant stores, and which one is better, and there is, you know, pros and cons of both. But they take the strong consistency angle.
+Another requirement that they mention in their paper is that they want to have availability, and they also want to have partition tolerance.
+Do people have any thoughts on this, on these requirements?
+Well, you can't have both of those functions.
+You cannot have both if you don't have strong consistency. So, do they… do they actually get this? We will see throughout the lecture. But that's how they actually frame… frame the original… the paper that they have… they have written.
+Another thing they want is they want to be able to find data in a huge storage, because they assume that Azure Storage describes not just a service for a single user, but rather a storage service that works across users. So it describes how they're multiplexing, essentially, load across users. So how do we find data in this huge storage?
+And they also want, similar to Dynamo, disaster recovery. So we want replication across data centers, so that if a data center completely, you know, goes down, we still do not lose this data.
+They, very importantly, want scalability, as all of these systems, and load balancing, so they're able to serve thousands of users.
+And they want multi-tenancy, and that's a big part also connected with the namespace, which means that all of the users will be stored in the same big storage, so that you do not waste resources. And that's also related to the multiplexing point that we made before about serverless, so it's a very big benefit for the providers to be using their machines 100%, and this is both for
+You know, the cost that it took to buy the machine, the cost that it takes to power it, and cool it, and, you know, all of the kind of, like, costs, force you to use or, you know, make it, make it…
+To most effectively and economically use your machines, you want to be using them all, utilize them as much as possible at all costs.
+Are there questions from people about these requirements? Do this make sense? Any questions about why would we want those, or… yeah.
+Great.
+So… How do you manage a distributed service?
+there is two types of tasks that you… that… or at least I am describing them as two types, there's maybe multiple, but I wanted to think of a specific categorization between two types of tasks when thinking about a big distributed service.
+The first type of tasks are the application tasks, the ones that have to do with how do you store the data, what code each node runs, and so on. And these are the tasks that you are also thinking while you are building, you know, the application in the assignments.
+On the other hand, there's also some other tasks.
+What kind of other tasks can people think of here? What kind of things, other than, you know, how do you store the data, and what code each node runs? What other tasks might there be if you want to manage a big distributed service? Thoughts by people? What do people think?
+Starting? That's a needed task. I would put it in the application task, so how do you store the data? Do you, you know, do you split it up? Do you keep it all in one place? That's certainly one of the tasks, though. Yeah. So, give me… give me tasks, and even if they fall in the application task, this is still useful.
+Load balancing is an important task, yeah, yeah?
+I exploit her?
+Monitoring? Yes.
+who can communicate with the nodes? I guess I'm kind of, like, a security-related task, or… yeah, yeah?
+Deployment or updating the servers? Yes.
+Other points and other thoughts by people?
+Fault recovery, yes, and this has two aspects, actually. So based on all of this, the categorization I'm trying to do here, and I'm trying to kind of, like, show you, is that, in my mind, there is all of the tasks that have to do with how to actually implement an application, you know, how do we store the data, how do we balance the data, partition it, what code runs to recover from a fault so that we make sure we offer some strong
+consistency, but then there is also a lot of other tasks that have to do with the management of the actual
+compute and the nodes of the service. So this has to do with monitoring. This has to do with detecting that the node has failed, or that the node is healthy and alive. What do we do when a node joins or leaves from a cluster?
+How do nodes talk to each other? Which rack do we put a node on? Okay? So…
+the… usually, modern, in general, like, these cloud distributed applications separate these concerns into two kind of layers. The service layer, or the distributed systems layer, which is what we are focusing on in this class also, is the top one.
+But the second… and the second is addressed by, software components that usually are called, like, cluster managers, like Kubernetes, Azure Fabric Controller, controller, and so on.
+So…
+I want to make this classification, because in this class, we're mostly focusing on this, but that does not mean that all of these are not important problems that have to be solved when you are actually deploying a service in practice. But we are not going to worry about this, and also Azure Storage doesn't really focus on this, and says that Azure Storage, you know, offloads all of this responsibility
+to the Azure Fabric Controller that does all of the monitoring of nodes, adding nodes, removing nodes, saying what node has which role, and so on. But they only actually worry about how, given these nodes and, you know, a substrate where the nodes are healthy, or we can detect where a node is problematic, how can we build these distributed storage?
+Questions about this? Architecture?
+Yes. Is this kind of… As, like, worker nodes, like, some sort of control plane, like, basically handle…
+So, that is related, but in my mind, at least even in that case, and there is still… this is not the only categorization, and that's why I said, you know, this is the way I split this into tasks now for the purpose of this class, but… but there is… even in this layer, there is the data in the control plane. But even that… both of those could fit in this in my mind. What is done in the cluster Manager is
+who says, you know, that the worker node is alive, even? Or which are the worker nodes? Or, or their IPs, or monitors, you know, some logs from them and is able to kind of, like, use it for other types of profiling and so on. So this is, in my mind, mostly what the cluster managers do, and then above it, given
+multiple nodes that we can detect if they're alive or not, and we know who is in our… in our group, then we can build a distributed system.
+Which has a control and data plane, and other layers that we will see also in this class.
+Other questions? Other thoughts about this?
+Okay, so we are finally ready to look, in Azure Storage's architecture.
+So, this is a complex, kind of complex diagram to walk through it. So, Azure Storage has the following architecture, that's multi-layered, and that's how they make things work very well. So, there is, first of all, a storage stamp abstraction.
+And the storage stamp is essentially a cluster of storage nodes that have disks and compute on them, and the main kind of thing that Azure… one of the key requirements that Azure has is that one account, so one user account.
+can go into only a single stamp, so there is some kind of layer of mapping accounts to stamps.
+Can people think of any issue with this, with this, with this one account per stamp situation?
+A stump is a cluster, so this is not a fault tolerance issue, but can people think of any other issue of having, you know, allowing one account to be only in a single stamp?
+Right. So the account limit is the stamp limit, and essentially what they're saying in the paper is that, you know, stamps are so big that they can fit, you know, like, thousands of accounts, so that's not a problem, but if your account is too huge, then you would have to kind of manually split it into multiple accounts and figure out how to split your data across stamps.
+So, in addition to storage stamps, what they have is,
+also a location service that detects and knows which stamps exist, and which nodes are… which accounts are maps to which stamp, and also a DNS lookup that talks to this service and is able to locate, again, accounts, in stamps.
+One kind of, like, side thing is that they say that the goal is that the stamp is only utilized at a 70% utilization, and that's as close they want to go to the 100%, because if they go further, they risk
+not being able to support failure, there is overloading the system in a way that will make it hard to migrate, load, and so on, if things become too bad. So, the goal is really to stay at this kind of very utilized, but, you know, not fully utilized.
+And by the way,
+just to give you a sense of what this number… why this number is pretty big. I don't remember exactly when I saw this, and I don't have a reference, but I think I have seen multiple times references of the number of utilization in big cloud companies, or, you know, big deployments, to be at the level of 10 to 20%. So, you know, even the goal of going to 70 is already very high.
+Compared to this, okay?
+Great, and as we say… oh, yeah.
+The… so the point of the stamp is that
+you essentially are able to… I guess it's a sharding, but at the level of account.
+So, a very kind of, like, high-level starting. So, because Azure Storage, as we said, is this… the whole point is that you have… I guess it's too far back now, but the whole point is that you can have multi-tenancy, so multiple accounts, so they say, how can we have multiple accounts?
+We have these huge clusters of storage nodes, and then we put accounts in each storage stamp, and then to load balance on our accounts, we can move them around the stamps. So the stamps are some form of very high-level management, yeah.
+Make sense?
+Can multiple accounts be in the same stamp? Yes, multiple accounts can be in the same stamp, and exactly that's also compared to related to multi-tenancy. So you do not want to have dedicated storage for one account, but rather you want to pack a lot of accounts in a single stamp. That's the idea.
+Maybe, maybe to add a little bit more context, because I see still some kind of, like, you know, confusion. I think the idea and the way I understand it is that instead of having the complete cluster as a complete storage, you know, where you manage the whole thing at the same time, you split it into stumps, which make it also easier to possibly, you know, manage it, because there is some form of organization, and each stump is an independent, independent unit that works
+And, and so on. So, yeah.
+So I just don't understand the benefit of the stamp. It's like, all the…
+like, actual servers, and your silence cluster are all localized, so it's easier to manage some of them.
+I guess… I guess the idea is that we need some form of sharding, right? So when we have a lot of data, we need some form of sharding. And we have sharding also at lower levels, but at the level of account, we need some form of sharding. So how do we do this sharding? We create this idea of big stamps, and then we have a location service.
+And then, when we have an account, we immediately hit the location service, and we know which time to look at.
+So that is one layer of, you know, finding our data, and we… this is kind of like the stamp. Otherwise, we have to look at what should we look at, I guess. Do we put the data, you know, we look immediately at all the disks that the data is stored on? Maybe, that's also a way to go. But the way they went about it is that
+You have one layer of data lookup that just locates which stamp an account is located at, yeah.
+Other questions about this architecture?
+Are you saying that your account gets back to a stamp and you have multiple accounts to a stamp, or is it a one-to-one?
+It's one-to-many, sorry, many to one. So, many accounts can go in one stamp, but one account cannot be split across stamps.
+That's the idea. And that's to simplify this kind of location and DNS. So the whole point is that Azure Storage is meant to be queried using URLs, so essentially, you have your account name, when you hit it, you know exactly which cluster of storage should I look for all the data for this account. That's the idea.
+Great.
+Let's quickly talk about the location service. And this is what I already briefly described, which is that, how do we find where the account is? This is the location service.
+Does this remind you of anything, this relocation service? Does this remind you of anything we've seen in this class so far?
+It's kind of like the Vue service or the MapReduce master, so this is essentially some centralized point of failure that decides when to migrate the accounts, knows where to find the accounts. What kind of… based on this, what kind of requirements would we have on this service? Any thoughts?
+What kind of things would you want this… what kind of requirements would you have? Performance correctors related on the service?
+I want the locations for this to be on the hot pad.
+You don't want to be on the hot path, correct? Yes. Other ideas?
+There's multiple requirements. Yeah, other thoughts?
+Fault tolerance? Fault tolerance?
+Fault tolerance. You don't want to be on the hot path. Anything else that we want from this service?
+For tolerance, not on the hot path, what goes together, usually, with these two? So what do you… if you don't put on the hot path, you get something that's kind of a bit slower, so what can you do if it's a bit slower? Yeah?
+Consistency. So, essentially, the point of this service is it doesn't need to scale that much, it doesn't need to be able to find for the account where to look for the data, and then with Stamp, it has to be strongly consistent, so it usually runs some form of Paxos-based protocol to make this work.
+Great, and now let's focus on the storage tab, which is actually what we will look at, and what we will focus on for the rest of this class, and the most interesting, maybe, part about Azure Storage.
+So, the student stamp has 3 layers. It has a stream layer at the bottom, a partition layer in the front end.
+And so the stream layer is really, you can think of it as a distributed, fault-tolerant, replicated file system.
+It has this notion called streams, which is essentially files, and it has no idea, binary files, and it has no idea about blobs, tables, queues, or anything.
+So, this is the substrate that allows us to have fault-tolerant… a fault-tolerant file system on which to build on and provide the abstractions we talked about, blob, table, and tools.
+Then we have the partition layer that does exactly that. It does this mapping from abstractions… from abstractions at the top level, which are the blobs, the tables, the queues, to the streams.
+And, we have the front end, which is simply a stateless routing thing that finds partition and stream servers, and we won't talk about it at all in this class, but what we will focus on is the stream and the partition layer, okay?
+Questions about… about this architecture here?
+So, streams are literally files, you can think of them as files, but we will soon understand exactly how they're implemented, but you can just think of them as files.
+binary funds.
+Other questions?
+Great.
+So… Let's talk a little bit about the replication and the fault tolerance of Azure storage.
+So they want two types of replication, and they implement two types of replication. They want an intra-stamp inside the stamp and across stamps.
+So, inside the stamp, the replication needs to be synchronous and on the critical path of the request.
+And the interstamp, across stamps, needs to be of the critical path and per object. And object here, we mean table, blob, cube.
+So, a question that I'm… I would like you to think about a little bit and talk to with the people next to you is, why do we need two types of replication? What are your thoughts on this? What are the trade-offs and the requirements of it? So, yeah, essentially, why do we need both?
+what are the… how do you compare both? Why would you… how would you implement one or the other? And, you know, requirements, trade-offs, yes. So, take a few minutes, talk with the people behind you, on the side, in front of you, yeah, and let's get back together.
+Water.
+Oh, oops, Dr. Strucky, it's me.
+Or it's just so… It's just… Actually, please.
+Yeah, you know, yeah, I suppose, I guess, like…
+hitting something, right?
+It's a small percentage.
+Let's go, okay, here we go.
+switches are set in the middle, vice versa.
+Well, congratulations. Okay.
+So…
+So, what do people think about this? Yeah, what are people's thoughts on the different types of replication? Why would we want one? Why would we want the other? How would we implement one? How would we implement the other? Trade-offs, requirements, and so on? Hans?
+Hans, Hans?
+Any thoughts are useful, as always. So, what do people think? I see one. Let's get to five. Let's get to 5.
+What do we think? Three?
+4… One more?
+But, you did it two times because, like, they're more, like, just to… So…
+Is it, like, intro? I think it's, like…
+I think, is, like, if something, like, actually happens, like, if, like, a disaster happens to, like, the database is located, like, it's, like, fine.
+Right, so… so intrastamp, oh, sorry, interstamp across stamps, if there's a catastrophe in one data center, one stamp, you still have the other stamp, and you can still recover your data.
+Great, so that's a great point. So, they have… they have complementary, but combining, like, and kind of accumulating fault tolerance characteristics. Other thoughts?
+Or at least the way I pictured in my head, like, status or life shards or performance, they're not for false objects. And they need some sort of, like, replication for the product. For instance, like, you're replicating with SM15.
+So I'm assuming, like, because we load balanced by transferring over our accounts, like, that's, like.
+So, actually, that's a good point, but that's not a word exactly. So, the way they do… I guess I haven't really shown you how they do the inter versus the intra, but, but, but yeah, I think, I think your point,
+I guess, Vic, you're pretty similar to the first one, that they offer a different kind of fault tolerance, fault tolerance kind of profile, let's say. But what do people think about what's the profile and what's the use of the intrastamplification? What's exactly the types of faults we are trying to prevent against?
+Thoughts? Or other thoughts about the credential requirements?
+What about the other fans that went out before?
+I mean, well, one, like, within a single stamp, it could help against, like, a very standard, like, machine failure, so you migrate to another one. And also, it would probably be faster to use, like, the data from another machine within a single sample instead of stamp.
+Right, so, so, yeah, there are two points there. One point is that in a single stamp, you might have these small failures, a network switch fails, a disk fails, a machine fails. In this case, you want to also have some kind of fault tolerance that you don't have to go and fetch from another data center the data, now that, you know, a machine failed on your data center.
+So in this case, because you don't want to go across and, you know, talk to another data center for this, you want to do something locally also.
+So yeah, what does that also mean as performance for the two? Which one is, is fast? Which one is slow? Which one happens all the time? Which one happens possibly periodically? Yeah. Or other thoughts?
+The insurance stamp happens more often.
+And then the hair stamp is more periodic.
+Right, exactly. So the interstump is something that happens all the time.
+On the critical path, for every request, for every data stored, whereas the interstop is something that happens, you know, offline, periodically, and makes sure to prevent from big catastrophes that do not happen very frequently, and therefore it doesn't need to, you know, happen continuously and pay for this cost.
+So let's see what I've written here. So why do we need both? That's kind of like the point that a couple of you mentioned, that, you know, we have these more frequent failures of, you know, single hardware.
+Small pieces of hardware that fail very frequently, and then we have these rare, big disasters where a complete stamp goes down, temporarily or permanently. And in this case, we still need to have access to the data.
+At the same time, the intrastamp, because it happens, it, it happens continuously, and all the time, and on the critical path, it has to have very, very low latency.
+And the interstump has to, instead, has to do optimal use of the network bandwidth, because it happens more infrequently, but it moves around big, big amounts of data, so it has to more focus on the network bandwidth.
+In this class, we will mostly… in this lecture, we'll mostly focus on this. We'll briefly talk about this, but that will be the main focus of what we're going to talk about with respect to application.
+So, so far, what we've seen about Azure?
+We've talked about design goals, we've seen the architecture, the lookup, and replication.
+And then, we have coming up the stream layer and the actual partition layer, how they're implemented.
+Brief break at the hour mark. Hope you're working on assignment form.
+Nothing else on this slide, actually. I didn't find another picture to put here today, but, you know, yeah, I hope you're working on assignments for it. Any questions about the logistics, before we continue with the lecture?
+Huh?
+I'm just wondering what would affect, like, how often they deal with Interesting.
+Recommendation for us to do.
+Is this based on, like, the durability guarantee?
+That's a good point. We will… we have… I have one slide, or maybe two slides later for the interstamp. The interstamp, we will look… we will see a lot how they actually do it. For the interstamp, I have a few slides a bit later. Yeah, yeah.
+Any questions about logistics?
+Okay.
+Great. So, let's start with the kind of, like, the key, interesting parts of Azure Storage.
+So, there is a stream layer, and we'll start from that. So, this is the foundation of the system, and it provides a service to store and access data durably. So, it's really this distributed, replicated file system abstraction.
+And, as I said before, it does not know anything about high-level concepts. It doesn't care about blobs, tables, queues. So, for now, and for the part of the lecture where we'll talk about the stream layer, I want you to only think about, you know, files. Forget about blobs, tables, and queues. How can we store files reliably?
+And to make it fast, and make this a liability also very fast.
+So the key idea of the stream layer, which is a very neat trick, is that… and it's not only used in Azure Storage, but Azure Storage uses it very well, is that instead of providing
+a read and a write operation on this file system, which is the most standard thing that you would imagine. You know, you have a file system, you would provide a read, and you provide a write. But what they do is actually provide a read and then append operation.
+So they have…
+The following abstractions, they have streams, which are files for all purposes, you can think of them as files, and then they have extents.
+And extents are 5 chunks, essentially. So you can see this little… in this little diagram here. Let's say this is a file that's called foo myfile. And then it consists of
+These four extents, which are 5 times.
+The stream, then, the file, is really just an extent pointer sequence. So if we have pointers to these extents.
+And then we have a sequence of these pointers, we can essentially construct a file.
+And, there is an operation that we can do, which is extend… not extend, but extend with a D here, which adds a new, extent to our, to our fine.
+And an important, a very, very important feature, or, you know, component of the system and why it works, is that you can actually see an extent.
+So an extent can be sealed, and therefore not accept any more appends on its lifetime. So once an extent is sealed, it's completely mutable from that point on. The data cannot change in the extent.
+And only the last accent in the stream, of course, based on this, can be appended and is unsealed. So, essentially, a file becomes this structure where you continuously add new data.
+And, and, you added in this… extend chunks.
+And every now and then, you see your extent, and then you continue with the next one, and you continue with the next one. So, this is how files are represented in this infrastructure, yes.
+Extend, or do you want it to say extend? No, this one, I want to… I think I want to mention extend, because this is, actually, wait a minute.
+You might be right, actually.
+You are totally right, actually. Okay, so I take it back. I did not mean extend here. I interpreted my slide wrong. So, actually, this is a typo. Let me write this down, actually. So,
+So…
+I guess this, what this means, okay, now that… with this very important, crucial correction, a stream is a sequence of pointers, and then an extent with a T.
+is a sequence of blocks, and block will sequence a little bit. It's like a smaller kind of chunk of data. But yeah, a stream is a sequence of pointers, and an extent is an actual sequence of blocks, okay?
+Now, new questions, based on that.
+Just to clarify, stamps also have, like, a fixed amount of storage included, correct? Stamps. Yes. Yes. And so, in this layer, there's also the implication that a stream has, like, a fixed amount of extensive
+Correct. I mean, I mean, if we reach this point that a stream captures the whole stamp, we are completely screwed. I don't even know what… you know, I think the assumption is that a stream is much, much, much smaller, I don't know, like, 5 orders of magnitude smaller, 6 orders of magnitude smaller than what an extent can be. A stream is literally a file, so imagine one blob, one table, you know. A stamp is a cluster of storage nodes, you know.
+have, like, petabytes or whatever, like, you know, a very big amount of storage. Yeah. So, they do have a limit, but not because of the stamp. Yeah, or I guess they have a limit because of the stamp, but that's more of a theoretical limit, not really in terms of practice.
+Other questions?
+Why only an operation? It seems like…
+Like, why? That's a good question. We will see in a little bit. Yeah.
+So Justin, you know, I guess whenever you, Whenever you append.
+That also seals the previous life.
+you can… you are appending, so I could be… we will show how C happens, but normally, if we have this extent and it's not sealed, we would just append to it. So extents don't necessarily have a limit. You dynamically see.
+What do you add? Let's say there's a pointer E5 now. I assume that would be an extend operation. If I want to add a new pointer and a new extent, I have to seal this first. So there is no way to add another if I don't seal the previous one. So only the last one can be unsealed. This is an environment of the system.
+Yeah, other questions?
+Previous work wasn't a certain extent that I think I showed you
+please add, like, there's, like, a start index and, like, an end index, or, like, some chunk of data on this or something. Why is it something that has, like, a sequence of blocks, rather than a start, end, and end? That's a good point, and I mean, stream is also not a very standard…
+name for a file. So I guess, this is how they call them in the paper, and I'm just using the terminology so that you can map it to the paper, but yes.
+I don't… yeah, maybe this is not the best way to call this, this component, but yeah, they call it an extent.
+Other questions?
+Great.
+So, the block, just to complete the story, is,
+A read is the quantum of reads or writes, and it's supposed to be something in the range of the megabytes. A read returns, therefore, a sequence of blocks.
+And the reads cannot read at a sub-block granularity. And this is because they also have some checks and validation that they do, and they do all of this at the block level. So, there is no way to do anything that's below the block functionality. You can write either a whole block, which is a fixed amount of data, like 4 megabytes, or you can read a whole block. You cannot, like, do tiny, tiny reads or writes.
+Blocks don't necessarily have the same size, but still they have some kind of limits of the size that they have.
+And, its extent, they want it to be roughly at the level of gigabyte, but we will see how exactly the extents are being… we decide when to seal an extent and move forward.
+And, extends are really the replication unit for the system. So…
+the way they replicate files in Azure Storage, in the stream layer of the Azure Storage, is by replicating an extent into… in three replicas. So each extent actually lives in three replicas, okay?
+So, a question for you, we saw, we saw how, you know, we might want to have, you know, smaller, big objects. So how can we store small objects?
+in a file, in a single block in an extent. Let's say we have a table that has just a single column, you know, that has very small objects. What would we do in this case, to use this particular abstraction? Thoughts?
+And this is not important necessarily for the streaming layer, but it's important to think of how can we do the partition layer on top of the streaming layer. Yeah.
+Or, like, floss don't have the same size, so what is the first line being?
+It means that they have a range, though, still. You cannot… you don't necessarily… they don't necessarily have the same size, but they cannot be smaller than some amount. So they have some kind of lower limit, and the reason is that they don't want to be writing or reading from this very small size, because that's just very inefficient.
+Yep.
+And also the application, yeah, yeah, it's very beneficial.
+A block is part of an extent, so there is 3 layers. There is, stream, extend, block.
+There is another question. You said that the extent is replicated. Is kind of like… also, like.
+the sequence of pointers is also, is also replicated, but… but this is how the data itself is replicated, which is the important part. Then, how to record stack the data, it's also important to know how to replicate, that's correct, yes, yes. But the important thing… the first important thing is how do we even replicate the data itself? Yeah.
+I guess I will… I will ask this question because maybe I realize it might be a bit too early, you know, that we haven't talked about the partition yet, but I guess what I wanted to… to point here is that,
+we would append many small objects in the same extent, or even the same block. So, that means that the partition layer has to do some kind of extra work
+to map small objects to this extended block abstraction. But that's not really a problem, or at least we will see why things can still be pretty efficient and how it manages to do it.
+But yeah, the partitioner has to do some kind of work to map small objects to bigger objects. Here, or similarly, big objects to break them down into multiple extents and blocks.
+Let's look now at operations in the actual kind of way that the stream layer works.
+So…
+Consider, I guess, yeah, before we look at the seal operator, consider now that we have the knowledge of how the stream works, that it's this pointer of extents, we know that the extents are replicated, and we know that the extents are immutable once they are sealed.
+So consider that we want two operations, two operations, two types of operations on top of this fine. Let's say one of the operations
+wants to modify the first block of its extent. Let's say we want to do an operation that takes a string and modifies this, this, this, and this.
+from all the extents. And let's say that we want to do an operation, another operation, that reverses the order of the extents in a stream.
+Which one is faster? And what are the kind of, like, performance implications of both of these? What do people think?
+Probably the person will be faster, because, like, as you receive each one.
+But for diversity, you need to have all of them.
+What's a venue.
+Is there some of that?
+So that's exactly the intuition, and that's why I wanted to bring this question up, because actually, what turns out to be the case here, and that's the right intuition, that would be my intuition too, and that's why I brought this question. Actually, in the case of Azure Storage, the opposite is true, because… because…
+These are the actual replicated things. These are, in some persistent in UW storage, creating a new, you know, modifying the pointers of this
+It's really an operation that just happens here, at this level, but modifying the extents, since they're immutable, means I have to go and create a new extent, actually, that's extent E1 prime, that has the same data except for the first block.
+And do this for all of them, which means I have to go and re-replicate all of these extents. Whereas in the case, I can keep them replicated under the hood, and then just read out these pointers.
+Okay? Does that make sense? And it's intuition, and this is part of the kind of, like, a little bit of an intuitive thing, but it's actually useful for them, and the partition layer becomes efficient in a way that it runs operations. But yes, does this make sense?
+this difference between these two operations. These are hypothetical operations, but I want you to understand the difference between the cost of
+copying and creating new extents versus just modifying some pointers in the stream layer. Questions?
+That there's no requirement that the extents are actually, like, Sequential in physical storage.
+Exactly, exactly. So, its extent is really a minifying, actually, that's replicated somewhere in stores, and we don't care where they are. That's why these are also pointers.
+So this could be anywhere. We have the whole cluster, there's somewhere in the cluster all of these extents, I know how to find them, and I know how they are replicated, and that's good enough to be able to create files using these extents.
+Other questions, my people or thoughts?
+Yes.
+I think you modify a file, and, like, some of the extents this would stay the same, it's important? Like, how does, like, how would the partition lay or demo?
+Which one's the key?
+That's a good point. I guess there is a question of what does it mean to modify a file? And we will see, and, you know, modify a table, let's say, right? Because eventually, what we want with this is to have tables. So, how can we be able to modify tables when the extents are like this, right? So we will see how exactly they are mapping tables to this abstraction, actually, and how to make this possible.
+Yeah.
+Other questions?
+Great.
+The extended reversal is pretty fast, so we create a new stream and modify the list of pointers. No storage operation needs to happen for this. So these are left as they are in the storage, and we're just modifying some metadata. Essentially, this file is just metadata over the actual data that is stored in the disks in a replicated fashion, in the extents, okay?
+Great.
+So, let's now try to understand how things are replicated.
+And now that you understand, you know, the abstractions of the STEM layer, let's look at how things are implemented. So, you have a client, which is really a partition layer client, it's not really an outside client.
+And you have a stream manager, that's a Paxos cluster that maintains the namespace of the streams, and creates and assigns extents
+two different extent nodes. So we have a bunch of extent nodes that know nothing about streams, and just manage blocks and extents.
+And then we run Paxos here, and where we hold all of the pointers, actually. So the pointers, and the files, and the streams, and where the streams point to extents, this is all stored here. And here we just… in these extend nodes, we just store the extents and the blocks.
+Why is it okay, performance-wise, to run Paxos here, in the stream manager? Isn't this, like, catastrophic for scalability? If we run Paxos here? What do people think?
+Nope.
+Well, that is one thing, and I mean, if we ran it across data centers, we'd be completely screwed. That would be, like, completely terrible. But even the fact that they're in the same data center, what I'm telling you here is that, essentially, whenever you want to be doing something, you are… you are… you have to run
+for every operation, maybe, or maybe not, you have to go through Paxos, but this scales very heavily. So, what exactly is the difference here, and why is it, based on your understanding already, also of streams and extents? Why is it okay to run Paxos here, and it doesn't really block scalability?
+Or there's a way for it to not block scalability.
+What do people think?
+Exchange manager at, like, at the start of the managers assign marketing extent, we can extend… extend…
+node… So they didn't have to run during lunch.
+Exactly. So, the Paxos here does… what it does, it just manages these… these files here. So, let's say you are… you are writing to a file, right? You are writing a lot of data to a file.
+This, primarily, what it does is, infrequently, it adds a new pointer here, but the biggest thing that you do is actually you are writing data to an extent.
+And so, by decoupling these two things, they are essentially pushing the stream manager outside of the critical path.
+And this… it just manages these pointers, so then the most of the overhead actually lies in this, in this layer here, where you replicate the extents themselves. And that's the biggest kind of scalability over here. Because, as we said, extents might be, like, a gigabyte large.
+or, you know, even multiple gigabytes, and therefore, you know, you don't have the pointer very, very, very frequently. And this is, you know, there's not that many operations that we are doing at this level, but there's many, many, many operations you are doing at this level, at the megabyte level of the block, many reads and writes.
+Questions about this? Does it make sense?
+Yes.
+If you're not frequently making, like, a new extent block, don't you always have to go through Paxos for even just, like, reading which pointers the unsealed one, just to make sure that
+It's not, like, been sealed as long as…
+We will see, actually, what's happening with the silver and silver, and there's a way to actually deal with this without always going through this.
+That's a good point.
+Other questions?
+Great.
+So let's now look at what actually happens in this, stream manager and the extents.
+So we want to create a new externa.
+or a stream.
+We call the Paxos layer
+And then this decides what's the replica set for that particular extent. So it decides, it creates this mapping, it stores this mapping, and then it tells back to the client, this is your mapping for this extent. Go and, you know, figure things out with the extent nodes themselves.
+And then what the client does, and this is the main replication flow, The client sends an append.
+to the first primary node. The primary writes and sends to the second, sends to the third, and then when it also writes, it sends back a response, and they send an acknowledgement, and everything is good. So, the critical path of replication and writing is this, and not this.
+This happens once every extent is… every new extent is created, but this happens to write the actual data for the file, okay?
+And now my question, what happens upon the failure of the node?
+And this is similar to the view chains that we have seen in the class for primary backup. So what happens is that you write an append, let's say.
+This, these, these, these start writing, and then before they, before they, you know, they have written, but this one fails, okay?
+So, at this point, you will either get a timeout, or you will get an actual negative response from someone that, you know, something failed here, some problem happened. At this point, you can say, see this extent to the stream master.
+And why… what do you think is the performance benefit of doing this thing here? So, we… let's say we time out very quickly here, after we stop hearing back, and then we silly extend. What's the benefit of this, and why do we want to do this?
+What does that give us performance-wise to our clients? We didn't hear back from this, let's say, after 100 milliseconds or something, and now we are immediately sealing the extended. Thoughts?
+Does it let us roll back and then create a new, list of… Like, replicas?
+Exactly. I mean, or not exactly, but almost. So, it lets us create a new list of replicas, that's the correct thing, but we're not rolling back, really. What we're doing is, I guess we're rolling back the things that have not been successfully written, but then we create a new list of replicas in this layer, which is highly available, because
+here we are only pack source, so even if, you know, like, two of the nodes out of 5 fail or something, we can still keep running, and then we immediately go and keep writing to a new set of nodes. So… so we are very, very quickly, they claim in the paper, in the level of 20 milliseconds.
+closing the Excel, and continuing writing later down the line. So we're essentially getting this
+very, very low latency, even if there's a failure at this, at this level, okay?
+Questions about, about this?
+Great.
+So…
+The stream layer, this is the summary of the stream layer, it uses streams, which are sequences of extent pointers, and these are fast… it's very fast to perform extent-based modifications on those.
+It only suspends append and read operations, and this allows it actually… this is what enables this kind of see, and this very fast finding of new nodes to replicate things. So, because we don't do routes, and we only do appends and reads, we are able to
+do this very fast, do both things, actually. Do two things. Push the need for Paxos and the highly replicated protocol out of the critical path.
+That's one, and be able to very quickly deal with failures at this level, because if a failure happens, I can quickly go to Maxos, run a protocol, find a new extent, and then go back and keep writing. So, it both pushes it off the critical path, but brings its benefits back to the whole application.
+Okay? Does that make sense to people?
+Great. So…
+append, read, and seal together allow for very high availability and good performance. If an extend node fails, we can seal, create a new extend, and keep writing, and this leads to an almost seamless experience for the perspective of the clients. From their perspective, it's just like, okay, this write.
+took 100 more milliseconds, but whatever, you know. From my perspective, I'm writing continuously. This is not really a problem. And yeah, you should think of the stimulator again as a replicated file system. That's kind of the abstraction I would like you to think about.
+The simulator actually does more things, and for whoever is interested, you can go and look at them in the paper and find what actually they do, in addition to what we talked about today.
+So, let's now go to the partition layer, which does… has some other goals. So, this is the architecture of the partition layer.
+And it does… it maps blobs, queues, and tables to strings.
+I need to provide transactions.
+And it has 3 components. It has a partition manager.
+partition servers, and then a lock service. And we will see what all of them do.
+One thing before we talk about this is that all data in Azure Storage are stored as big object tables. For example, all blob objects for an account are in a blob table. So essentially, further down in their implementation, the kind of blob table or queue abstraction is hidden.
+And the question that I'm asking to you, based on what you know from this class, is how can we scale serving a table? Thoughts? How do we scale serving a very, very big table?
+Suddenly.
+So, the partition level is primarily focused on doing sorting, and it does this with the notion of arranged partition.
+And each partition, its range partition, which is a SARD, essentially, of a table, is served by a different partition server.
+And the partition layer, only, therefore, does sharding. The replication is actually handled by the stream layer below.
+So, the partition only needs to worry about how to shard the data and the tables to actual files and streams in the underlying abstraction.
+So the partition manager assigns partitions to partition servers, and then it load balances across them.
+The partition server is essentially a SARD server, which all serves a bunch of partitions that it holds, and the partition can only be served by a single server, and that makes sense to keep… to have consistency, and transactional guarantees for a partition.
+And then, the log service is used for two reasons. Both, it's a… it's, again, some kind of Paxos log service, similar to Sabi, and it's,
+it does lead an election for the partition manager, and it is used to give releases to the partition servers and the partitions they serve. So, to determine who serves which partition, the partition servers get releases from the lock service.
+So, the core data structure of the partition layer is the partition… the range partition. And the idea is
+that… Imagine we have,
+imagine we have operations that update a table. They are new rows, they modify rows, and so on. So the way things are stored in Azure Storage, and this is not just in Azure Storage, but also, you know, in other kinds of systems that have similar infrastructure, is that you store
+All of your operations
+on a committee log. So instead of storing the exact table, when you do a write, you store writes on a committee log. So you say, I modified this row with this new data. I modified this row with this new data.
+And then you also have some materialized checkpoints of your actual table.
+So…
+So the combination of these two leads me to your actual final table, because if you take the latest checkpoint and run the operations on your committee log, then you get the actual final table, that's what's happening now.
+And in the partition layer, they store this data in two ways, both in memory, for fast processing, and on disk for durability.
+First of all, does this make sense as an abstraction? So the fact that we split the table, and instead of writing the table and just having the table, we have the table, but also then we have a commit log where we write operations on the table.
+Does this make sense?
+Okay.
+So… a range partition contains, as I said, both in-memory things and on-disk things.
+The storage, the disk things, are… A metadata stream
+that contains all the information that we need to load the partition to a server. And this essentially is pointers to all the streams that we need to pull from storage to load that partition. Let's say we want to serve a table.
+Right? So we have a bunch of streams that we need to pull, so there is a metadata stream that contains all the pointers to all the streams that we need to pull, so that we load it in the memory of the server, so that we're able to share this table to clients.
+And then, it has two more things. A commit log stream, which holds all the operations, inserts, updates, deletes, since the last checkpoint.
+And, the raw data stream, which is essentially a storage checkpoint of the data, okay?
+And then we… in memory, we have… we have parallels of the… of the… of the last two. We have the memory table, which is essentially… they call it a table, and this is bad terminology, but… but…
+It's really an in-memory version of the committee log, so it's all the updates since the last checkpoint, and they have a cache of that checkpoint, but also in memory.
+Okay?
+So the way we work and we serve partitions is the following. A partition server starts serving a partition, which is, you know, includes a bunch of tables, or, sorry, includes a partition of a table by loading it.
+And then it reads, first of all, the metadata stream.
+It loads the latest checkpoint in memory.
+And it replays all the operations on the commit log to have the memory state. So there is a storage… there is a storage,
+there's a storage log, as we saw, and it… so it loads this, and then it plays all of this. And then it has a materialized version of the table in memory.
+Of the partition.
+And then, what happens is that there is update operations that are happening, insert, update, delete, and they all go to the commit log and the memory version of the commit log. And then we return success.
+When?
+Sorry, sir, will there success immediately once the operations are stored in the logs, in the storage and the memory log?
+And then the reads first go to the in-memory log, and then go to the in-memory checkpoint.
+And every now and then, when the log is reaching some limit, a checkpoint is made, and therefore we can drop very safely the memory log. So just to show this, I guess, programmatically, what happens secondly, we have a table, we start accumulating
+Things in our log, and every time we need to serve a read, we need to now look at all of those.
+to make sure that I read the latest data, and then also look at this. So, once we gather a lot of those.
+What we do is we say, okay, consolidate all those, so create a new create a new…
+In memory and storage step onto the table, where we have essentially squashed all of those.
+And then we keep doing it. We keep creating more, and so on. So this is kind of like the workflow of how you write, to this log, and table,
+architecture.
+Questions about this?
+So…
+what do people think about the benefits of this commit plus checkpoint situation? What are the benefits of this? Why… why is it… why is it useful? Why are they using it? Why are we not just storing the table, you know, in a reasonable table architecture, or data structure? So yeah, what do people think? Any hands?
+What are the benefits of this commit and checkpoint, log?
+playing balance.
+It's a balance between speed and durability, and why does it have speed, and why does it have… or at least, let's think also of how it connects to all the end-to-end system.
+Bye.
+So, that's a good point. So, first of all, the benefit of the checkpoint is that if you just get the log.
+then you would be… every time, you would have to replay millions, whatever, you know, lots of events. So the checkpoint is essentially protecting you from growing too large on your log. But what's the benefit of the log? So this is one of the benefits of the checkpoint. But what's the benefit of the log in contrast to this?
+So this is the one end of the spectrum, just having all log. What about having all table?
+Slap something in the table and every operation is really slow, and how does the log help? Think also in particular compared to the stream layer. Why is the log very useful when we have a stream layer?
+Any thoughts?
+Since you're, like, using the stream layer as an
+You're working with just the pointers, so each, like, Change is not, like.
+the delta in the actual data.
+So, the benefit of this, and it's… I guess I'm paraphrasing, I think, what I understood you said, which is that the…
+the log, maps directly to the stream layer abstraction that has the seal, the read, and the append. So the log is very easy. Whenever you want to write an operation, you just do on the stream layer an append.
+For this. And append, as we saw, it's very, very fast. It doesn't even require necessarily to go through the Paxos stream layer, because you just write, we say to the log, and then this maps will just arrive on the stream layer to an extent.
+So, you can very, very quickly write a bunch of things in this log, and then every now and then that you want to make a sample, you pay the cost of actually replicating, let's say, you know, the new table, and so on. So, you get a lot by mapping… by this mapping of the abstraction.
+And I guess, yeah, this is the last thing that I've written here. Then we have the fresh recovery, since we have the commit log. The commit log is… allows for the fresh recovery because we have everything, and this relates to the kind of, like, balance between durability and speed.
+We have quick loading, because the checkpoints are frequent, so we have checkpoints to load from, we don't need to replay the whole log, this is the other thing I just mentioned. The update is very, very fast, just appends to the log.
+And it's also very easy, actually, to combine the memory and storage representations here.
+So…
+The range partitions are very big structures. What problem could this lead, when we put them, you know, in partition servers? What problem, could this lead if, you know, a partition ends up being too big, and there's so many requests? What could, what could that lead with, too?
+If it's not charitable, does it fit on the server, or, like, Performance-wise, it's open-loaded?
+Right, so a single server could be overloaded and not be able to support a big partition. And this could be either due to CPU, storage bandwidth, or storage size.
+And the solution that they have for this is load balancing.
+And we will quickly see how load balancing happens in Azure Storage, and the way they do it is by splitting hot partitions that have a lot of requests, and merging cold partitions. And they use some form of profiling to do this.
+So the split is pretty similar, the merge is also… it's pretty easy, the merge is also similar, that's why I'm also showing you the split. The partition server checkpoints the complete partition. It checkpoints the partition, it creates a materialized view.
+He then stops serving traffic, And then it creates new streams, metadata commit log data streams.
+Talking about the… the split, two, two new partitions.
+By the way, is this creating new streams fast? Slow? What do people think? Creating new streams?
+Does this take a lot of time to do?
+Thumbs up if you think it's fast, thumbs down if you think it's slow. Fast or slow? Creating new streams. Here.
+For the partition splitting. Fast, slow, fast, slow.
+I see a few thumbs down. So, actually, it's very fast, and the reason is that you don't modify anything on the extents. Again, this goes back to the point about, you know, just modifying some pointers is kind of easy. You are creating some new pointers, you point to the new data, you don't touch the data. The data is actually stored down there, safe and sound, you're not moving it around, and so on.
+So, that's why it's very fast.
+And therefore,
+And the insight underlying this is that Azure Storage decouples how the data is replicated, the extent level, and how it is served at the partition level, and at the stream level, even. It's a decoupling.
+After it's done this, it modifies the new partition metadata streams, and it starts serving requests on both of them, or it moves the partition to another, to another partition server.
+Questions about load balancing?
+Is the new streams fast in spite of, like, having to go through access for each of those?
+I mean, going for packs through Paxos is something that's not as fast as, you know, like, going immediately to a server, but still it's at the level of, you know, 20 milliseconds, 100 milliseconds. At this point, you are allowed, you know, to pay this, but to re-replicate your data.
+would be catastrophically, like, you know, the problem would be having to re-replicate your data under the hood. So essentially, what you're doing is, instead of
+you're not touching the data at all, but you're just saying, okay, I will just point my pointers to different parts of this… of this expense, and that's it, and then I'm not touching the data at all. It's still fast if you wanted to do this all the time, but you don't do this all the time. You do this infrequently. yeah.
+It's not on a critical path, this kind of, you know, load balancing.
+Great.
+Let's quickly touch upon on a single slide of interstamp replication. So, remember that I told you that it supports two types.
+For disaster recovery, all operations are asynchronously sent to another data center, and this happens in the background, in a batched manner.
+So, the other data centers do not serve reads, actually, but are meant to be there just to be able to have the data in another place. So, essentially.
+If something goes wrong and a stamp goes down, someone has to manually go and change something to be able to sell this data. So, this is not really meant for, you know, a day-to-day kind of thing, but rather than a real catastrophe to not be sued because, you know, all the bank data is lost, for example, and then the bank
+you know, has completely lost, cannot operate at all. So this is more as a, kind of like,
+A safeguard to have the data in two places in case a natural catastrophe happens.
+So, high-level conclusions about us as students, and we're wrapping up.
+We saw the design and implementation of Azure Storage. It has multiple layers, and that's what's cool about it. The stream layer is a distributed FHI system with high availability that supports only appends, and this allows it to have high availability.
+The partition layer on top does starting and load balancing, and it has this nice, elegant commit log and checkpoint hybrid.
+And now, before we finish, I want to try to draw some bigger insights and lessons from this one.
+So the first one is that Azure Storage has a unified service for blobs, tables, and queues.
+And other than simplicity and sterilization, that, you know, there's a single team that deals with all startups in Azure, this has another key benefit, too. What do people think the other benefit is for this?
+If you use the same kind of storage for blobs, tables, and queues.
+Is it more of a secondary, and more of an accidental, let's say, or not, yeah, benefit that you get for performance. Thoughts?
+It's the same logical handling, that's the main thing. And there's a secondary performance benefit. When you mix, hmm.
+Good bachelor.
+Awesome. That's one… What was it?
+You could batch request across different types of one retrieval, that's also a great point.
+And I guess the secondary performance point is that they all have different requirements and needs, these three. So blobs are big in size and need big disks. Tables benefit from I.O. parallelization, because they can be started very easily, and many disks. Queues can mainly run in memory.
+So, essentially, the outcome from this is that we can get multiplexing for free, better utilizing all of our resources, because we use the same kind of infrastructure to run all of these things together. I mean, and because they have different requirements, then they kind of balance out and use all of our machines at their best capacity.
+The second lesson is this compute-storage separation.
+So, Azure Storage, and this is related more to the first part of the lecture about cloud-native applications,
+It enables compute storage separation applications, meaning that you can split your application completely in the cloud in the part that does the compute in VMs, serverless, and so on, and the part that does the storage, which does design storage.
+So, then, you can scale up each of the two completely independently. So, we don't have to think about, you know, should I get another machine if I need more disks?
+but then also get more compute that I'm paying now for, but I don't need. So if you need more compute, you get more compute. If you need more disk, you get more disk. And that's how you… you are able to, to get this,
+As a storage allows you to get this.
+Why is this even possible? And why would, you know, what is a critical requirement that enables someone to split their application, and it makes it possible to put all of their storage on other storage, even though they run their compute on VMs? What enables this?
+What do people think?
+What kind of change is when you split your storage and you put it to other storage instead of having it in your VMs? What happens then?
+Is there any performance overhead added? When you split, you have things under your VM, and then you split things to other storage? Is there any performance overhead that is added?
+Say the networking has, like, the… Vegas.
+Recipient
+You pay everything to reach Azure, which is the networking, its whole stack, and so on. So, Azure and Dynamo and all of these systems, because they are fast and efficient, allow and enable these cloud-nature applications to be simpler and easier to scale.
+But because they're fast, if they were slow, no one would break their application like this, because then you wouldn't be able to tolerate, to handle your load. So if your application is bigger, then you wouldn't be able to do it.
+Some… another big lesson I wanted to draw from is comparisons with other sharding. So, how does Azure Stores compare to the other sharding that we have seen so far in the class? Modulo hashing, consistent hashing, chord, and dynamo. Any thoughts? I guess we are running out of time, so I will quickly
+tell you this, and not, force you to answer this too. So, some differences are, that sorting happens at multiple layers here, both the partition and the stream layer, and this is because a stream itself maps extents to different, to different extent servers.
+So something happens at both layers, and it's decided by a centralized controller, the manager, and the partition manager, and the stream manager.
+So, and this is different than the other systems, because all the other systems actually do sharding in a decentralized way, where all the nodes decide how to shard things. So here, actually, they follow a completely different infrastructure. When everything is centralized, simply, and then the sharding is done at the center layer, but you push a lot of things out of the centralized controller's path, so it becomes possible.
+And, azure Storage.
+does sorting, and this is important to keep in mind, at both layers, but replication only at the streaming layer. The partition layer does no replication.
+And finally, the final question is the claim they provide strong consistency, availability, and partition tolerance. Is that true? Is any of these three sacrificed? What do people think?
+Is there…
+do… are they right, and they… and they… and they actually beat Cup? What do you think? Did they beat Cup?
+Thoughts?
+What did they sacrifice?
+If anything, maybe nothing.
+Huh.
+They still have centralized systems.
+They still have what? They still said bias, but consumption.
+They have centralized systems, which means they are running Paxos, actually, in many various places, and Paxos sacrifices availability. It's done.
+So, what actually they mean, and this… this is more of a… of a kind of a marketing term, I think, that they, you know, while writing this, they say, oh, we have everything, but… but… and I want to bring this up to… to… to have you be critical of this. This is actually impossible.
+What… what they mean, though, which is an important point, is that
+all of the centralized services are actually off the data path, of the critical path. So even though you have centralized services that are, you know, they sacrifice the strict availability, they still are not in the critical path, so you can, most of the time, be very, very efficient. And you need them only in rare cases, and then you just, you know, you spend a little bit more time and wait for them.
+So, it was a little bit of a long lecture. Please fill in this for me to be able to also repeat next time what is most important and least important, and not what's least important, and thank you.
+I don't like that.
+Last part on the form, I'm not getting, like, any response if my question is correct, if my answer is correct.
+Oh, you did not. Okay. That's weird. Okay, I will fix this.
+I have some questions about, like, the new change for the stream level. I think this sort of relates to, like, what I was dealing with on the project, where it's like…
+I don't see exactly how you can just build secondary…
+Just, like, fails to sync, I guess. Is the failure period, like, cancer, like, you append a block.
+And then you forward this upon to your secondaries, right? And then you get no response from, like, secondary
+But it's possible that secondary V did actually execute the patent and
+like, the access loss, right? Yes, yes, yes, yes. In this case, we're sealing, right? Yes, but it could… but it's possible that… and then, like, because it's not successful, you do not actually commit it on primary, or… primary secondary or wait not to commit it.
+So, so, what happens here is that these three
+we know what they think, all three of them, that… or at least, you know, what they respond to the client also, you know, some have failed, and we didn't manage to write beyond this point. So this is the point we respond. Even though some might have actuated.
+So, then the client will go and see, and seal also means I'm sitting here.
+So this, this is what I see. This is where I do. So even if someone has written this… The metadata doesn't. The metadata doesn't know it, the client doesn't know it, so for all sex, you know, for all purposes, this does not exist anyway. Yeah, yeah, yeah. So the client can continue writing, rewriting this.
+To someone else, and then we rely to someone else. Oh, yeah, okay. So that's why it's correct. Yeah, yeah, yeah. And that's why the ceiling is, like, over time. Yeah, yeah, yeah, okay.
+And then, just a question for how, like, the partition layer works. So, like, the partition is, just, like, a bunch of pointers for how blobs are divided among streams, or, like.
+Like, for how, the partition actually views the…
+Blob object is just, like, a mapping to, like…
+the first chunk of data is in the stream, this, and yes, offset. Yeah, yeah, yeah, exactly, exactly, exactly, exactly. Which means that for one piece of data, it could be, like, across a ton of servers.
+Yes, yes, yes, yes, yeah. So the storage servers and the extended servers are always, like, there's a lot of them, they are all part of this stamp.
+And, and yeah, yeah, there would be a lot of little data. So even for, like, one singular object, because it's, it's, like, fragmented. Yeah, exactly, exactly. That's just, like… Yeah, yeah, yeah, yeah. So everything, everything is cleaned out there now. Even… even for a single file, because the moment you write to three of them, and, and one of them fails.
+then you talk, you know, you talk in silly, right? And then you say, okay, give me a new extent.
+This gives you probably extended maps to different servers, or, you know, at least some of the servers are new, so that you don't face the same problem.
+So, so, so that means that essentially, you know, even a single file can split among, you know, multiple centers, and, yeah, yeah, yeah.
+I see.
+And, like, before, when you're talking about SLAs, like, usually this level of, like, fan-out, where we need one piece from a ton of different groups and aggregate, that means, like.
+Isn't it at your height?
+So, so the reason why this works also is because the partition, so when do you need to read everything in a file? You need to read it when you load the table, you load the table.
+For a blob, it would be like… Oh, yeah, or whatever, yeah, but even there, I mean, the biggest typical thing, and, you know, once you know all the places where you eat from, actually, it can be parallelizing, because you can go and say to these three, or to at least one of these three, give me this.
+then give me this to this other thing. And you can do that in parallel, because this… so this can even be to your benefit for performance. Yeah, yeah, yeah.
+You're splitting the read into a bunch of concurrent… Exactly, because you know, you know exactly that this, this file is split into these 100 extents. I need to fetch these hundred extents from this servers, let me just fetch them in whatever order.
+Yeah, yeah, yeah. Yeah, so, as opposed to, like, if you had it all in one place, then you're, like, bottlenecked by the REIT banks or something. Exactly, exactly, exactly, exactly.
+But, like, oh, I guess, so, like, this… this advantage out is better than just, like.
+Because you still, like, have, like, Tons of…
+tail latency potentials, where, like, you're…
+held back by the weakest link in the chain, but that latency is smaller because you're splitting the amount of read from each thing.
+Could you repeat this final point? For the SLA fan-out thing, it was, like, when you have… you want, like,
+This is a follow-up, yeah, yeah, yeah. You're bottlenecked by the worst one, where you want… every single one has to perform above that. That's true, that's true. That's a problem, but this problem, I mean, the way to solve it, and the way… this is… by the way, this was a thing to mention that, you know.
+this… this… the SLA pay is pushed up when you have fun out, but in reality, even though that's the case, services are still built through huge graphs, with huge fanouts. So what this means in practice is that
+each of your services, actually, to have an SLA here of 100 milliseconds, this has to have an SLA of 5, actually, and this has to have an SLA of 5, and this one has an SLA, and so if you aggregate, you know, 10 that have 5 on the 90th percentile, then you get 100.
+on the 90th year. So, essentially, you have to push
+you know, the SLAs of each individual service to be very, very, very, very small to get this number here. But you still… the funneled is kind of, like, unavoidable. I think, I think, you know, in a big distributed, salary kind of service, you still got to have fun out, but all this means that on the back ends, you have to have very, very tight.
+It's not just 90 to get 100, but 5 to get 100. That's kind of the idea. Gotcha. Yeah, yeah, yeah, yeah. And this is kind of facilitated, because each read is smaller. Yeah, yeah, yeah, yeah, yeah, yeah. Okay, yeah, wait, I think I…
+I look for, the partition layers, like, checkpointing and…
+re… or the commit log thing. For the commit log, does that mean that,
+The stream layer itself is within that, like… Snapshotting?
+Or is the stream, like, a separate thing that's decoupled, and the commit is replayed to the stream? So, the commit log…
+Easiest treatment.
+one stream.
+Okay, so, like, this is not, like, the metadata… like, the pointer table that the partition layer has. It's… it's every… all the state.
+Yeah, but it also has a metadata stream, which is also stream, yeah. Exactly, exactly. So there's three streams, essentially, for one partition.
+One, which is the table, the checkpoint.
+table checkpoint. One, what's the commit look, and one of the steps.
+The question is about the walk service. It's like, Wait, I'm…
+So each partition server is managing, like, like, disjoint blobs, or whatever data they're holding, right?
+And the lock is just…
+If it's already destroyed, why is there a lock? Because you don't know ahead of time who has which partition. So, essentially, the lock says, I will have this partition.
+So, so essentially, the way to imagine, maybe, is that this is Tabi, or Zookeeper, and it has, for its partition.
+a file for its partition, zookeeper file, P1, and then it says the IP of the server, the server that actually has it.
+Partition server one.
+So then, essentially, what this means is I am holding this for some period of time. I am the one having this.
+Oh, oh, so the ownership metadata is kind of… Yeah, yeah, it's, it's… yeah, that's what, that's what this lock is about. Yeah, the lease, the lease is about.
+The list says, I can't this partition for some period of time, yeah.
+Okay, but they… the servers themselves are also… or, like, the partition servers are actually holding
+the metadata as well. But this is a partition, because it's three streams, it can be, at any point.
+Exported to storage, and imported from a different partition server.
+Okay, that's, that's the idea. So this, like, stream layer is, like, one…
+That unified, like, distributed system. Exactly. Exactly. And it's used to store… Just this part, I guess. All three of these. All three of these. So it has these three, and what happens is… we have a slide also a bit later about how you do the…
+Oh, I thought I did it, I think… yeah, the logic.
+Yes.
+You read the metadata stream, you go to the stream layer and read this.
+Then you know where this is, where this is.
+Go and load these two. And then you load all of these three, and then you are able to actually go and run this partition. Maybe, as a partition server, could go and respond to things about this partition. Run inserts, reads, and so on.
+Okay, so the… this commit log and…
+The table is the… is not like a pointer table, it's like… Everything from the extent later?
+Or the stream wave? You should think of the checkpoint, the whole table, checkpoint, as one thing.
+One thing. It's mapped to a single string.
+the table of this partition. Let's say this is a partition. Oh, okay. Yeah, yeah, yeah. The commit log, another string.
+the metadata, another stream. So the stream layer is just providing for us this functionality.
+So in this picture, it's, like, not one… it's, like…
+Three, like, tons of things, like, features their own for a partition.
+I'm sorry.
+Yeah, I mean, I mean, I mean, what do you mean, three, though? I mean, there's, not, like, one…
+It's like, each of these get a stream, right? And then…
+You get multiple things, 1, 2, 3, actually, in multiple streams, and then, like.
+Each stream has its own, like.
+group of, like, the Paxos and the extent nodes. Yeah, I think the way… the way that… because I think otherwise it's kind of confusion to think about. I think the way to think about it is.
+understand stream layer without thinking at all about partition. Stream layer, there is some partials running, there is extremes and extents. At this point, forget about the stream layer, and think that you have
+Some layer that can give you replicated fault-tolerant files.
+Now, given this, how can I, in the partition, map a table
+to files. The way I map a table to files is that I create a metadata file.
+I created a commit log file, and I created table 6.5, 3 files.
+Then I map each of these to the stimulator something, and then every time someone writes, I go here and write something to this file. Every time I go to checkpoints, I rewrite this file.
+And every time, you know, I read, I check, I check my memory state. Yeah, yeah, yeah, yeah. It's just a black box file system. Exactly, exactly, exactly. But it's not one singular, like, file system service that black boxes. Each one contains, like.
+Maybe the… the… its own…
+black box for… Each one… no, it is a black box, though. It is a… yeah, a whole black box, one layer. I mean, I mean, but then, it's like, this… the stimulator offers… offers an abstraction that says, you know.
+read string, append to string. So, this is just using this. And all of the partition servers use this, actually. All the partition servers use the same stream of snatching.
+So PS1, PS2. I am reading partition 1, partition 3, I am reading partition 2, partition 4, which means I'm reading these files for partition 2, partition 4.
+From the streamlining.
+Oh, I see. But the checkpoint holds…
+So the actual data for, like… Let me stop recording, but… oops.
+Yeah, yeah, go ahead. The actual checkpoints where I understand, are, like, health… er…
+The extent data is held in the stream later, right?
+And if the partition.

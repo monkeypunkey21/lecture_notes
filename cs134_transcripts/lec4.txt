@@ -1,0 +1,637 @@
+Yeah, and then it's like my, you know… I mean, that, that's…
+People got these two drinks, you know.
+Okay, I guess we can get started.
+Hi, everyone. Yeah, today we're,
+going to do the fourth lecture for distributed systems, and before we get started, I wanted to give a brief, make a brief point, a brief note. Do not
+do the assignments in a public repo, okay? That's considered code sharing, so yeah. If you have your repo public, just make it private, and I think for the assignments 2 and 4, they're private by default, but if you have something public for assignment one, please make it private, okay?
+Great. Before we start with Lecture 4, let's go back to Lecture 3 and look at a few points, in particular the quiz questions.
+So, let's look at question one, and this question asked, said the following thing. An event A that caused an event B, caused an event B if and only if it happened before an event B.
+And that's not actually true, but only one of the two sides is true, so…
+A caused B implies that A happened before B. So if A caused B, it is true that A happened before B, necessarily. But the other side does not hold.
+So, if you remember the happen before definition, we have three parts to this definition of what we say when we say that something happened before something else. We say that something happened before if
+There is a message, receipt and, receiving and sending that, connects the two events, if they're in the same process, and they actually occur before one another, and if there's… if they are transitively related, okay?
+So… there could be a case that B might be after 8,
+But might be completely independent. This could be the processing of an independent request. Let's say that this A and B here, each one of those, talks about the processing of a different external independent request. In that case, B happened after A, but does not mean that A caused B. Does that make sense?
+Any clarification on this?
+Great.
+Let's also go to question 3. Question three,
+ask the following… the following, if we have two Lampert… two Lampert clocks for events A and B, C of A, that's smaller than C of B, that… that holds if and only if A happened before B.
+If A happened before B, then certainly C of A is smaller than C of B. That's true, we know that. However, the converse, again, is not true. So, if
+The clocks, are smaller. That does not always mean that A happened before B, and here is an example. C of A here has a clock value of 1.1.2… 1.1, sorry, because it's in process 1, but C of F has 3.2.
+So, C of F is clearly larger than A, but F did not happen after A, based on our definition of happened before. Does it make sense?
+Questions, clarifications on this? Thoughts?
+Great. And finally, the two other questions, which I think most of you got right. If a system can provide a guarantee on an asynchronous network model, and then can also provide the same guarantee on an asynchronous network, that is correct. Implementing a system on top of an asynchronous network model is strictly harder, and an asynchronous network model allows strictly more behaviors, so if you can support that and provide a guarantee, then you can provide
+The same guarantee over a simpler network model.
+Another question was the vector clock question, which is the same as the Lampert clock one, but for those, it actually is true that when the vector clocks are smaller, then indeed, even only if A happened before B, okay?
+One more point I wanted to clarify here, which a student asked me at the end of the previous class, I think after some people had already left, whether two unique events in a system could ever have the same vector clock values.
+So, what do people think about this? Could two events, A and B, have the same clocks? Thoughts?
+Hence?
+Hands up if you think, they could have the same clock. I guess thumbs up if they could have the same clocks, thumbs up, thumbs down if not.
+Okay, I don't see any thumbs up. That is correct, they cannot. So, what is the reason? let's… we will go into a somewhat informal proof, just to show that this is the case.
+So, recapping on how we update the vector clocks, initially all vector clocks start at 000, and then we have two rules for updating.
+For each local event, we increment the local entry in the vector, and then if a process receives a message, then we set all the local entries to the maximum of the received message in the local
+The local and the received event, and then we increment the local vector again.
+So…
+Assume we have two events, that have the same, A1 and A2, and B1 and B2, and assume that A1 is B1 equals to B1, and A2 equals to B2. We have these two events, A and B.
+An event can be one of three different types of events. It can be a local event, which is an event that has nothing to do with sending or receiving, a send event, or a receive event.
+First of all, we know for sure that A and B cannot be in the same process, because the update rule always updates the local component when it processes a different event, so there's no way two events in the same process have the same local counter.
+Okay? So they cannot be in the same process. So that necessarily means A and B are in different processes.
+And then, let's think of the following, let's think of the following, of the following case.
+P2 can only progress the first clock element, so A1… B1 in this case.
+only with the clock values of a send event from P1. So P2 has no other way to increase and update P1, okay?
+So that means that since B1 is equal to A1,
+A has to be a send event, and B has to have occurred after the receipt of A, but before any other, before receiving any other event from P1.
+So, if there is ascending from A to B here, from P1 to P2 here, and then there's some other ascender receipt here, B has to be in between these two events.
+But all events after the receipt of A actually have B2 larger than A2, and that is because B2 will be set to 1 plus max of A2 and B2 pre.
+So, that leads to a contradiction, so there's no way for two… for two events to have the same clock value. Any questions and any thoughts on this?
+Do we have, like, group, like, questions on the midterm or the panel?
+Not a formal proof, but maybe some informal argument you might be asked to do, yes.
+Other questions?
+Great.
+So let's see what today, what we'll talk about.
+First of all, we will talk about Things.
+Second, we will talk about non-determinism.
+And finally, we will talk about the Sandhi Lambert algorithm.
+These images will become clear after we progress with this lecture.
+So…
+Yeah, we saw last time we saw logical clocks, we saw Lambert clocks, we saw vector clocks, we saw how we can implement a reputed state machine using these logical clocks.
+To this example.
+And now we are at the stage where we have a replicated state machine. Are we done now that we have local clocks, logical clocks? Thoughts?
+What's missing?
+Failures. So, logical clocks do not do anything about failures. They don't… they don't give us any guarantees for failures, nothing.
+So, in this lecture, we will talk about fault tolerance, we will start talking about fault tolerance, and for many lectures after this, we will talk about faults and how to tolerate them in this class.
+But the first question is, what do we even mean, by fault tolerance?
+So… What we mean by fault tolerance is that the system
+S, satisfies some specification that it has.
+Given that some classes of faults can happen to it.
+So, what is the first question you should ask when someone asks you, how do you make the system fault-tolerant? Any thoughts? What's the first question we need to ask?
+Oh, what faults are we talking about? Exactly. So what types of faults do we care about?
+So, some types of failures that we care about in distributed systems fall into the… into three categories. We have class failures, we have network failures, and we have Byzantine failures.
+So let's do a brief kind of overview of each of these three types of failures.
+So, first of all, we have grass values.
+Cross values, let's say this is, like, an example of a system. Cross failures,
+Are failures where a component, a cross of the system, fails, loses all of its ephemeral state, and the component becomes unreachable, and never comes back to life.
+So, another process, so other processes might try to contact it, and they don't get any response back, their messages do not reach it, and this component is never coming back to life. So this is a crash failure.
+And usually, after cross-failure, what happens in the system, sometimes that there's another process that comes up to life and takes the role of that component.
+So these are the cross finishes.
+Then we have network failures.
+Network failures affect messages in two ways.
+They can either lead to messages being dropped.
+Or they can lead to messages being reordered.
+A key challenge with network failures is that it's very hard to identify between dropped messages, very slow messages.
+Like this one.
+Or crashed processes.
+So, in general, if a message does not reach another process, we can't really distinguish between these three cases.
+A way too often… a common way to solve or address network failures is to retry and deduplicate. So, to send the message again and again and again, and deduplicate. This does not really solve them, as in it guarantees that the message will get there eventually, but it just, you know, if there is some potential for it to arrive, because networks are not
+Usually broken forever, then it will, it will get there.
+And finally, we have Byzantine failures.
+So, pigmenting failures are different from the other two, so they could modify or corrupt messages or processes. An example of that is the following. Let's say we want to send a message from P1 to P2, asking, do you want to have tomato pizza?
+Then, a penalty failure could be that an adversary goes and modifies this message, and says, we want food pizza.
+These messes are very hard to tolerate, and they're strictly worse than crash and network failures.
+So, recapping, we have these three types of errors. In this class, we will focus on class and network failures, we won't really focus on Byzantine failures, and
+The network failures, really, we won't, we won't deal with them in the class, in the lectures, but rather in the assignment. So you have to have to come up with some ways to deal with network errors. And primarily, for the rest of this class, we will focus on class failures, okay?
+Any questions about failures and failure types?
+Like, they have a TCP as a protocol, just to ensure that…
+No messages are often falling short, so…
+So, you could use TCP, that's a great point. So, even if you use TCP, a way to have network failure is if the wire is literally cut. So, you know, there is still the hardware kind of, like, limitation of the wire can be cut. Yeah, so… so in general, there is no total guarantee that you get from DCP, yeah.
+Other, other questions?
+Which class do we study? Like, the dental studies?
+I don't know of any, usually, currently. Usually there is protocols that you can do for Byzantine failures. Sometimes they fall under, you know, advanced distributed systems, or sometimes also in the intersection of distributed systems and cryptography. Yeah, in this class, they're all strictly more complex.
+than, you know, the grass failure ones, and also harder, you know, they get… it's harder to get guarantees. The class is not that long, so we don't talk about them here, but yeah.
+Other questions?
+Great So… How can we recover from class failures?
+Any ideas?
+What do people think? What's a way to… what are some ways to recover from class failures? Hans, thoughts?
+Replicas?
+replicas?
+Great, yeah. So we could have replicas. Other thoughts? Other ways to deal with cross failures?
+We said that in class failures, the component, loses all of its ephemeral state.
+Checkpointing, yeah. So these are actually two, the two big categories of replicas and checkpointing that we will see in this class. And yeah, one way is every some seconds, or every, you know, some amount of time.
+take a checkpoint and store it on persistent storage, like a disk. Sometimes you can even do this on a remote machine. And then if the component crashes, you can retrieve the latest checkpoint from the persistent storage, and restore the component state based on it, and continue execution from that point on.
+So here, I think in this class, we are assuming, like, the disk is, like, a good model, but even then, like, when you write to a disk, you are not really guaranteed, right, that it would write on that flash or something like that.
+So, I'll be just assuming in this class that, like, oh, this is a synchronous thing where you give it something, and you just table it, and…
+So, we will… we will see a system close to the end of the class, a real system from Azure, where we will also worry a bit about the storage problems, but usually in distributed systems, we abstract a little bit away, and we say, okay, we can assume that the disk will not fail, but
+maybe… maybe we can assume that, you know, each machine has a disk, but not all disks reserve at the same time. So usually we take consideration of the disk together with the node, or we assume it works, yeah, yeah.
+His, snapshot of the same?
+Yes, I will be using the terms, the terms, interchangeably in this class, yes.
+Other questions?
+Great.
+So, let's look at some challenges with sec-pointing or snapshotting. Let's say we have the following process.
+We take our checkpoint here, and then the process crashes.
+Is that okay? What do people think? Are there any problems with this?
+My, cute, like… Intrusive.
+U.S.
+it might induce actions. So, I guess…
+Yeah, there's, I guess, two types of problems that could happen with doing these actions.
+One of these problems is that you could redo them, and redoing them might not be idempotent. For example, one of these actions might be you send a text message to someone, or you send an email to someone, okay? Or you… yeah, some action that is completely side-effectual.
+Another problem is that this do something is non-deterministic.
+And it not only sends a text message, but it sends a text message to someone else. So, you know, and so let's do a brief
+divergence to non-determinism, and get a sense of how this occurs, and what kind of problems it can lead to in fault tolerance.
+Rondidanism is a very common challenge when tolerating faults, faults, and,
+Yeah, do people have any… any ideas of what… what are possible sources of non-determinism in a distributed system? Any thoughts? Randomness? Yes. Other? There's a lot, so yeah. Other… other hands, other thoughts?
+The network? The network? Yes.
+Seriously?
+Things racing with each other, so essentially different processes, yeah.
+Other things?
+Llm output.
+LLM output. Yeah, I guess this is randomness in some way, but yes, yes.
+User input, exactly. Anything else? Any other ideas?
+Vos. VOS?
+Wow, you got exactly the ones I have in this slide. So, yeah, randomness, user input, network delays, process scheduling, and the OS interrupts, but also other things.
+So, all of these things, when they happen in the system, they can cause issues with recovery.
+Also, a side note is that this… all of these sorts of non-determinist are actually what makes testing of distributed systems very hard. So, usually, in normal software, you have problems like randomness, user input, and noise interrupts, but you don't have this tool, network delays and process scheduling. Process scheduling you have in concurrent software.
+So, a problem in distributed systems, is that,
+You add on top of this other sources of non-determined is network delays and process scheduling, and suddenly you have exponentially many executions that could… that will happen from your program.
+So, how can we address non-determinism in the context of fault tolerance? And if not, what could we do, maybe, to deal with non-determinism? What do people think?
+Any other thoughts?
+I mean, it's non-deterministic, but, like, you can get a close enough approximation, like, a total non-deterministic testing suite that you can, like, come up with, and then, like, test. Well, this is for testing, sorry, yeah, so I mean, how can we… this is in the context of fault tolerance.
+So there, you can't really do a pseudo or approximate solution for undeterminism. Maybe you can do it for randomness, but what can you do it for network delays? Network delays means that, you know, you have a system of, you know, 100 processes separated across the network, and then they send a message to each other.
+And slight variations in network delay might mean that one message might arrive earlier than another in different executions. So if you restart things, maybe the same messages are now arrive in different orders. So this is some sort of non-determinism. Requests will be processed in different order, and so on. So it's not really possible for all of these. For randomness, it is, maybe, but not for all of them. It's not possible.
+take all the information, he has, like, who was the equivalent, and you're like
+like, logging it, like, I don't know, like, keeping track of the information, sort of whatever.
+Right. So, the answer is in what you said. So, the answer is logging. So, what can we do? We can log all of the events that lead to non-determinism. For example, we can log every message that was received. We can log random numbers generated.
+and put them in storage, and then during recovery, we can use the log to resolve any non-determinism. So when it's time to actually receive a message, not receive the message, but go and look at the log, and pick a message if a message exists there. Or, instead of rolling from the random number generator, pull the random number from the log also.
+So, this way, we can replay, essentially, things in a deterministic way, even though there was no determinism.
+We won't worry about this problem for the rest of this lecture, and I think also for this class, I don't think for the assignments either you need to worry about this, but in general, you should keep in mind that this is… this is a very important problem, and
+all kinds of solutions that we design in distributed systems.
+face this problem, and often it's kind of hand-waved away. There is work that deals with it, but very, very frequently, it's very hard to deal with, okay?
+Any questions about non-deminism?
+Great.
+So, let's go now to checkpointing, and the main part of this lecture.
+So checkpointing can help us recover from a crash failure. A node can save its state in a checkpoint, and if it crashes, it can recover from this checkpoint.
+System of many nodes.
+How can we actually recover them? Either due to a failure, or because we want to restart all of the nodes in a different cluster, or… yeah.
+The solution, of course, is to take checkpoints across all the nodes.
+So what we want to do is we have many, many processes, and we want to take some kind of global snapshot, or checkpoint.
+By taking, like, little snapshot tutorial checkpoints at all the processes.
+So, I want you now to turn around and talk to the person next to you, and discuss the following things. What are some things that could go wrong when taking checkpoints across many processes? When should the nodes take these checkpoints? And also, how should they take these checkpoints?
+in particular, I think the most important thing to discuss is what things could go wrong, okay? So, yeah.
+Talk to the person next to you. If you don't know them, introduce yourselves, and yeah, we'll get back in a few minutes.
+Great. So, let's start getting this, yeah, getting your thoughts together, so…
+what do people think? What are some approaches that we could do? What are some things that could go wrong? Yeah, thoughts by people? Hans? Hans?
+Just observations also about what things are hard or what things are easy, yeah.
+More hunts, more hunts?
+More hunts?
+More?
+A few more I need, and then we can…
+Any thought is useful, really. Any observation.
+They moved.
+I guess that they're all taking Checkpoint, how do we know it?
+When they've also submitted their checkbook.
+How can we know when they've all succeeded in the checkpoint? That's a good point. I guess, yeah, I'm keeping this, yeah.
+Oh, you don't… it's extremely hard to, like, synchronize, like, a logo and Snapshot, because…
+Some processes could be actually able to work at that time and not be able to actually take a checkpoint.
+And then there's also network failures that we may encounter when we're trying to message across all of how we know those messages are guaranteed.
+Right, right, right. So this goes together with the first point, I think. How do we know that checkpoints succeeded? We have to synchronize somehow across the nodes. Other thoughts?
+Assuming not retained, can you land port clock model, where, like, whenever you have a checkpoint, you have a master checkpoint server, whenever a known checkpoints, it just, like, sends it up there, and then that does, like, a LAMPORT clock or some distance vector order… sorry, not distance vector, the vector clock order.
+And assuming that works without any illegal or some dumb, like, non-meterministic error, it should work, right?
+Well, there is, there is, there is some, some, some truth to what you're saying, and what we're gonna see as the algorithm does use the ideas of vector clocks, not totally directly, but… but indirectly. So yeah, there is, there is something you can do with vector clocks. yeah, preserving what the vector clocks actually help you preserve.
+Other thoughts by people? What do people think about synchronization and, you know, coordination?
+Yeah, but let's say…
+The snapshot for each node is then transmitted by a network to some central processing do it, I guess.
+As for server.
+It's like them.
+the snapshot per A node, it's dropped by the network.
+our work.
+That's a good point. So I guess we will have to make some assumptions in this particular lecture. This is also a real problem, though. So in this lecture, we will make some assumptions about the substitutes, when they are taken, they are taken, and we know they are saved. But this is… this is a good point of something that could go wrong. Yeah.
+like to know if you want to store your snapshot of the crashes, can you send it instead? I guess that's a similar… there's a similar consideration with this. The snapshot, where did you store it? Yes.
+Is it necessary to synchronize snap-like checkpoints across nodes?
+That's a great point.
+So, let's gather all of these things together a little bit. We will not really worry about non-determinism, as was mentioned, and we will also not worry about the snapshot failing, really.
+But let's focus on some other parts of the problem.
+So…
+There's two ways that we could do distributed checkpoints. One of them is without coordination, another is coordination, okay? And a very reasonable question is, why do we need to coordinate at all, right? So, let's say we have these two processes that exchange these messages here.
+Let's say you take some snapshots at some points in time.
+And let's see this node phase here.
+So this, these two are the latest snapshots here.
+Can we recover from these two checkpoints, snapshots? What do we think? Any… yeah, is it okay? Are there any problems?
+It would be, like, Q1 will, like, once you recover, we'll try to set the 6 or M6 again, but then that's already been in the C completely, so CPU will see two problems with that.
+Correct. So… so one problem here is that
+the checkpoint of P1 happened before M6 was sent at all, and the checkpoint of P2 happened after this message was received. So, if we try to recover both of these processes at that checkpoint, they have in consistent state.
+These things, I have not sent this message, and these things, I have actually received this message. So… that's a problem. So we cannot take this snapshot, actually.
+What about these two? Any thoughts? Also inconsistent. I guess I shouldn't have clicked. What about these two? Okay, this is now obvious. Also inconsistent. So, whenever, you know, a checkpoint happens before a send of a message, another checkpoint cannot have the receipt of this message.
+So a problem with uncoordinated checkpointing is that they might lead to a problematic global snapshot, because the states might not align.
+So the core of the problem is that after recovery, the system, which the system we consider the set of the processes, of all the processes, is in a state that you could have never reached without recovery. So this state might be an illegal state of the system. The system doesn't know how to even deal with it.
+So how can we deal with this?
+Some people here mentioned coordination.
+So, let everyone know we are getting ready to checkpoint.
+So, we could do this the following way. We could tell everyone to prepare for a snapshot.
+And then hear back that, you know, great, let's… we are ready to do the snapshot, and then tell everyone, do the snapshot now, and then we all do the snapshot.
+Is that okay? Or do you see any problem with this?
+Thoughts on this protocol?
+The snapshot, like, request the demos.
+The substituts could be lost. Okay, great point. So, also, I guess, yeah, we will not worry about this problem at the moment, but yes, other problems that we might have.
+We just basically, like.
+our throughput, because we're essentially having a bunch of threads constantly waiting on other threads to be ready.
+Don't work.
+Exactly. So, the problem here is really that we stopped the world. We want to do a snapshot, and now everyone has to stop doing whatever they were doing, prepare for snapshots, start exchanging messages. Imagine if you have, you know, and these messages are actually, they, they, they, they accumulate,
+multiplicatively with the more processes you have. So if you have, like, n processes, you send N squared messages here. So this is a big problem.
+So, we have two approaches here. We have, an coordinated snapshot, which has low cost.
+No cost, actually, just taking the snapshot, but leads to consistent execution. And then we have coordinated snapshot, which has very high cost, but leads to consistent execution.
+Do we have to pick one?
+Well, the answer is no, and this is because of Sandy Lamport. So, the Sandy Lamport algorithm, was,
+allowed, essentially, to get the best of both worlds in this particular case. It allows you to get a consistent and coordinated snapshot with very little overhead, and without stopping the execution, okay?
+So, now we'll talk about the Sandy-Lambert algorithm, and the goal is to take, as we said, the snapshot of the distributed system. By the way, there is other use cases that you could have for such a snapshot, and actually, in the original paper, these
+stable property, like, evaluation of any stable property, was the primary goal. So you could use a global snapshot to do deadlock detection, because you can take the snapshot, and then if you find any cyclical dependencies across processes, you can say this, there's a deadlock in the system. You could do it to do distributed garbage collection, to ensure that no process has a handle to a file.
+And more broadly, you can just evaluate any stable property.
+Unstable property means a property that is, if true at some point in a system, it will always be true from that point on.
+But in this class, we will… or at least in the context of this class, and actually why this algorithm was very useful afterwards was primarily for distributed system, synapsuting, also for fault tolerance.
+So… Let's look at an example of an application.
+And let's say we have an application where we have some processes.
+That rotate a lock across them in a ring order, in a circular order, and whoever has the lock can do some things.
+So P1 sends the log to P2, P2 sends the log to P3, and P3 sends the log to P1, and in between, P2 has the log here, P3 has the log here, P1 has the log here, and P1 has a lock here.
+Okay.
+Any questions about application?
+Great.
+So… Let's look at an example snapshot in this application.
+Let's say we've got the snapshot here.
+And I will use this line to kind of delineate where the snapshot happens.
+Is this a good snapshot here? What do people think?
+Thoughts?
+You know, because to… of, blocking this info.
+Actually, all
+processes think they have the lock. So you're right. All three processes in this, in this, in this example think they have the lock.
+What is the problem here, concretely? What, what, what, what problem, yeah, why did this happen?
+What does this snapshot? This, this snapshot virally?
+Potts?
+I guess you have, like, an issue of, like.
+or not holding true. Where, like, if the release lock happens and the, like, receiving the lock happens, you can't store the receiving lock without having the other state, like, persist that it released it.
+Exactly. So… so the problem is, indeed, that there is a happens-before relationship in our system, and it is violated by these checkpoints, similar to the example that we showed before with the uncoordinated snapshot.
+So, the first challenge of snapshots is the happens before. So, the capture state must satisfy the happens before relation, and even event B is in the snapshot, and A happened before B, then event A must also be in the snapshot.
+The main… the main place where this occurs is with messages, because in a local process, happens before, of course, despite by the stack pointing, by the… by the… happens before is not violated by snapshots, but across, nodes, when there are messages, if a snapshot includes a message receipt, it should also include the message sent.
+Okay?
+Great.
+So… so this is the snapshot one, and yeah, these snapshots actually include the receipt, but not the sending of these messages.
+So let's look at another example snapshot.
+Is this a good snapshot?
+Thoughts? What do people think?
+Well, if data's a stored, then no one has the law.
+Exactly. So, in this particular case, all processes think they do not have the lock, so the lock is lost. So, if we recover this system, no one has the lock, and the system cannot even progress.
+So what is the problem here? The problem is not the same as before, actually.
+What do people think? What's the problem?
+Thoughts?
+I guess you still have that happens before problem, because M2… and this has the, like, you've got the message that the lock was received, but you don't have a message that the lock was ever sent.
+Yeah, actually, here, exactly, it's the opposite. So here, the line crosses in a different way. So we have this checkpoint here before receiving, but we have the second point here after sending. But it's closed, so it's not exactly what happens before, but there's something else related to these methods. Thoughts?
+I think, like,
+Releasing and giving the lock to someone else has to be, like, a single transaction where either both happen or it doesn't happen.
+So you can't have, like, a partial result where someone gives a talk, but nobody uses it. Right, so, so where is the problem here? What do these snapshots not actually include as information? That is very important information.
+That's okay.
+P3 has not received M2 at this point, so P3 wakes up here.
+Exactly. So, so the thing that is not included here is this in-flight message. So the message M2 was lost.
+so…
+The… so, combining this with the previous problem, the goal of capturing a global snapshot is to capture the instantaneous state of every process, but also to capture all the relevant messages in transit in the system.
+And what comprises a distributed system state? It's actually the state of its process.
+and the state of every communication channel, so the network, essentially. Every message that is currently in transit in the network is part of the distributed system state, because it has been sent, so it is… it is going to cause some kind of effect in the system.
+Any questions about this? Any thoughts?
+I get, like, you can back up the first step. Like, the second part is, like, beyond your handing, right? Like, if something is already sent in the network, then it's not…
+It is part of the system, but, like, you need some tolerance that, like, forget about if it never happens, right?
+It's a problem that requires its own solution, not related to the stance running.
+Well, we will be able to, with a snapshot, then come up with a solution for it, though.
+So yeah, maybe, maybe, maybe it could also be solved without it, but this algorithm actually can solve this problem also, the Sandy Lambert algorithm, yeah.
+Thoughts?
+Great.
+So, quick break for announcements. Assignment 2 is out. Start working on it. It's significantly harder than Assignment 1. Implication? Please go discussion.
+If you haven't done team sign up yet, for some reason, reach out to Kiazza ASAP on the private post, okay? Any questions about Assignment 2, Assignment 1 Logistics, team signups.
+Discussion, I don't know.
+I have a question on the assignment tool, so can I ask him, or is that, I think probably that's not the right forum. So maybe ask her Rukata, okay? Yeah.
+Any questions on logistics?
+Great.
+So…
+Now we will see how Sandy Lampert algorithm works, and we will start how it deals with this problem, how it solves this problem of the global snapshot, and we will start by talking about the system model of the algorithm.
+So, we have…
+and processes in our system, and processes cannot fail while taking a snapshot. This is one of the assumptions that they make in this algorithm. By the way, one thing that you have to keep in mind about this class is that
+as I said in the beginning, there is these two parts. There is the clean theory, and there's the dirty real world. And to make any kind of meaningful theoretical contribution, you have to make some assumptions. And of course, not all of them will hold always in practice. So, all of these protocols, and many of these protocols that we will see, do make some of these assumptions, which might sound unrealistic, but still, the fact that they are so clean
+and have such clean guarantees, allow us to then go and repurpose them and make them work for a real system.
+So in this case, we will make some assumptions that might not be totally realistic, but the fact that this
+Algorithm is so clean and deals with this problem of coordination without any… without, you know, stopping the world is what makes this… what makes it very important, okay?
+So, process cannot fail while taking a snapshot, and any process can initiate the snapshot, so we don't make any requirements on who is a… you know, there's no kind of asymmetry in the system about snapshots.
+We also make an assumption that all processes have FIFO unidirectional channels between each process pairs, so there is a separate send and receive channel between each two processes, and these are FIFO, so there's no way to reorder messages on these channels, okay?
+And finally, we also assume that there is no message duplication or loss, okay?
+Great.
+So, 5-HO channels, we also talked about them last time, and just a brief reminder also in the slide, is that they're a very common assumption in distributed systems, and they only hold between two processes, not more.
+So, this is essentially the, behavior that is not allowed in a FIFO time. You cannot have two messages where one of them was sent after… M2 was sent after M1, but M2 was received before M1. So, you cannot have messages crossing… crossing lines, okay?
+So the requirements of the algorithm are that we want to take snapshots in a distributed manner.
+And this process records on state, and this is what is appealing, essentially, about the uncoordinated snapshot that we talked about in the beginning, that was inconsistent, though. So we're able to let all the processes take snapshots without coordination.
+Also, a very key requirement is that the system proceeds normally while taking the snapshot. So there's no stopping. The system keeps doing work normally. It doesn't stop at all.
+So, a key insight of Sandy Lambert is that After taking a checkpoint.
+You send a message to other processes, informing them to also take checkpoints.
+And these methods will arrive before any subsequent messages, because of FIFO.
+So, in this case.
+Because this message was sent, and it will be received before M1, this process will also take a snapshot before M1 arrives.
+But it's not that simple.
+So, we enable the snapshot by broadcasting these market messages, these green arrows here.
+Which are distinct from application messages, so they do not… they do not cause any work to the application.
+But they are actually consumed and sent by the algorithm.
+And the market messages serve two purposes.
+They enable the process to discover the need for taking a snapshot, and they serve as a barrier on every network channel.
+And this guarantees that checkpoints include all messages received before the market, but none after.
+So… The Sandy Lambert algorithm.
+There's an initiator process, which randomly records its local state, takes a checkpoint, and then sends out a marker on every outgoing network channel, okay?
+And then it starts recording messages on every incoming channel.
+And then assume you have a PI process that receives a market message.
+from PK, meaning that… and we will always denote in this class, and for this algorithm, the channel is in the following way. A channel CKI means that it's a channel where the K process is the center, and process I is the receipt.
+So, PI receives a marker message from PK on the channel CKI.
+So, given that
+I want you to talk with the person next to you. What does the process have to do if it receives such a message? And keep in mind, while you try to work this out, that the channels are FIFO, and this is the very important requirement of the algorithm. So yeah, start discussing about this, and we'll get back together to talk about it.
+Did you want it, Ashley?
+Yeah, that's true.
+Congratulations and privacy.
+And then the message that was… They love it.
+Okay, things seem to be quieting down. So, what do people think? What does the process do after it receives a message? Thoughts? Hans?
+Hans? Hans?
+More events?
+What do people think?
+Hands?
+Is this because you do not have any idea what is such hard of an answer? If that's the case, I will give you more time.
+Hans?
+Even some observations might be useful. So don't necessarily feel like you need to solve the whole problem, but if you have some thought of what could the process be doing, or, you know, an idea, throw it out.
+Or what's a problem? Or what, you know, some kind of insight you gathered. Yeah, I see only two hands at the moment.
+Let's get to 5, and then… and then we will… yeah.
+5 hands. C3.
+Yes, come on, volunteers, please.
+Born.
+One more? 5. Okay, okay, okay. No, on the back.
+I think that, like, a snapshot being taken.
+So, you said two things. I did not hear the first, I heard the second, which was that you record messages in the channels. That's a great point. Other, other, yeah, points?
+Take a second point itself, that's a great point. You have to take a checkpoint, record some messages, other points, other thoughts?
+Like, showing your own state and the state of the channel just now let the initiator know that I'm done. Let the initiator know that I'm done, so you have to send some messages back also, that's a great point.
+Do the… do the process receive, if we send messages back, do process receive only one marker message?
+Two, three, how many do you think?
+What happens if you get more than one? You know, what happens in the second? Is it specific to one method.
+Go ahead.
+So, then if there's multiple messages being sent, as well.
+Yes, so… so each process, first, the incentive process broadcasts a market message, so every other process receives a market message from it, and then, I guess, as we're gonna see, and I will continue by looking… by looking at the actual equity, every other process also will send
+broadcast marker messages to everyone else. So…
+let's gather all of these insights and get the full solution, which is actually the combination of all the points that have been mentioned. So…
+Let's say we have a PI process receiving a marker message from PK, so on the channel CKI.
+If it is the first marker PI has seen, then it records the state, so it keeps the checkpoint.
+It marks that channel, CKI, as empty.
+This is important. It sends a marketer out on every outgoing channel, CIJ,
+And then it starts recording incoming messages on all other channels, other than the one that it marked as anything.
+Okay?
+And if it has already seen a marker, it stops recording on CKI, and it sets CKI's final state as all the messages between the start and the end of recording. The start of recording happened here, and the end of recording happened when it received the message, another marker on this channel.
+Any questions about this protocol? Thoughts?
+Is it March?
+KI as empty, because it's just received a message from K to I.
+Yes. Essentially, what this means is that it's empty, because for all other channels, we will receive two markets. But for this, we only receive one, because it's the first one we receive. So, since it's the first and the last on this channel, actually, we can close this channel and say there is no message in between. Yeah.
+So, for all the other channels, there's two messages, but we'll see an example also that clarifies this, you know?
+But once the PIs can supply their message to VK, then, like, why can't you assume that that same PI is gonna send it to all PIs? Like, why do I need to…
+send out to every outgoing channel from TK? That's a very important question. That's a great question, yeah. What do people think about this? Why do we need… since, indeed, someone has already sent everyone a message, why do we also need… why does every process need to send a message to everyone?
+Is that just, you know, we are throwing away, we're doing some duplicate work here? Why do people think we're sending these messages?
+I think we… every pair… or every channel to be marketed as means, like, every pair of, like.
+Sending… sender to receiver, it's for me.
+Right, so… so every channel has to be marked as finished, not necessarily empty, it might have messages in it, but… but I guess empty means no messages, and we closed it. So every channel has to receive a marking message to close it, exactly. So that's why we… and every channel, as we said in the beginning, we have channels if we have
+three processes.
+1, 2, 3, wake up!
+It's Avik?
+two channels between each of them, a send and a receipt channel. So we want all of the channels to get a market message, at some point.
+Great.
+So the snapshot competes when every process has received a marker on every incoming channel.
+And the intuition is that, the intuition of the protocol is that we start the snapshot, and then we wait until all of the channels have flashed their messages.
+So we are waiting for all the messages that were in flight to be flushed and followed by a marker, and then we know, okay, now there's nothing else in flight in this particular channel, so I can close it safely, and there's nothing else I need to store for this tunnel.
+A question here is, how many markers does the algorithm send? Thoughts?
+Or questions on the protocol?
+I have a question about the protocol. You, like, don't want to send more messages because you want to flush the…
+like, channels? Don't you have to face, like, the same duplicate issue?
+Where you're waiting on June?
+That's a good question. So, the difference here is that Compared to before. Before.
+P1 has to tell someone else, take a snapshot, and they have to stop sending messages. They have to… everyone has to stop working and wait for this to complete. While here, the only thing you do is you take a snapshot, okay, that costs the snapshot time, but then you… you just squeeze in a message in the timeline. But you don't actually… this message doesn't cost
+No one… everyone else is doing their work, is processing their messages, no one has stopped. The problem with stopping everything and blocking the work is that
+If you have a latency-critical application, let's say a web service, there, the tail latency matters a lot.
+So for these applications, you really have a very high requirement that
+you do process all of the requests under a particular time. So if you do this kind of
+snapshots that block and stop the world, then some of the requests would wait much longer, because you would have to wait for the snapshot to complete. And all of these requests would essentially
+violate the latency requirement, and possibly lead to lost revenue, and so on. So, for latency-critical applications, it's important that we do not put work on the critical path. Here, we haven't put work on the critical path. Everyone just does something on the side.
+But the whole system is not blocking, waiting to take the snapshot, and then restarting to process. I don't know if that makes sense. Even though it's blocking the network request, it doesn't… It doesn't block any network, it just sends another network request.
+So there is… there is many network requests in the network, but it's not like we… we stop the network. Everyone still sends and receives messages. It's just that with all the other messages, there's also these market messages now. Yeah.
+Other… other thoughts on this, or questions on this, on the throughput?
+Paul, other questions in general, actually?
+Denmark it.
+When do you send market messages?
+Two ways. The initiator sends out marker messages, so whoever randomly decides to take a snapshot, and the receiver process, whoever receives a marker, it sends another marker to everyone.
+Did you go… Well, when you receive it, you have to set download messages that it knows.
+Yes, I mean, the reason is that you do that to essentially
+mark this channel also, all of it. So, let's say that one decides to start this snapshot, okay? It will set markers on these two channels. So, these two channels have markers now.
+The problem is, even though these two know that there is a snapshot happening, the in-between time, they don't know how many messages are in flat. So what we do is, when we receive, let's say here, these micro-message, we also send
+a market here, and that means that this one here will know that after I sent you the exact point, after I hit the exact point, I sent you the marker, so there's no other message that you should expect from me. And similarly.
+this will hear about this circle, and then it will send this. So, this means after you hear this market message from me, there is no way you will receive another message from me. So, all the messages go in between the point where this took the checkpoint.
+So the point where this might arrive, and the point between it here and, from this, so let's, let's, let's write this in a, in a…
+So, let's say we… we… we do P1 to P3,
+This takes a… this takes an example here.
+And then P3 sends, and this sends also to P2.
+At some point, B2 will take the snapshot, because it will hear from this, and it will also send a message everywhere, except for the first one, because it has heard already from it. So, it will send a message to this. Let's make it also delays a little bit. So, in between this.
+And this…
+P3 is keeping track of all the messages it's receiving on this channel between P2 and P3. So if P2 was sending here a bunch of messages.
+We have kept track of all of them, and logged all of them, and kept the secrets. Does that make sense?
+So… From the moment we take the first checkpoint.
+To the moment we hear on any channel, we are keeping track of all the messages we're receiving at this channel.
+For every message it receives from every channel.
+It takes the checkpoint at the first marker, so whenever someone receives the first mark, it takes checkpoint immediately, and then it starts recording messages on all other channels.
+Yes, more questions. Like, on that example, can you continue with it, like…
+why are we doing that, or what's the reason for doing that? Like, what is it… what problem is it preventing in this scenario? So, the problem it's preventing is that all of these messages
+We're in flat, in between this segment and this segment.
+So they were sent by P2, but they were not received by P3. So the P3, P32 took a checkpoint before these messages were received, but P3 took a checkpoint after these messages were sent.
+So this messes are in flat. Do I agree with this?
+Okay, so let's been sitting flat. So what do we do now?
+we have to get a message from this tool to know when to stop recording messages. So we will be record… every time we receive a message, we will be recording it. So we keep track of these messages.
+And then, when this… when this arrives, we know, okay, now I can close this tunnel. There is no other… there's no other message that we receive from P2, in between the two. So, if I… if we recover, I use…
+my exact point, and replay all of his messages, I'm gonna get exactly the same state. Yeah.
+Would you consider those messages a part of the checkpoint, or those are, like… They're part of the checkpoint. Okay, so you're like, but didn't we say we…
+in this scenario, you would check them.
+We keep at checkpoint, I guess, okay, maybe the terminology… I use the same terminology for two things. So there is two pieces of information we're keeping track of. There is the process state. The process state is done, is saved here.
+It's recorded when you receive your first marking. And then there is a second piece of information we need to store, and this is all the messages. And these are also part of the global snapshot.
+But they are stored incrementally after we receive them, and we consider them done when we receive a market on that sign. So when we see the market on that sign, we know this channel is now done. All the messages I have are the actual messages I need to keep.
+So where does it record the messages after the first checkpoint? Like, is it storing it? It also stores them on a checkpoint, yeah.
+Doesn't, P3, when it gets the initial marker, also send a message out to P2?
+Doesn't P3, the time it receives the first market? Also, yes, it does. But the question is, when does this arrive? It could arrive here.
+It could arrive here, or it could arrive here.
+In both cases, there would be a different… there would be a different situation. So if it arrives here.
+then this would take the snapshot here, and it would consider this empty, because it is the first marker message it received. So then it would send one to this.
+So, depending on which arrives first, the operator takes a different path, but in all cases, this works in all cases, no matter what, no matter what kind of intermittent you have.
+copies.
+Oh, my God.
+snapshot gets sent to P2 after, like, P2 already received P1 snapshot.
+get stored, I guess. So, so this case here that we showed here is the one where this.
+has happened. So this arrives afterwards to this, okay? You want me to explain the case where P3's first marker arrives at P2 first.
+before P1, or which case?
+So I guess I understand that PPE is going to just keep on, recording the messages overseas and talking to some of them.
+If P3 is sending to P2, will P2 just be doing the same?
+Yes. So, Peter will be doing the same thing, as long as it closes also to close its sunny. So, if this arrives here, let's say this arrives here, okay?
+there could be some… some licenses that P3 has sent
+to P2, here, right?
+And they arrived after P2's snapshot, but after… because of the FIFO channel, the marker message arrives after those. So, if we store these messages.
+And we close this tunnel when the market arrives, then we know we're done, also.
+So where did… We measure this, every node serves the necessary it receives.
+That it receives.
+Okay, so we've already… Yes, but we took it…
+Again, there is two types of things we're saving. There is the saving of the state that happens here.
+At the checkpoint, and then there's the saving of the messages, this recording thing that I'm sending here. So there's the recording of the state, and then we start recording incrementally also all the messages that we receive. And then we complete, complete the snapshot for after we have received all of the markers from everyone.
+More questions.
+it's… I mean, it's not… it's expensive because it costs storage space, but otherwise it would be wrong, what we would do. So I guess it is some form of… you pay something there, but you also… the key thing here is you don't stop the work. So we are… everyone is doing what they were doing, it's just that while the message also arrives, you also store it in a disk.
+And you just say, okay, let me store this too, the message that I received now. Nothing else.
+Other questions, yes, yes. What exactly comprises, I guess, say, for V3, like, is it just when I receive that message, and I have this metric here?
+Or does it include the reported messages, like, once that completes? Do I save that? I'm here? I mean, I don't think… I think it doesn't matter if you save it in the same place. I think what matters is that you need both.
+This one, the first, the state is sent instantaneously, and then the messages are sent incrementally, and also recorded incrementally. So, at the end, it will have these two components. Whether you're stored in the same place or in a different place, it doesn't really matter. You have to have both, though.
+More questions, because it's a complex protocol.
+reporting, it independent messages on each channel, right? So, I guess in the case where it's, like, send $15 more for that simple, what happens if the message that you send is dependent on the state of that, like, process? Like, for example, like, we have…
+Plus ABC, and then B sends to A, and this is, like, if you're in transit, B sends to A, maybe, like, 10% interest, and then C stands A, maybe 10% interest. Okay. And then you have those in transit, how do you know how to, like, like, what the actual state would be?
+Actually, that's exactly why the algorithm is exactly the thing it's time to solve against. The fact that you will… you will, for every node at the end, you will have
+a state, and messages, okay? So when you want to recover, you will take the state.
+And you will replay all of these messages, and you will receive these messages, essentially, you will re-receive them.
+There are messages on two different channels. Like, you know, like, on one… in transit on one channel, you know that's an order, but you don't in transit on the other channels in order, but you don't know if it's ordering with those two channels, like, combine. I see, I see, that's a good point. That's a good point. I guess…
+That's a good question. I think…
+maybe the… okay, I need… I need to get to get… my intuition for this is that
+you… you actually have to store also the ordering dependencies between the messages, that's a great point. I think the algorithm does allow that also. It doesn't seem like there's a fundamental reason why it does not support this. But let me get back to you on this, to make sure that this is correct. But my intuition is that
+You can, maybe… so, maybe, maybe I'm simplifying the story here by saying that you… you store them in a sequence, but you can actually store all of the… all of the kind of, like, ordering that happened, and all the messes that you are having.
+Yes, yes.
+I'll get back to you on this one.
+Other questions?
+I'm not sure if this relates in his previous question, but what would happen if P1 was also sending messages to P3?
+If P1 will send a message to P3, great. Yeah, tracking those as well, in addition to P2 will also send a message. So, where would P1 send messages to P3? They would be there before or after the snapshot.
+Right? So the ones after the snapshot, we don't care, because they're after P1 snapshot, so they will not be part of P1 snapshot. They will arrive after the market messages, we don't care about them. Anything that was sent afterwards, we don't care.
+It's outside of the assumption. So we carely about things that were before. So there might be some things that are before here, and there might be some things that are before here. These, again.
+they will be… they will have been received before the market messages. So we know, again, that they will be inside the state of this option, so we don't… they don't need to be recorded.
+Other, other questions? Other thoughts?
+Oh, there's some kind of, like…
+lack of, like, sensitivity here, and that, like, really what you drew from P1, I know that P1 to P3, it's guaranteed that the mark will be received after the event, but if the event went from P1 to P2, got delayed at P2, and then went to P3, it would…
+than not.
+It would… indeed. So, from P2, this could be even the case, this could be even this. Let's say it's this… it's this connection here. This arrives, and it's sent to P3, correct? Yes. So, in this case, these methods will be recorded here.
+So it's not a problem.
+we received… P2 received it, it's in… it's in P2's snapshot, like, state snapshot, and then it's in P3's recorded methods.
+Just because it arrived after its absence, but it's still in part of the global… of the global recorded state. That's because…
+E2, even though the message got delayed, it still received the snapshot in the FITO order. Yes. That snapshot of B1.6, B2. Exactly, yeah, yeah, yeah.
+Other questions? Other…
+This might be, like, regarding, like, your original thing about, like, this being that theoretical solution, but, like.
+Imagine if it wouldn't be, like, possible to, like, take the snapshot of, like, every single file of the state of Manavis, and, like, share them, right? Like…
+So, so, your point is, does this a subset of everything?
+So, so, that's a good question, and usually what we do in applications is that we keep track of the relevant part of the application. Now, if the application is a huge application, like a database, that becomes a harder problem, but
+But for the sake of this class, we will assume that, you know, it's not a huge kind of thing, it's just, you know, some kind of standard application needs to function. Yeah.
+This is another kind of assumption about, you know, the realism of the protocol, yes.
+Other questions?
+Oh, bye.
+Actually, the protocol works also in that case. I don't remember if I have a slide on this, but it does work also in this case, yes.
+Other questions?
+Okay.
+So, the snaps has been complete, as we said, whenever we processed the market on every incoming tunnel.
+And after reception starts, we wait until all channels are flashed. So we get back to this question, which was before all the other questions. How many markets does the algorithm send? Thoughts?
+Thanks for my son.
+n squared minus N. Yes, correct. So, yeah, it's N times n minus 1, it's like, yeah, it's n squared minus n. So, everyone sends a message to everyone else except for one, essentially. That's the idea. So, all processes to everyone other than one.
+And, let's look at an example here, and also,
+I'll answer your question about messages that are part of the snaption.
+So, let's say that this starts to take a snapshot, P3 here. It takes a snapshot, it sends these market messages.
+P2 takes a snapshot, It sends Michael messages.
+P3… P3… P1 receives P2's message credits, and then sends marketing messages.
+Which messages out of all of these figures, do the channel recordings contain?
+Thoughts? Hans?
+Everyone should be able to answer the question at this point. More hands, more hands.
+Morphans? Which messages? What is the question?
+Oh, this is a question. Why does, what does people say?
+on P-tubes, like, amazing.
+That's a good question. So the algorithm, let's go back to how it works.
+it has a case when it receives a marker message. If it is the first marker message it has seen, then it takes a checkpoint of its state. If it's the second, it doesn't take another checkpoint. So in this case, even though P3 sent it first.
+P2 Zara itself.
+So, P1 received P2's market first, so from its perspective, it's the time that it takes at checkpoint.
+So, which messages are part of this channel recordings?
+Hans.
+Hands? More hands? More questions. If there's a question, raise both hands or something, I don't know. Hands, how many… which messages are in these channel recordings?
+More hunts.
+More, Hans?
+Is it 3?
+Or… 5, 6… A few more, a few more.
+7, I think?
+Let's get it done.
+We've… you've all seen the protocol, and you asked your question, so yeah, 9, 8?
+9… 10. Okay.
+M1 and M2, exactly. So, only M1 and M2. And why is that the case?
+T1?
+sends M1 and M2 before it does its second one.
+Then
+Everyone else actually sends the checkpoint before all the messages. So all the other messages are exchanged after the checkpoints are taken. So M1 and M2 will be recorded, and then the time between P1 and P2 will be closed by this market. So this market will close the time between P1 and P2.
+And this market will close the tunnel between P1 and P3, therefore only having M2 in its… In this channel.
+Questions about this?
+Or in general about the protocol.
+close the channel with people being… would that be marked, but it doesn't really matter until messages are sent. Exactly, exactly.
+So, like, the recipient of M1 and M2, will that be, like, saved in the next snapshot, though?
+It's part of the same global substitute, because in other examples would be complete, the snapshot, when every process has received the marker on every incoming summon.
+So, essentially, the snapshot, it's not done when we take the state checkpoint, but it's done after we have completed and marked closed all the channels. And that's where we say, okay, now the global snapshot has completed.
+So, if one process fails, then does every process have to revert to the past snapshot? Because, I mean, some will have sent messages afterwards. Correct, yes, yes. So the way to recover a distributed system in such a case would be to recover all the processes from the snapshots and replay the messages. Much of this all the requirements that I have to… I have to check, yes.
+This one? Yeah, if M1 were to arrive before P2…
+the checkpoint, then it wouldn't be in the recording, right? It's just part of your checkpoint. Exactly, exactly.
+Other questions?
+Will M3 and M4 be part of the net, like, the following checkpoint?
+We don't know. I mean, yeah, I mean, there will be, assuming there's another checkpoint at some point, yes, there will be. But they won't be recorded. They will be… if a checkpoint starts here, they will be part of the state, M3 and M4, yeah.
+So, a channel here basically means, like, messages you're, like, actually checkpointing, right?
+Eternal means… A unidirectional.
+kind of connection between two processes. So that… yeah, I don't know what you… yeah. Like, like, all messages in a channel, like, means, like, those messages are the ones being checkpointed, and then we pose it, like…
+all the rest of the messages, like, they'll be checkpoint in a later snapshot. Yeah, yeah. Essentially, what the recorded messages are, are the messages that were in the network.
+during, after, you know, when the checkpoints were taken, the state checkpoints were taken, these messages were in flat somewhere in the network, so we have to wait for them to finish, yes.
+Last time between the CD and the recording is state when you receive it. And, like, recording is what you're sending before the marker.
+Could you repeat this? Yeah, for the recorded… the recordings. Is it recordings? Because those are the ones being sent before the marker, and then it's a state, because it's what's being received.
+Yes, exactly, exactly. So recording is the ones that have not been… were not received when the checkpoint was taken, the state checkpoint taken, but the other ones are part of that, because they have been processed already, the process has done something because of this event, so this thing, it's effectively been saved.
+Assuming this has to do with how the
+But why not then just kind of the messages
+slide, and then once you're done with receiving all the messages to save that as the new state, why have it be, like, state, and then sequencing messages?
+That is a good question, and I think the answer is that we close the channels incrementally.
+So, we don't close all the channels at once. So, I'm wondering whether, if you… if you take another checkpoint, you have also received now other messages that were not part of the original checkpoint. Because here, we don't close all the incoming channels at once. We close each incoming channel when we receive the marker message. So… so I'm not sure if that actually works.
+What happens if you just… just like that, sequence of, messages, it only includes the ones from the channels which they haven't received the marker yet.
+clean those, once you have all of them, like, completed, you just latch all those and apply them into a state budget. But, yeah, you could apply them, but that would mean you have to actually
+the state is literally your state environment, right? So, you would have to recover that state on the side, apply the messages, and resave the state. That's possible, but, I mean.
+Why would you do it? I don't know. Yeah, I mean, your point is at least for performance reasons, right? Later to just recover from a state immediately, or… I'm thinking the reason we keep them as best separately is because…
+later, during recovery, there might be some… There is no benefit. If we… if we could… if we could replay them and really save the perfect state, that would be… that would be even faster in the… to recover later, but they are both equivalent, that's the idea, that it's… it's equivalent to keep the recorded message and replay them, versus keeping the final state.
+Yeah, equivalent correctness-wise, yeah.
+That's a confusion, but we'll get back to you, yeah, yeah. So, by, like, reporting that state and having that be separate from the messages, can you do, like, local computations still after that? Or, like…
+Do you have to… is it just that you have to not send any messages on closed channels, or do you have to stop everything you're doing? Actually, you don't stop anything, so you take this checkpoint, and then you keep working, normally. You record these messages, and nothing else is happening. You're just doing everything. As it arrives, you're doing it, actually. You're applying it to the state, and then you also record the messages.
+So, yeah, yeah, there's, there's no, there's no other blocking to the… yeah.
+Other questions?
+One more question. I guess, like, so…
+If you're, like, in the process of receiving
+markers we haven't received from anyone who failed. So, like, say P2 fails after it takes the snapshot before it receives M1… P2? P2? Yes. Yeah, so after it, like, sends a marker to P1, before it receives M1? Yes.
+Or before it receives message 1. Okay. If it fails there… Oh, so, okay, if it fails there, this doesn't work, you have to go to the previous…
+Yeah, so you have to actually have this recording. So, yeah, yeah, so this would… this would be a problem. So, if anyone fails until they close their channels, then this is an invite option. Yes.
+For the P2 and P3 relationship, if…
+There was another message, like message 5, that came after M2, because I think M3 comes in, and then it would apply message 3 onto P3. Yes. And then M2 comes in and records M2. If an M5 comes in from P2 to P3, still in between
+the… time where P1s.
+Here?
+We don't want one more vice, like, inventory, right there.
+Would it also apply that M5
+out of order? It would be… it's not… everything is applied, actually. So, everything is applied.
+But only M2 is recorded, nothing else is recorded. But everything is normally applied. So, one thing that you have to keep in mind about this is that the system works exactly as it was before. Nothing changes, but in addition, these state snaps have been taken, and some recordings are being done, and some arguments are being done. But the operation is completely normal, yeah.
+Other questions?
+Right. So…
+Why frontier? So, this is… this is a common way of calling this, actually, in the literature also, and usually, we call this part of them essentially the frontier, and all the messages that were sent inside the frontier will be in the checkpoint.
+as recorded. That's kind of like the idea. So this frontier is essentially the frontier from which all the same messages have to be inside the checkpoint, okay?
+So this, this frontier is essentially what, what, visually can, can, describe, where, where the, the global snapshot ended, okay?
+Great. So, trade-offs. We saw uncoordinated.
+inconsistent, coordinated, high cost, semi-Lampport, low cost, consistent. Amazing. Key insight. The hard thing to save is to save the in-progress messages, and that's what the algorithm does very well.
+One final thing.
+Let's go back to the ring for a little bit.
+So, we saw how this works very well with Sandy Lampert.
+But now I'm showing you this snapshot here, this global snapshot, you know, these three
+Check points here. Does this look okay to you?
+This one crosses two, you know, two, like… yeah, yeah, it's like, doesn't deliver K?
+No duplicate.
+And functionally, the lock is where it's supposed to be when you restore it.
+Right. So, that's exactly the thing I want to point out here. So, even though this violates happens before, and M3 is received without even being sent.
+This is actually correct for this specific application, because only P1 has the lock here, actually. If we recover, only P1 has the lock, the system can actually progress properly. And why am I saying this? Why am I showing this to you?
+Because…
+a lot of the algorithms that we will come up with in this class, and in general, I guess a more general lesson is that
+you can do a protocol, and if you do a protocol for a general purpose, and for all applications, you have to be much more careful. But if you're constrained on a specific application, you make the protocol easier. And that's how also, you know, research happens in distributed systems and design in general. People find specific assumptions about the applications or about the domain, and then based on these assumptions, they can make things easy.
+So this is one assumption that we can make. If the application has this kind of circular fashion, you can take even more uncoordinated snapshots. I don't know how to make a protocol that works here, but I just want to show you that Sunday Laport doesn't mean it's the only way to get a correct snapshot, okay?
+After this… oh, question.
+We didn't give you, like, something, like.
+That goes round bobbin, such that each process fails before one comes back to it, and this would kind of let process one go twice.
+I mean, this is not running twice. Actually, if they run, and at some point they recover from the snapshot.
+I mean, it might run twice, that's a good point. So if part of the specification is that your application has to run exactly once it, then this might violate it. But you might violate this in general, actually, because you have to take same checkpoints all the time. I don't think you can ever satisfy this property if you have phones.
+Yeah, the application, at this point, it will wake up, and it will be like, oh, okay, P1 has the lock, great, we can continue.
+If only the requirement is atomicity and mutual exclusivity.
+Great.
+Please.
+Dude.
+This post-lecture quiz.
+And, next time we'll talk about dealing… about… with failures without checkpoints.
+Oh, that's good.
+You don't have access. Oh, what?
+Oh, no! Wait.
+Yes.
+Does this work?
+And, Windows.

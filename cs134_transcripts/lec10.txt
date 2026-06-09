@@ -1,0 +1,636 @@
+The publisher of the patient neighborhood.
+There's not a few ways that we're gonna say that.
+All of them were buying some of the
+Mr. I think it was like…
+Are you saying it's not available.
+I think my lead was so impressed that she gave us today.
+We also have…
+What will happen?
+Okay, hello everyone. I guess we can get started. As always, let's get started with the previous lecture squeeze questions, which this time, I think, almost, yeah, they were, they were almost completely correct by everyone, but I'm just quickly reiterating on all three of them.
+So, the first question was about the consensus properties that Paxos satisfies, and we had said in the class last time that it satisfies the safety properties, agreement and validity, but not the liveness property, termination.
+Then, we also… the second question was about
+failures, and it asks what is the minimum number of acceptors for Paxos to be able to tolerate F acceptor failures?
+And for F failures, we saw that you have to have two F plus 1 acceptors, which means you have to still have an alive majority. If you have an alive majority of acceptors, the protocol can still work correctly.
+And finally, we had some questions about how to improve the performance of Paxos, where we asked, where some correct answers were possibly skipping the promise phase, once we have received acceptances from majority, electing a leader using Paxos, and let the leader take all the requests.
+And what was wrong was sending a promise and accepts in a single phase. And just to briefly reiterate on that, if we do both.
+the proposal and the, and acceptance, the promise and acceptance, the prepared and acceptance, the same phase, then there is the following problem. If
+Let's say some other proposer wants to propose at this point.
+then we have two options, and both of them are problematic in some way. So, either A2 can change its mind.
+So in this case, it changes its mind, and the consensus was actually violated, because the majority changed its mind, and now it would have a different, agreed-upon value, or it does not change its mind, in which case we can… we can end up in a situation where the system gets completely stuck, because everyone has a different accepted value. And so, yeah, the single-phase backlash does not really
+work.
+Questions about this, this, this quiz question, other quiz questions, other questions about last, last week's class?
+Not all of the exemptors agree, but could you still have the learners All invasion, in this case?
+In the case where we change the member mind or not?
+Like, it's been doing that with your shoes.
+So, I mean, the point is that, the learner will hear here that X was accepted.
+Or at least they will broadcast messages to the learner that text was accepted.
+But then, maybe another learner, you know, maybe this message actually reaches one of the learners, but then another learner actually doesn't… for some reason, the message is dropped. And then the other learner, at some point, gets these two messages. So now, somehow, two learners think of a different thing about our system, about what is the actual consensus. So yeah, does that make sense?
+Or does it actually… does it aid your question to something else?
+I was asking about the… Yeah, here, we don't change our mind. Oh, sorry.
+Oh, it does not change its mind, sorry. So, so about that case, yeah, what's the question precisely? Yeah? If there's no network failures, does this work?
+Like, for the learners, they will always get the right…
+I mean, the thing is, this could, this could work,
+in some cases, like, like, you know, if you actually send this proposal and they accept, then they have essentially locked, but there's also cases where you could just get stuck completely and there is no… there's no way to progress even at all. The protocol is stuck, everyone has agreed on something else. We had shown in the last execution where we had, in the last class, when we had 3 different acceptors.
+And each one, each proposal, synth…
+The proposals and the… to… to… to acceptors.
+And then, essentially, this ends up agreeing on X, this on Y, and this on Z. And in that case, the system is completely stuck. So that's the problematic case. Indeed, here, if we don't change our mind, the system has actually managed to reach consensus, but it's just… there's multiple cases where now we have different problems. Yeah.
+Questions?
+So…
+if Paxos needs to, tolerate F failures, then there must be two F plus 1 acceptors. How does the system know what F is? Is it, like, some arbitrary…
+intercept parameter, or is it, like, dynamically changed? Like, how does that typically work? That's a great question. So, in reality, what happens usually in these systems, and we see an example also in today's class.
+you are a systems distributed systems engineer in a company, and you make a decision that I want to be able to tolerate my infrastructure up to
+X amount of failures, so therefore, I will allocate that amount of machines to Paxos. This is a very good question that you're saying. This is a bit of an arbitrary number, and usually in practice, I think, normal kind of, clusters, replicated clusters, usually fall into 5 or 7.
+So even if they could do 5 or 7. Yeah, but… but this… this is a… this is a… yeah, this is a great question.
+how do you choose? It's really up to the… up to the kind of, like, the guarantee that you want to have as a company, and whether, you know, you have some kind of statistics about how frequently your machines fail, so then you can get some kind of, like, 999 availability given enough machines, yeah.
+Other questions?
+Excellent. So, let's… get to today's class. So, we talked about consensus in the last two.
+to lectures. And, today, we will talk about consensus.
+but in practice, with the, the systems Chavi and ZooKeeper, which came out, I think about a decade or something ago, and they, they actually implement consensus, in practice, in industry.
+So yeah, from now on, we officially entered the second half of the class, so there will be more focus on real systems from now on. There will be, in the next two lectures, we will go back to foundations for a little bit, but then we will mostly be staying in real system territory.
+So, summary so far is that we have seen replicative state machines.
+We have seen how to do ordering with logical clocks. We have seen how to do data consistency, in particular strong consistency, ability, sequential, and causal. And we've seen fault tolerance with primary backup, and consensus through the Paxos protocol.
+Before going to today's lecture, I want to take a little bit of a step back and make sure we have the correct context. So, as I said in the beginning in this class, we're looking at two types of things, foundations and protocols and real systems, and the reason why I want to talk a little bit about that now is because when we approach
+foundations and protocols, we have a different learning goal than when we approach the real systems. So we want to get something different out from the foundations, and something different out from the real systems.
+So, from foundations and protocols, the goals that we have are
+To abstract and simplify a problem in a very clean and elegant way.
+To come up with a protocol for this simplified problem, and the goals and the requirements are that the protocol should be explainable, and easy to understand, and also easy to prove, and provably correct.
+So the goal for implementation is really to get this clean, elegant intuition about the problem and the solution.
+On the other hand, when we look at real systems, the goals are different.
+So there the goals are to determine, first of all, what are the assumptions that hold in the real world.
+And that is very important, because,
+I would say, like most of system design out there in real life, is about understanding what are the precise assumptions and requirements that your real-world use case has.
+So, given these assumptions, we might have to change and either strengthen or weaken the protocols that we have to rely… to better align to these assumptions.
+And, yeah, we will think a lot about system design using these assumptions from the perspective of a system architect.
+So, essentially, what do we want the contract of our system to be? What do we… what are our expectations on usage, workloads, classes, assumptions? And based on these expectations, we will create a system that provides some guarantees or a contract to users that we think is useful. So, this is a big part of what we'll be talking about throughout the systems part of the class, which is different compared to foundations.
+And yeah, one important thing is that most of the time, in my experience with Israel systems.
+The biggest kind of insight is agreeing on that contract, and on what we want to offer, what is the specification we want to provide to the users, and then implementation kind of follows, usually, in the systems. So the interesting part, usually, is about what are the real assumptions, what do we want the users to actually interface with, and so on.
+Questions?
+Great. So… We've seen fault tolerance in theory.
+And today, we will see fault tolerance in practice, with Tabi and Zubina.
+So, let's start with Xavi.
+Tubi is an internal service within Google.
+and it's meant to be a highly available coordination service.
+And as I say here in this little excerpts of the paper, building TABI in this paper is not meant to be novel, research-worthy contribution, but rather, we built this real thing that there is very real reasons why we made some design decisions, and this is how it works, and this is why we do it this way, okay?
+So, we will talk about two things for Xavi. First, we will talk about, Xavi from the client perspective, this kind of contract or specification I've been talking to you about, and then we will go also a little bit in its implementation.
+So, first of all.
+Chubby is a file system service for coordination. This means that it has a very similar architecture, or… it's very similar to a Unix, normal Unix file system.
+to facilitate development for respect of developers. So, it presents itself to the user as a little file system, and each file is associated with a lock.
+And then these logs are used to do coordination.
+So, the things that clients can assume are that the service does not fail, given some live replica, so the service is available, and it can give them… and it's still… it will always be available if they make requests for it. And the second thing is that there will be locking guarantees, meaning that only one
+Client can have a lock at any time, any point in time.
+Okay, questions about, about, about this, this, particular, interface? Is the lock for reading, writing.
+Or both. The lock is for doing whatever you want as the application, yes.
+That's a good question, actually, I don't know. Yeah, I don't know. Maybe the paper says, I don't remember, though, yeah.
+Other questions?
+Great. So let's understand a little bit, how would one want to use Xavi, and in what context?
+So, let's say we have an application, where we have a database, and we have a bunch of workers.
+That want to be writing to this database. And we want only the leader worker, or one worker at a time, to be able to write to the database, so that we have some guarantees of, you know, not contending on the files, and not having some consistency guarantees.
+The way Itzabi solves that is that it says.
+If you have these workers and want to guarantee that they only mutually, they atomically write to this database, talk to a Zabi service.
+between the workers, and whoever acquires the lock, they can be doing the right thing. They're the leader, and everyone else is waiting while this is happening.
+So this is an example of the code you would write in these workers, to do this writing. So you would open this particular file in this, and it looks like a normal file system, it's like a file system that's inside Chubby, this is a path in Chubby.
+We then try to acquire this file, this log. If we succeed.
+This means we are actually the leader.
+So, we tell everyone we are the leader.
+And we do that by setting the contents of this file to contain our name, essentially. So we grab the lock, once we are able to grab the lock, we know we are the leader, so we write to the file, look, I'm the leader now, and then we write to the database. And at some point, we release the lock, okay?
+If not, if we fail, if the star acquire fails, it means we are not the leader, so we can find out who the leader is by looking… by reading the contents of the file, okay?
+Questions about this?
+This is essentially the way Zub is meant to be, programmed against. This is what… this is what it provides as an interface. So this is kind of like a prototypical use case. Questions about this? Does it make sense as a use case? What do people think?
+Great So, Xavi implements a log service.
+And to remind you, a service is… remember, we've talked before about this client-server paradigm, where you have a client that sends requests to a server slash service, and it gets back responses.
+And a server or service is deployed elsewhere from the client. So, they often run on different nodes, VMs, containers, what have you, and they do not share code.
+Contrast that with a library, where you have a library, you import it in your client, in the code of the client, and then they usually run on the exact same machine. So there's a single deployment of the client and the library, and the one… the developer team of the client actually needs to handle deployment too.
+So the question that I think it's important to answer now and to think about is.
+Why does TABI implement a lock service?
+And why not implementing a library that implements Paxos? So there is… there is two… two colored… two colored words here. There is lock versus Paxos, and there is service versus library. So I want you to think a little bit about the trade-offs for the user and the implementer.
+Why would you choose to do a log service, and where would you choose to do a Paxos library? And what are the pros and the cons of it?
+So…
+Talk to the person next to you, and we'll get back in a few minutes to talk about it
+So…
+Sorry.
+Yeah, it's totally interesting.
+50 numbers here, whatnot.
+People fall back.
+I don't know, like, a better security.
+Obviously, it's a template.
+We can supplement to visit.
+Thanks, thanks.
+Research Club.
+We're giving our CBS article the article with that.
+all the favors.
+That they will.
+No, no, no, who's a long user based on house?
+to the sponsors.
+It's just, yeah, separate.
+That's, like, how…
+I'll just let it keep doing that.
+I think we're gonna get, like, 2 out of time.
+I'm gonna make some of you about it.
+Yeah, yeah.
+So, let's get back together, but before we get back together, I see today the class is a little bit more empty, so there is… there could be some merging, you know, like, there is people behind you, in front of you here, here, so you don't necessarily need to talk to the person next to you, but also the back and the front, okay? So, you can condense a little bit and talk to the people next to you, also.
+So yeah, what do people think for this? Why, why…
+why would we build a log service versus a Paxos library? There's differences in both, in both these, in both dimensions, both the log versus Paxos and the service versus library. Hans, what do people think? Why would we want one or the other? What are the trade-offs in respect of the users, of the implementers, and so on?
+Thus. Hans?
+models?
+Does this question make sense, first of all? Are there any… are there any… yeah.
+I see some prints.
+Even observations. Again, here we just want to, you know, this is a more open-ended question here also, and we will have more of these, more open-ended questions throughout the systems part of the class, because there is things that are not totally obvious, like, you know, there is F faults for two F plus 1 replicas, but things that have to do more with usage, and imagining what a client wants, or their software engineering needs. So yeah, Hans, thoughts?
+I see 5. Okay.
+that box be more performant than passive's?
+Logs could be more present, like, patches. That could be… that could be a reason, indeed, yes. What other people think? I… I want, yeah, all the opinions.
+As a user, you wouldn't need to be running this yourself?
+So you wouldn't be running this yourself if you are a service, correct? Other hands, other thoughts? I feel like Axos and Chuck install almost entirely separate problems, where you don't, like…
+people… you would use Chubby for…
+Some clients should be able to write to a central database individually, and you don't want,
+other clients to influence what goes into that database. You want to be able to write your own values, right?
+actually solves the emergency problem. Different problem, okay. Other, other thoughts?
+Other… I saw some other kinds, too.
+My hands came down with me… oh, yep.
+A service is, like, more general than the library, like, library would be, like, language-specific, while a service would be used by anybody, but…
+Right? So there is language specific. We will expand on all of those points. Other, other, other, other, other thoughts, like, anything else about service versus library, Paxos versus log?
+Probably easier for… It's easier for implementing to use the service than library. Easier service.
+Other?
+how these seems more centralized and passive.
+seems more centralized. That's… that's a good point, and, yeah, we'll get, we'll get to how… how I interpret this exactly, because, yeah, great point. Other points?
+Great. So let's try to consolidate a little bit all of these points here. So we have… we have, first of all, let me also throw out my points, and then we can see which ones of those align with which, and then… and then cover the rest. So, first of all.
+applications start small, and later realize they need availability. So, if you… if you have some code base, right, you write your application, and then you suddenly want to have availability on top of it.
+and you want to include this with a library, you have to go and do many changes in your code to actually import this library and make sure this works. Harder to adapt.
+So, the… there is a significant benefit from using a service that's far from you, and you can just, you know, now ping it for it. And this is, I guess, related to the easier, easier, it's easier to run a service,
+point.
+Then, the deployment responsibility, and all of the responsibility of handling these replicas now goes to the Chabi team, okay? The client can just work with a single server running. We don't even have to call the replicas to make sure they're alive, to make sure they're connected to the network. All of these things are handled by the Chabi team. So, deployment is offloaded completely to the Chabi team.
+And then logs are easier for programmers compared to Paxos. So, it's easier for a programmer to,
+to think about a lock than think about, okay, I have this underlying protocol that puts, that decides on some value. So, I guess this has to do a little bit with the difference of intent and what you want to do. So, with Subby, really, and with a lock, you can just tell the developer, okay.
+whoever grabs the lock can actually do the thing, but with Paxos, you have to think, do a few more steps to get there.
+And the other things, I think, that are related to this here, too, are language-specific. This has to do with the service aspect, because if you decouple, you know, an application as a service, then you don't care how it's implemented, can be implemented in whatever language, it doesn't matter, you just fire an HTTP request to it.
+centralized, in my mind, the way I understand this, has to also do with this, thing that you don't have to care about replicas, but rather the Jabi team, and from your perspective, the Sabi service is a single entity, even though under the hood it runs a bunch of replicas. And the point about performance.
+I think that performance, there might be trade-offs, and this goes towards a good point, but these trade-offs are not…
+that object, at least at the level of Xavi, but it will become relevant for Zookeeper. So we will go a little bit on the performance trade-offs in Zookeeper, but… but Sabi doesn't really give significant performance benefits on its logs compared to Paxos. But there is… there is a voice to get benefits, yes.
+Other points on this and other questions on this?
+why there's a whole, survey, as opposed to you literally just us implement a lot, because…
+From what you've said so far,
+Chubby doesn't seem, like, that complicated of a thing.
+Well, so… so what do you want to… when you have a log service, right? You want to make sure that at any point in time, as we said before, here,
+We want to, at any point in time.
+Without worrying at all about replication and fault tolerance, to be able to… to get to see who has a lock.
+So this already requires some work, you know, as a developer, every team at Google would have to implement some kind of fault-tolerant locking service to get… locking part of their application to get this to work. So essentially, somebody hides away all of this fault-tolerance and just says, the lock is alive for you and always good. So essentially, that's the main difference. Yeah, that makes sense.
+Other questions?
+Great.
+So, the first two of these points are actually more general, and they're more general as in there are benefits of the service architecture more broadly, and not Savi specifically.
+Okay, so… As we said, this is our example.
+And now let's try to think a little bit about how Chavik would be used from the perspective of a client.
+So, Tubby is this log service here,
+And we have some clients of Xavi that talk, talk to it, and one of them actually manages to get the lock. Great.
+Are these them?
+What is the relationship of these clients with the standard clients that we've been talking about? Are they the same? Are they different? Any thoughts on this? What do people think?
+Are these the exact same clients, like the ones we talked about, you know, we've been talking about, or is this a different, notion of a client?
+Thoughts?
+Often, so far, we've been talking about clients as, you know, literal users. Oh, I'm performing a request to Facebook's web page, for example. Are these the same clients, or are these different kind of level of clients, or… or… yeah.
+I guess these clients are, like, other services which depend on Tabi. Exactly. So, there is this level of indirection here. So, these are clients of Tabi.
+But they have clients of their own, so this is a service application developer who builds their TABI client to do what their application is to do, but this is not usually the final application. TAB is not meant to be used by, you know, an end front-end application by an actual user, but it's meant more to be used by an internal application that requires some kind of locking and other guarantees.
+Okay?
+So, what could go wrong here? Think of this case, you know, we have, we have the lock service, we got the lock.
+You know, what could happen, what could go wrong in this particular case?
+Anything that could go wrong?
+What if the chubby client, like.
+dies without really pushing this law.
+So we did get a guarantee that the log service will not die, and that's the guarantee that Savi gives us, but we don't know anything about this client. We don't have any guarantees for this. So now, is this log lost forever? Are we doomed? What's happening here?
+So let's look at how Jabe handles client failures.
+So, think that the client acquires the lock and fails.
+The way TABI works is that the client library keeps tabby sessions with the service, with the tabby service, and if a session closes, the log is released.
+How is that happening?
+So, a session has a timed release.
+During which, the service guarantees validity.
+And then the client sends Keep Alive messages before this list expires. And if the list expires, meaning that there was no Keep Alive sent, the session is actually invalid, and the logs are released automatically by the service. Okay?
+The question that might occur to you now is, how do clients know when the lease expires? I've been saying all this time that, you know, clock synchronization is hard, right? So how do they know?
+The answer is that releases are meant to last longer. So they're meant to last for periods like seconds, tens of seconds, and clients have conservative approximations of this. So even if the clock drift, you know, is big, it's not gonna be bigger than a second. There's no way you're not gonna… you're gonna have such unsynchronized clocks that go beyond the second unsynchronization. So what Sabisa is essentially
+I have a big…
+a very long kind of lease, and then I over-approximate it and say, okay, even if at 9 seconds, you know, at 9 seconds, I start to actually, you know, sending my keep alive and so on. So we have these over-approximations by a big amount, which is very big for the level of clock synchronization, but small for the purposes of this lease.
+Questions about this?
+When a client receives a lock, is it getting a lock for the entirety of the database, or only, like, the specific portion that it needs to change? That's a great question. What do people think here? So, when a client gets a lock, do they get for the whole database, or a specific region? What do people think? What, yeah.
+Probably just…
+one partition of it could be one answer, but actually, the answer they have, I would say back to you, is that actually,
+Everything is correct, essentially. The thing is, Sabi doesn't actually tell you what to do with the lock. The semantics of the lock are up to the application. Savi says, I have a lock for you. Actually, I have a file system of logs.
+You can put a bunch of logs in a bunch of little subdirectories of this file system, and then use them whatever way you think. You might, you know, take your database, partition it, give a log for its partition. You might have a big log, you might have reader, writer logs. So, essentially, somebody just says to you, I give you some logs, do whatever you want. This is one use case of how to use these logs, but these logs could be used for other reasons too.
+Does that make sense? So the Tabitha says, I have logs for you, and then how you use these logs in your application, whether you separate them for database rights, whether you separate the partitions of database, this is up to you, essentially.
+Tabi does not enforce anything with respect to this.
+Point, questions on top of that? Does it make sense?
+This is important, because Xavi does not, as a… imagine… Sabi was built by Google internally, right? So they want to provide a service that is very general. They don't want to force on other kind of services, you know, that use Xavi any kind of, you know, they don't want to force them to have to do something specific. So the only thing they provide is this lock, and the
+The reason why this is also designed as this file system is to make it easy for you as developers of applications on top of Xavi to be able to, you know, have, like, a nice partition space, or something that you can, you know, to use this easily, this kind of set of locks.
+So then, is… would each service get their own partition of the general database? Because then, if they're allowed to do whatever they want with the box, wouldn't there be a lot of crossover?
+With, like, one service wanting the right, and another service wanting the right.
+There could be blocking, so that is mostly up to the application. So here, we have this, we have this infrastructure, right? This is Javi.
+And this is our application. We want to build an application that writes to a database.
+So, if there is indeed a lot of contention and a lot of rights, we would actually probably want to split.
+the locks across the database. As you are very correctly saying, that if you have all the… one lock for the whole database, then you have to really contend for this lock, and there is a lot of, there's a lot of contention. So you might want to shard, but that's not necessary. You know, maybe your database is just used for very few rides every now and then, so maybe you just have one lock, and that's fine.
+So, this is mostly up to the decision of the application developer. And this here, the clients of the application, actually think of them as cooperative entities. So, I am a developer here, that I'm writing my application.
+And I will make my clients work well with each other, you know. So, so yeah, I don't know if that answers the question, yeah.
+The client uses this to really push it to lock, and can't it just continue the server requests and write it to database soon when it's not supposed to? Because how can the log service require that data to actually
+That's another great question. So, a client… why are we guaranteed that the client will actually satisfy what, what, you know, the lock says? And the answer is.
+the client is you, you know, it's the developer. So if you want to take the lock and, you know, destroy your system, go ahead. I mean, you can do this even with a normal lock, right? In an operating system, you can take a lock, and then, you know, your application states that whoever has the lock can write, but then you don't have the lock and you still write. So the code that you write here
+make sure that actually I'm using the lock correctly. But Sabi has nothing to tell you about this. I mean, I can't tell you you implemented your application correctly. What I can say is, I provide the lock. Whether you use the log correctly, what you use it for, I don't care. Just use the lock. Yeah.
+I think this is… this is all going to the same point, which I think is very important, of the fact that
+A key kind of goal of Xavi is to just provide this very, very, very limited abstraction, and not enforce anything on the developer. They don't make design decisions about what an application is going to do, they just say, I offer lock for you. That's it. Okay? Other questions?
+Great.
+So…
+We talked about the leases, so now let's look at an execution of Java. We have the application client, which is the, you know, the front-end actual user client, and then they ask, you know, they do something, which is get the log, whatever. This is more of a representation of what they could do. They send a request that will actually require that the log is taken.
+And then, some client says, okay, start the session with a lock service.
+lock service responds okay, get the lock for that particular… that we need to do for this application, success, and then we actually do whatever we want to do, and return to the app client, and we did, we, we are… we are, you know, things are working. As time passes.
+we would be sending these Keep Alive messages every, you know, if the window of the lease is 10 seconds every 9 seconds, we would go and send the new Keep Alive, and then the log would be like, okay, I extend your lease for, you know, 10 more seconds.
+Questions about this? Does it make sense?
+Do you still send Keep Alibs like you've done a request for people?
+So again, that is… that's a good question. So again, so the question, I guess, is, just to repeat for everyone, do you, still send people lives if you are done with the request? And the answer is, this is up to the application developer to decide.
+you might have an application architecture where you say, okay, I will keep the lock for as long as needed, and then I will only give it up if I die.
+Or there could be another kind of application strategy architecture, where you say, every client has requests, so we swap around the lock, and we don't keep it for longer.
+So, it depends on what you want to implement here. Sabi again says, if you want to keep the lock, keep it. If you don't, drop it, it's up to you, yeah. But if you want to keep it, you have to send Keep Alliance. That's the only thing you have to do.
+Great. So… Subicusions.
+Lock acquired.
+And we said, for example, the use case that we had in mind is that we have a storage service, a database, and then we want to log to it, once we have the lock.
+Is there an issue with this here?
+Any problem that people can think of with this architecture? We got the log, we write it to the database.
+Is everything fine?
+problems?
+What are the right fields for the…
+what if the ride fails? That goes towards the right direction. The ride could fail. I don't see an obvious problem if the right fails, but I think this goes towards the right direction, so yeah.
+What if they write?
+Something.
+What is the weather?
+So… This could be a different database here. We might… this might also be separated over the network.
+Now, we might write, arbitrarily delay happens, someone else has the lock now, they write, and they actually… there is contention. Oops, problem.
+So…
+What is the key problem here? What is the key? Can someone crystallize what the problem is here? So, we got the lock, and then we want to do some write. What's the problem?
+He never had confirmation that we broke.
+image.
+We never have confirmations not to not go into the database, that's a good point, but even if we did, still, you know.
+there is… there is this question of the confirmation comes first, or the writing comes first? Because if we… still, if we have a confirmation, we might still have lost the lock in the meanwhile, because we crashed.
+So, at some point, you know, this has to make a decision to write, and you can't… you can't be in complete agreement all the time. There is a network in between these two. So… so what's the… what's the… what's the fundamental problem here?
+Or, yeah,
+The lock associated with that message will still be entitled.
+Right, so, building up on this, exactly, the effect that the log was supposed to have
+happens by a service that does not actually hold the lock itself. So, I do not hold the lock, but I perform the effect.
+So…
+Can you think of any ways to guarantee that, that the effects that need the lock happen in the lock period?
+Doesn't serve yourself?
+Which are this? The sources.
+That could be one way to do it. So, the way that Sabi proposes for the users to solve it is that there is a log ID object that is passed around
+to whoever might want to do something, knowing that I am in the lock, and this is passed around this lock ID to everyone, and then everyone who gets this lock ID also talks to Chub and is like, okay, do I actually still have the lock here? Can I actually go and do this right? And if yes, then I actually go and do it, okay?
+So we pass around this lock ID, and now everyone who might do an effect goes and talks to the tabby service and makes sure, okay, I have the log, I can do the actual update.
+Questions about this?
+Great!
+So, this concludes the Tabi from client perspective. So, are there any questions about Tabi, like, as a user, as a user of Tabi? Questions about how it's to be used, and so on?
+Anything that's not clear.
+Great, oh.
+I don't really get… how can you guarantee that, like, Whatever effect happens, happens, like, before the lock.
+Expired, but the lease expires.
+For, for, for what part? For here?
+Yeah.
+So, what you can guarantee, and what you can check, and again, there is some kind of amount of, you know, of conservativeness that you might have to have here. You check whether the lock is active, and you can check also how long
+the list is still active for it. So, if you see the list is active for, you know, 100 milliseconds, you might be like, okay, maybe that's not safe to do this right now. But if you see that the list is full, or, you know, like, 5-second list.
+then you can determine, you know, can I complete this right in 5 seconds? Maybe, yes or no. There is still, though, this question of, you know, there has to be some kind of estimation at everywhere, whoever uses and cares about this log.
+of, am I able to complete this action before this lock will expire? And make sure to make, you know, over-approximations about the timing, and so on, yeah.
+You're MVP.
+There's no comment guarantee. There is… there is this timing. So leases fundamentally have this… this problem that they… if time, you know, if time stretched to an arbitrary amount, you know, if the clocks are unconscious to a terrible amount, or if something happens timeless you cannot predict, then you have a problem.
+What happens in practice is that many systems actually, and we will see other systems also that take this stance, they do…
+build on clocks, and they make some assumptions, like, okay, the 99.9999 percentile of clock skew is 35 milliseconds, so I… 100 milliseconds is safe to assume that, you know, we will never cross this, so I can just assume this and go forward with my life, yeah.
+As we said in the beginning, foundations clean, systems dirty, but, you know, they work. So, yeah, other questions?
+Great. So let's go to… to… to the implementation, from the implementation side. How do we actually implement what we said to the user? They will have… so all this time, we're looking from Totsabi as this
+service that's kind of completely isolated from us. We don't know how it's implemented, we just know that it offers a lock, and it never dies. Great. So, how do we actually do that?
+So, before we even talk about how to implement things, we have to think of the requirements of our system. And so, when the engineers went to make this system, they first put down all the requirements that they have on the system.
+So they expect that the system is going to be used by thousands of clients that interact with a very small number of very small files. These files mostly hold locks, they're not meant to be actual data files, and they expect that, you know, there will be thousands of clients, thousands of services interacting with that service all the time, okay?
+they want high availability, they want service to never, you know, to never go down. That's another kind of requirement that they have, because that's what they offer to their, you know, internally to their other teams.
+they want scalability, so the Sabi service cannot be the bottleneck, because if it becomes a bottleneck, then there is no point in using it. So, the point is, you can, as a developer of an application, you are, you know, you should use Tabi and not have to worry about it failing, or it being the bottleneck of your application.
+And you might want to get to all of this to have some form of, event notification to reduce, polling.
+I guess this is a little bit more on a different level of abstraction than the first three, which are… which are more of a requirement, and this is more of a, something in between a requirement and an implementation kind of strategy.
+Questions about these requirements? Do they make sense?
+Great.
+So, a key question that the topic developers had to answer, and the sub engineers, was whether to have fine-grained logs, where you grab a log per action, or per transaction, or per… you know, like logs that are supposed to be used for a single thing. You grab the lock and you drop the lock. You drop the lock.
+Or cold-screened logs, where you grab a log for a long period of time, and then do something.
+For all this period of time.
+So, the thing I want you to think about, with the person next to you, behind you, in front of you, is what are the pros and cons, performance, correctness-wise, for fine-grained locks and coarse-grained locks, from perspective of an implementer of Tabi and a Tabi user? So, yeah.
+Talk, and we'll get back in a few minutes.
+I'm glad to bother me.
+Thanks, sir.
+There you go.
+I'm not only quiet.
+Has he,
+What is it really is to sleep with?
+Okay, so what do people think? What are pros and cons of fine-grained logs, of course-grained logs, from the user perspective, implementer perspective? Yeah, thoughts and observations in general.
+Locks. Fine grain, coarse grain. Hans, what do people think?
+Morhans? Morhans?
+Yeah, from a client, perspective, like, if you have, like, client brain locks, you have to spend more time grabbing and, like, releasing them, as opposed to, like, force-putting blocks.
+But, like, on the other hand, if you have, like, a toy box, like, are kind of blocking other applications for officers from using whatever…
+Yeah. That's, that's great, yeah. Other thoughts by people? What do other people think? There were more hands.
+Yeah, like, another thing is for fine-grain locks, if you want to do a bunch of transactions in a short period of time, for each transaction, you have to grab a lock, which would take a while, as opposed to with coarse grain, you could just grab the lock.
+Hold it, make all your transactions, and then let's fill the hole.
+So, the ratio of time that you spend working with the lock and actually doing work, you know, the finer the lock, the more you pay for the actual lock rather than your work. Yeah, great point.
+Or, the system specification of…
+Having a small… having a small number of small files, it's…
+Probably usually going to be centered to have fine-grade blocks, if you're only doing, like, if you're only
+Mass equals one file at a time, whereas if you're,
+Messing… if you want to mess with more than one title at a time, like he said,
+So, I guess, yeah, I read this point as if you were to associate, if you want to be touching a lot of things.
+then you don't want a small, fine-grained log for it, because that would lead to a lot of work for you to grab all these little locks to be able to do all of these changes. So I guess, course, coarse logs?
+bots, allow for botsing, I guess, yeah.
+Anecdotes?
+That just depends on your average, like, workload.
+In what way? Like, if you have a big, and you don't want to grab a lock a bunch of times to finish your workload?
+But if you have, like, small workloads, then you don't want to take up, like.
+minutes of conversation for a long… Great, great, great. So, so, again, I guess this is also a workload point, that, that the more… so, so there is this, this kind of, like, this kind of,
+two edges to the story, and I guess, let me… let me reveal also how… what everything thinks here, and I think we can then consolidate, because I think all of the points do fall on these two, kind of directions. So, the first is that… oh, one thing I guess you have not touched upon is that
+or I guess it's similar in a way to some of the points that you made, is that
+from the perspective of the implementer, also grabbing more locks requires higher scalability. So the smaller the locks you have, now the chubby developers are on, you know, are responsible for being able to handle that. So, if you remember the original system requirement, it was
+scalability is very important, so Sabi cannot be the bottleneck. So, if we have fine-grained logs, we're actually making our job harder as Sabi developers, because we now have to actually be able to handle, you know, thousands or, you know, many, many, many of these log requests all the time.
+So, these have to do both from the client perspective and the implementer perspective. So, if you're a client, you don't want to be grabbing locks all the time, because the more locks you grab, the more overhead you're paying, the more… the fewer times you have to do your actual work, and so on.
+The thing that was, that was, another thing that was mentioned is that
+Oh, I guess this was not mentioned exactly, but it's also an important point, that if you have very fine-grained locks, if tabby, even for a little bit, it stops being available, now the whole… all the clients cannot grab locks, and clients were expecting that they would be able to grab locks, you know, at this millisecond granularity, so now.
+The Sabi service is not able to respond for, you know, a second, and there's complete chaos in the system. So the finer green the logs, again, the more expectation there is on Sabi service to have better availability, okay?
+Now, some, another problem is that,
+when you have very fine-grained locks, you must also be prepared to lose these locks very frequently. So you might… when we said before, if you have 100 milliseconds left, can you do the action, or do you not have enough time to do the action? So the smaller the logs, the more tight you have to be in your application, you have to have some kind of very aggressive defenses, I guess, programming to make sure that you might lose the lock, and what do you do in that case?
+But, on the other hand, if an application replica crashes, then that does not lead to any availability. And this is related to the point that was made by a few of you, that if
+in the coarse-grained log case, when an application client dies, then… and lose their log, you have to wait until the lease ends, and this lease is, you know, 10 seconds long. So there's not available in this case.
+It's not like another, like, fine, like, around that locker room, right?
+They will until the end of your action.
+Oh, that's a good point. So, so, why would we have more, we would lose logs if we had fine-grained logs? Because
+we would have, again, to have some system, like a lease system, or at least, assuming we are implementing this still with leases, and then we wouldn't have wanted the list to be 10 seconds, because if the logs are fine-grained, you don't want to grab the log for 10 seconds. You want to grab it maybe for 100 milliseconds.
+I don't know, something like this. So, if something happens, the network is a little slower this time, suddenly the handling sections are not enough for you to do your thing. So, yeah.
+Make sense?
+Other questions?
+For the size and… for the size of the files.
+the average file that shall be,
+is expected to be used for. How long, approximately, would an average transaction take?
+for the files that… you mean… there's two levels of files. There is files in the Xavi file system, and there is files that the services want to write to when they grab the lock. Which of the two?
+I guess I can answer for both. Yeah, so, so, so, so the Sabi files, they're tiny. The changes that you saw in the example that you, you're doing are changes in the, in the, in the realm of,
+It is very far back.
+So the tendency of this, of this form, I add my IP address, or my name, to the file. This is like, I add some bytes to this file.
+Whereas, on the… on the other hand, the files that you might want to modify in your application here, in the database, these files, it's up to you. Maybe you're taking logs to write files that are gigabyte log, terabyte log, I don't know. So it could be… they could be arbitrary.
+Yeah, exactly.
+Other questions?
+Great, so let's continue with the coarse grain blocks. So.
+this is the opposite of the previous one, so now the scaling responsibility falls to the clients. Sabi is able to kind of, like, you know, the service with CoorsGlain Logs is able to, you know, relinquish some of the scalability responsibility to the clients. We don't have to worry about it as Sabi developers.
+The log service and availability, even in seconds, if Sabi is unalive for a few seconds, that's not terrible, because
+Almost always, someone will have their lock, and they will be progressing, you know, normally. So, clients with log can keep working until their leases are done.
+And the developer does not have to worry about lost logs, because, you know, it's 10 seconds. If we are close to the expiration time, then we worry about the lost log, but we certainly keep alive. But we don't have to worry about lost locks a lot in the application.
+But, there is this counterpoint where if the application replica now crashes, we can stall, the system can stall, because there is no one, this list is long, so we have to wait for the end of this list to be able to continue.
+Tabby?
+takes this distance here and goes for core skin locks because of its requirements.
+Questions, here, and thoughts?
+Great. So…
+the design of Javin implementation, is, is, this is an overview of how it looks. So.
+Sabi usually is implemented as five replicas in a Chabi cell, and a cell, a Sabi cell is a chabi service, essentially, where they run a Paxos protocol to actually do a replicated state machine here and make sure that the files in this file system have exactly the same values.
+So they have… they have a leader-based packsource, I think, where there is, you know, there is some kind of replica that is the leader, and then they, using consensus, they make sure to… to offer strict, strong consistency guarantees here, despite up to two faults in services.
+And then the rest of the service, the client, the Sabi clients, they… you have the application, they also offer a nice little library that is just used to wrap the RPC calls to Tabi, so you don't have to actually go and do, you know, RPC calls yourself, but you just say, call a function in the Sabi library saying, okay, call Sabi service, to do this.
+Questions about this, this design?
+Great.
+So… Reads are a very, very, very common part of our workload in Java.
+And, we want two things when serving reads. We want the learner's ability, and we want good performance.
+So…
+What does layersability mean? Could someone remind me, or, you know, how do we ensure layersability here? What does it mean from the perspective of clients?
+for their leads.
+What does it mean for a read? To provide liability guarantees, what do we… what are we guaranteed for every read?
+Hans, thoughts?
+When we do a read on a linearizable service, what guarantee does the linearizable service give us?
+Right, so the last completed thing that has happened, the last completed right, we must see its effects. Maybe we see even something that is incomplete, but has started, but certainly we have to see the last completed right.
+So the solution, to, to get layers ability is,
+And self-reads is to get the reads accepted to one of the slots in the replicated log, so to also put reads in the slots in the log.
+Is there any problem with this?
+So we can guarantee reliability by putting all the reads in the log, in the RSM log, and then they will have a global order with the writes, and we're good. Any problems with this?
+Really slow.
+It's really slow, so now, suddenly, especially if you have a really heavy workload, our log gets full of these reads that have no effect on the actual… on the actual, on the actual computation, rather than we want to enforce the order between them.
+So… Some alternatives, what could people think as an alternative here?
+We also talked about this briefly in the last class. What could we do, possibly, as an alternative, here, for the reads?
+Notes?
+What could we do to not put the reads in the log? What could one do to get better performance?
+Any thought on what could happen here? How could we do this?
+We do it at the end of last lecture about some ways that one could do, get some optimizations of Paxos RSM.
+Okay, I'm gonna give, give it, give it away. So,
+Either we can… we can serve reads at all replicas, or another thing that we could do is to serve reads at a leader. So have a leader, and that leader can only the leader serve… serve… only the leader can serve reads, and therefore, there is
+No worry that these leads will not see completed things, because the leader actually is the one that… the only one that has the latest state of the system.
+So, let's see how this could look, actually. So, for every key, every replica stores a value and the version.
+and then we deliver the latest version out of the majority of replicas. So this is one way, the serving reads at all replicas way to do this. So, if we ask for the file foo.
+we can… V1 can now ask, oh, this… this should be… this should have… oh, these are versions. V1, V1, V2, V3, V2. So…
+The replica can ask all replicas, or a majority of the replicas, including itself, what is the latest version of this value?
+And then, they can respond that it's 3. And then, because it's a majority, we respond with the speaker value.
+Now, similarly, this one can read and can get the majority. Is there any problem with this?
+Does this work? Does this not work? What do people think?
+This particular execution.
+Is there a problem here?
+Right, so even though we have majorities here, different replicas might have different versions.
+So, there is a gap between the acceptance and the learning. So, the way that Sabi does it, as I said a little bit before, is that you have a leader. So, instead of doing this kind of serve reads at all replicas, you have a leader, and all replicas contain the DB, but only the leader serves the reads.
+And the clients must submit all reads and all rights to that leader, and you find that by asking any other replica. So you ask any replica, and then they tell you, okay, there's the leader. And then you talk to the leader until he dies or says, I'm not the leader anymore.
+So, the leader reads, the benefits of this is that reads do not require now any coordination. We don't need to put them in the log, we don't need to run consensus for them, we can just save them immediately, and then the writes are accepted by the majority of replica normally, because you run consensus every time for every write, as we… and you put it in the log.
+What if the leader fails? We do an election protocol.
+with consensus between the replicas, we find the new one, and then that's ready to actually go and serve the requests. And these are times where we could have this unavailability that Sabi can have. As I said, Sabi might be a little bit unavailable for a period of time, for example, during a leader election, but that is fine, because as long as this takes
+In the realm of a few seconds, it will be fine, because most releases take much longer than this, okay?
+Are there any issues with this?
+God bless.
+All the requests arrive through one node. So, let's now see
+What can we do to improve that even further? And Sabi has two optimizations to approach this, caching and proxying.
+So, first of all, clients cache the data they read.
+Are there any issues with this?
+Think of the guarantees we offer to the users. If we cast data at the clients, is that okay? Is that not okay?
+What do people think?
+Is that fine?
+It might be an issue of having sailed past.
+Hmm. So, exactly, there might be an issue of having stale cars. So…
+When you have a cache, that means you first read from your cache.
+And your cast might not have exactly the latest situation that's happening back in Javi, and this violates Mira's ability.
+Is there any way to address this while having caches? What would be a way to still provide layers ability while having caches? What's a way to do that?
+Isn't the leader supposed to have, like…
+The most recent state most of the time, so can't just cash from the leader?
+So, we can cast from the leader, but still, the cast happens here, actually. So the thing we want to avoid is, we want to avoid querying the leader for everything. So we say, let me put a cache here in the client.
+And lead from that stage before going to the leader, not go to the leader every time. But then the question becomes now, this cast might have stale results, so what do we do? How can we still guarantee learners' ability while having a cashier?
+Thoughts? What's the fundamental problem here?
+Or what are some ideas to show them?
+Right, so the leader has to invalidate the cast copies of the clients upon updates. So whenever there's an update, the leader has to, first of all, know everyone who has a CAS.
+And then for each data item, the leader keeps track of, yeah, who has cast it, and when they modify anything, they send invalidation to clients.
+A question following this is, can we proceed and perform notifications after invalidations?
+When can we proceed and perform the actual modification?
+At which point?
+So the leader knows these 10 clients have the cash, I am modifying, and then I'm sending them, you know, validations. Where can I do it?
+I think once the client confirms that it has validated that part of cash, then you can… Wow.
+Right, so we actually have to hear back from the clients.
+And this has a performance issue, actually, that now it has a synchronization layer with all the clients for every ride. But…
+Sabi gets away, because traffic is very, very, very read-heavy.
+And there is no strict latency requirement on the writes. So, the assumption is that I want rides to go very fast, I don't want my leader to be the bottleneck, but writes, they can take a little bit longer to complete, because the write is essentially when the leader acquires a log and actually, writes to that log. So we have…
+lower, or I guess higher tolerance for latency, for lower latency, in this case.
+For worse latency, which is higher latency.
+Now, a question I want to ask you for more scaling, is what do you think is the most frequent type of request for travel?
+I want… I want your… this… this should be, you know, it's more of a… what… what do you think? There's been types of requests that we've seen. What kind of… what's the most frequent type of request for Xavi? Tops? Hans?
+What do you think?
+Hans, Hans, come on. We've seen sometimes of requests.
+Hans? Hans?
+How many people here think it's the rights? The rights are the most frequent type of requests. Raise your hand if the rights are the most frequent type of requests.
+How many people think that, the leads are the most frequent type of requests?
+Okay, I knew that, that's why I tricked you. So, okay, so the reads are actually not… the most frequent is actually the keep alarms. So, there is reads, but most frequently, what you're doing is just keeping alive your locks, so you're not reading. So, 93% of the requests from a real production trace that they had is, keep alarms.
+So, how can we actually scale Keep Aliens?
+And as you see here.
+set, which is the read here, is 680 parts per million, compared to, you know, like, there's, like, orders of magnitude difference with people lives, and even reads, which are more than this, they're still not that many.
+So, the way to scale Sabi is… Sabi Keep Alives is with proxies. So, you have some kind of proxy, Zabi services, and then you send people lives to these proxies, and then they batch these keep-alives and send single, like, batch keep-alive messages for various clients. And that, the benefit of that, you have to
+take into consideration the added, now, synchronization skew, so you have to consider… to be even more conservative with your measurements, but you can batch, you know, and instead of 100 people lives, send 10, or 1 in. So batch and send them all together. And that way, you get better performance, and Xavi stops being a bottleneck for people lives.
+Yes. So… I guess a natural question from this diagram is, let's say one of the, like, small
+clients' people lives fail. Then, would the proxy not send it to people?
+What do you mean, fail? Like, that keep alive doesn't get to the proxy.
+Oh, this doesn't keep… get the proxy at all. Yeah. So, would the proxy still set the batched people up? It would send from only what it scared of.
+So, essentially, the proxy, imagine it as a NECO server. I'm just getting a bunch of Keep Alives, I'm not sending them immediately, I'm waiting for a little bit, and then once I have, like, 10 of them, I send one Keep Alive message that has 10 inside, and then I get a response for 10. If I hear from 9, I send 9.
+Question.
+And she says one of the clients wants to renew their box, and then Chubby sends the proxy, yes, they can leave the box back, but then that client's no longer available.
+Xavi thinks that law takes to something.
+Because the proxy was the one that didn't be interested in.
+So indeed, there is a potential for additional failure points here. So the proxy, if the proxy fails, if the network between the proxy and the client fails, this could also lead, as you said, to, you know, additional problems, and the tabby thinking I've given the lock, but this one having been not having insisted, and so on. But the benefits of
+These proxies can even run on the same exact network as Sabi does, so they might not be, you know… if this fails.
+you know, this would have bigger probability to fail compared to, you know, a direct connection. So if you run them on the same network, the only thing you do here, essentially, is just say, instead of asking this poor leader for all they keep our lives, just send it, you know, 10 times less requests by
+somewhere else gathering the request and sending them all together. That's it. But that's because you can't do this boxing at the client level, because clients don't know about the existence of other clients, you do them at the proxy, so that you can actually hide it from the client and from Tammy, if that makes sense, yeah.
+Great. So, the key points of Tabi…
+Recapping. Log service instead of consensus library. That's easier from the perspective of the users.
+There's a file system abstraction, since developers are used to file system abstractions, they can easily program against them.
+There's coarse-grained locks, which allow for easier implementation of chabbing.
+And there's time releases that keep the lock alive. And even though clock sync is hard, it works in practice, because you pick large enough conservative approximations, so you're good.
+And finally, sub-implements has a leader of replicas to get better performance for it.
+And it uses CAS and proxy to get better performance.
+Great.
+So let's quickly talk about, are there more questions about Savi.
+Great. So, logistics. Assignment due is due on Sunday. If you're not done, go discussion.
+we won't be able to debug things during the weekend, okay? The deadline is on Sunday, but that does not mean that, you know, the TAs and LAs will be over Piazza during the weekend and be like, okay, any questions that you have, we're here to answer. No, go to discussion.
+Assignment 3 is just out, so, if you're done with 2, start early, and there is, less than 3 weeks until it's due.
+Oh, and one more thing is that next, on Tuesday, I will be, in Seattle for NSDI, which is a Disability Systems Conference, and,
+Therefore, the next lecture is already recorded on Zoom and will be uploaded very soon. So… so you will… you will find the next lecture. Do not come to class, or come to class and watch it here, I don't know. But, you know, you can find it on Zoom, okay?
+Questions about logistics?
+Great. So, let's get to the second part of the lecture, which will be shorter than the first.
+And it's about Zookeeper.
+So, ZooKeeper is an open-source coordination service with this amazing logo here, and it's one of the most popular coordination services.
+And it has various similarities with Xavi.
+It is a small file system like hierarchy, it's a services of a library, but also, it has differences with Xavi. So it has a lower-level API that allows for more flexible coordination patterns, and it has weaker guarantees for better performance.
+So the main motivation of the keeper is that, instead of forcing developers to use logs.
+that Savi does, we allow them to implement whatever they want using a slightly, a slightly lower level primitive.
+So, we allow them to build, things like logs.
+Watches for cluster configuration updates, determining process groups.
+some forms of double barriers, where you synchronize everyone before and after computation, and so on. So, they offer a slightly lower level of abstraction, and then you can build on top of the Zookeeper abstraction all of these things, including locks that we have inside.
+And the point and the reason is that blocking in Savi is too slow and could lead to arbitrary delays. When does Savi block? What do people think from what we discussed just a little bit before? When does Savi block during its execution? What are cases when it blocks a lot?
+But we have to wait.
+We sent a few slides back. What do people think?
+What's the kind of, like, hardest and most expensive blocking that Xavi does?
+Whenever it bites, it needs to, like…
+Do consensus to the log, and then also invalidate
+Exactly. So when you write, you do consensus of the log and invalidate CASES to hear back from all clients.
+So, the solution that ZooKeeper comes up with is to provide a weaker guarantee to avoid blocking, even in this case.
+So the agenda that we will have for ZooKeeper is that we will only focus on the… or primarily focus on the client perspective, and we'll talk about the following things. What is the guarantee that ZooKeeper offers? How to implement a lockover ZooKeeper, what performers to expect from ZooKeeper, and how to use it efficiently.
+SocialKeeper guarantees, almost cleaner's ability.
+So, rights are strongly consistent and globally ordered, linearizable.
+BUT!
+All requests end… sorry, not bad… and all requests from a single client are processed in FIFO order.
+As people can… might or might not be able to determine from this, this is an example where consistent entities are defined in ad hoc ways.
+And therefore, be hard to compare.
+So, as I showed to you in the consistency lecture, in the last slide, there is this graph of, you know, like, 15, 20, 50, I don't even know, consistency conditions, and all of them often are defined in these very ad hoc ways, like, oh, you get, you know, your rights, your leads can see your rights, and then the rights do not conflict with other rights, and, you know, there is a 5-fold order in your leads.
+So, all of these things, and then some other researchers start to understand, okay, how does this compare to liability?
+What we certainly know is that this is not linearity. That's why I'm saying almost there's a baby.
+So take this execution here. You have set X1, setX2, getX1, getX2.
+Is this linearizable? What do people think?
+Anyone disagreeing with this? No.
+It is audible now?
+Why is this linearizable, or why is this not linearizable?
+None of the above, so you can't agree to work.
+Order of the events.
+Right? And what's… what's the problem without… if we cannot reorder these events?
+If you can't reorder the events, then…
+get X1 on, it has to be before 10X2. Exactly. So this cannot happen after this. There's… this is… this is a… this is not a registered implementation. So this is not realizable.
+Is this an execution that can be observed from Zookeeper?
+Well, you might be able to guess the answer from… Yeah, but
+Why? If yes, or if not?
+Yes, so that we don't have to invalidate the cache immediately.
+Which would allow GitX to… the early DX1 still be a valid thing to receive.
+Yes. So, we don't have to talk about this from the perspective of caches, because they… we don't… they don't necessarily talk about, you know, still we're talking about the level of
+abstraction, but on the abstraction, exactly, you are right. Here, what we said is we guarantee that rights are global order and so inconsistent, so since this finishes first and this finishes second, certainly this is the global order, everyone agrees on this.
+But, the requests from a single client are processed in 5 orders, so this get, the only thing that I need to guarantee is it happens after this.
+And this, it happens after this. The relationship of these two and these two, no relationship. I can do whatever I want. So this gets, I'm actually allowed to, you know, move it before this, but I'm fine. So that's, that's, that's, that's a zookeeper's guarantee.
+Okay?
+So…
+The thing that Zukip realized, and it's related to this point that we talked about much, much, much earlier, is that you do not need fullness ability to implement locks.
+So clients can register a watch file, and ZooKeeper notifies the client when the file is updated, but not the data.
+And then a lock implementation can do the following. Try to acquire a lock by creating a file.
+write operation.
+If the file already exists, watch for updates on this file. Upon watch notification, try to reacquire the log. Try to do an add. So, with this.
+I guess, yeah.
+Is this… is this safe? Why? Does this block? Are there issues with it? What do people think?
+Good, bad? Does it work? Does it not work?
+Why is it good, why is it bad? Rods?
+I am describing to you a lock implementation. So my question is, is this actually safe as a lock?
+Why or why not?
+Does this block? Does that have other issues? Yeah.
+compared to Xavi and the implementation that, you know, Xavi had.
+Thoughts?
+This is, like, kind of a, like, rare possibility, but if, like, two, different, like, servers write the same file at the exact same time…
+then it's kind of, like, unclear, like, whose file is gonna get written first, or if they'll look over the…
+That's a great point. So, your point is that if two rides happen at the same time, who actually has the lock? But I'm saying, I'm responding to this as a zookeeper, rides are actually strongly constituted globally ordered. So, if
+someone's ride actually succeeded, I guarantee that it was the first. And then the other one was after. So I, as zookeeper.
+order them. Somehow, there is an order. So, only one has… so, essentially, that is why this is safe. So, this is safe because what's gonna… what's the keeper figured out is what you just need right
+Consistency, and not any consistency for the leads to get a log implementation.
+Does that have any issues?
+Do you ever get, like, the…
+So, watch another patient, then you might never try to…
+That's a great point. So, if you… the one certification is essentially what forces you now, what is the way for you to get the lock. And there is possibility, maybe, that you don't try to reacquire the lock, and that could be a problem, but there's also another problem.
+What happens when, you know, a client tries to get the lock? You know, or when a lock… when someone releases a lock, and there's some clients that are watching for this, what happens?
+So, multiple can be watching, so there can be a hair defect, and we'll see this in a little bit. So…
+Zookeeper does not need to block foreigns.
+What about Sabi? What do we say? Does Sabi block for EIDS or not?
+Does Sabi block for eats?
+What did we say?
+Breeds are some…
+How is we're happy.
+Reads are served in the replica, so topic didn't block for reads either.
+Zookeeper serves reads in any replica, though. What about Chabi?
+He should be, yeah. That was always a leader. Only the leader.
+Zookeeper rights do not need to wait to invalidate caches, that's a benefit.
+But the zookeeper writes block for other rights, because the consensus is unavoidable. We have to have consensus for strong sequential consistent… for strong consistency for the rights, like Xavi.
+And, so, blocking is unavoidable. There's no way to avoid completely blocking, but, what Zookeeper does is it blocks a little bit less, and it has a slightly different kind of performance profile.
+In the next lecture, we will talk about weaker consistency and see how that works in the grand scheme of things.
+So… Now, let's get back to this lock, and talk about this problem, this hair defect.
+So, if a lock is released, a third of clients suddenly try to acquire it, overloading possibly the service, because every time a lock is released, a hundred clients that are waiting for it are jumping and trying to acquire the lock.
+The solution to solve this, a way that they propose in the Keeper paper, is to build a sequencer. So how do we build a sequencer?
+The following way.
+instead of grabbing the lock in a normal way, we build a little lock tree. So, we create a little lock tree head, and then we get its children.
+If we are the lowest
+side node of C, the third side node, then we have the lock, we are good, and we create our little file.
+If there is another… there is another one before us, so if we are log 2, and there's a child before us with a previous smaller number, then we wait, and we watch for that one to… to be released.
+So, there is, you know, the first one acquires the lock, the second one waits for this to disappear, the third one waits for this to disappear. At some point, one is done with what it was doing, it releases, now this wakes up for the watch event, it goes to 2, it gets it, it realizes the first, so it now has the lock.
+And then similarly, it goes on, and then you get this sequencing, performance, and you get rid of the head effect.
+Questions about the sequencer?
+So sticky.
+It's essentially true, yes.
+But it's a way to implement it on top of this file system abstractions ZooKeeper says. So, when ZooKeeper paper came out, they essentially wanted to convince people, our system is easy to use. So, if you need a lock, you can get a lock, but you can also get this better lock that has herd Effect, that does not have the head effect, and here's how you could get it.
+On top of our null file system.
+Other questions?
+Great. So, zookeeper's performance.
+A client updates a bunch of, like, 5,000 objects after grabbing a lock. And each of these operations takes 2 milliseconds.
+The total is 10 seconds.
+So, they would do an update, consensus, Update.
+Are there any suggestions on how could we improve this?
+Somehow, bird, hold on.
+Right, so one thing we can do is we can actually pipeline all of the updates in a FIFOQ, and service can run them all at once. So what the client can do here is they can just say, all of my updates, start sending them, pipelining them, and then
+Zookeeper just, you know, in a bad way, makes sure these rights are applied in order.
+So this is a way to improve things. With batching, we have seen, I think, already, batching, but I just wanted to, you know, bring this up in the context of ZooKeeper 2, because they do… this is a… this is a part of the implementation.
+So, an overview of Keeper's implementation is that all replicas serve reads, and why is that allowed? Because they offer this weaker form of consistency than usability, so reads can read all the values, and that's fine, they don't care about this.
+All rights are forwarded to the leader.
+And then, a leader runs a consensus protocol called ZAB, which is, some form of Paxos, like, leader-based Paxos protocol that is now internal to ZooKeeper, that ZooKeeper came up with, and it has its own proofs and so on, similar to Paxos.
+And there is also a form of carbage, likely keep our lives in Sabi.
+So… Any questions for the keeper?
+Is that…
+You can't restore that for you.
+That's a good point. So you do have this problem again here. If your client has this lock, indeed, you have a single point of failure. I don't remember them talking about how to solve this in the Keeper paper, but I suspect that you can solve it in a similar way with some kind of lease, or the lock is eventually released, no matter what you do. Yes.
+Other questions?
+Great. So, consensus in practice.
+What we saw in this class is that consensus practice is often implemented as a service instead of a library, because developers find it easier.
+The file system abstraction is popular, since it's very easy to understand, and real-life consensus systems use leader for performance.
+Real time, is also used for some tasks in practice, like real physical time, as leases and keep alive to get things working, but with some kind of conservative approximations, and cassing, proxying, pipelining are all useful optimizations.
+But most importantly, system design is all about trade-offs. So I want you to keep in mind from this class, and keep that in mind throughout the rest of this class while we see more and more systems, that there is
+trade-offs in systems. You never get something that works perfect in all ways. So what are the trade-offs that these two systems make very concretely?
+Sabi makes the data for cost-gained locks. This has some pros and cons. The cons are that if the client dies, there is bigger availability, but Sabi is allowed to have an availability without delaying the clients.
+ZooKeeper makes another type of trade-off, and it says, I won't offer linear ability, and by this, I will be able to serve reads in various, in various replicas, and therefore I'm offering slightly weaker consistency, still good enough to get logs, but slightly weaker.
+Questions about, about this comparison, and about the works of, Sabriel Ziekeeper?
+Great. So… Please fill in the quiz, as always.
+And, thank you.
+And next time, I won't be here. You can be here, but the lecture will be on Zoom.
+I will, I will upload it today.
+Oh, oh my god. Okay, don't leave!
+Wait, this is… Wait, which one is that? Why did… hmm, weird taxes, oh.
+Maybe it's a lot.
+Stay for one more minute while I'm… I'm generating a QR for you.
+Yeah, that's a good question.

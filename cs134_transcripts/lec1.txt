@@ -1,0 +1,314 @@
+So, the plan is yes, but only if there is space, and I think that because the class exam will be in this room, and now it's full, at capacity, the room, so I was planning for us today how many people want PTs, and if there seems like the people could actually fit in the room for the exam, then I will… so I'll gather a number.
+Then I will ask the audience is possible. But yes, if that is feasible, yes, I'm planning to do that.
+Beautiful.
+You still need to, you know?
+I guess we'll wait for a few more minutes before people take lame.
+By the way, can people online hear us?
+Just the thumbs up or something.
+Can people online hear me?
+Yes, I see the thumbs up, great.
+Okay, great.
+So, I guess we can get started. Hi, everyone. I hope you can hear me. Yeah, so…
+Yeah, welcome everyone to,
+Distributed Systems, CS134, for Spring 2026. This is the first… my name is Kristen Dinos. This is the first short introductory lecture, where I'll just be giving some context on what we're gonna see in this class. So, yeah, without ado, let's get started.
+So… What is a distributed system, before we even start this class?
+So, a distributed system, and what we'll be looking at throughout this class, is a system of computers or software, software elements that cooperate all together through the network to provide some kind of service to users.
+So, today's agenda, and what we'll be looking at throughout this class, for today, is why does one want to study distinct systems?
+What will be the course syllabus and logistics? And then, if there are any questions from all of you, I'm happy to hear.
+So first, why do we want to study distributed systems?
+The answer is that they're everywhere. So, many, many companies, some of these actually are a little bit antiquated, but, yeah, a lot of companies out there, a lot of big software companies, they run distributed systems to offer their services, to, you know, thousands, millions of clients across the globe.
+And an example of distributed system, such as distributed system is Google Sets.
+So…
+throughout this class, I will, not only today, but also in general, throughout the class, there will be some questions in red marked with this kind of, twin, twin emoji kind of,
+Yeah, here. And what this means is that I would like you, when I post you the question, to turn to your left or right.
+introduce to your fellow, fellow students, and then discuss this question for a few minutes. So, yeah, as an illustration, let's start and discuss this question as… now that we're starting this class. So.
+Imagine you are googling. So, what are your objectives and goals when serving sets query results to users? So, you are a Google systems engineer, you are building certs, what are the kind of, like, goals and objectives you have?
+So yeah, take a few minutes, say hi to the person next to you, introduce yourself, meet, and then we'll reconvene in a couple of minutes. So yeah.
+Okay! Okay.
+Let's start, let's start gathering some, some thoughts here.
+Yeah, so what do people think? What have these discussions, you know, what have you figured out with your peers? What are some goals and objectives? Yeah, Hans, thoughts?
+My partner and I talked about…
+Speed and reliability. Speed and reliability, great, great, yeah. Other thoughts?
+Oh, maximize ads and Gemini prompts? I guess that's true, yeah, yeah, exactly. Not very limited to distributed systems, but yes, correct. Sorry.
+Thoughts, other enhance speed and reliability, maximizing ads? Like, accuracy of the structural. Accuracy of a sense is also correct, yes.
+Making it relevant to users, I guess that… but we can say that this is related to accuracy, maybe, of results, yes. Other thoughts? If you think of, like, the systems engineering perspective, you know, if you… yeah, other kind of systems characteristics.
+Minimizing the amount of infrastructure that you need in order to handle more services. Minimize the amount of infrastructure, correct? Other thoughts?
+Is that it?
+Yes. Maybe maintaining, like, a high uptime for the servers, so…
+That's great. Maintaining a high uptime. That is related to reliability, I think, or usually people do talk to those, in the same kind of vein. Other thoughts?
+Oftentimes, when you're, like, when a user's, like, searching on Google, they're probably gonna make, like, multiple queries. So, if I'm designing a system, I want to make sure, like, if I hit one query, I can try to predict what sort of queries the user will then put text to add, to, like, make faster, I guess.
+not just speed over one query, but, like, I guess, like, over… That's a good point. So, I guess speed, and in general, I guess latency or speed or, you know, response time doesn't only matter, like, per query, but also you might have an amortized, kind of, across, users or queries kind of metric.
+These are all great ideas, and I think these are roughly, what I have here, too. So, you want resilience to failures.
+Which means it's the reliability or uptime or availability, I think what we mentioned. You want low latency, which is what you mentioned for speed.
+You want support for large load, and that means
+there is two types of, kind of, speed that you care about. You care about how quickly does a request take to respond, but also how many requests can I handle? And this is also related to the infrastructure point. So, the more requests I can handle with my infrastructure, the better. I pay less money, but I also can handle my actual loan.
+And finally, yeah, the accuracy point, which is easy access to the most relevant results.
+Questions on that? Any thoughts?
+Great.
+So, the way they achieve these goals, or not all of them, but many of them, are through distributed systems, and these are some of the things we will see throughout this class.
+So just to give you an example, this is how… this is a photo that, I have not personally found, but it was in the slides from the previous instructor for this class, I assume it's true, of Google in 1997, a couple computers in a garage or something. But today, most of these
+of these, kind of big companies have geo-distributed services, where you have users across the globe, you have servers and data centers across the globe, and users interact with each other and with the data centers, and the data centers interact with each other, also.
+So yeah, this is today's kind of infrastructure. You have these huge data centers, the whole kind of, like, cells and all of these services are spread across data centers and across data centers, among, like, hundreds of thousands of machines.
+And so, yeah, this is, this is one kind of, representation of Google's data centers.
+Today, and as you can see, there is a lot of them across, spread out across the world.
+And it's the same for other companies, like Amazon, and also non-data center kind of companies, like Cloudflare, which mostly focuses on ads, edge, ads kind of servers, so not big centralized data centers. They have even more of those kind of infrastructure.
+So, distribution has, in general, reached extreme proportions, and just to give you another example, so we talked about the example of infrastructure, but I also want to consider the example of applications.
+So, this is the dependency graph of all of AWS microservices, and if we look a little bit more clearly.
+Actually, this is the graph. And this… I mean, the examples that they have here is because they themselves call this a dead star, because it's so dense, this graph, so there's no way to kind of extract any kind of information. And this is not just for Amazon, but there is also similar kind of graphs for Netflix and Dex. And these are not infrastructure graphs, but other software graphs. So each of these nodes here is a little service.
+that this company offers, and then all of these are the interconnections between them. So they're distributed both in infrastructure and software, okay?
+Questions?
+Great.
+There's a lot of other distributed systems examples, like, yeah, we talked about data centers, distributed machine learning, is a new… machine learning training is a, is a new, application, big data processing, distributed databases, and so on, and so forth.
+So why do we need distributed systems? And going back to these goals that we talked about in the beginning, so we want to handle this geographic separation. All of these companies want to have customers that span the whole planet, but still be able to respond to them fast.
+We want to build reliable systems with unreliable components. Unreliable here means the actual infrastructure. So compute fails. And if a server might, you know, might fail once every month, if you have hundreds of thousands of servers, that means they fail daily, or even every hour, or even every minute. There's something failed in your whole infrastructure.
+So how do you build a system
+that has the illusion that everything is working under the hood, with, like, a lot of nines of reliability, meaning that it is down, like, for seconds in a year. How do you build such a system with unreliable components?
+The goals are also… and why we need the simple system is because we want to aggregate systems for higher capacity. So,
+there was a time when you had bigger load, you just got a bigger computer. But that kind of, that kind of thing is long gone now, so the way to actually scale is across compute, and especially with cheaper compute. So the most common kind of way of scaling today for companies is not to scale up, but scale horizontally, meaning instead of getting a bigger compute.
+Getting, like, a bunch of small, cheaper ones, and connecting them together in a distributed systems to be able to manage and handle the load.
+And also, we want this distribution where we customize some particular services for specific tasks, and this is the microservice kind of case that we also saw before with Amazon and Netflix and Twitter and so on.
+So this is… one part of why we want to study separate systems. They're everywhere.
+But the second part, which is equally important, maybe, is that they are very hard to reason, and very hard to develop.
+So there are several key challenges that make them hard to work with.
+So first, a distinct system has partial failures, and this is a call that is attributed to Leslie Lampard, I don't know when he said that, but a distinct system is one where you can't get your work done, because something you've never heard of is broken. That's the situation I told you about before, about infrastructure. You have some compute failing somewhere. What does this mean for me? I don't understand, why is my application not
+working.
+I'm trying to just buy something on my Amazon, on my Amazon cart.
+So, as an example to understand this kind of, like, magnitude of these errors, Facebook's Pineville Data Center has more than hundreds of thousands of servers, five hundreds of thousands of disks, thousands of network switches, and so on.
+So…
+As I said, all of these components, they work with a high likelihood, but if you aggregate together, then this increases significantly in the sense that something is not working across the complete stack.
+So, the takeaway is that we have to design distinctive systems, assuming that failures will happen, and so we have to build these systems in a way that is able to tolerate these failures gracefully, and keep providing some kind of illusions or guarantees to the users.
+The second challenge is that, the filters are actually kind of ambiguous.
+So, if a server doesn't reply.
+How can you distinguish between server failure, network failure, or, you know, they're both big schlong? Any thoughts?
+how can one distinguish between these three types of failures? Let's say you send the request to, you know, you want to load your next reel on TikTok or something, I don't know, and it doesn't load.
+What, what is, what is the problem?
+What's a way to determine what's the problem?
+But, Hans?
+Maybe, like, a heartbeat kind of signal, where you just hang out, just to say, like, I'm still connected. That's a good point. So, you could have a heartbeat signal. Are there other thoughts on how one could distinguish? Try and send a message to a different server?
+try and send the message to a different server, I guess. That is good, because then you determine that, you know, you… the server is the problem, but not you, right? Yeah, that's a good point.
+Essentially, like, different status codes for… Whatever requests that you make.
+Onto the server side, and it's just, like, the success…
+or success has one code, server failure has another code, network failure has some other code. That's a good point. Yeah, so you can have success codes, yeah? You can tell a lot of times, like, what layer of the network.
+The network stack that it billed at? Like, sometimes you can tell, like, oh, it might have built earlier on at, like, layer 3 versus, you know, when it reaches the server.
+That's a good point.
+So, I guess, I was planning this to be more of a trick question, actually. So, actually, you cannot totally always, that's the actual truth. I mean, there is maybe ways to kind of put some specific codes, determine maybe if the network, what's later on the stack of the network, maybe failed, but in reality, in general, in the general case, can you actually figure this out?
+You send a response, a request, right? You don't get a response back. What, what does that mean?
+If you don't get a response back. So if you do get a response back, great, okay, I got the response, I know that, you know, the server failed, but if you don't get the response.
+Could it be the server? Could it be the network? Could it be that they're both slow? We don't really know. And that's kind of a fundamental problem because of the distributed nature. So we don't have actual access to what's happening on the other side of the world, so you cannot make any assumptions about the delays also.
+So, the third challenge, is, concurrency.
+So… One could say.
+Is it not easy to make distributed systems? Let's just partition users across machines. Let's say each user, or, you know, it's like county, or it's like a zip code gets a server, and then, you know, we run like this. Any thoughts? Any problem with this?
+Beautiful. One user's gonna be higher than another?
+One is a little bit behind another, that's a great point, yes.
+numbers of it, if there's even enough for each person, like, if you distinguish each person to one server. Okay, it's… yeah, that's a good point, so you might not have, you know, you might not be able to split each person per server, but maybe you say, you know, you find a way to do a good split, but indeed, the split is a very hard problem. There was a hand also back there.
+I guess…
+If there is update in one of them, you want to ensure it's consistent and all of them.
+That's a great point, yeah.
+Oh, we need variability to avoid fragmentation.
+Variability to… to avoid fragmentation, variability of what's… of what type.
+Sorry, sorry. Variability of what type?
+Okay, okay, so this, this has to do with the adaptability of the load, yeah, behind you, yeah? Like, maybe it would be hard to communicate amongst, like.
+Different servers, because different people are on different servers, and maybe you have, like, scale patches or something like that.
+Totally. So, so I guess you… you gave… all of you gave, like, two types of RSAs, and one of them has to do more with the load.
+So, there is, you know, questions about how many users do I assign on its machine? How big machine does its county need? If the load is not… is not static, but it's dynamic, so users don't always, you know, send the same amount of requests, but they send more requests when they get back from work, or when they're at work, I don't know. So, yeah. So there is a lot of this variability, and this is the load question, but then there's also the other category that you mentioned.
+Which is actually shed state. So…
+it's not the case that you can just separate these things, because then that would mean you would only see the, you know, the Instagram posts of your… in the same county. So how would you see the actual things that are happening in the other servers and done by the other users? So the whole point of these distributed applications is that they share state, and they seem to somehow communicate and synchronize across them, so you cannot just split them.
+Okay?
+Great.
+So…
+That means that we actually have to run multiple kind of users, multiple requests, and multiple things, concurrently in accessing the same kind of distributed state.
+And, in operating systems, how many people have taken operating systems here? Hands up.
+Okay, so, so, in operating systems, the main concurrency mechanisms that we use, there are concurrency mechanisms to handle concurrency, like logs, mutexes, semaphores, and so on, but is there a problem with those mechanisms in this context that we have here? Any thoughts? Any problem?
+On the back, yes. But I feel like, like, LOX and NewTectas and Zemforce, they're all very specific, or, like, one machine managing maybe multiple threads on a single machine, but now you're dealing with multiple machines.
+Totally. So, so all of this, all of these, all of this exactly are restricted to a single process, and we need the service to essentially, now have logs across servers. And the challenge, this becomes really problematic, actually, because when you have cross-server synchronization.
+think that the network or the machines might be unreliable, so if someone holds a lock, now they might slow down everywhere across the globe. So you have to have systems that are able to somehow synchronize without, though, holding these locks and making everything unavailable. If some network cable is slow somewhere, some machine is slow somewhere, and so on.
+And there is other challenges that exist in disability systems, and why they're hard. Design and evaluation at scale. For example, you have to, you know,
+Depending on the load on your service, you might have to redesign your software services completely to be able to handle different magnitudes of load, and in general, it's very hard to evaluate at scale or predict exactly how your system will work at big scale.
+There are also problems with comprehensive testing or correctness, because in a distributed system, and in concurrent and distributed systems, in general in concurrent systems.
+there is so many concurrent threads, and there is so many different execution orders between all of these concurrent and distributed threads. So if you really want to test what's happening, you have to test exponentially in executions, because you have to say, for example,
+Let's say you have, you know, thread A and thread B,
+So, you can take a step here, a step here, a step here, a step here, or it can be more like, this takes two steps, this takes two steps. So, all of these different executions, and imagine, like, you have hundreds or thousands of threads.
+Could lead to different behaviors in the system, so if you want to really check their correctness, you have to do all of these orders, different orders, and make sure you are correct.
+And finally, there's also problems with security. Like, when you have network, and when you have services with different trust levels, there's problems there too.
+So there are many problems.
+And this is not a new thing also. Distributed systems have widely been understood and studied as very important for more than 40 years now. And, for example, many Turing Award winners have worked on distributed systems problems, either directly, like Leslie Lampert, Barbara Alinskov, and Butler Lampson, or also more indirectly, like Clark Emerson Sifakis, and Punelli, who worked on correctness, kind of,
+And formal methods for reasoning about concurrent and distributed systems.
+So, given all of these problems, and this is this motivation for disability systems, now the goal of the class is that we want
+2.
+Build an abstraction where we unify several machines.
+And the user, from the perspective of the user, these machines act as a single, coherent, unified thing.
+So, this should enable concurrent use of state and resources, and hide all failures.
+And the point is to automate the heavy lifting, so developers don't have to actually do it, because
+And that's why this class is important, because you could say for, you know, everyone who wants to build a distributed system, let them just go and figure out all of these problems, but the study of distributed systems engineering is essentially, how can we build systems that provide better abstraction, either for developers or for users, so that they can be used as parts of bigger systems.
+A problem that we will need to be very careful about throughout the class is that the stronger the abstraction that we provide.
+the worse the performance we will also get. So this is a trade-off that we will have to manage throughout this class. If you want to provide an abstraction that looks totally sequential, totally no faults, everything runs perfectly, something will be… will become slow. So… so…
+This kind of data is what we'll also learn to navigate and understand also its fundamental kind of limitations.
+Many possibility results.
+So yeah, the goal, this machine crashes, this machine crashes, remember exactly the user, everything works properly, they get the result, they can load their card, they, yeah, they order their delivery, and so on.
+Contrasting this with operating systems, distributed systems
+gives one… gives an application the illusion that it is running on a single machine, though there are many machines, whereas in contrasting operating systems, we give every application the illusion that it is running on its own machine, though they share a machine.
+So this is… this is kind of a way to think about how these two classes are kind of different and, yeah, and have a different perspective.
+So, the class outcomes are…
+As developers of distributed systems, to be able to reason about uncertainty in these systems.
+And as users of distributed systems, to be able to identify guarantees and properties offered by a system. When will it work well? When it will break, and what do these things mean for, you know, me as a user or developer when I'm using a distributed system under the hood to get some other higher-level goal?
+Okay? Nope.
+Questions? Thoughts?
+Great.
+So how will we achieve these outcomes?
+The class is roughly split in two parts.
+So first, we have these very beautiful foundations. Everything is very well boxed with very nice labels.
+you know, beautiful, elegant, clear insights. These are, like, the theory that we will study and see of how the symptomatic systems work, and this is very nice to be able to draw bigger conclusions about what can work or what cannot work.
+And then we'll also see the real-world systems, which look like SIT, but they're functional, and they can actually work and get you what you need to do. In this class, we will need actually both, because with only one of them, you can't really get anywhere in this domain, okay?
+So, let's, let's look at an interesting problem that's a good indication of the distributed systems problem.
+So, imagine there's two towns across a lake.
+And they want to have a fireworks show at the exact same time, of course, because otherwise it will be very awkward if one of them starts first and the other does not. So you want to start at exactly the same time.
+Now, the problem is, they need to agree on an exact time, of course.
+And they only talk with both messengers. This is in the time before phones.
+So, another problem is that the boat messengers might actually get lost in the lake, either because they're not very capable, okay, or there is fog in the lake, or I don't know. So, the boat messengers might not always arrive, but they might get lost.
+So the goal is.
+For them to decide what is the protocol to agree on the time, on the exact time they will do the fireworks show.
+And for this, I am asking this question to you. You should discuss for a few minutes, and then we'll get back and talk about it.
+Okay, let's start gathering back, then, the discussion here.
+So, yeah, what do people think? What's the protocol to make this work? Yeah, Hans? Hans, what do groups here think? What are… what are people's thoughts? Yeah?
+user acknowledgements, okay, like, okay, we'll keep that, let's, let's hear more thoughts.
+Have one town just design a time, and then send, like, 100 votes to the other one telling them time, and then the first one
+Always does it at that time? Second one, they receive an email that also during that time. That's, that's, that's, that's, that's a strategy. So, like, you know, completely bombard them, send out all your vote people, and then, you know, if, if one of them arrives, then you get, you get the actual, yeah, time, the same time.
+Send one boat across, it will get all the times, and then it'll come back.
+And then it'll pick a time and then confirm it and send it to the other side. And you do that four-way sequence until, like.
+Until it's done. So basically, acknowledgements, edit from each side. Okay, interesting, interesting. So let's try to get this together a little bit. First of all, the one where you bombard them and flood them, okay, that could work, but there's still, you know, one chance that all of them get lost, and then this doesn't really work. But, you know, you could still send them, still keep sending, and then, you know, you start the show, hope that they have received at least one, and then, you know, hopefully this works.
+But let's go a little bit in the acknowledgement kind of discussion.
+So…
+Let's say, town 1 says to Town 2, okay, we decide the time. Fireworks show, April 10th, 10.42 PM. Okay, let's go.
+Is this okay? No. As some of you said, you need an acknowledgement.
+So, T1 cannot be sure until they hear an acknowledgement. So, if they don't get an acknowledgement, and they throw the fireworks at 1042, they might just do it on their own.
+So then, T2 will send to T1, okay, let's do the show on April 10th, 1042.
+But you said four ways, so is that okay? If not, why not? If yes, why?
+Thoughts?
+T2 doesn't know if T1 ever received the act, so T1 might just sit there and, like, wait for this act to just never found, and T2's environment instead. Hmm, yes. So, T2 actually does not know if T1 has received the act.
+So actually, T2 cannot be sure, and so this means they have to wait for another act for T1. Thoughts?
+What now? What do we do now?
+Thoughts?
+If we send another AC, what happens then?
+I don't know, once been… Do you want the logical, please do you…
+Wouldn't be so true.
+Exactly. So, I guess the whole point here is that no matter how many acts you send, you are not sure, you are never sure that the other person, the other town, has received your act. So, you might keep sending acts, and you are never sure.
+So, there is a distinct systems analog to this problem, actually. And this is… imagine two computers across the world need to agree on a shared value, not like a value, like, you know, our values, but two database replicas agreeing on a table value, on the value in a row in a database.
+And this is called the consensus problem.
+And if the network connecting them is actually unreliable, so messages could be dropped from this network,
+Can they always agree on a common value? The answer is no. So, actual consensus cannot be perfect, cannot be perfectly done in this context, where you have multiple computers and an unreliable network. It cannot be done with full all the guarantees. So you have to sacrifice something.
+We will learn more about this later in the class, but this is… and this is one of the key kind of, you know, protocols in the systems and topics in distributed systems, but I just want to give you a sense of, you know, the impossibility result here, and what… what these kind of problems look like.
+Some other topics that we will cover are synchronization of clocks, there is logical clocks also, there's failure recovery, there is consistency, which means how do you make sure that the data, the shared state you have, actually looks consistent from an outsider perspective.
+We'll talk about consensus, the program we showed here, distributed transactions, which means providing locking guarantees in the context of distributed state, and we'll also talk about the real systems, and how they work, and how they balance some of these, topics that we will… the theoretical topics that we will see in the class.
+So, course logistics, actually. Any questions on the topics, on the… on the motivation of the class?
+Yeah, thoughts? Have a couple questions?
+What are some prereq and assumed knowledge that we need to have for our previous classes, like operating systems, network?
+So, I think, I think you don't really need the full prereq of networks, so it is… and formally, it is a requirement, but I think you just need to have a sense of…
+you know, how can I do basic networking in software, and understand basic networking and, you know, its guarantees, reliable or unreliable, and so on. And I think other than that, it's mostly about maybe knowing about concurrency is a good idea, but it's not the requirement, because a lot of the things that we'll see, like consistency, also has to do with concurrency theory.
+So if you have some sense already of, you know, threads and concurrent accessories and logs, that's good, but it's not really required, I would say, yeah.
+Other thoughts? Other questions?
+Great.
+So… Let's switch to course logistics.
+So yeah, the staff for the class, includes me, Kai.
+I'm, yeah, I'm a second year professor here at UCLA, originally from Greece, I did my PhD at Penn. My indices are cloud and distributed systems, programming languages, compilers, and then, yeah, the TAs are Kaelin and Sebastian, and the LAs are returning LAs, Alec and Peter. Kaelin is also a TA
+after having taken the class, I guess he liked the class a lot, I don't know. yeah, one thing that I want to note here is that,
+we really do… are searching for, you know, LAs for this class for next year, so if you like this class, maybe you can consider becoming an LA next year. Just a thought. You can also ask Alec and Peter whether they liked it or not, and you know, yeah, what's good or not good about it.
+So, there will be discussion sections and office hours. Discussion sections are on Fridays, office hours by Kaelin, Sebastian, Alec, and Peter, they split two and two in discussion sections and office hours. And,
+Yeah, prerequisites. As I said, primarily, concurrent programming, but not really, you know, details necessarily, but having a sense of concurrent programming. Programming in a Unix environment is useful because of the assignments.
+Knowing something about Go is not bad, but, I mean, nowadays, it's much easier to kind of, like, learn the syntax of new languages.
+And yeah, some of these things are taught in CS111.
+Yeah, if you think you don't have the prefix, and you're, you know, you're considering whether you want to take this class based on that, come and talk to me after class, and we can discuss, and you can, you know, give me your precise kind of background, and we can figure it out.
+Oh, an important point. The cluster kit size is 120 for this offering, and it will keep growing next iterations, and it's now a regular course, so there will be an offering every year, by me in the spring.
+My plan is to offer PTE space per meeting, but just to get a sense, I have already received emails. Could you raise a hand if you want a PTE?
+Okay, okay, okay, 1, 2, 3, 4, 5, 10, 8, 9, 10, 11, 10.
+Okay, so, okay, I guess… we'll have to see what parties happened exactly about this. I think I would like to do more of it is. I'll have to see if there is actual space
+If it… because I think the exam will be here, and I think if the class 120, class 20, something completely is, we will literally not fit. So, so let me write this down and talk to some arguments, see if that's actually, possible, and to what extent.
+Here we go.
+He beans.
+Okay, the resources for the class, course website,
+there. Piazza, you can find the links, these links on Brewingland, too. I will use Brewingland for announcements. All communications, it would be great if you do them through Piazza. So anything that you want from, you know, the instructor team, right, make a post, public or private, on Piazza, because that's much easier for us to track.
+And for any of the instructor team to answer, because emails are much easier to lose, you know, who will answer this, and so on.
+The course components, there is, lectures. It's encouraged that you watch them and keep up with the schedule. There is four assignments, that are pretty hard, and there's a final exam.
+So on lectures…
+I will try to record the lectures, I'm already recording this, and if there is no problem, this should work, probably. It worked last year.
+Recording is not a replacement. Oh, I will also… I will also upload the slides on… on Bringlin, I forgot to do this today, but if… last year, some student always reminded me before the start of class, because I always forgot. So, from next class onward, if someone wants to, you know, before the class starts, tell me, you know, please upload the slides, I'll do it. Before the class starts, also so that you can have them and take notes while we… while we have the lecture.
+So, as I said, recording is not a replacement for coming to lecture. Last year, students who didn't come to class did not do as well. I don't know if this is correlation or causation, but, you know, I'm just throwing this statistic here. I'm not requiring attendance, so you do you. If it works better for you to watch the recordings or not even watch them or something, feel free to do that. The main benefits of coming to class
+are that you get to ask your questions live, and you get to meet your other students. And that's, you know, that's kind of fun. So, yeah, come to class if you want. I think it's a good thing, but yeah.
+Discussion sections.
+Discussion sections are actually more important to go than class. I actually, you know, I heavily encourage you to go to discussions, even if you don't want to go to discussions, because, you will both see theory and also, help and, with assignments, which are pretty hard.
+So, I think the best way to kind of learn for this programming assignment is to go and debug things and talk to people and kind of, like, try to figure it out on the fly, and so I would heavily recommend that you go to the discussion sections.
+Questions so far about logistics?
+I guess… yeah, what's the third doing?
+I guess there's two ways. I don't know why there's three. Yeah, there's the theory and the lecture material, and then there is the assignments. Yeah, two ways.
+I guess you also meet your peers, that way. yeah.
+So, programming assignments, four assignments in total. First one is a MapReduce introductory assignment, dramatically easier than the second one, warning, warning. so this… and the second, third, and fourth are assignments that build on top of each other. Oh, it's the second?
+Excellent, but you're welcome.
+Yeah, there are some textbooks that I also write on the website, and you can follow those too. Yeah, yeah.
+Yeah, so assignments, yes. Second, third, and fourth build on top of each other, and they are really hard. So compared to the first, you will do the first in some amount of hours. The second is at least 2X. For me, it was 3X, to do the time, to do the second. So, you know, keep that in mind.
+And the first one is individual, so we want you to, you know, work on the first one individually. It's more of a, you know.
+if you, if you, you know, if you can do the first individually, then you can probably, you know, also tackle the second. And then, yeah, the goal is that in the second, third, and fourth, you can also group up with someone, and so be up to groups of two. You don't have to, but you could.
+And we recommend it, because you can talk with your… with your group member, and figure out how to do these complex distributed systems protocol implementations.
+There will be a form that will be released at some point, where you will add your group member by that specific date, 10th of April. If you have trouble finding partners, go to discussion, meet people, talk to people after class, or talk to people during class, during questions, or post to Piazza.
+Questions about assignments?
+the logistics, I guess. Let me continue, I guess, with assignments before we answer all the questions about them. So.
+They are all written in Go. how many people here have written anything in Go? Hands up.
+Okay.
+how many people here have written… yeah, I guess, I mean, I think Go is syntactically very similar to, like, languages like C++. It's kind of simpler and cleaner, so I think you can probably, you know, if you have written something in C++, you can probably very quickly, or some other lower-level language, you can probably, you know, get your… get the hang quickly.
+The assignments have test cases, which you can run locally, and you really need to understand the test cases to debug. So test cases test for all case types of interactions in the system, so you have to really understand them before you start solving the assignment. It's not like you could just brute force them.
+Assignment policies.
+Due by 10 PM, on the deadline date, there is this, exponential kind of, penalty for late days, so the first late day, so 10 p.m. is the deadline, 10.01,
+you get 2 to the power of 0 penalty, so that means 1%. You can get a maximum 99%.
+If you go 2 days, you know, more than one day later, you get 2%, 4%, 8%, and so on.
+Collaboration in this class.
+There's good and bad collaboration, good collaboration, clarify problems, specification, discuss insights, good collaboration. Bad collaboration, sell code, and give away the solution, okay?
+And, what's 1201? Would that be counted as N equals 1 or n equals 2? Wait, what, which one? 1001? 12.01, on the same day. 12.01 is, is 24 hours before, so 10.01?
+10.01, and for 24 hours after. Okay, so it's… It's 1, yeah, yeah, yeah.
+So it's not at the midnight, I guess it's 24, 24-hour late days, yes.
+Other questions about the assignments?
+Okay.
+So now, what do people think this is, or what do we discuss now? Any thoughts?
+Then…
+AI. AI. So, what do we do with AI, okay? So, we take this stance in this class, that use it as much as you want, you can be creative.
+The only requirement is that you submit an AIUSA.txt per assignment.
+Precisely describe what we did in this AI-users.txtly.
+An example is I used, CodeLLM, this CodeLM club, to write a complete assignment. I never even looked at the code it produced.
+This is a valid AI usage.txt, hopefully not one of you. And why do I say hopefully? I guess I'll get to that in a minute. Usage of AI will not affect your grade, so even if you write this, you will get full grade, I don't care.
+However, if you're found to have used AI but not having written an AI usage, then you will be heavily penalized.
+So, I don't care if you use AI and you, you know, you explain exactly how you use it, but if you use it and you don't say it, then you will be penalized.
+And, a data to keep in mind, and I guess…
+One more thing with respect to this is that, also, you will be held to, academic integrity standards with respect to what AI produces, so if, you know.
+you use AI together with other five people, and you get the exact same code, and then you submit this code, and then we see that, you know, five of you have the same code, then we will… this is… this is considered copying, I mean, we cannot… we have to… yeah, so you will be held accountable, so be responsible with how you use it. The reason why we take this kind of stance here is that
+I think, you know, gradually, this will help with a lot of problems in how to program these kind of systems, and we want to understand what are the actual difficult things for you to learn. And if you learn how to use the tool together with the actual hard things, that's the best outcome for us.
+So we want to understand, you know, what can you do, what can it not do, what you want to do with it, what you cannot do with it, and then gradually we can, you know, make the class be about the hard part, and about the part that's actually relevant.
+Perdue.
+At the same time, I would like you to keep something in mind.
+The less you write, the less you understand.
+So, balance the state of any way that works best for you. If you just, you know, get… manage to get some kind of code LLM to write the assignment for you, you will not learn anything.
+And I think you are, you know, you are responsible adults here, and you want to be in this class and learn something. So if you are, you should, you know, try to learn something. So I would say, don't just go immediately for it, and try to understand what you have to do. Maybe use it for syntax, you know, use it for similar things.
+Even… at the end, you can use for whatever you want, but this is my kind of… this is my personal, subjective kind of encouragement, okay?
+Thoughts? Questions on this?
+Clarifications?
+Yes? You don't use AI at all in this time, you still need to…
+Yes, you can write, I didn't use it.
+Great.
+Okay, assignment one, out of the day. This is a lie, it's not out of the day. We wanted to have it out today, but we don't. We will let you know when it's out. And it will be due next Friday, by 10pm, as we said.
+For the submission, there will be some process that will also be described in the announcement, and you will figure it out. You don't need to read this now.
+Exam.
+The final is on June 12th.
+Hmm.
+And there will be no makeup, except for dire circumstances. So schedule interviews and other commitments appropriately, because last year I had, you know, many people being like, oh, I need to go do this internship, actually. So, not interviews, internships. I had to do this internship, I can actually take the exam.
+So, please, you know, try to make sure that this can be done properly.
+And a related question to this.
+How many people in this class take, unrelated, maybe, you know, how many people in this class take CS130 this quarter, hands up.
+Okay, hmm, this does not correspond to the number of emails I've received of people taking 130, where the exam conflicts with this class. Okay, so I guess I'll have to respond to these people on email, since they're not here.
+Booking. Grading,
+breakdown. The programming labs are 50… 57% of the grade, with increasing, percentages, because they are harder and harder as you progress.
+The exam is 40%, and the discussion attendance is 3%, meaning
+For each of the first three discussion sections, you can get 1%.
+If you go. And pick any of the two you want, depending on your conflicts. If you have a conflict, make a private that is completely unresolvable, and you cannot make it to one of the… or, you know, any of these, the first three discussion sections. Make a private Piazza post, talk to the instructors, and we will find a way to kind of, like, see how to, get this to work.
+And, I mean, based on this also, I don't know how to make it clearer, please go to discussion, okay?
+So, tips for success. Start the labs early. Attend lectures, if you want. Discussions, attend them for sure. Ask questions when something is unclear. To me, in the class, discussion section, piazza, office hours.
+to do this for next class. Start working with Assignment 1. Discussion 1 will be very useful, because there will be a tutorial on some important things, and on how to start Assignment 1. Sign up in Piazza, and find a partner for group assignments 2 to 4.
+Thank you, that's the end of the first lecture.
+the silly.
+Should I send you another email? So, so, I think what I will do, actually, is I will make out a form, and I'll have you have everything
+typically… .

@@ -1,0 +1,492 @@
+Did you watch, like… I watched it.
+I don't know.
+Good luck.
+So, hello, everyone.
+This is, the last lecture for this, quarter for civil systems, sniffed.
+And yeah, before we get started, with the… with the last lecture, let's…
+talk about, the quiz questions from last time, from Newcast. So, there were 3 questions, and the first one talked about microservices.
+And, the main point of this… it mentioned some… some positives of microservices, like team independence and decentralized updates, but microservices actually make latency worse, and that was also what we saw with Nucas.
+I think this… most of you got this question right. The second one was a very important question, and some of you got work, so I want to… I want to focus on this a little bit. So, Mucus does not provide real-time monitoring guarantees for correctness, and let's see an example of that here.
+So this is the execution we saw, the second execution we saw in the class last time.
+And, we have the front end making some read requests that hit the cache and return when they hit the cache.
+However, before these requests were even sent out, there is a right that we eventually invalidate this particular request.
+The problem here is that, the problem here is that
+Even though this ride happened and possibly completed the whole request that wrote before these requests started.
+These reads don't see this, right? So there is no real-time ordering guarantees in Newcastle. CAS violates the real-time ordering guarantees to provide performance benefits through caching, and not invalidate on the critical path.
+So, yes, does that make sense to people? And, does… do the real-time ordering guarantees… does it make sense what we mean by real-time ordering guarantees? Does it make sense why Newcastle does not offer real-time ordering guarantees?
+Questions about this execution in particular?
+Great.
+The last question was about the diamond microservice pattern, and then there was, like, a little of a, I guess maybe it was confusing, a little bit, but…
+this question did not ask about a microservice pattern in general, but just a diamond pattern. The diamond pattern is a pattern we saw last time, when you have
+SL is calling another service.
+This kind of pattern.
+So, this pattern affects casting correctness.
+And if we have caches, by default to this pattern, we might get wrong results, and that's one of the things Lucas cares about.
+However, this pattern doesn't have anything to do with programmability or performance, and this was just more that took kind of, like, as an unrelated effect. So the main effect of the diamond pattern is that caching doesn't work straightforwardly, but we need some kind of modification to make it work. And the modification we saw last time is to keep track of all the services we visited.
+and of the services that are listed by the CAS items.
+Question about this.
+Does that make sense to people?
+Great.
+So… Two days, Alexander.
+We will talk about some lessons learned from the class.
+We'll talk about some future directions, and loving problems distilled with the systems.
+There won't be an outstanding.
+And then we will conclude.
+So…
+First of all, just to get a kind of, like, brief overview of what we've talked about in this class, we've talked about a lot of topics. We've gone through, clocks.
+We talked about MapReduce briefly as an example of distributed system and distributed application to motivate some of the things we're going to see. We talked about snapshots. We talked about ways to do, replication and fault tolerance using primary backup or using Paxos.
+we talked about consistency, various types, from stronger to weaker. We talked about consensus, with Maxos, which is also used for fault tolerance.
+And we talked about practical systems that do consensus, like cyberKeeper. We talked about sharding, and how can we scale up a system to handle additional load.
+transactions, which allow us to do, to have guarantees on operations that touch multiple of our shards or partitions. And then we're talking about various systems, like Dynamo, Azure Storage, Spanner, Velos, and Nucas.
+So, one thing I want to do today is to summarize on some key high-level lessons from the class, which are…
+Important for system building, at least in my opinion, both in academia and industry.
+And not of them… not all of them are actually fully independent from each other, but I think this is a way to kind of present them that makes sense.
+So, the first one is system goals.
+Before designing or even starting to think about how to implement the system, we need to really agree on the system requirements.
+And the requirements, setting these requirements as goals is critical for system building. And this is how we really presented and talked about all of the systems in this class. We first saw what is this system really trying to achieve? What are the system goals? And then, given these goals, the design falls out for free.
+The requirements and the goals can be about correctness, performance, or other types of requirements, like the fact that Newcast, for example, can be incrementally deployed, or does not require modifications to the user application.
+And the good thing about requirements is that we also come up through them with non-goals.
+So, forecasting, for example, we say.
+we don't care, really, about the right-heavy load. So, if an application has ride-heavy load, then caches are not really that useful, because you will pay more cost to actually invalidate things, and you won't get, really, a lot of… a lot of benefits. So.
+A good exercise for you to be doing whenever you want to be designing systems, building systems out there, is, first of all, think, what are the goals that I'm trying to achieve?
+What are the things that I'm trying to, you know, to solve, or what are the things that I'm not trying to solve? And I'm actually totally happy, to completely ignore, okay? Questions about this, about this, lesson and the system goals in general?
+Great. The second lesson Is to think defensively.
+If we want to build a robust system that works and is able to tolerate faults, is able to tolerate a lot of bad adversarial conditions, we need to think about all of the corner cases. Where will our system live? Who can interact with the system? What are the worst things that can happen in this environment?
+Are the messages lost? Can components crash? Can the system get overloaded? All of these things are things we have to be thinking about if we're building a system to be able to make it robust.
+So, another thing that I think you should keep in mind and think about after this class is that,
+Whenever you want to build a system, if it's to be productionized and run in some kind of environment that is not, you know, a sandboxy bubble environment, you need to think of all the terrible things that can happen and prepare against them.
+Okay? So, to prepare against bad things, we need to first think, what are the bad things that can happen?
+And this is what we also did in this class. We first talked about the kinds of faults that can happen, the kind of bad things that can happen, and we always thought, what could go wrong here? What could go wrong here? So this is, I think, another kind of lesson that I think is useful for system design and system building in general.
+Questions about this?
+Great.
+The third lesson is that specifications are very, very, very, very important.
+And specifications decouple what we want and how to get it.
+Some examples of useful specifications that we saw in this class are consistency conditions. So, consistency conditions, like layersability.
+talk to us about what we want from a system without talking to us at all about how to implement it. The usability doesn't say anything about how your system implements the usability. It just says, this is a contract, a specification, that clients might find useful.
+So having these contacts and the specifications allows us to decopy and solve problems.
+in both levels, both the level of the user and the client, and then the level of the system builder. As long as we have a good contract, we can then, first of all, reason about what we can do with the system as a client, and reason about how to build the system and provide this contract.
+And we saw other examples also. Isolation, consensus properties, and so on.
+Another thing that is very, very important about specifications is that they make it very easy to compare against systems.
+So…
+if you have specifications, like measurability, consistency conditions we saw, we are now able to say, okay, this system offers usability, this system offers sequencer consistency. Since I can compare these two specifications, I also can compare the systems. Whereas otherwise, we would have to talk about
+The implementation of its system, and somehow try to find a way to compare these two implementations was really hard, because there's no kind of abstract model that allows us to reason about it.
+Thoughts and questions about this distilled lesson?
+I guess one more thing, just that I think I didn't really… I just have a bullet for this here, for the first lesson.
+is that one more thing that I've mentioned also throughout this class, but I should also hammer home here, is that
+What we mean by goals and non-goals is really this implicit assumption that, there's always trade-offs. So there's no system that works perfectly in all cases, so that's exactly why we need to choose our goals, because if we don't choose our goals, then we will make a system that performs well in some
+cases sacrifices others, but the ones that sacrifices might be the ones that we care about. So, detecting and identifying the goals is exactly the way to navigate the trade-offs correctly, and find what trade-off can be… what goal can be sacrificed to get benefits in some other thing that is more important for us, okay?
+Questions about these lessons?
+Or thoughts about, you know, overall, the summary of the content so far, and what we… yeah.
+Great.
+So, let's now talk, let's now switch to some open problems, and future work, and future things, you know, that are relevant in distributed systems.
+So, first of all, this class, I mean, we… we… we try to cover
+a lot of things, but primarily, my goal was to cover a set of fundamentals that you need, no matter what you're going to study, you know, beyond the distinguished systems, and a bunch of systems to show you this kind of realistic trainers. But, of course, we didn't cover everything. So now,
+I will go over some of these bullets, which go from cloud computing, data processing, system reliability, collector's guarantees, and so on. So I'll go through each of these bullets, just to give you some pointers on what are some open and interesting problems that… or, you know, things where you can dive deeper to learn about, you know, what's happening now.
+what's happening on things that we didn't really cover in the class, okay?
+So, first of all, A very important trend,
+these days is to… is serverless and cloud commuting. So, what is happening more and more is that we offload more and more of the functionality to cloud providers.
+And what I mean by offloading is that originally, cloud was essentially just a rental of physical machines. You know, you can get access to physical machines for some period of time, run something, and so on.
+you know, gradually became VMs, became lightweight containers, and now we are at a state where most things are these functions, serverless functions, or function as a service, or this kind of terminology, which what this means, essentially, is that we
+the provider deals with everything that has to do with deployment, and we just tell the provider what code we want them to run for us. So the kind of, like.
+fundamental, or key, key example of this is serverless functions, Lambda, Azure Functions, Google Cloud Functions, where the user writes code in a language of their choice.
+And the code is this function that handles incoming events, like an HTTP request. Let's say this function here, process request and do something, and then we pass it to the provider, and the provider deals with everything.
+So what serverless means doesn't mean that there is no servers, actually, but it means that the server is handled by someone else, the provider. So the provider takes your function.
+allocate some VMs to run your function.
+then load balances across multiple VMs when there's a lot of load.
+Then they scale the VMs up and down.
+And what you get is that you pay for what you use. So, let's say the provider, you know, there's a load spike in your function,
+you do not… the provider has to allocate VMs and deallocate VMs for you, and you do not pay for the… for the VMs at the VM allocation time, but you pay per execution.
+Of course, the provider is making money, so this means that the cost that you pay for its execution is higher than what you would pay if you got the VMs yourself, but then you would have to deal with doing the scaling yourself, doing the VM management yourself, upgrades, and so on.
+So this is the concept of serverless functions. Any questions about serverless, or about this? Yeah. Any questions about this?
+Does that make sense?
+Great.
+So, serverless functions are short-lived and do not have permanent state.
+And this causes, why is that the case? Because if they had state.
+then the provider would have to worry about how do I balance, how do I kill down this VM now that there is some state here? I have to figure out ways to manage the state, to replicate the state, and so what the serverless providers ask you to do is that if you have any state, use an external service, like S3, or Dynamo, or whatever, and in the function itself, there is no state.
+This causes several challenges.
+Like, how can we correctly and efficiently provide some abstraction for state in serverless that is fault-tolerant? And there is papers
+Like this one here, fault-tolerant and transactional state to serverless workflows, that talks about how can we build a system that provides fault-tolerance guarantees for the state in the serverless functions.
+Then there is questions of how do we build things on top of serverless, since serverless does not have state internally. And there is papers out there that show how we can build very interesting things on top of serverless, like this paper from Laptops to Lambdas, which shows how we can do things like take Chrome compilation and run it in thousands of serverless functions to… so that it can run, you know, in a few seconds instead of
+Whatever, like, multiple hours.
+And then there's also other work on serverless. These are just some examples, but this is a hot kind of area that is continuously moving, like efficient communication over serverless, how can we do efficient communication, how can we make sure that our serverless functions are correct, and so on.
+Questions about serverless functions, these references, or, you know, other, other thoughts about serverless or the cloud?
+So… I just, like…
+But I can think of a way to obstinate is just your function
+Includes, like, writes this to the database, like, to handle problem requests, right?
+Is that how these papers are approaching it? Like, do you need an external, like, storage to keep this, and then, like, keep consensus and so on?
+So there is… there is some papers that… the first paper here uses… assumes that we use an external service, but it deals with mainly the problem of, like, importance. So if your serverless function crashes in the middle and restarts, how can you make sure that you don't, you know, modify your state in consistent ways?
+There is other papers, as far as I know, there is also work that talks about how can you, in your function, have state. Of course, you won't have fault tolerance guarantees, but if you have
+for those guarantees in the same way that an external store might have, but you might have guarantees in the form of, if my function runs
+it will not cause any inconsistencies to the state. But yes, there is other work too, but yeah, this work in particular focuses on assuming that the state is sitting in an external database.
+Other questions?
+Great.
+Let's talk a little bit about data processing. So in this class, we saw a little bit about MapReduce in the beginning, but very little.
+But there is so many things since MapRit use, and here are some initial pointers, which probably you already know some of them. So there is Spark. Also, one person asked about Spark in the Ask Me Anything kind of form, and before that, I can give a little bit of a brief
+overview of what it does. The key of Spark…
+Spark is also for mass processing, like rapid use, but the key idea, the thing that it mainly deals with, is that rapid use
+has this problem that between every stage, every MapReduce state, it writes everything to the disk to have fault tolerance. So you have a MapReduce state, you write everything to disk, and then if you pipeline multiple MapReduce stages, you end up writing to the disk after every MapReduce,
+states. So the main benefit of Spark is that it pro… it, it, it,
+its main contribution was a way to keep the state internally in some prominence of where this state is coming from, so that if we pay, we can then rerun all the previous things without storing things in storage. Let me show this and experience the kind of a visual way.
+So, let's say, you know, you have some type of mappers with users, more map-based…
+You know, login users, and so on.
+So what a user would do is that it would save all of this in disk, save this in this, save this in this, save this in this. But really, the only thing you care about is really the final output.
+Okay?
+What Spark does is that it keeps some metadata. It doesn't save anything to disk other than inputs,
+And then, when it knows that if something fails in the middle, this, you have to imagine that this, even though it's two nodes, it is parallelized to run, you know, like, in a cluster of 100 nodes. So each one of those is, like, 100, actually, you know, workers, and so on. So if all this work is fails, Spark has a way to find, okay, which worker failed, and for which time.
+So, based on that, I will find the original sample that we care about, Mush it through this pipeline.
+And then only rerun this. So essentially, instead of having to store everything and rerun everything from scratch, Spark is able to identify only the real missing piece that failed, and push that only through the whole pipeline to get the final correct state, even in the case of failures. Does that make sense?
+At a high level, very high level, what Spark does.
+The patient who has the question can also ask a follow-up question, if they have any.
+Great.
+By the way, data processing is in general a very interesting topic, but in this class, it's supposed to cover everything, and data processing has a slightly different flavor compared to the things we've seen in this class, because a lot of what it cares about is this… is this kind of,
+It cares a lot about throughputs, it doesn't care a lot about latency, and it has a lot to do with how do we do efficient communication, and not that much about how we have this more finer-grained fault tolerance. And in this class, we follow the more kind of.
+The additional, let's say, distributed systems, kind of, like, curriculum, where we focus more on the faults and the fault tolerance.
+But, yeah, an additional kind of interesting direction for data processing that you can take a look and read if you're interested is stream processing. So there's a lot of… there's a lot of papers, after Spark also and aftermarket use that talk about stream processing, which is sort of doing bats for data, where you have, you know, huge data set covering this.
+You have incoming requests, and the workflows, data flows of the common requests, or computation, and how do you have them efficiently, and in a way that is fault-tolerant, and high throughput.
+So, you can look for this at this paper, NIAID, and the… some of the authors of this paper, who at the time were at Microsoft Research, if I'm not mistaken, now they have this company, which is called Materialize, which is… yeah, it's a very kind of, like, it's time to push further this view of
+Having stream processing be the kind of fundamental data processing, obstruction.
+And also, we have systems like actor-based systems, like Ray, which are an alternative to think about data processing. I will not talk to you about this at all here, but if you want, this is an interesting paper that you can take a look at and see, and…
+Yeah, to learn more about how data processing is evolving today. Ray has been very heavily used to do distributed reinforcement learning tasks, and so on.
+Questions about data processing?
+This is more of a, by the way, a laundry list, kind of, of all these different directions, so if anyone wants, you know, any, any, any… to ask anything on any of them, and what you want to talk about them, I'm very happy to talk about them, to the extent that I know. So yeah, stop me at any point, because there's a lot of, like, bullets, but
+You know, we can dive in, any of them quickly once more.
+Great.
+Then, we have system reliability.
+And, we talked a little bit about, you know, some kind of ways to have correctness for our systems.
+But it's really, really a very, very, very key area of research, which, you know, especially, I guess, big and small companies are working very heavily on. How do we make sure that
+A production system behaves the way we expect it to.
+And this has multiple kinds of directions, and there is directions that have to do with overload and overload control, so,
+you know, real systems often are under very heavy load. How do we make sure that they are able to tolerate this load and behave in a way that is predictable and reliable? It's not just completely crashing. And how do they maintain their SLOs
+But for some of the requests, at least, this is a paper that talks about this for microservice applications.
+Then there's another interesting topic that, various companies are also
+by putting more energy in, and it's very, very fresh, in the sense that people didn't even think about this until, you know, like, 10 years ago. It's the concept of metastable failures, and this, this is a paper to get started about this, metastable failures in the wild. This concept says the following, that
+a system
+Could get in a state that, when it has high load, some… this is a property of the system.
+being vulnerable to metastable failures. So sometimes with systems, if the load increases, they get to this weird state where if something bad happens, then no matter if you solve
+the load issue and the bad thing that happened. The system still stays in a metastably problematic state that will always
+There is no way, essentially, for the slip to escape on its own automatically, and it has to recover manually. Someone has to go in, you know, completely restart the system, and so on.
+And a nice example of that is, imagine a system where, you know, you have timeouts, and you redo some requests after the timeout. It's very common, you know, you don't hear back, you're a client, you don't hear back from the server for, you know, 10 seconds, you redo your request.
+In such a system.
+If there is a way that if you increase the load enough that the system is close to failure.
+And then something bad happens, like one machine, one sand crashes, and so on, or, you know, the machine gets a little bit bottlenecked, then it will stop being able to process all of the incoming requests, which means that all of this huge load of incoming requests will start firing the repeated requests, and so on, so then you will have not just the original requests, but also the repeated requests that they are doing, and then the system will be completely blocked, choked out.
+And it will not be able to exit from the state until you go and manually empty out all the requests that it has an incoming requests, until, you know, to get it back to a fresh state that it can still process things. So this is a very, very interesting
+direction for research, and there is, you know, I think Amazon in particular, is putting a lot of effort and time to understand, they have some researchers working on how do we deal with this, how do we understand these types of errors, and so on.
+Questions about this? Overload, metastable failures, and so on.
+Great.
+Then we also care about the correctness guarantees for this dividend system. And correctness meaning whether they satisfy their specification.
+And
+There is a ton of work on testing, model checking, full-fledged verification from both industry and academia on this topic, and some kind of recent works that you can look at and, you know, get inspired from if you're interested in this topic are
+the PP language, which is used to describe a distributed system, and then be able to test it in a systematic way, or model check it in a systematic way. And then full-fledged verification, this paper that was done by
+I think mostly Microsoft Research folks and some other… some academics,
+thus is the first, I think, that has full-fledged proofs of real-world implementation of distributed systems that they satisfy some safety and some liveness properties. And this is… this is, again, an open… open kind of hard direction. How do you make sure our systems are correct?
+By the way, as an interesting example.
+I don't remember if it's for this system, but there is, after this and before this, there have been a lot of… there has been a lot of work on trying to verify real systems, and then there is also papers
+or at least I've seen at least one paper showing that even a verified system actually has bugs. So they found… they took a verified system, and they showed that because the assumptions were not perfect that they made, it still has some bugs. So, verification is not a panacea, but,
+you have to, you know, for some critical systems, you might want to do it. The kind of, like, final kind of conclusion from this is that
+It's very important to figure out that our systems are correct, and there is a lot of work on doing this in a systematic fashion.
+Questions about correctness, verification, testing, model checking.
+Cool.
+There's also a lot of work on monitoring and tracing. You have a real production system, you… how do you know if there's a problem? And if there's a problem, how are you able to determine what the problem is and how to fix it?
+So in this class, we've almost completely been thinking about how do we build correct systems.
+But in the real world, there is a lot of, also, work on trying to understand,
+how can we monitor our systems and know what's happening in our system? And this is one paper that does… this is a line of work by… by some folks who
+Who, who build distributed tracing infrastructure to create some kind of causal, causal monitoring of systems, so determining causality relationships between events.
+And there is also very cool recent work on profiling, which is not directly for distributed systems, but profiling is also a very important thing that you want to know, you know, how fast are systems, how slow are systems, and so on.
+Questions about monitoring, tracing.
+Great. Disability transactions. We talked very, very, very, very little about disability transactions, and there is a ton of work out there. There is,
+work that talks about monotonicity, trying to generalize the concept of eventual consistency to monotonic systems. Essentially, monotonic systems are systems that can tolerate eventual consistency and work very well without requiring stronger consistency. There is…
+Causal versions of… stronger causal consistency that is
+Strong enough to guarantee almost everything that you might want, but can be implemented fast enough compared to, you know, sequential consistency.
+And finally, there's also more impossibility results, you know, that people have been studying on what things you can… you have to sacrifice, you know, and what kind of trade-offs exist in the system space.
+Questions about… about this?
+These papers, by the way, are just entryways. There is no, you know… if… there's no kind of way to collect everything in the space, but these are some good solid papers that you can look and then, you know, follow the breadcrumbs and kind of find papers that cite them, papers that, you know, this paper cites, and then kind of gradually build the framework if you're interested in
+These kind of things.
+Great. One more thing that is kind of also more and more prevalent is the idea of disaggregation in distributed systems. So the networks are becoming faster and faster, especially in the data center.
+And so it is becoming possible to switch our architecture from, instead of having these machines that have everything together, compute, memory, and storage, to instead pull together all of our CPUs, all of our memory, and all of our storage.
+So instead of having memory per node, we can have all memory accessible by everyone in the data center using a protocol that, like RDMA, that is able to go over the network to fetch every… anything from this big memory.
+And the key ideas are, and the key questions are, how can we efficiently use this additional memory? So, now we have this memory that's not local, but it's, you know, it's combined, and so all the applications can reach it. It's slower, though, than local memory.
+And how to do automatically… how to automatically use this memory and get some benefits without actually requiring a change to the application?
+And the good entryway for this kind of research is, Hansu's group here at UCLA that works a lot on this, on this, on this topic.
+Or at least, many students worked on this topic until a few years ago. I think now they're switching more to some other topics.
+And I guess, yeah, as a follow-up, this is another kind of interesting direction that I have no idea about, actually, other than, you know, a very high level. But I wanted to bring it up because it's… it's, it's important these days.
+how do we build systems to support machine learning? And that means training or inference. Doing it efficiently, doing it correctly, being able to tolerate faults, and this is fundamentally a distributed systems problem, because
+to train these huge machine learning models, you have to train on thousands of nodes, so the question is how… what can we do if a node fails? So there's a lot of problems. Again, Harry's group is working on some problems in this space. I don't know a lot about this, but if you are interested, you have to go and ping someone in Harry's group, and maybe they can give you more info.
+Questions about, about, decent segmented systems?
+Great.
+And we also have,
+blockchain and Byzantine consensus. So, one thing we have not talked about at all in this class, but we just mentioned, is that in some systems, actors can be malicious, meaning that we don't just have to worry about crashes, but we have to worry about some nodes
+Playing, playing unfairly, meaning that they don't respect the protocol that we have enforced.
+This is a much harder setup to provide than in guarantees, and the kind of fundamental paper on this is Byzantine fault tolerance and Byzantine consensus.
+This topic is very important on peer-to-peer systems, like blockchain, where actors are malicious, and they do not necessarily all follow the protocol. So, to have some guarantees, you have to make stronger protocols.
+that, you know, maybe assume something like, some nodes can crash, some nodes can be bad. Based on this, what can we actually guarantee for the whole system?
+Questions about, Byzantine fault tolerance?
+And based on the consensus, adversarial, malicious actors, and so on.
+Great
+The final slide I think I have for open problems is this, which talks about spins on classical distributed systems problems. So.
+We have classic problems that we've seen, you know, consensus,
+clocks, and so on. Even though these problems have been around for, like, decades at this point, like 40 years and so on, or even more, there is still interesting work happening, for this. So, this is a recent paper that I saw, by some people who came up with a better
+abstraction compared to the vector clock that has better performance guarantee… better performance behavior than vector clocks, if we do not have random access for the vector clocks.
+which we don't. We don't really care ever about randomly accessing vector clock components, but we care to only compare different vector clocks. So based on this intuition, these folks here came up with a way to structure the vector clock as a tree, and then get much, much better performance.
+Another kind of interesting, paper that I read was,
+by a group at Berkeley who thinks a lot about consensus, and they say that consensus should not be deterministic in the way we do now, where we say, given F false, I can tolerate F false.
+in a system with two F plus 1 nodes, but rather think about, statistical correctness, in the sense that in a real system, you would never, you know.
+what does it even mean to have FA nodes? This doesn't mean anything. What we can use as information when we are, you know, designing a system, or we are working in a hyperscaler is
+that we know that our nodes have some probability of crossing at any point in time. So, given this probability of crossing, how can we provide probabilistic or statistically very high guarantees that the system will work?
+Because even if, let's say, we have a 5-node system, with data and consensus.
+And we say, okay, we can tolerate two faults. There is a small chance that three nodes will fail. What do we do in this case? So the point is, we might want to start rethinking about consensus in a statistical and uncertain way, instead of just saying, okay, F faults, and what do we do with this, F faults?
+Any questions about this, or anything else that I talked about in this kind of…
+future work, section so far. Any thoughts? Any… yeah, any questions, any other things that people would like to hear about?
+Great.
+A break about the logistics, and also periodicity survey, please. And yeah, are there any questions about the logistics before we go to the Ask Me Anything part of the class? Any questions about logistics, the exam, I don't know, assignments or anything?
+the surveys?
+Thanks a lot, by the way, for filling in the survey last time. I read already, and many of your comments are actually very useful. The one that I had you… I forced you to fill in as captive audience last time in class.
+Yeah. Any, any questions about logistics?
+What's adjustments on how to study for the finals, and, like, what topics we should…
+Yeah, so I would say you should focus on all the lectures, you know, all the lectures have something interesting to say. I would say,
+put some additional focus on things that we asked during class, you know, and for most of the classes, we also have… I think there's two types of things that we will be asking. There's things about, you know.
+Trade-offs, understanding trade-offs, goals, specifications, and then another which is understanding implementation and how things work.
+So I think both of these things are important for you to understand, you know. Why do we make some trade-offs? Why are some trade-offs important? And also, how do we implement something correctly to provide some kind of guarantee? So, yeah, I don't think there's really any way to kind of, like, cut anything from the class, but I would say, you know, these two things are important. And also, in the exam, this is very, very important, actually.
+There will be a big component of the exam, will ask very, very detailed questions about the assignments. So, if you are one of the, you know, people who use AI more than others, maybe you want to, you know.
+go back and read what you did there, understand, you know, the details of your solution, the details of the specification, and so on. You… we expect you to understand fully what implemented in the assignments and the specifications of the assignments, okay? I think somebody asked something else, but let's say you, like, didn't implement something 100% correctly, like, is there any way, like…
+Like, how we should be able to know what the canonical implementation is. We will not ask you about the canonical implementation.
+We will ask you about things that you… I mean, if you didn't implement something correctly, and we asked something about that, maybe you cannot answer this. But, you know, this is like, yeah, I mean, there has to be…
+Yeah, yeah, you have to understand this… not… the thing we will not ask about is we will not ask about some imaginary canonical solution.
+If you have your solution, and you understand your solution, and you solved the exercise, then you should be able to answer, if you understand your solution. We won't ask you something about the imaginary solution that, you know, someone else has written, and understanding this. This is not the question we'll be asking.
+Yeah.
+Other questions?
+Okay, so…
+we are at this point of the lecture where we have the Ask Me Anything. And, we have some questions in the form.
+But before those, I guess maybe I will go to the first question of the form just to warm things up. And someone asked me, what are your thoughts
+about the island of Antique Paxos. And this is a true island, actually, it exists. And it is very similar to the Paxos Island, actually. It doesn't look very different. It's right across from it, they're literally next to each other.
+I would say this is probably a bad name for a protocol, because it's like, you know, I hate pack sauce, so I made anti-pack sauce. So, yeah, I wouldn't use it for a protocol if I were you, but yeah. Also, fun fact is that
+kind of, like, my grandma's mom is actually from Paxos, which is… yeah, I've never been there by myself, because, yeah. But anyway, yeah, this is about Paxos. So yeah, now your questions. We have more questions from the form, but I prefer to, you know, ask your questions also here, even if you ask them in the form.
+Yeah.
+Questions?
+Anything is okay, just ask, you know, yeah, you know?
+What are, like, the, like, most recent, like, major breakthrough
+distributed systems. Like, is there anything that's, like, been, like, particularly, like, revolutionary.
+That's a good question. So, is there any particular evolutionary in the recent times? I think all of these directions that I mentioned here, all of the directions I mentioned today.
+All of them include things that are recent, and they are all, in some form.
+innovative, revolutionary, there are things that people care about today. I don't know if there is…
+you know, any of them can stand above the rest as, you know, THE revolution, but all of these directions from this class, if you go back and look at many of these papers, many of them are from the last 10 years, and these, in the last 10 years, you know, they kind of crystallized many of the important parts that have been happening in the last years in the area. Unfortunately, there is no such thing even as a
+distributed systems community, because it's kind of disparate. There is the…
+more theory, distributed systems folks, which publish at venues that are more theoretical, like principles of distributed computing, and then there's the systems people who submit papers more to NSDI, OSDI, and SHSP, which are the systems conferences. And these two conferences, yeah, communities care about different things.
+ones care more about guarantees that are provable, the others care about systems that work, and maybe have lower guarantees. Yeah, I think…
+The best summary for this is, I would say, look at all the bullets that I have in the previous slides, look at these papers, they are all kind of interesting, hot, recent topics, yeah, yeah, yeah, that people care about.
+Other… other questions?
+There was another half chance when I answered… when I asked this, but yeah.
+More questions, come on. On a very broad note, what's your, like, feelings about, like, the state of computer science academia research as a whole? Academia, research, or as a whole, computer science? It's like academia, let's say. Academia, hmm.
+Well, yeah.
+It's hard to say, you know? Like, I wake up all sometimes in existential dread, you know, like, what's happening here? Like, with all the AI, like, you know.
+Are we… is education obsolete? I don't know. Is, you know, is programming obsolete completely? Like, what exactly is our goal, both as, you know, computer scientists and as computer science educators? I really don't know. I've seen everything in the community. Actually, mostly I see this techno-optimism, which is like, you know, we will have a doctor for every kid because of AI or something, I don't know.
+believe, and I don't think this is the right way to approach this, but,
+Yeah, it's really hard to say, really. Probably you all have…
+you know, very good sense of how things are going, too, because many of you are probably also applying for jobs, or have jobs, you know, lined up, and so on. Yeah, I think, I think it's still hard to say. I think the only thing I would say, maybe to Shamalaise is that
+I don't exactly know where we are going and what will be important in 5 years, in computer science education, like.
+Will programming languages be important? I don't know. Will formal methods be important, and verification? I think so, but I don't know. The thing that I think I know is that we are at a kind of, like, double point.
+that is very, very, very, very optimistic about what can be done, what will be done in a few years, and whose jobs will be completely automated. And also, I think they are very optimistic about the effects of this automation, that somehow we will be better in the world overall, which I don't think is the case, because
+We have had previous, kind of, like, improvements of productivity, and
+it's unclear, you know, I think this is a political discussion, but it's unclear if we're doing better or worse, you know, it always, yeah.
+Other thoughts, questions on this?
+Who do you say people should, like, focus on NCS in order to have a future for…
+Like, what are the top 5, I guess, areas, topics that you would suggest people… That's a good question, yeah. I mean, and this is a question that I ask myself every day, too, because I'm like, you know, will my research be absolut in a few years? You know what I'm doing. So yeah, I don't really know. I think, I think my kind of intuition is that
+we need… I think what I would say as one thing that I feel like… I think… just take as a grain of salt, it's my completely personal opinion, it's biased because of my research experience. I think…
+no matter what, currently we have… we're living in this craze of natural language descriptions for our system… for our systems. I think we still need some form of formal guarantees.
+and some form, some way to get checking that these natural language, very powerful systems work as expected. So I think formal methods, verification, testing, model checking, and guarantees of correctness will be important, just because otherwise we have nothing. We just hope that the system worked, and there's nothing… that there's no way to kind of hold accountable other than maybe putting another system
+To check the original system, and at this point, it's like, okay.
+Yeah. This is, this is my, my, my girl, but I don't think I know… yeah, I, I have, I think…
+if you are interested in doing something, I think, in any domain, I would say.
+work on something that interests you, because I think overall, even if, you know, you go to a PhD or you go to industry, it's more likely that
+it's probably more important that you work on things that you really like, and this will make you do… have better outcome. That, you know, catching some… imagine some trend that, you know, you might catch before… we don't know what the next trend will be, but if you work on something that you're interested.
+Some… you will do a good enough job that you will… someone…
+someone cares about everything, that's the point, you know, the world is so big, the computer science is so big, even though, you know, the theory, you know, some theory stuff are not that hot these days, still, theory people find jobs in academia. Still, they find jobs in industry.
+there is space for everyone. Work on what you want, because otherwise, if you just try to say some trends, then you won't be able to do well.
+We have definitely proved that distributed systems are super helpful for hyperscalers, but is there much, like, active research into, like, much smaller uses of distributed systems, like the embedded systems, or, like, smaller companies that don't need
+A lot of different servers.
+That is a good point.
+I think that's a great point. I think…
+there is a question of whether we are going towards a world where things are decentralized, so everyone has their own infrastructure, or they are borrowing and they are offloading the infrastructure. So I think
+It seems like we're going towards the way where everything is becoming more centralized, and in this case, even though they are important only for hyperscalers.
+this means it's important for everyone, because everyone uses the hyperscalers in one way or another. But, I don't know if it will have a shift, you know, or maybe that would be nice, maybe not, I don't know, towards a world where, you know, we have decentralization, and then it would become important again, because if you run your own
+you have your own data, you have to have consensus, right? You have to have some kind of fault tolerance. So now the point is simply that we are… we are… we have been moving for the past years towards a world where a few hyperscalers do everything, and we just hope they do it well. The people who work on the systems work there.
+But yeah, you know. But for example, there is companies like Materialize is a startup, started as a startup, and they… they're building this distributed streaming database. They need distributed systems, folks.
+other kind of machine learning startups also. I've heard from folks, you know, that systems are very important for them, because
+Even if you're training a small model, you still need a lot of machines. So yeah, I don't know if this really goes for the scale, the, like, really, really small, you know, very, very centralized scale, but yeah, yeah, I think, I think it's useful for…
+Other questions?
+For, like, the directions in model checking and formal languages, right, I think the problem is that if the language you use to write the model is not the same as the one you actually use to implement your system, then you can still have bugs in the implementation. So I was wondering if you know of any research that
+Takes in, like, configuration files.
+That are actually used to configure a system, and that's model check on that.
+there is certainly research that looks at configuration bugs, and I would look at, I don't remember exactly, I think I would butcher the name, maybe it's a professor of UIUC, Illinois, Urbana-Sampaign, I think Tianin Xu.
+who works on configuration, or his students have worked on configuration. Oh, yeah, one of his students is pseudo, soon, I think, and he's now in Toronto, and he works on this kind of configuration… configuration bugs.
+But there's something important in what you said. So, you said that if you have your specification in your application in a different language, there might be gaps.
+But the work like Ironfeed, that I showed, actually, it verifies the real implementation. So the reason about the actual implementation code. Of course, then you have to assume the compiler doesn't, you know, introduce a bot, but there is, there is… there is work also in really verifying the actual implementation, the actual code, yeah.
+Other questions?
+Okay, I'll also draw one more before you… you go, before you ask me more questions. One person asked, have you… did you do Eventide Island in Breath of the Wild? Would you make a protocol named after it? How many people here have… have… know what this is, or have done this quest?
+Okay, so I know who asked the question, just kidding. No, no, so this is, this is this, island in Breath of the Wild, where you go and you, you do, you do, suddenly you lose all your equipment and you have to do some quests, so you have to really be, be, skilled or whatever, because, you know, your equipment is not useful to do the quests.
+We could name a protocol Eventine, yeah, I think that's a good idea, yeah, I don't think it's bad. Yeah, Breath of the Wild is a fantastic game for whoever hasn't played it, yeah.
+Other questions? There were more questions in the form that people have not been asking. I can start answering them, but I, you know, ask, ask them, ask them also here.
+A what? That would be nice. If we can get funding for it, I would consider, yeah, yeah, yeah. I don't know how this could be justified, especially given the UCLA deficits, but, yeah…
+I would recommend that everyone goes to Paxos, Paxos, though, because it's a very beautiful island, yeah. And at the Paxos, yeah, if you go to one, go to the other, it'll miss it.
+Do you have any bigger restaurants in Westwood or South Help? Hmm.
+Favorites.
+I don't think this is, like, let me think if there's something that's more, like,
+Yeah, boondocks, I like boondocks. I've seen, I don't know, at least one of you in boondogs. I've seen some people in Boondocks.
+Yeah, Budok's a great cafe. They have very good coffee, very expensive, but what can you do? Yeah, coffee is expensive these days. Let's see, is there any, like, sleeper pick? Because…
+I really like…
+the, this Turkish restaurant called Nuka Cafe, which is, on Westwood Boulevard, you know, you have to walk south of Wilshire, and then it's, like, in between Santa Monica Boulevard and Wilshire, and it's a very good Turkish place, and I… I really, really like
+House of Bread, which is a bakery south of Santa Monica, and has excellent bread and really excellent croissants, really excellent croissants. It's amazing, yeah. I don't know, I mean, Sotel has all the restaurants there that are popular and good, so I don't know if I can… yeah, yeah.
+Other questions?
+More questions?
+How has, LMs and coding agents changed your… How you do your work.
+research. That's, that's a good question, yeah, yeah.
+I am not maybe the most adept at using LLMs in the most effective way.
+I've been… I've been, I've certainly used them to… to improve software that I have built for my niches, that no one wanted to fix some things, and I did them much more easily with… with Cloud. I've used them to… to… to kind of, like, finesse text.
+But… but text that I had already, I was very confident about if I was to publish it publicly, or text doesn't really, you know, it's not very important, so it just needs to be… to be presentable.
+But I haven't really actually used it in a way that I feel like I hear all these success stories, you know, like, people being like, oh, I came up with this research idea by talking to an LLM. I'm like, okay, I don't know how you do that. I have no idea.
+Yeah, so maybe… maybe the best people to ask that is… is… is the TAs in this class who are also working with me, and I think they use, you know, LLMs kind of successfully. I am not… I'm probably more of a grandpa kind of situation in this. Yeah, yeah, I'm not very adept, yeah.
+Yeah, other questions?
+I feel like I have to give the troll question. Greek baklava or Turkish baklava?
+Actually, they are the same. But if, you know, if we were in Greece, I would have to say, there is no Turkish macro, actually, it's all Greek. Originally in Greece, Greece is the original, you know, culture, whatever, the yogurt is Greek, the cheese is Greek, whatever, no, but in reality, they're the same.
+Because, Greece and Turkey were both
+spin-offs of Ottoman Empire, let's say, and yeah, these things were back then, yeah. So eat any baklava you want, yeah, they're all good.
+Other questions?
+12 questions Enjoy.
+I enjoy reading. I enjoy reading. Or sometimes playing video games, yeah.
+You play it.
+So, so the game that plays most frequently these days, is Slayer Spire.
+It's, yeah, I put in a lot of hours in Slade Aspire. Slade Aspire 2, in particular now, this is, yeah, it's a very good game. Whoever doesn't know this, it's a very good game. Yeah, yeah, yeah. It's very obsessive, yeah. What's your favorite character?
+Is it inspired? I like the silent, yeah. I like playing silent.
+Yeah. I'm not a pro or something, but I haven't done, like, I haven't reached 8, 10 or something like that, essentially, yeah, I'm just, like, 3 years old.
+No.
+Other questions?
+Your father books.
+What are my favorite books? Hmm… What could there be recently?
+So, I guess recently I've been in this kind of, existential techno-pessimism kind of, vibe, so, and, and system, system pessimism. So, I think one book that I really found very important, is the book called,
+Critique of Economic Reason by Andre Gordz, who is a philosopher, a 20th century philosopher, French philosopher, who writes about this idea that, you know,
+Chasing productivity and this economic kind of, like, model of thinking about the world is really… has… is leading us astray to some kind of very catastrophic path, and we have to kind of rethink
+what, what our goals are, and so on. So yeah, Andre Gordon, he's the… he's the author.
+Can I think of another reason? It's the right of the book? I think, yeah, yeah. So this is, this, yeah.
+And I guess now I'm reading, the book called Golden Gulag, who is by, by, by,
+It writes about the prison system in California, and how it has… it's not, like, accidental, how it's so big, and the forces that essentially have saved it, yeah. So these are some books I've been reading recently.
+Other questions?
+Hmm.
+Especially with, like, AI infrastructure? Yeah, so the good thing about how do we stay up to date… so the good thing about distributed systems is that it's not like AI research, where every day you have to wake up and stack archive, because there's, you know, like, 10 new papers that might scoop you or something. So in services and stack fully, there is still these venues that I talked about, there is, you know, HSP,
+OSDI, NSDI, there's Eurosis, maybe, there's a couple of other venues that have disabled systems papers.
+So, I'm reviewing for some of this, I'm in the program committee, I lead their proceedings when they come out, and I kind of get a sense of what's new. I talk to people, and that's enough.
+two individual systems know what's happening, at least. In AI, I have no idea how people do it, really, because I feel like I have some friends who work in AI, and it's like every morning, you know, there is something new in archive, and it's… I don't know how you can deal with this, or how can you keep up to date, yeah.
+What about, like, outside of research paper?
+Like, we like applying things more practically.
+Applying this more practically, even these, actually, I mean, I'm… the people I know and talk to are one way, but also papers are often… companies really value, publishing papers in the systems, because, I guess.
+they show that they are, you know, it's some kind of, like, presence in the community, that they are… that they're used to, you know, hire talent, but also, you know, boast about the fact that they can do things well, better than others. So usually, companies
+Zivid Systems has a lot of, like, maybe one-third of the papers in these venues are from… including industry people. So, yeah, yeah, yeah.
+Other questions?
+How do you explain what you do for research to someone who's not in… decide.
+Hmm.
+Okay, this is a question that was also in the form. Great. So…
+I have not been very successful at this, people who are not in computer science, because I feel like it's like, okay, I work on making, like.
+making systems go fast or something, you know, like making programs go fast, or being able to reason about these complex protocols and systems that are running. Yeah, you see, it's already, like, too complex, like, I don't think I have a description. Yeah, yeah. I think there's people who can do this well, but I'm not one of them.
+Yeah.
+If you were not a CS professor, what would you be given?
+I don't know.
+I don't know. Is this, like, I guess… Like, my second, second day.
+I mean, the thing is, with these things, you know, like.
+do I have complete free will on what I would do? I don't know, because I, you know, I ended up making some decisions in my life, and doing some undergraduate degrees, some PhD. The things I could be doing now are being with my skills at other elements, you know. I could be a professor, I should go to work in industry,
+And then I could do other things that have nothing to do… yeah, I don't know if I… if I feel like I'm… I'm adept enough in anything else that I could do, you know, and someone would want to pay me to do it, yeah, yeah.
+If I have money, maybe that's a different question, I don't know what I would do. If I didn't have to work, I don't…
+Other questions?
+Other questions?
+Why did you choose to go into academia over industry?
+I was keeping both options open, in my final year when I was applying for jobs in academia. The main reason why I chose, or no, the… the…
+I did feel at the time, also, that I liked a lot working with, with students, and not being, like,
+And I don't really care about working on what I feel is important. I think some people say that, but in the end, even in academia, you end up working for what some grander power wants, because you use funding, and the funding
+dictates in some ways what you work on. So I think primarily for me, it's working with students, and something about the fact that, you know, when I was… I did some internships in my PhD, and for some reason, even though it was great, the work was great.
+I was looking at it, I was like, I don't care exactly what I'm doing here, like, you know, it was like, we made some nice papers, but something kind of didn't keep me exactly… yeah, but my work in, like, the university, working with students, I went over there, and I'm like, great, let's go to work, you know, it's pretty cool, yeah.
+So, yeah, I think, I think working with students and being in the academic environment, and whatever the implications of this are, yeah, yeah.
+Are you teaching any graduate classes at UCLA? Yeah, so I'll be teaching… actually, I don't exactly… I had… I had some… I have taught in the past, like, cloud software systems, and I taught a seminar on,
+on, intersection of PL and systems, because that's my field, it's my… I'm in the intersection of programming languages and systems. But now…
+I am really thinking things a little bit, and I… I am actually,
+In a state where I'm not exactly sure what I'll be teaching. I have the following kind of options. One of them is that I'll teach a class on advanced distributed systems, like, consensus protocols and stuff, like, the newest, the newest hottest stuff on this. That's one potential. I don't know if I'll do them. Another is…
+To teach something in the… about black box.
+systems that compose black box components. So a lot of my research has been about optimizing or analyzing scripts or microservice applications.
+that the key characteristic of this is that the components are blackness. So microservices, you know, you don't know what the service does, and in scripts.
+you often call, like, black box binaries, you call, like, libraries that you don't exactly know how they work.
+So, how do you make these programs faster? How do you reason about the correctness of these programs? A lot of my research has been on this, so I'm trying to see if I can make a graduate, core graduate course that talks about this. But yeah, it's TBD.
+If you look… if you want to see what guys will be teaching, at some point in the summer, if you refresh my website, at some point, close to after July, I suspect, maybe in August, I will have some updates about what I'll be teaching. Yeah, that's the hope.
+Other questions?
+decides me to go into this, yes, area that I'm kidding.
+I… my undergraduate was in electrical engineering days, and the reason why I went to that school
+was, and this is not the… this is the reality, I was so naive. It was, like, because one of the classes in the school, in this… in this program, was, like, playing with electronics, and, like, the final project was making an electronic amplifier. And I was like, that's so cool, you know, I want to be making amplifiers in my life or something. So, yeah, so I took this, I took this… I went to this department.
+Without knowing anything about what I wanted. And then gradually, I saw that, you know, writing code is pretty fun. And then I did the… I really liked the professor there was working on compilers.
+I worked with him, I did my thesis with him, and then I applied for PhDs, and most of the compilers programming language systems people, and there was, you know, things that were… I was interested in CS departments, so yeah.
+Other questions?
+Any burning final questions?
+It's a strange one. Is, Plato and Aristotle required reading?
+Actually, no. It's very sad, it's very, very sad that, I think people in the US know more about Plato Aristotle than people in Greece know, because the curriculum in Greek schools is terribly, terribly, like, somehow,
+like, propagandist and biased, and it's like, you know, we just learn, oh, we are the descendants of this great ancient Greece, but we don't learn anything about ancient Greece. You know, like, we learn some… we read some of the epics, and we do a little bit of ancient Greek, but we really don't dive deep, and it's very sad, because it's like, people here
+know more stuff about this than me, Teresa, yeah.
+Other questions? Do you miss recruit a lot? And if so, where in LA do you satisfied with?
+I do miss it a lot, actually. Unfortunately, actually, again, maybe this, maybe this will sound, like, hypocritical. I have not tried Greek food in LA, and this doesn't mean that I don't miss it. The point is.
+that there is something about Greek food that is not just
+the food itself, but somehow where you eat it and how you eat it. So in Greece, like, there is, you know, islands, like, like this.
+And, you know, there is, like, restaurants that are on the beach, and you sit there, and there's, you know, like, someone who runs the restaurant, and they have, like, five fish that they caught that day, and they're like, which one do you want? And then you're like, this one, and then they grill it, and then they boil some greens and give you some potatoes, and you eat this, and it's fantastic. So, it's not really that…
+you know, it's just good, fresh ingredients, so I don't know.
+Yeah, I mean, I haven't had any, any, any, a lot of Greek food here. I've had a few things, but nothing was actually good, so, it didn't… it didn't hit this… didn't fit this year. And also, there's one more thing, actually, in Greece, that
+Often, you don't go to a restaurant, eat and leave, like here, but rather, you go to these places that have, like, these small plates, you sit, drink, and, like, sit for 3 hours or something, and then you get plates as you go, and then… so it's not like you sit there, and you sit and snack.
+But the food's good. But, this kind of concept I don't think exists here that much here, just the whole time.
+Yeah.
+But I also have… I also have, Greek olive oil that, I, I, my, my, my parents sent me from Greece, so… so I use, I use my, my, my mom's… my mom's mom's olives, olive oil here when I cook, so I guess this is probably Greek, you know.
+Okay, so this is a little bit of a strange question, considering this is, like, a systems class, but, like, what topics do you think are, like, the most important for people to know, like, programming languages, if you're, like, trying to get into, like, let's say research or something a little bit more theoretical?
+Yeah.
+Yeah, I think that a lot of the focus these days in PL is, in, verification. It's a time to reason about programs being correct.
+proving that programs are correct, type systems, and these kind of things. And this is a very reasonable and a very relevant, I think, direction. I think the PL community has… is, like, split. There is people who are very, very theoretical and are like, I don't even care about what's happening in practice, I just want to do my math.
+And then there's, like, category theory people, or homotopy type theory people, and then there's people who are like, I want to use these kind of tools to prove things about LL software.
+And I think this is very relevant because, yeah, as I said, nowadays we're using LLMs, but the LLMs are also good at creating proofs. So maybe, you know, the future is that, you know, we…
+we write both the programs and proofs to these programs, you know, with an LLM, but to write proofs and to verify things, there's a lot of kind of groundwork to be done to improve the tools that do the proofs, and check the proofs, and so on, yeah.
+This is one direction I think is very important.
+Other questions?
+Is there a story behind the GitHub username?
+There is, but it's very embarrassing, actually. I'm not sure if I, hmm… Yeah, mmm…
+It's… it's… I guess… I guess what I can say is that it… it originates from a time that I was… from a username that I had on Xbox Live when I was 12. So, yeah, you know, you can draw the… some connection, maybe, from this to what it is now. It's not… it's a meaningless connection, but it originates from that time, so I guess
+the story itself and, you know, the username that I had picked at the time when I was 12 was so embarrassing that, but yeah, when people are, you know, 12, 12-year-olds are not very smart, maybe. Yeah. Other questions?
+I guess you touched on it a little earlier, but, like, nowadays we have these AI companies who are trying to automate everything, including intellectual work.
+So I think I often feel very uncertain about the future.
+I'm not sure if I'll think about it.
+How do you think about it? Uncertain about your future or the world's future? The future of, like.
+just, like, humans working, right? Because that's how…
+I want to choose a job that I feel…
+That is meaningful, but at the same time, like, there's lots of people who would prefer it.
+A machine could do.
+Most of the jobs.
+Yeah, so I think that this book, that I said here, and also another book that I read recently, which is called Bullshit Jobs, frames a little bit, by David Grabber, frames a little bit, I think, my opinion on this now, which is that down this path.
+it's not a good path, because only a few select few people will be working on nice things, and everyone else will be working on, you know, in some way or another, things that are not good, either because they are not paid well, or because they are bullshit jobs. And I think… I also feel, like, very, very unclear about the future.
+And yeah, so maybe, maybe you can take a look at these books too and see what you think. Maybe you'll feel even more, even worse afterwards, but, you know. Yeah, yeah.
+Other thoughts, questions? Final questions so that we can start wrapping up also. Any burning final questions that you have?
+Have you ever run, like, a serious system algorithm that was, like, so clean and so clever that you're just like, it's, like, the most beautiful thing I've ever seen. The most beautiful thing I've ever seen.
+when I first had the Lizability paper, the original liability paper from 1991, I think, by Henry Henry Ming, I was like.
+This is so beautiful. I wish I could do this in my life. I'm like, I was, you know, I had so many notes on this table, it's so beautiful. Of course, afterwards, I realized that, you know, you can't be aiming to do things like that, because it's like, you know, one in a…
+lifetime kind of thing, but yeah, this ability paper is so clean, and so elegant, and so well written, I think it's great, yeah.
+It's not a protocol, per se, but it's a very clean description of what, you know, what they're doing, yeah.
+Final question.
+Final question.
+Is there a final question?
+21?
+We'll do… Any favorite things in LA?
+Favorite things in LA? Hmm.
+I mean…
+The nice thing about LA, what I like about it, is that… I mean, okay, the weather is great, and every morning is like, wow, the weather is excellent again. But,
+I mean, it's… it's really, you can find… I think the amount of
+tiny, decrepit-looking, like, you know, hole-in-the-wall restaurants that are, you know, people that necessarily mistreat you, but the food is so good, I think it's very high, and I think that's one of the things I like, you know, to go, like, to these places where it feels like sketchy or whatever, what the hell is this decoration in this place, but somehow the food is great. Yeah, I think that's kind of, like, one of the…
+Yeah, and from various places in the world, yeah. But I don't like, kind of, like, the Polished stuff. I prefer, like, the, you know, kind of like the dancing, where you're like, hmm, is this hygienic? You know, I'm not sure, but, yeah, it looks good, yeah. Yeah.
+One place that kind of fits this for me a little bit.
+is this place that has, like, it has a very distinct decoration, and it stays open until very late, which is a very, very big pro. It's called Xinjiang Barbecue, it's in SCB, San Gabriel Valley, or Monterey Park, somewhere in that area, and they stay open at, I think, 4AM, and they have these fantastic skewers, like lamb skewers.
+And the decoration, I'm not saying anything, you can go and see it by yourself, but inside…
+It's a very interesting space, and, yeah, you can go and, very late, after whatever you've been doing, pharmacy, and have some good food, yeah.
+Okay.
+Let's conclude if there's nothing hands, and, let's get to the conclusion of the class, so… Oh, yeah, one thing is that I will be teaching this class next year, too.
+And, if you like the class.
+you can… you should keep in mind and apply to be a TA, LA reader next year. I don't know the applications for all of these things, when did you have to do it, but if you want, we're looking for them, and next year we'll scale the class more, so there will be more need for TAs, readers, and LAs. So if you're interested, talk to your TAs, talk to your LAs, talk to your readers, and then say, you know, the ones in this class, ask them, did you like it or not? And if they say yes, maybe you could consider it too.
+And yeah, there is nice things that I would like to do, and it would be great if there is people who are interested in the class and would like to be part of this.
+And some acknowledgements,
+really, really big thanks to Alec, Caleb, Peter, and Sebastian, who really, really lifted the class, and I mean, especially Alec and Peter were at least last year, too, and they designed a lot of the material, also they helped me… they helped with everything, really, they're amazing.
+Thanks to all the participation from whom I stole a lot of material, like Lindsay Cooper, Ravi, who was here in the past, and I used his slides, some of his slides, Vincent Liu at UPenn, and finally, the biggest thanks to you, you made the class great, you asked questions, you came to lecture, it was fun.
+I hope you had fun. Very, very nice having you. Have a great summer. I guess see you in the exam.

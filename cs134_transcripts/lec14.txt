@@ -1,0 +1,626 @@
+Sorry.
+Alright, you guys? Yeah, I'm just kidding.
+Thank you, oof.
+I didn't listen.
+Did you say you're gonna…
+Yeah.
+forgiveness.
+Snowball? Yes. Right there with you.
+Maybe it's not doing the legal jam.
+I figured it out.
+I'd be sorry about that.
+Oh, sweet.
+Yes, I can.
+What was impressive.
+Excuse me.
+Where is he? Okay, Julie.
+Oh, muscular.
+I don't think it was… Important system.
+Are you looking?
+Sit down, let's take a little bit.
+We don't have, like,
+They're off, you know.
+Yeah, and I think I've done it all in Paris.
+How are you?
+Oh. Not the same time.
+Hello, everyone! How is everyone.
+So, yeah, we're getting back to, distributed systems, so…
+First of all, before we start today's lecture, I wanted to hear, are there any questions or thoughts from people about the guest lecture by Jesse? Any thoughts, questions, or comments, or anything?
+Yes? Eileen.
+We tried to incorporate class material, and how you asked questions that were related to what we were doing, so it all kind of connected together.
+Oh, thanks, thanks. I guess, I guess the goal, the goal for this, I mean, now it's, it's, it's a little bit too late, but, you know, for these guest lectures, I think the goal is also for you to understand, you know, as much as possible, so I think
+Usually, you should, I think, feel more comfortable, all of you, to just unmute, ask questions. I think this is the goal with lectures, and with guest lectures and presentations everywhere. But yeah, happy to hear that, yeah. Any other thoughts or questions about Jesse's lecture?
+I was reading their paper after the call. It's like, there was a very…
+like, simple rules, like, like, non-creditable idea, but, like…
+I just felt like it was much more simpler than we expected. Like, I think you mentioned that we were in the backstro and backstro, but I don't think even she needed to know that much for the…
+Like, it was, it was, like, very skill-quenching.
+So that's a good… that's… I'll give it as a positive. Okay, so yeah, I guess, yeah, it's true that it was self-contained, but… but I… I mean, I think having a sense of, you know, what consensus is, and why this is a hard problem, and why this is usually complex to get running easily, and essentially, I think the key idea, and the cool thing about this paper is that, they use this notion of real physical time.
+to have an out-of-band synchronization mechanism, essentially, without, you know, having to communicate when things are down. So yeah, I mean, it's true, yeah, that it's… I guess it was more self-contained, but I guess it's good that, yeah, it happened after you already had practice, yeah.
+Why? Are there other points about this lecture? Anything that people want to bring up?
+Great. Okay, so let's get started, and as always, let's first talk about the questions from last
+last lecture that, I gave. So, last time we talked about Dynamo, and about SQL versus NoSQL, so the first question asked, pick all the following things that are true for SQL versus NoSQL data store interfaces. The first question said they can both be used for any application.
+And that actually is true. So, they might have different
+programmability, performance trade-offs, but technically, you can use any of the two for any application. There's no… there's no expressiveness limitations to any of the two, and you could use it. Now, you might have to sacrifice some performance, you might have to build additional components on top of it, but it's not like any of the two does not support something. So that's important. So, I think it's mostly… the thing we need to keep in mind about this is mostly about the trade-offs.
+And not about a fundamental limitation to any of the two.
+And the other two, parts of this question were about, what SQL… no SQL, I'll include that. And an example of, things that SQL is good at is joining.
+data items, whereas, an example, where NoSQL is better is when you have many queries and applications that need to access a few independent keys at its kind of request.
+And so, yeah, this performs better for NoSQL, because we just… you can just pick up these keys and get those, and you're good.
+Then we had a question about day latency, and this question, I think everyone got it right, but just to remind everyone.
+Their latency and efficiencies are aggravated very heavily when aggregating results from many backend services, and we saw the example of the fan-out service, where even though each of the backend services had a 90th percentile latency of 10 milliseconds, or 90, I don't remember, then to get the same kind of performance at the top level, you were
+you would… you would fall down to the 73rd percentile. So you… many, many more requests would actually be, take longer to respond.
+And finally, we have the third question, which was about dynamo, and it asks all the ways in which dynamo improves the performance of lights. The first part of this question was saying truncating vector clocks.
+And, that's something that actually we didn't see at all at the lecture. I forgot to remove it, because it was from the last version of the class, and I did not teach anything about truncating vector clocks.
+The funny thing was that half of the people still picked it. But, yeah. Anyway, so yeah, this is not… this is not gonna be… we didn't teach it, I'm not planning to teach it. If you want to learn how dynamic actually truncates vector clocks, you can, read, the original paper to see how you can, you know, further truncate vector clocks.
+But, the things that Dynamo does to improve performance of lights are actually having sloppy quarrels, without a stick majority, so this means,
+Allowing a right to succeed, even if a single node or, you know, not a majority of the nodes actually have acknowledged it.
+And also, it pushes conflict resolution to the reads. So, as we saw, if you remember,
+Dynamo has a conflict resolution mechanism and allows all the rights to go through, and at the read point, actually tries to reconcile and see which of these rights have won, and so on.
+Yes, I guess, now that I see this, I mean, I didn't explicitly say truncating vector clocks, but I guess I can see now why some people might have picked it, because I guess we did talk about the fact that vector clocks, normally they have N components, right?
+And in Dynamo, you have these little lists of only the relevant drones, like A, and then blocks.
+So, this may be some form of truncation. Dairo does some additional form of truncation, actually. So, okay, take it back. Maybe, like, half of the people that picked it, it's reasonable. But still, it's… there's something worth keeping in mind here, that this…
+doesn't actually improve the performance of the lights in any way. The only thing that this improves is the memory requirements of keeping, keeping track of this information. So it doesn't improve writes, but it just makes sure that you can keep track of this information without having to, you know, keep, like, hundreds or thousands of
+Of values per key that you have, because this information, you have to have per key, okay?
+Questions or thoughts about this? What about the questions of the previous lecture? Of the… yeah.
+When you say the dynamic majority, like, how do they choose, like, what majority to have? Is it just, like, based on, like, whatever, like, SLAs they want to have with Dynamo?
+Yeah, so I think that's… that's the idea. So the question was, how do you pick what's… what's your… if you remember, we had these two parameters, the R and the W, and so… and let's say all of your nodes are N, and so if you want strong consistency, you can push R and W to be larger than N, which means that always a deep and the right,
+Quorum will intersect.
+But an application might decide to lower these values and say, you know, if just one value, one component accepts the right, we are good, or if a few components accept the right. And yeah, the answer is that the expectation is that if you have an application, you are… they assume that the application developer is kind of smart enough
+To decide, okay, this application can tolerate
+Some, you know, very rare inconsistency, and in this case, in this rare inconsistency, we will actually, you know, so we will lower, we will lower the rates to get, you know, better performance, usually, but in some rare cases, there will be some kind of inconsistency.
+This is similar to what Zest said also in the lecture, that, you know, in real life, I don't remember exactly where the context was, but Zest at some point said, you know, that some kind of inconsistency is very, very rare. And in general, you know, one of the things that are important to keep in mind from this class is that we come up with all of these, you know, with all of these nice foundations and protocols, but in practice.
+things need to work well enough, and that's… that's what people, worry about. And I will talk a little bit about this kind of trade-off and difference also a little bit later today.
+Any other questions about last lecture?
+Great. So… Let's get back… so, okay, today we will talk about
+the rest of Dynamo, some things that we've left, and then we will talk also for, like, half the lecture, maybe one-third, about distributed transactions.
+and then coming up, we have, only real systems, kind of, to talk about. There is something missing here that I will, I will talk about in before, before Mucas, but yeah, we'll be talking only about real systems after today's lecture.
+So, Dynamo, so far. What have we seen?
+Dynamo's goal was to have weak consistency.
+or weaker consistency for better availability and performance. And the whole point was that, you know, you have this situation where things are failing here and there, you know, the data center is… has loose power, but people want to be able to still put things in their Amazon cart.
+And the problems that we talked that Amazon needs to address, Dynamo needs to address, are partitioning, where we saw how they solve this with constant hashing.
+High availability for lights, which they do with vector clocks, consistency, which they do with swap aquarium, and today we will talk about failures, both temporary and permanent, and membership and failure detection.
+So,
+Yeah, I guess some more recap for Dynamo, yeah, it uses constant has sync. As we said, there is this sloppy quorum where you pick these R and W values, and if R nodes agree, you respond to a read. If W nodes agree, you respond to a read.
+the first available succession of a key is the coordinator, which is similar to what we saw for chord.
+slow.
+Even in your facility.
+Reform with the things that are in the
+That's… that's, that's exactly right. So, so we will see a little bit about that today, too, but, exactly. The… the assumption is that these read and this right are your successors. So you see how many successors? I will… I will… I will have to, to count, yes.
+Any other questions about this?
+Great. And then, vector clocks to identify causal precedence and be able to actually determine which values, which operations happened after which other operations arrives.
+So, today's agenda, we will talk about failures in Dynamo.
+We will talk about Dynamo in practice.
+When we talk about, isolation and transactions.
+And finally, we will talk about, two-phase locking.
+So… Dealing with failures.
+There are two types of failures that we can worry about, and we should worry about, in the context of dynamo, and in general, in the context of a distributed system, and they make this…
+In the class so far, we haven't necessarily made this distinction very clear throughout, all the lectures, but they do in Dynamo, and they have a different kind of approach on how to deal with each type of failures.
+So the first type of failures are temporary, where a node is temporarily unavailable, or in a network partition. And these are essentially representing failures where, you know, you… some kind of network suite, you know, has a malfunction, some kind of network… some kind of network component goes wrong, but the node is actually still running and everything is okay.
+And then there are also permanent failures, where, you know, something happened, then, for example, the node… the node disk completely malfunctions, or, you know, completely breaks, or the system… the… the, you know, a rack completely, completely, like, blows up or something.
+And so let's first talk about the temporary failures, and what Dynamo does to address those.
+So let's say we have this example here, where we have, a key. Here, we have these nodes A, B, C, D, F, G. B is the coordinator for key, for K.
+And, yeah, nodes B, C, D, will store keys in these lanes, including this particular key. This is the standard constant Hassel.
+And let's say that we want to perform a write, and we have N equals 3, and W equals 3.
+What could go wrong here?
+I have already given some, you know.
+the title of the slide also gives the way. What could go wrong? Why… so we are trying… coordinator is trying to perform a ride to this skill. What can happen?
+The… doesn't risk falling, and then it can't do the right.
+Right, so one of our nodes might be down, temporarily. And in this case, we will never hear back from W nodes.
+So, now we have this conundrum. We can provide durability, but we will not respond immediately with success here, or we can do the opposite. We can try to, you know, lose the durability, but respond immediately with success.
+What could we do to solve this? Any ideas? How could we address this problem for temporary failures? Thoughts?
+So we have this fundamental data here. Either we… the way this protocol works, either we have the durability, but then wait arbitrarily until this… this one goes back up, or we respond immediately with access, but we lose durability. What could we do?
+Great. So, what if we temporarily used a different node? So, the way this works, and they call this the hinted handoff technique in Dynamo, so the coordinator, in this technique.
+tries to actually write to subsequent nodes. So if it doesn't hear from this node, it tries to write to a subsequent node.
+Beyond the W successors of the key.
+And, the coordinator then informs the recipient of the intended node,
+Which is currently down, so the recipient, which is the new recipient, keeps a hint in its metadata that this key is actually not mine, but it belongs to someone else.
+And then periodically, the node that has the value temporarily checks until the intended recipient is actually back, and then it forwards the key, okay? So then it deletes the key, since they are adequately replicated.
+Let's look at an example of how this works.
+So, again, the same setup, we have N equals 3 and W equals 3. Gk…
+And then, let's say B, sorry, C, is temporarily available, so B writes, D writes, and E rides. And then E knows that it has to send something to C later down the line, so it keeps a metadata about this.
+And then when C is available, he forwards the replicated data back to C, and then we are good, because we always had at least 3 durability here.
+Questions about Hinduv?
+Yeah, that's a great question. So, do the process keep communicating? And yes, the answer is yes.
+continuously, it's… it's… I guess it has a range, but what continuously means here is periodically. So there is a kind of, like, periodic, you know, periodic interval with which they talk to each other, and try to realize, okay, is this… okay, let me send the data back to it.
+In general, actually, not just here, but we'll see a little bit later also, Dynamo uses this technique very frequently, this technique of periodic
+periodic communication, which is not, like, in-band, like, like, you know, here we have the in-band communication, but out-of-band. Essentially, every now and then, we will talk and try best effort to achieve some, something, yeah.
+Questions about this?
+Just, like, 100 numbers will just go into this.
+Different at the moment.
+Okay, great point. What if he goes down? Keep it, we will talk about it in the next slide. Any other questions?
+Thank you.
+Questions?
+Great.
+So…
+Dynamo has this, before we talk about this particular problem, let's go a little bit back and recap this point about availability versus durability.
+So, Dynamo allows users to tune this W depending on the application requirements, as I answered in the beginning.
+So, what happens with, when we put W equals 1? What are the implications? What are the, what, what an application want when they do that? Any, yeah, what do people think?
+High… extremely high availability, but…
+Right. So, the highest possible availability, but there is no real dulability, because if a single node fails, even temporarily, we lose access to the data completely. So, in practice, most applications use a higher W than 1.
+Is there any case where we could have W larger than 1, but still have the same issue?
+like, some very limited form of durability. Thoughts about this?
+What could be a case where you have a W, a larger W, but still have the same issue, very low durability?
+Yeah, funny.
+Draco Harbor is, but…
+That's exactly the idea. So, the idea is similar to what we looked at cold, where you had the virtual nodes and the real nodes, but here, actually, the difference is the data center fails. Because sometimes you could indeed have a case where your data center fails. And so what happens if your nodes, all of your nodes, after you are in the same data center, you lose this data.
+So, to avoid that, one thing that you could do is that, and they say that it's possible to do in dynamo, it's not exactly clear if this is the actual implementation or not, but your successor list can span across data centers also, similarly to how we saw in code that your successor list should not count virtual nodes, but it should go, you know, and make sure it has at least n real nodes.
+So here, you might also want to say, you know, it also has at least two data centers, for example.
+So this is… this is some problem that might occur, a correlated failure of the whole data center, and so in this case, you would want to make sure that you cross across data centers.
+Questions about this?
+Great. So let's now look at more failures. And let's say we have written 2E, and we're still waiting for C to come back.
+And what you said is that E might also fail, and I would say even in a permanent way, so maybe E fails completely.
+So…
+what happens is that the data that was to be sent to C is actually lost completely. So there's no way to reach N equals 3 in the steady state of this system that we designed. So the system knows at the state where, for this particular key, it will continuously be N equals 2 from now on, until maybe there's another write to this.
+So this… this is a problem because, you know, if this keeps happening, you know, at some point, it becomes more and more likely that some key will be completely lost from the system. So, what do we do about this?
+So, the hidden account of node may crash before it replicates the data.
+But we still want to ensure that the key… all the key pairs are replicated n times.
+So, a solution that we have in Dynamo is to do replica synchronization.
+So nodes that are nearby on the ring periodically gossip, another kind of way where Dynamo introduces this periodic out-of-band communication.
+And in this case, we would mean, you know, these three nodes, so B, C, and D would periodically extend messages and be like, okay, do, you know, do we have the same types of data, the same amount of data? We compare the keys and values, and then we copy any missing keys the other node does not have.
+Are there any performance considerations with respect to this? What do people think?
+If we do this kind of synchronization every now and then between nodes, and they talk, and they try to compare the keys and copy missing keys, performance considerations.
+As long as they are non-blocking, they could, like, gossip as much as they want.
+That's a good point. So this is actually an important point, and that's why Dynamo uses, in general, this periodic, periodic out-of-band gossiping, because periodic out-of-band gossiping means that you do not block on the critical path. So whatever happens, happens on the back, it could take a lot of time, but we don't really care.
+But there is actually some performance consideration here. What do people think?
+how… how does this… what does this sequelization actually need to do? What… what is the computation?
+Then…
+Exactly. So the naive approach would require taking literally every key value that you have, and seeing, okay, does the other node have it? So, we have to find a way to compare across all key value pairs.
+So, now, I would like you to think.
+How could we do this and check more efficiently whether there is a discrepancy of keys across nodes that are sitting next to each other?
+So, I want you to, as always, talk to the person next to you, in front of you, in the back, and discuss for a few minutes, and then we'll get back together. How can we do this more efficiently? What could be some techniques, some insights? Yeah, what do we need to do?
+Okay.
+Yeah, yeah, yeah.
+Appreciate some of their decisions.
+It's all right.
+Yeah, that's very, very cool.
+Oh, games!
+So… Let's see, so…
+What are some ideas by people? What are some thoughts? Let's see some hands. What do people think? What could we do here? Some insights, you know, what could we do to do this more efficiently? Thoughts? Hands? I see one.
+Do a few more.
+One more… 4… Do you look?
+5?
+Miss 6?
+Okay, let's do fine. So…
+Do they just keep track of, like, all the changes since the last Andy Gossip?
+All the changes since the last time they gossiped.
+that… could be a way. So that's actually a good idea. So.
+Still, though, it would mean that there is… there is some kind of linear, you know, if the changes, if there is…
+So that could amortize, possibly, but it would really depend on the frequency of rides and leads. So the idea was, maybe you can do something amortized, and essentially every time you cost it, you pay the cost, but then from then on until the next course period, you can keep track of, you know, all the rides that I did, and only if it goes in the list. That's a good idea, it improves the efficiency, but we can do better. Other thoughts?
+Hmm?
+Have an LLM ask your channel.
+Yes, you could use algorithm to hash your credits, yes. Others don't. You could, like, instead of just using one hash, you could, like, use something called a verbal tree, so that way you can figure out what
+Right. So, that's exactly the answer. So, the answer is hashing, but more specifically, Merkeley trees. So, let's see how to get this done. So.
+We want to somehow not have to check all the keys to find all the differences.
+So the intuition is that we would like to check many keys all at once, with a single operation, and we will do this with hashing.
+So, the way they do this is with Merkeley trees, as was mentioned, and Merkeley trees hierarchically summarize… can summarize the key-value pairs and node calls. So, the leaf node, is the hash of…
+one key-value pair, in practice a range of keys, it would be in the real world. And then the internal node, hashes the concatenation of all the children hashes. So, you end up having a tree structure.
+Where you have the root, that contains the hash of everything, and then under it you have, you know, silden for each part of your, of your… it's, you know, you split your space, and then you, you have a hash for those, and a hash for those, a hash for those, and so on.
+And the way to do this is you iterate the process down the tree, you start on the root, if everything is matching, no need to do anything else. If not, then you
+go down, iterate over the tree, go to the children. If any of the children is the same, then you do not look at these brands anymore, and then you only look at the brands that have a difference, until you find where the difference actually lies.
+So, to see an example, let's say we have this here, where you have, let's say this is node A, and this is node B, and B is missing the orange key, which A has, while A is missing the green key, which B has.
+So…
+How do we find this difference between a Merkeley tree? We would, start at the top and compare hassles, from the root downwards, pruning when the hassles match. So here we would start, and then we see the hassles do not match, actually.
+So then, we would do this here. So, at this point.
+What… what would the… what was the algorithm do? Hans, any idea? What was the algorithm do at this point where we are… we have compared this, but now we're now comparing these four?
+funds?
+Nope.
+Okay, so if you wanted to find the differences, you just check the top, and like, if it's this…
+What could the census different for it.
+Then you go down that side, and you book it and try to, and you keep going through finding another one.
+Exactly, exactly, exactly, exactly.
+So in this case… so in this case, what would happen for this, I guess, yeah.
+If you want.
+The top is not the same, so that's why we keep going one step below.
+So now we're at the second state.
+I didn't know what I'm saying, and you go to the right side, and then you go down to the,
+Should I talk?
+Can you take a look at the, the left side of, like, the…
+Okay, so that's good enough. So, as you said exactly, we take the left.
+And the left, they are the same, exactly. So, we do not need to look at the left branch of the tree anymore. All of this we know, whatever is below is exactly the same. That's exactly what we get here. And then on the right time, we have to keep going down and traversing. And so, we go a little bit further down with sectors 2, and then we will find that actually there's a difference both here and here. So, we just…
+We prune everything where the houses are the same, and we go down the other path.
+Questions about this?
+The numbers here mean… mean the ranges of keys. So, I mean, you would have here the whole space of keys, from 0 to, let's say, you know, 128, and then here you would have half of it, and here the other half. And here, you know, it would keep going down. Essentially, you split your state in some ranges, binary ranges, yeah.
+How would you know, like, which… if two hashes are different? How would you know which hashes are the most up-to-date one instead of reference?
+That's actually a good question, and I think… actually, I do not… I'm not exactly sure, because I don't remember… I don't remember from the paper, but my impression is that what you have to do once you get to that final point.
+is that you actually have to go and check the actual data values. And since Dynamo has all of this, all of this, you know, metadata about, you know, causality vector clocks, you should be able to determine which one is more fresh and which not. But that's a good question, yeah. I don't… I don't remember exactly how they describe it, but I assume that
+If you get down to this point, you are able to possibly at least union the keys, because you have the vector clock values, so you can at least union the vector clocks, put all of the values in both of them, and let them figure it out.
+So would most countries be, like, smart, then? Like, would most of, like, the leads be, like, set to zero?
+For the leaves set to zero? What do you mean by leave set to zero?
+Schlifalleys is…
+I guess, it depends on how dense… how densely populated your space is, but yeah, it could be the case. Yeah, yeah, it could be the case, yeah. I'm not sure exactly, though. I mean, if there's a definitive answer to this, yeah, or if I… maybe I don't understand your question exactly, also.
+Would most trees pecul up.
+Have, like, two more, like.
+Okay, I hope I'm saying this correctly, because, like, if you're used to sit in Planckett or something, but then, like.
+But one practice.
+I guess, I guess it depends how big your range is. So if you… so you… we started… all of this situation has started with this… with this, with this kind of constant hassle, right? So we have a range here, we know the range AB, and the range AB is going to be stored in BCD.
+So this is literally a range of, of, of
+values. It's… it depends on how big this space is, but for constant hashing, we had said that, you know, we hash the keys, so we know this is, like, from 0 to 1,000, I don't know, whatever it is. So for this zero to a thousand, then we would break this up using the Mercury tree. Yeah, so that's where we do the ranging and the hashing. I don't know if that makes sense.
+That's a good question, and the answer is yes, and we'll get to this in a little bit. Yes.
+Other questions?
+Great.
+So…
+How do… we will get to this question a little bit later, though, not exactly now, so keep it. So…
+We talked about this reconciliation process, and this gossiping that happens between the nodes, and then they are able to find, actually, what happens, and, you know, when there is different keys among them.
+But then, there's another question, which is, how do different Dynamo nodes know where to find data items? And this is similar to Cord. In Dynamo, every server can receive and process requests. So, remember Cord?
+And the question here that I want to ask is about data lookup. What does a node need to do when it receives a request to find the key? So let's say that any random node, some node in your ring, receives a request, a GET request. What do they need to do, and how do they find who actually has the data?
+Thoughts?
+Do people remember what Chord did in this case?
+You can do the finger tables, or you can use a successor, or a combination of both.
+And what they say in Dynamo, and this is also part of this kind of, like, practical, real system vibe, is that this is too slow and too complex, and so what they actually do is that they use, again, a Gaussian problem.
+So the crucial protocol that they use now is once per second, or some kind of range like that, the servers contact, and randomly chose another server, and then they ask, okay, what
+service do you know about, and what are their kind of ranges that they hold?
+And so they, they communicate about this, about this knowledge, and then the best case lookup after gossip is, constant, you just know exactly which server has it, but, the worst case, you know, is that you might have to ask a lot, because this gossiping might not lead you to the freshest, values.
+when is… why does that make sense for Dynamo, and why does Dynamo actually make this assumption? What kind of thing has to hold for our workload or for our use case for this to be… to be okay?
+What are the requirements in our kind of realistic use case for this to be reasonable, and to not be much more expensive than finger tables? Thoughts?
+Just… Based on the fact that this is what is used to practice.
+It's kind of fairly soon that all of one holds.
+Most, at this time.
+That's exactly reasonable, but I guess, going one step further, why does this hold? What are the things that have to hold, or the requirements that have to hold about the application deployment, application workload, so that this actually is, you know, is constant in the end, and is, you know, one or two hops?
+What do people think?
+Those are probably aren't that common?
+Right, so either failures are not very common, and also note additions and removals are not very common. So if servers do not change that frequently, then this best case holds. And in general.
+One thing I just want to keep in mind is that chord, for example, which was designed with this idea of, you know, doing this better than just gossiping.
+Was designed for a case where you have very, very, very high frequency of node channel.
+And they were imagining at the time, it was a time when people were very, you know, optimistic and positive about very decentralized kind of, you know, international, decentralized webs, where, you know, people would join and go out of networks all the time. But in the data center, you know, for a company that has a data center that's very tightly controlled.
+this, you know, is not exactly the case. You know, nodes don't really get added or removed continuously, or you know when that happens. Nodes do not cross that, that frequently. They do, but, you know, not continuously all the nodes cross. So yeah, because of these requirements, and this, sorry, this workload and,
+And deployment assumptions, gossiping works rather well in practice.
+questions about, all the things that we've seen about Dynamo so far?
+Going back to that constant lookup, would that mean? You have to store, like, a massive table of all the servers?
+But sometimes…
+Can that, like, not be feasible? That's correct. But… but what is massive here? So, let's say we have, you know, a hundred nodes, a thousand nodes.
+If each node has, you know, a thousand, a table with a thousand
+entries, and each entry has a range, that's okay, that's not that terrible. I mean, they also hold that many key values. So, that's not really that bad. But it's a good point, I mean, if… and that's what also, initially, when it was proposed, it was mentioned that it's meant to work with, like, these deployments of millions of nodes. But in reality, we don't have millions of node deployments for a data store. This is not what happens in practice, yeah.
+Other questions?
+Great.
+So what's left for Dynamo is to talk about performance and some even more practical things that Dynamo does to make things work.
+So, let's first get to performance, and I want to show you one plot from their paper, just to… so that I can explain some key, important takeaways. So, let's… let's parse this plot, because there's a lot… there is a lot to unpack. So, this is…
+from peak season, of, of December 2006 at Amazon, the, the latencies
+So the y-axis shows latencies, and the x-axis is literally the timeline. So, essentially, they've taken all the requests across a huge period of time, and then they plotted… they gathered the latency for each of these requests.
+And then they plot this latency, and there's a logarithmic scale here, millisecond logarithmic. So this is 10 milliseconds, this is 100 milliseconds, and this is 1000 milliseconds. 1000 milliseconds means a second.
+The things… we have four lines in this table, and in this plot, and the four lines are,
+there is leads and rides. The leads are, we have the average and the 99.9 percentile tail latency. So you see also here how people care about not just the 90th, but, you know, the actual tail-tail latency. And you can see that the leads
+these are… these are the leads, and then the rides, again, average end, 99.9.
+Are there any questions about the setup of this clock?
+Anything that's not clear from the setup? And then we'll talk about the takeaways from this plural.
+Great. So, I wanted to keep the following takeaways in mind, and that's why I wanted to show you this plot. First of all,
+the tail is much, much higher than the average. We're talking about a full order of magnitude higher. So this is close to 10 milliseconds, and this is more than 100 milliseconds, okay? So the difference between the average and the tail is huge, so that really matters.
+And that's why engineers and systems developers really try to optimize for this thing.
+The second is that real workloads are actually… have… have patterns. So, a common pattern between workloads is this kind of diurnal, like, day versus night cycle, where, you know, there's more requests during the day, and so because there's more requests, also latencies go up because the system is more overloaded, and at nights, you know, requests, there's fewer requests. So, this kind of patterns exist in real workloads.
+And therefore, we won't see anything like that in this class, but I want you to keep in mind that in the real world.
+There is a lot of, kind of, focus on even doing possibly predictive
+Kind of things for your systems, where you know, okay, we know that the workload follows as a pattern, so let's start preemptively doing something to make our system more, you know, resilient or performant when the heat is going to arrive.
+And finally, the writes take more than there is, and this is due to the disk accesses and the fact that we need to actually write to the disk. So, this is another kind of fundamental property of workloads.
+And, yes, any questions about these takeaways or this plot?
+This is from the original Dynamo paper.
+So this is from Amazon, Amazon, actual Amazon workload, yeah.
+Other questions?
+Great.
+Wait, sorry. Yes? I was a bit interested in, like, the shape of the bottom two, like, bots, like, they're very similar, but the idea of, like, Dynamo is it's supposed to… it's supposed to support more, like, variety systems, but they kind of follow the same pattern. Is that expected, or is that just… and, like, why is that?
+Why is it the case that the lights and the reads look kind of similar in the latency? Yeah, yeah, yeah.
+So, so, so, I guess the pattern here, the only, the main thing you have to notice about this pattern, what does this pattern show? This pattern shows latencies, okay? So, the higher the latency, it means that the system is slower.
+So this… what… how I interpret this fluid is that
+the periods where latency goes higher, there's more load on the system, so the system is slower for everything, really, because, you know, it maybe receives 10x the number of requests, so just everything is a little bit slower, so it takes more time to actually respond to everything. So this is why the patterns kind of follow each other here, but writes are just a little bit slower, because they require, usually, you know, more disk, you know, it takes more time to write.
+And maybe you also have, you know, the durability requirement for ads.
+But since Dynamo is, like, a… Figure it out on…
+Like, why it reads so fast?
+I mean, that's a great question. So, the fact that LMO is light-focused doesn't mean that they can actually make rides faster than reads. But what it means is that if the gap was normally bigger, or, you know, if the 99.9% latency of rides was out of the roof, here they managed to actually keep it pretty close to the read.
+So, normally, write requires more things, you know, you need to replicate things, you need to make sure they exist everywhere. Here, you see that write and reads don't vary by that much. It's like a 2x difference, maybe? But that's still, I mean, in the very acceptable lanes, if your application returns, you know, in 100 milliseconds or in 200, that doesn't really affect things from perspective of a human. Yeah.
+So, the hard thing, and the thing that Dynamo is focused on, is
+What do we do with the very bad rights, and how can we make sure the very bad rights are still good, and they're not terrible, they're not completely off the roof, they're not completely blocked, and so on?
+Other questions about this plant?
+Excellent. So…
+we will talk about a few more things that Dynamo does in practice, and one of them is based on this, requirement, some applications actually need even lower, 99.9 percentile lines.
+So how can we improve write performance? Dynam also says that we can improve the performance of writes even more
+by using pipeline.
+So each node has a local in-memory buffer where writes are performed.
+And then periodically, this buffer is flashed to disk by a writer train. How could that look? Let's say we have the node, the buffer, and the storage.
+we write to the buffer, we write to the buffer, and every now and then the buffer kind of flashes everything to disk. That takes time, but because it battles all of this together, it takes less time, and also the writes don't have to wait for this ride to go to the disk.
+Are there any problems with this?
+On failure, it's, like, dawn still pitch.
+Right, so on failure, if you fail here.
+Bad luck. This thing is not written in disk yet. So, it sacrifices durability, and if the node crashes, its buffer is lost.
+So this is, again, something that Dynamo does only for applications that can take it. And the reason why I'm showing you all this is not to say, you know, I mean, I've already destroyed your confidence on these systems because, like, you know, they don't really work fundamentally, but the point is that, you know, everything is about trade-offs.
+So you might need to really push your life performance a little bit further, and sacrifice, potentially, some durability, but hope, you know, that with low probability, this… with very high probability, the data will actually be there, okay?
+And then, let's also revisit consistent hashing.
+So, let's say we have a new node in the system, another platform optimization that Denimov does.
+we have a new node that joins, and we want to bootstrap this node. What do we need to do to bootstrap this node?
+So it has its own identification number, like any of it, so it would have to ask everyone else on the network to see if that happened is, like, somebody else is using that app, and if not, then you can, like.
+Start replicating the finite state machine from computers to this.
+That's correct. So you have to find the other nodes, and you know which nodes they are, though. We know the successors. Once you find your successor, you're good. And then, from your successors, you can copy all of the data that they have.
+Is this a problem?
+So… you know, could this be a problem? When would this be a problem? What do people think?
+Beautiful.
+Like, right now it's only active.
+disagreement.
+Right, so this can is very, very intensive. And so, first of all, it has to take very low priority. So we can't, you know, to keep this kind of good performance in this slot.
+we are using our compute to do this kind of performance. So, to do this kind of copying.
+we would have to, you know, start using up our storage, and using up our storage bandwidth to copy around the nodes. That means that during this time, we would not be able to respond very fast in this request. When you replicate in this scenario, is the file transfer happening
+the bucket of, like, whatever disk level in the EC2 instance, or is it happening at, like, a much higher dynamo level, where when a node joins…
+Amazon tries to, like, propagate. I mean, it's, like, a very dynamic, specific question, but I'm just curious to see how cloud providers and those data replicate.
+So, how cloud providers handle data application, how that… So, data replication usually… so there's two ways, right? Or, no, there's two ways, but there is an abstraction and an interface. So, usually what happens is that the user, who uses
+things like S3, Dynamo, blah blah blah, whatever kind of other, other storage.
+that they have, they don't care about what's happening below. They just get some guarantee that they have replication of data with some guarantee, like 99.999, I don't know, whatever. Then what happens on the system is that the provider has a bunch of machines.
+which talk in some way, maybe in this consistent cache way, in the case of Dynamo, and they have their own disks.
+And they…
+use some kind of protocol to replicate this data. This protocol we have seen, you can do this, like, with Zookeeping, you can do this with Paxos, you can do this with Dynamo. So that's kind of, like, the idea. All of the things that we've been seeing in this class is, how can you provide such an abstraction to users, where you hide away that you are doing work, but you are actually providing some durability and application like this?
+Great, but getting back to the point here about, about bootstrapping. So…
+The scan is very, very intensive, and so it does take a low priority, so we cannot just, you know, use up… start using up all of our disk bandwidth when a node enters to, you know, copy nodes around, because then everyone would see a huge spike in their latencies, and we don't want that.
+So…
+during busy seasons, because it takes low priority, this could take up to a day, or at least that's what they reported in that paper. So bootstrapping a note could take up to a whole day. So…
+This is… this is a big problem, and they want to address this.
+Is there any other performance issue here with bootstrapping this for Dynamo, based on the things we've seen already? What's another problem that has to happen?
+Because you were talking about, like, a diurnal location, can they just only do it at night, because there's already just such a big gap of, like, doing things like daytime and nighttime. I think that nighttime sends the daytime well.
+That's true, and that's what I think the low priority means, that it runs at the lowest kind of load, but still the low load is not going to be low for Amazon, because also there's, like, you know, international patterns and so on. But yeah, that's exactly what they do. Low priority means if you don't have a lot of load, try to do some copying.
+At busy season, this might take up to a day, because you don't have a lot of cycles to do the copying.
+So yeah, anything else that is problematic with performance other than the copying?
+That you have to do for bootstrapping?
+Any ideas? What else have we seen in today's lecture that could be problematic? It's not at the same level as the copying, but it's also a possible problem.
+I feel like in this class, like, 90% of the time, the thing that could go wrong is a failure. That's a good, that's a good point, but, yeah, but this one says performance, so it's not about, it's not about failure, but that's a good point, yes, yes, this, yeah.
+the lookup tables will be wrong, but I guess the other point, which I guess is not… is not the same level of magnitude as the rest, is that you have to recompute the Merkle trees, at these nodes. And this…
+is not that big, but the solution that they have for this actually solves both issues. That's why I kind of brought them together. So…
+The root cause of this problem is that consistent hassle determines both partitioning and placement.
+So…
+when you add or remove a node, this affects both how the data is partitioned and split, and where the partition is. And let me show you how, now, Dynamo solves this, and how it manages to decouple these two. So,
+Dynamo uses a static partition scheme where it pre-partitions the half space to a fixed number of equally sized shards.
+So we can see here, let's say you have, you know, all these signs, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, and so on. So these little, these little signs here are the actual partitions of the data.
+And then what you do is, you know, and the arrows are no's, okay?
+So what you do is that you place a shard, not a key, on the first and virtual notes after it's end. So, you know, the shard ends here, this one, so you would put it to A, B, and C, let's say. And this one, similarly, would go to A, B, and C.
+This way, what you need to do is you only need to identify which thirds to hand off when adding a node.
+But there is no need to do a linear scan of all of the keys.
+And this allows you to also maintain the Mercury trees per shards. So as long as you have the Mercury Persard, you're good. You don't have to recompute this every time that you do node addition or, or removal.
+So this allows you to avoid having to do a full scan of all of the keys, but instead, you can do a more batch kind of processing and send around shots. It does not completely alleviate the issue, just to clarify. And the problem still persists, you still have to take time to do the bootstrapping, but it just drops the overhead.
+Questions about this?
+That's a good question. They don't clarify that, but I do assume that the shards have to be smaller. Like, how much smaller? Like, I don't know. Maybe they mention the paper, but yeah, I have… I have no idea, actually, what the range, what the ideal range would be. I would assume smaller, for sure, like, 10, 100x, I don't know, a thousand, I don't know. Yeah.
+Great.
+So, summarizing everything for Dynamo.
+the key points of Dynamo.
+Going back also to the previous lecture.
+We have eventual consistency.
+A way the contact resolution happens at writes using vector pinks.
+We have very quick data lookup, using gossip and constant lookup.
+We have very high availability with sloppy quorums and hinted handoff, because we're allowed to write to nodes that are not the ones that are the actual successors.
+We can detect inconsistencies during permanent faults using merit tools, so then we can use this methodology to make sure that we always have, you know, a high durability.
+And, in practice, they do also more things, like write buffering and cell partitioning to get the performance even better.
+I want to talk about… a little bit about the impact of dynam. And
+Dynamo was essentially one of the main reasons why eventually consistent NoSQL systems were popularized. And these have much better scalability than strongly consistent SQL-based systems, which were kind of like the norm before.
+Yes.
+Pull it out of the What's it.
+You are correct, couple of days, yes, this is a typo.
+So…
+Okay.
+So the impact of Dynamo is that, it, popularized this kind of eventually consistent store, that, that, you know, most of the time, you know, is also highly, strongly consistent, but sometimes it's not, that has better scalability.
+The problem, though, with these stores is that there was significant frustration over application development complexity, because now, as an application developer, you have to worry about all of these things happening. You have to worry about, you know.
+Things not being consistent, you're not seeing your latest rides, things not being durable, and so on. So, a recent trend…
+Is to have, again, move towards strong consistency.
+trying to, you know, to use some novel advances in data centers and networks to also get back to storing consistency. And we will see an example of such a work in a few lectures with Google Spanner.
+That does not mean that, you know, eventual constant stores are not hot anymore, it's just that there is this kind of turns, as we said, and some periods of time, you know, people are pushing more for performance, and then this is the hot new thing, and other times they're pushing more for strong consistency, which has fundamental limitations to performance, but if your applications can take it, then you would take it, because if your application doesn't care.
+To go, you know, for that high of a load and for that low of latencies, you can be better with just, you know, having a store that you can more easily program over.
+And I also want to, compare a little bit Dynamo with some other works that we've seen. So…
+what are the differences of dynam and cord? What do people think? What are some differences of Dynamon Cord, or at the high level? What are the differences?
+Hans, thoughts?
+What are some differences of Dynamo and Cord?
+On the back?
+No finger tables, yes? Other ideas?
+different kinds of systems.
+meant to be at, like, it was implemented at Amazon scale, or as part of, like, a featured prototype.
+That's correct also. Code was initially released this prototype, and Dynamo was implemented at Amazon. Other points?
+I think Bookeeper was written in Java, that number might be a better language
+That is possibly true, I don't know, but, we don't know, actually, what was implemented, but also I'm not asking for this yet, but that's a good… yeah. So, other points about cord, Dynamo versus chord.
+So, I guess that maybe, maybe, maybe it's more of a generalization of the first point that was made. So…
+first of all, they make different trade-offs, because Cord assumes this very, very high node share, but also, a very important difference is that Dynamo follows this kind of simpler protocol with worse, worst-case guarantees, but
+works, in practice. And, and this kind of… this kind of, different, design way is important to keep in mind, and we…
+You know, it's consistent since the beginning of the civil systems until today that, you know.
+In theory, it's great to have your protocols that work very well, you can prove things about them, and this is very important, because I understand them also very well, but in practice, you have to make some sacrifices, and that's what I want to kind of crystallize with these two, by comparing these two systems.
+And then what about Dynamo versus Javi or Zookeeper? What are some similarities? What are some differences? What do people think?
+Right versus radio systems, that's… that's a great point, yeah. Other… other differences or similarities?
+That's a great point. Sub and Zookeeper were not meant to hold a lot of data, but they were meant as coordination services that hold some small chunks of data to allow you to do complex coordination. And any similarity that they have.
+Sabiju Keeper with Dynamo, what a similarity they have?
+If any.
+Huh. Are they? I don't know. Maybe.
+there.
+Thank you, wait.
+I mean, they both, like, target, like, a very interesting problem, right? Like, you have, like, multiple systems of doing, like, crazy stuff, but then in the end, like, you get some sort of, like, consistency out of them. Like, that's a really big…
+That's a similarity, and I guess maybe the way I would, they indeed hide away this complexity, and I think the way I would mention this, and it's more to hammer home, that services
+are often the way people implement the systems. You want to implement a service, and then the user doesn't really import your library or anything, there is a service that they can send requests to. The service deals with everything.
+deals with application, and so on. And so the difference, as you said, yeah, Dynamo is more of a store, it's actually a data store, whereas Tubman ZooKeeper can be used to build a data store, and then Dynamo is strongly consistent, and light-focused, whereas Tubman ZooKeeper are more read-focused.
+A slightly bigger point about your reverse practice is that,
+after all of these changes to the protocol, are we even implementing constant hashing? Do any of the original guarantees still hold? And, as I said before, the reality is that, you know, you take a protocol and then you modify it in some ways, and then the outcome is things work most of the time, or to be more precise.
+We don't want to be sued. And that's actually, I think, the main way that companies do, you know, consider things is.
+Will we get sued by something? Will, you know, someone who loses their data be so annoyed at us that they will have to pay some kind of, like, legal cost? If not, okay, forget about it. Or we will lose clients. So this is really about financial loss, and this is how industry works.
+Good, I don't know. Bad? I don't know, yeah. But this is, this is the young thing.
+Sounds beautiful.
+money parties and the…
+I have not heard of this, but I guess this is… this is something… but this goes a little bit the other way, because I guess in this way, Cloudflare says, I will give you 100%,
+So the more I, you know, the worse I go out of this 99.99999 being good, then I will pay you. So this is… they want very, very strong guarantees to be able to have this. Yeah, or at least probabilistic guarantees, yeah. But I think that's kind of, like, the idea. These companies need to make money, and they care about how much money these things cost, so that's how they also make their decisions.
+Any questions about dynamo, theory versus practice, what we've seen so far in the lecture?
+Great.
+Quick logistics break.
+Ascendant 4 is out.
+End.
+this is an actual snapshot of students who started working on the assignment earlier, whereas this is one of students working on the assignment late. So, I don't know, you do whatever you want after you see this, you know. You can decide based on your… yeah. Any questions and any about logistics? Yeah.
+Questions about the logistics?
+Great.
+So…
+Let's get to the final part of today's lecture, which is isolation, and then some ways to get isolation.
+So, we brought up sarding a few lectures ago, and we saw this is a technique to partition state across machines. Great, we have all the state. We split the state. Excellent.
+This allows us to separate the state across machines, and if a request only affects or depends on the state in one machine, then no other machine has to learn about this request. If we just want to talk about X, we just go to this node and reads X. We write X, read X, and so on.
+So, starting allows for load balancing across partitions, and it accommodates cases where the state is too big for one server.
+But what if the operation touches multiple partitions?
+First of all, do you have any examples and any thoughts of when could we have operations attached multiple partitions? We've seen some before in this class also, but any ideas about what kind of operations or services you could imagine when you want to attach multiple partitions? Thoughts?
+You need, like, the same…
+What do you call? Your,
+Amazon or something, like, where you have a product there.
+If you click on something, you might be prompted to click on something else, and then now you need to fetch something else, which will be
+Yeah, so if you want to, for example, fetch two products, and let's say do something with two products, or if you want to make sure that, you know, there is, there is some kind of, like, internal thing where you track how many, you know,
+how many products each kind of, like, warehouse has, and so you want to make sure that they are moved from one to the other, then you might need to touch multiple things. Are there other examples of people that people can think of with multiple partitions? Yeah, this is more of a very high-level question, so yeah, other things that people could think of?
+That's a great point, so if you want to do something across many rows, like sum them up, or aggregate them, then you really need to touch many partitions. Anything else that sounds like… yeah, anything else that needs… you need some kind of guarantees also from?
+Anything else? Any other idea about what could… what operation could happen?
+I'm not looking for a correct answer here. Any, any kind of operation that, that touches multiple… yeah.
+Big-scale machine learning trait of,
+Training on a big distributed data set, and then what would you want? You would care, possibly, that all of the data you are seeing has… is from a similar kind of time, or, you know, from a similar kind of period. Because otherwise, you would be training, you know, on half and half data, and you could lose your guarantees.
+So…
+Some examples that I also have is, you know, adding a meeting to calendars of multiple participants, transferring money from one account to another. What about looking the balance, looking up the balance of two accounts? And I guess this was also mentioned for some or for machine learning. I guess maybe I can just go immediately to the answer. The point is.
+We don't necessarily know whether
+You know, there could be operations that touch multiple partitions, but not always need guarantees by what kind of data they read or write from these partitions, and we'll see a little bit later what this means.
+But, for the ones above, for the meeting to calendars, and for transferring money, we need atomistic guarantees. What does this mean?
+We need to make sure that all operations are completed at once, or fail together.
+So, the client code,
+Let's say we have this kind of operation that does gets a key, and then, sets… let's say we just have a value in our store, and we get and set it, and we do this with an increment function.
+We would execute this independent function in client 1, then client 2,
+what problem could arise here? What do people think?
+Any other hands?
+Yeah, on the back?
+Yo, yo. No, no, on the back. Yeah, so, let's say the,
+either the get failed or the set fails in Client 1.
+Let's say the set 2 fails, and if you try to get… you might be expecting 2, but you get a 1.
+Okay, so that's a good point. You might be expecting to get a 2, but you get a 1.
+And how could this happen? This is an automaticity violation here. So, we could get… we could do the first GET, and then someone else goes and does the second GET.
+And then we do set, and then they do set. Oops. We lost an operation completely.
+So…
+Atomicity is different than consistency, because it refers to sequences of operations. So here, this is not a one operation at a time situation like consistency, but rather multiple operations.
+And we call this usually, in the literature, transaction. So a sequence of operations that need to be executed in an atomic fashion.
+We call this a transaction. And then the goal should be for a system to implement and allow us to atomically execute a transaction. So, we start executing this, and then we end here, and then before something else starts running.
+There's also conditional transactions. A transaction might not always complete successfully, and so we could have,
+a transaction that says transfer monies across accounts, and then if the… only if the account actually has more… more money, then we can do the transfer, otherwise the transaction fails.
+So, transactions might fail, but this doesn't necessarily… in the context of transactions, the term failure doesn't necessarily mean there's a system failure, but rather the transaction did not complete successfully, which is a valid result. So, the transaction is allowed to
+Fail or succeed, and both of these are allowed, but what we want is for them to execute both
+Together, or both not together?
+So, what is… how can we describe this atomic execution of transaction, this property.
+foreman. And I want you to talk with the person next to you to think about this, and to do this, remember a little bit the consistency conditions that we talked about, and how we used to talk and define them. So think a little bit about it. How can we…
+Define this thing that we want here for atomicity in a formal way, similar to how we've defined other consistency conditions.
+So yeah, talk with people next week, and we'll get back together.
+It's like… Gives out of favor.
+Beautiful.
+Anybody else?
+All elections in this one.
+Possibly.
+And that's what she wants to see in yellow.
+I mean, those characters are listening?
+It's a matter of secrets of juveniles available.
+This one.
+I noticed the point yet for me.
+Obviously.
+So… What do people think?
+Any ideas? How can we describe this property here about automaticity? Any thoughts? Hans? What do people think? Remember, really, what we talked about in consistency, and yeah, any ideas, even if not completed scope yet. So, Hans?
+I see one, two, few more, 3… Good to fight?
+Ideas, ideas.
+4… What's the tape?
+Bye, potatoes. You?
+I think they could help.
+just assumed, like, two things as part of the transaction, like A and B.
+then we can say, like, whenever any other thing happens before A, then it also has to have to repeat.
+And… Like, also a book.
+I guess if, A happens to support anything.
+Ben B also happened to put that in the
+That's, that's, that's, that goes towards the right direction. So what you're saying is that if there is something
+that happens, I guess, after this.
+after the first thing in the transaction, so this, it has to also happen after everything else in the transaction. So essentially, we're saying we are not allowing anything to happen in between. So that's a good way to think about it, but
+Let's think that this is an actual, real execution, maybe, that happened, and maybe this was correct, so maybe this… maybe this is 1, 2, 3.
+think a little bit about, you know, what do we say, what do we do to define consistency conditions like linearability? In our… how do we define linerizability, for example, in our existing… in our original, setup? Yeah.
+I think in, like, CS111, Professor Eggert, like, went over this, where we were, like, his perspective on it was, like, as long as those atomic operations can be, like.
+Like, written in a linear fashion.
+And then, like, what you use about, like, linear relability for consistency, it applies for the same thing
+So, that's the idea, but what could we say? How could we say? So, given an execution.
+Can you find an execution that is what?
+And if that execution is what, and it's the same as this, then we are good. What is that execution, the other one that we want to find?
+Thoughts?
+So exactly the same way like we did with Larry's ability. We have one execution, we are allowed to reorder some things, across clients, and we have to find some execution after these reordering that is… satisfies what kind of property, and if that execution is correct, then we are good.
+Thoughts?
+So… This property, we can describe it the following way.
+For each execution of the system.
+there exists an equivalent execution. Equivalent meaning we are allowed to reorder things across clients.
+such that the equivalent execution is fully Syrian, meaning all operations of its transaction execute in Norden.
+So, if we can get an execution that has this followed by this, and this followed by this, always together, and it's equivalent to this, as long as we re-enter across clients, then we are actually good, because things are atomic from the perspective of clients, okay? Does that make sense?
+Somewhat.
+It's almost, but the difference is that sequential consistency talks about one thing at a time. Subsequential consistency talks about the total order of operations.
+So, there is a total order, but it doesn't say anything about multiple operations of a client being consecutive.
+So, CLizability, in addition to what sequential instances says, it also says that all operations of each transaction, so these are sub-operations of the same transaction, in the one we find execution, have to execute in order.
+So this is another kind of requirement on top of it. Sequentialism doesn't even have this notion of operations of a transaction. Each operation is separate. Does that make sense?
+Okay, I will let this… I will let this… I will look at an example, but you should look at this also at home, and then come back, you know, next lecture also, if you have any questions. But let's look at an example to understand this a little bit better. This is very similar to consistency models, but the main difference is that
+Here, we're talking about sequences of operations in a transaction instead of single operation at a time.
+So, let's say we have this execution here.
+Where they have 1, 2, 2, 3, even though the execution looks like this.
+What is a serial execution that explains this?
+We use exactly the same machinery that we used in consistency to talk about executions. So what's the execution that explains this exact execution? Thoughts?
+Exactly. So we can move this get to be after set 2. So we do get 1, set 2, get 2, set 3. That explains, so we're good. This is a serializable execution.
+If all the serializable executions… if all executions of the system are serializable, then the whole system is serializable.
+Let's say now, let's look at it from another perspective. Let's say we have concurrent execution of the following two transactions. We transfer $10 from my to Bob's account, they both have a handle in the beginning, and then we need the balance.
+What is…
+Okay, I guess this… I'm not asking this, because I give the answer away, but the permissible outputs for T2 are really either 100-100, because read run… transaction 2 run first.
+or 90-110, because T1 ran first, and then T2 ran. So these are the only two permissible outputs for T2.
+That means that all the other outputs are actually not permissible. So anything else, the T2 is not allowed to return anything else in this case. It can only return this or this. This if it transfers, this if it runs second. Does that make sense? We're allowed to pick, but nothing else, okay?
+Great.
+So, how do we actually achieve salesability? We talked about what we want, but how do we get it? And the most classic protocol is two-phase locking.
+So, in two-phase locking, we have clients that submit transactions to a coordinator, so we have to have a coordinator among our partitions now.
+And the transaction coordinator acquires locks on all the partitions that it needs to touch. And once the locks are acquired, it executes a transaction and releases the locks. So let's say we have a transaction coordinator here, and these three partitions, and let's say we want to do something on all three partitions. We try to lock all of them.
+then they say, okay, I give you back the lock, and then we can commit,
+the transactions.
+There could also be cases where some of the partition could reply no, and that could be because it has given the log to someone else, or maybe the transaction would fail in that node. So, for example, this can predict that the transaction would fail in this node for some reason. Let's say the money in this account is not enough, so I'm saying I will abort this transaction immediately.
+Not even… don't even run this transaction.
+So this is… this is the way to do two-phase locking.
+And, as I said, the transaction coordinator needs to acquire all the logs before attending the transaction.
+These joint transactions, therefore, can execute concurrently, which means that if you have transactions that run on different partitions, they can run concurrently. And only related ones that touch the same partitions have to wait on each other. And there are also ways to pipeline these transactions further.
+Questions about the face locking?
+We have to do, like, for this current transaction detection.
+do something similar to what, like, Jesse was doing, Where are you divers.
+Yes, exactly. So, in transactions, usually to determine which ones are disjoint and not, and most of the… this is really the most…
+naive way to do transactions, but, you know, there is a ton of ways, we will not see them in this class, but there's a lot of work on trying to do, as fast as possible, concurrent transactions, determining what things are dependent, running other things in parallel, and so on. So there is, like, a huge literature of things out there to do this. Okay, I'm just trying to touch the tip of the iceberg to show you, you know, that this is…
+something that's possible to do transactions here. Yeah. Other questions?
+This corner is a single point of failure, right?
+Exactly. So, I don't know if I have a slide for this, but that's exactly correct. So now, this becomes a single point of failure. We might… I think I have a slide later, but they may not. But it becomes a single point of failure. Yeah, other questions?
+How do you do with air stem blocks?
+One transaction.
+That's a great point. How do we deal with lead locks? We won't see this in this class, but practical ways to deal with this is to have some order between the locks, usually. So if the locks, there is an order, so you always try to grab the locks in the same order, you would never face a deadlock, that you would try, you know, to grab these locks and then these locks.
+So now you're stuck, and you cannot grab all the locks. If you try to get them all at the same order every time, you're good. There is questions about, you know.
+for this to work, you have to know ahead of time which logs you need to grab. So, as I said, transactions have, like, a huge literature, and the goal of this class is mostly, and this particular lecture, to show you, okay, what can be done. But yeah.
+Great.
+to make sure we… we… we can, we can save everything on time, let's switch, from, from this to more broadly isolation levels. And isolation levels in transaction are the same thing like consistency models for concurrent code, so…
+this is how we call different kind of guarantees, isolation levels. And a very common alternative traitability, just so that you can get the sense of what exists, is snapshot isolation.
+So…
+each transaction, or snapshot isolation, the guarantee is that it will operate on a snapshot of the database. So it cannot read different data items from different times, and that's an important guarantee. It's, of course, weaker than salesability, because it doesn't provide any guarantee about everything running atomically, but it just says, if I do a transaction, I won't treat, like, half the committed things that one other transaction did, then half the committee things at another.
+I will read this into the database that is a real state that the database goes in at some point in time.
+And this is supported by, things like Firebed, Oracle, MySQL also has multiple kinds of isolation levels.
+Why would we want snatched isolation? What do people think?
+Why would we want standard isolation?
+backups.
+What do you mean by that?
+like, you would… the whole point of what I'm thinking about, like, snapshot isolation is, like, as you've written there, that
+Each operation is, like, on some sort of, like, snapshot of the database.
+So… Essentially, it gives you, like, point check marks to, like.
+We apply that transaction in case something goes wrong, or we do some sort of, like…
+Okay, so that's, that's… I think that, that, that goes towards…
+the right intuition of why subset isolation is useful, but it's not really about backups. The snapshot
+Sub-saturation is another kind of… similar to how we talked about multiple consistency models, liability, sequential consistency, here, this is to be compared with serializability. So why would one want to have substantialization in addition to serializability?
+For performance enhancement, exactly. So if you want to have standardizability, you have to pay every cost, because you actually have to make sure that things run atomically. Whereas here, you can just say, as long as I can guarantee that I can find a snapshot database that's good, then I'm good. I don't need to run things atomically, as long as I can somehow determine this snapshot.
+And we won't talk about how to implement standard isolation, but I will just want to give you an example of how it works.
+So, let's say we have this execution, where we have two transactions, one of them says, flip all blue values in a table to green, and the other says, flip all the green values in a table to blue.
+So the starting state of the table is blue and green.
+What are the final outcomes after executing both these transactions, assuming CLizability?
+Assuming serizability, what are the possible outcomes? Final stage of this table. Thoughts?
+All blue, or all green, because one of them will run first, will flip the blues to greens, or will flip the green to blue, and then the other one will flip all of them together.
+What are the final outcomes after executing both, assuming snapshot isolation?
+What are the possible outcomes that we could have?
+Or the day be?
+Thoughts?
+Someone else?
+Let's do, snapshot isolation, right?
+You just have all the originally blue values being now green, and all of the originally green values don't be green.
+So, certainly, with substitution, because it's weaker than standardizability, you have both of those. So you're right about this. So, you can have both blue-blue and green-green 2, but there is also one more.
+thing that you can actually have with snapshot isolation. So there's one more final outcome that is permissible with snapshot isolation. I meant, like, literally flipping the colors of each individual value. Like, all of the… like.
+take the original, so, for this case, which is blue and green, what could that be? Yeah, so there's only two. Okay, yeah. Okay, okay, yeah, sorry, now again, okay. So, yeah, there's also green and blue, exactly. So, both of them, red.
+the blue-green, so this is a valid snapshot, so they rotated that, and that's… that's good. That snaps the isolation relation, we're good.
+Questions about snaps isolation?
+It's weaker than serializability, that's a key thing, and it is useful for some database, for some, kind of database workloads. It's more akin to eventual consistency, or, yeah, compared to, you know, strong consistency.
+Great. Oh, and finally, yeah, we have the fault tolerance point, which is that there is actually serious problems when either a partition is unavailable,
+Or the transaction coordinator isn't available.
+So, what's the solution? We could implement every partition as a replicate state machine, and this we had mentioned briefly in the starting, the first starting class. So…
+we can use both the sarding technique to shard and replicate state-assing technique to replicate. So, we have 3 shards, we replicated shard.
+with a reputation technique, and then we have both sharding and fault tolerance. And this is how you can, you know, this goes back to the class that we
+We talked about serving, where we said you have to combine both to get both replication and serving.
+Questions about this whirlwind tour of isolation guarantees, serizability, standard isolation, and two-phase locking. Question about this?
+Great.
+Please… Fill the quiz, as always, and thank you.
+Don't worry.
+Well, the thing… I don't think you heard.
+I don't know why not?
+If I'm remembering this correctly, I think in a previous lecture, I guess across some nodes, you have, obviously, a different space flow, and then for replication, you only have, like, some overlap.
+Kind of of a, you know, stored in different levels, I guess. So, obviously, like.

@@ -1,0 +1,678 @@
+Oh, that's beautiful.
+Missing, bye
+Need a lot of it.
+That's a good one.
+Good morning. Take care of us.
+I'm going to say.
+Yeah, they understand.
+Yeah, not because they were supposed to take any time.
+Not but tired, that's… pretty clear. I would agree with that, but… A lot of troubling.
+Yeah, that's a problem.
+And it's gonna be encouraged to expand, honestly, like, based on, both because of the travel budget and congratulations.
+But again, or becoming looser.
+Hello. Hello, everyone.
+Let's get started, with, yeah.
+With a lecture.
+So before… before we go into these specific lecture materials, or even the quiz materials.
+I wanted to mention something. Not everyone is filling out the post-lecture quiz, okay? So, it takes very little time, okay? And the goal for you, the benefit for you, what you get by filling it in, is that you get a solid sense of what happened in this class, and if you got something very wrong, you can find out very quickly, and then resolve it by, you know, looking at something or going to Piazza and asking a question.
+And also, it helps me to understand, you know, trends. If something
+If 40% of the class does not answer something correctly, then that means I'm doing something wrong. So, if you're not filling them in, I also don't get to know exactly what's happening, and you know, if something's understood or not, okay? So, please fill it in. We have roughly the same amount of people filling it in last year and this year. I guess it also depends with how many people come to class, but
+Yeah,
+please fill it in, okay? Any questions about this? About the post-lecture quiz? Any… or any adversity in filling it in? Any… any silence that has been blocking you?
+Okay, cool. So let's… let's go to the questions, the Lecture 5 quiz questions, and, let's start with the first one, which was actually… so…
+The first one asks the following question. The primary has to always wait for the backup to respond before responding to the client.
+And the hint for this actually was wrong. So the problem was that I merged two lectures from last year. There were primary backup of split in two lectures, and the first lecture, we never talked about the view service, but in the second, we did. And in the first lecture, we do talk about this idea that you could optimize things in theory by not
+Asking the backup for reads.
+What is true for now, and, you know, what is true given the whole kind of architecture, is that in the context of your service, we showed that
+not contacting the backup can lead to split brain. So in this case, we always want to contact the backup, even for the reads. And for the assignment, that's also the case. So the primary always asks the backup before responding to anything.
+Okay? So, even though there is, you know, a potential for optimizing in a different context, or, you know, this, this we should not, you should not worry about this, and especially in the context of the service, it is wrong. Questions about this question, or thoughts, or concerns?
+Great.
+The second question, was about the comparison of snapshots and primary, and for some… from primary backup, and for some reason, the Google form does not… did not successfully give the hint for this, but the answer is, as we said in this table in class, that snapshots
+Put less of a cost on normal execution.
+But they are… they lead to more stale recovery, and also they take more time to recover, compared to primary backup, which… where the backup is always ready to recover at any point in time. Questions or thoughts about this?
+Great.
+And the final three questions, I think most of you got them correct, but just reiterating on them. When does a view service change the view? When it has not heard from the primary or the backup for a while,
+The client needs to ask the view service for primary before every request, that's not correct. And if we had to do that, then there would be really no reason to have a need service. If we always need to ask it what's happening, then there's no point in having the view service at all. We are exactly where we started.
+And, there was a question about this following view sequence and whether it's valid, and, you know, you start with one primary one, P1 is primary, you add the backup, you lose the primary, you just… you promote the backup, and then you add the new,
+backup, and this is a correct and valid use sequence. Are there any questions about this?
+Great. One more, point from last class. So, we have this particular example in last class, where
+we… in the context of MapReduce, we were asking when should the replicas sync? So, we have this MapReduce master here, who… who determines which worker takes which task.
+And it handles the message from a worker, and then it picks a task plus sign to the worker, it marks it as a sign, and then it actually responds with a task assignment.
+Last lecture, I said we replicate queues for this to work. I said that we have to also replicate, together with the state of the server, the queues, the input queues.
+But that's actually not true. And do people know? Why do we actually need to replicate queues? How could we make this work with the primary backup replication the way we saw in class? Thoughts?
+We are talking about input queues with the handle messages. Any questions, any thoughts why we need or don't need the queues?
+Or other clarification questions about this example?
+thoughts, why we might not meet the queues at all. I said we would need to replicate input queues. Even the assumption that there are input queues is actually kind of problematic here. So, what is the… why doesn't thought correspond to reality, or how could we implement this without input queues?
+Think of the primary backup as we saw it in the rest of the lecture.
+Oops.
+Yes? Do you have, like, two sets of pre-loads on the other?
+So…
+If we had queues, that would be actually part of the problem, and that's why, last lecture, when some students posed the question, what do we do here, how do we actually replicate this? I said, oh, we also replicate the queues.
+But that's actually not… not correct. And the answer is that actually what needs to happen, or at least you can't… maybe there's a way to make it work also with queues, but you can also think of the standard primary backup that we saw in previous lecture.
+These hundreds of methods, and this means that… let's say we have a bunch of clients, right?
+And they're sending requests, and this is the primary, and there's a backup, waiting to come up to life.
+These requests
+Until the moment it's actually pending, even, let's say the request is handled here, we pick up the request, and then we parse it in others, and then we do the work, and then we crash.
+Then, this particular client
+would see an error response to this request, and they would have to redo this request, okay? So there is no need to have any queues in this system. The replicas just pick up a request at a time, they process it if possibly, but then they don't, you know,
+There's no need to keep a sequence of input queues, because there is no concept of input queue, actually. You make a request, and you wait until it's done, okay? So there's no concept of queues here. Does that make sense to people?
+Ask me questions about… yeah, if this makes… yeah, any questions that… about the domain here, the setup?
+Like, when would… would there be tears, or why? Yeah, when would there be things?
+So…
+I don't think in this class we see a context where there are queues, but usually, cues appear when you have,
+Components in a system.
+that have unidirectional, channels. So essentially, I guess Sandy Lamper, there is some sort of queues in Sandy Lamper, the FIFO queues, but in this particular context, the actual request pattern is like this. There's an RPC, so there's the primary.
+the client sends a request to the primary, but then waits for a response. So there's no concept of queue, because if you put things in a queue, it's like you put it in the queue and then you forget about them.
+But here, you actually wait and block until your request is done. So there is no context of queue. Because if you crash, if this crashes, or your request fails, even because of the network, then you will make the request.
+So there's no expectation from the client that, because I made the request, now the request is at the hands of the primary, and they will deal with it and let me know at some point. I am still responsible for making sure that this request is completed. Does that make sense?
+Other questions, other thoughts by people on this?
+Great. A little addition to this is that, These errors like that.
+have happened, that will happen throughout this class. This is the second time that I'm teaching it, and so, yeah, there will be bugs and lecture material, because I'm trying to improve them and work on them compared to last year. So, yeah, help me catch the errors. So, if you see anything wrong, do call me out and ask me. Like, last class, someone asked me about this, and then, you know, I'll do my homework and I'll try to clarify, okay?
+Great.
+So before… before going in, in the… in today's… another… another before today's class, I wanted to give a brief overview of where we are so far, and what are we expecting to see also in the future of the class, now that we're getting close to, kind of, like, the middle.
+So, as we said in the beginning, there is two parts to the class. There is the systems and the foundations part, the dirty and kind of real-world part at the top, and then the bottom, the foundations, which has the clean theories. And we started the class by looking at MapReduce, which is a real system, and how it works, and some of the considerations from supporting MapReduce.
+We talked about time and snapshots as foundational aspects of distributed systems.
+Then we talked about primary backup in the last lecture, which is a way to implement replication in a systems level. It's not a foundational kind of protocol. And today, we will focus on strong consistency.
+And I guess, through the rest of the class, we have roughly half things in foundations, and then the rest, and closer to the end of the class, we will go more towards real systems. So, in the foundations, we will talk about consensus in the next lecture, and then lecture after that. Weaker consistency, starting and distributed transactions, and then for real systems, we will look at examples of real systems and how they apply
+All of these techniques that we have seen here, plus more techniques to get things working for the real world.
+Questions about this? Any thoughts?
+Great. So, today's class, we will do a brief recap of Prime and Backup.
+We will talk about linearizability.
+And consistency models more broadly.
+And let's start with, looking a little bit back at primary backup replication.
+So we saw in the last class, primary backup replication. You have a primary, you have backups, the backups are always in sync with the primary and ready to pick up whenever the primary crashes.
+There's a view service which keeps track of the current configuration of the system, who is primary and who is backup, and this is useful for the client to know how to reach the primary.
+And the view service, it monitors, who could possibly be primary and backup, and then it changes the view after, there is… any of the primaries or any of the backups is unreachable, or is considered dead.
+So at that point, it changes only after the primary has acknowledged the current view completely, and the primary sends an acknowledgement only after making sure that it can sync with all the backups.
+So…
+As we said, we can scale the view service by having clients cast the view, so not send requests to the service each time. And then, to deal with the split-brain scenario, the primary must check with backups all the time before serving any client. Otherwise, there would be the situation of the split brain.
+So let's now go back to an example about… that we had seen in the past, and think a little bit about ordering.
+So, we had seen this example where we have these… these two replicas.
+Having a bank account, information of the bank account, and then we have clients in different locations performing requests to these replicas to deposit or pay some interest, or get the value of the account, and so on.
+So, I want you to think a little bit about, and with the person, and talk with the person next to you, what kind of properties do we want from our implementation, specifically about ordering? And this is a more open-ended question here.
+Today in this class, we will talk about consistency models more broadly, so there is no one correct answer. So I want you to start thinking, what do I want between different… what kind of ordering do I care about between different operations? Do I care about ordering between all of them? No.
+Start talking about that, and think about that, and yeah, we'll get back to talk about this in a few minutes.
+Got it.
+You know, it's always…
+Questions?
+Oh, how about you?
+If the vice versa.
+Additionally.
+So…
+What do people think? What kind of properties would we want from our implementation? What kind of ordering? Any thoughts, observations? What do we care about?
+Yeah, so if I pay 1% interest, just to be clear, let's say you had $1,000 in the primary, does that mean after that you end up with $990?
+Good question. It could mean any of the two, actually. And I guess the question here is also more broad. It's in the sense of, imagine arbitrary service and arbitrary types of requests. What kind of things could you care about? You know, what kind of ordering among all the different requests, all the types of requests, on all types of services that you could be implementing?
+Yep.
+Questions? Thoughts?
+Hans, what do people think?
+Any hands?
+Any thoughts?
+Just how much whichever ordering makes you the most money afterwards.
+That's, that's certainly this person's goal, for sure. Yeah, get, get the most, the most money afterwards, yes.
+I would have been talking about how unreliable, like, Roblox are, but…
+It's some sort of correlation with real-world time?
+maybe some sort of correlation with real-world time, that's a good point. So we actually… we might want something that has to do with real-world time.
+Other things that people can think of? Yeah.
+Let's say, you know.
+and deposit premises, and then I want, at some point, to do a… let's say my account has $1,000, I do a deposit of $500, and then I want to send out 1,200.
+Should this kind of withdrawal of $1,200 fail, ever? That's what we were talking about, it's like, if you're paying your credit card bill or something, you need to pay a deposit into your account before that, making sure that your money goes into or something.
+But I don't really know how it works in a national bank, like, I know there's, like, a certain time for, like, processing.
+That's something that also needs to be considered. Right. So, so you sometimes want, you know, if something finishes, you want something else that starts afterwards to see it, actually. So you want some kind of happens before, again, relationship. Yeah. Anything else?
+Anything hasn't come to mind to people?
+Like, you kind of just need it per user, though. Like, if a bunch of different bank accounts are doing operations, they're not interacting, it's okay. So, you just want, like, per user accounts, in order. It happens before. That's a great point. So, so…
+in the strongest case, you want this to hold for everything, but you don't necessarily want it across users, because if I'm doing operations on my account, and someone is doing it on their account, and we're never talking, we're never touching each other's account, maybe that doesn't matter at all. That's a great point.
+Yeah, this can be generalized even more broadly, not just to user, but to any type of partition of data that you have.
+Yes. Other things that come to people's minds?
+I should, like, avoid, case submission by translation.
+Like, what if they bought a few closings, like, be the old value of the deposit, then the final value would be 1.
+That's a good point. So, you certainly want some kind of atomicity, I guess, maybe we can call it. So, if we both increment, let's say, my deposit to the account, we don't want deposits to happen in a non-atomic fashion. Let's say the deposit says, you know, read the account, then
+Then?
+Equals account, user.
+And then you do the, then…
+Equals, class equals, deposit amount, amount.
+And then I count… user equals step.
+That doesn't happened atomically. Otherwise, you might just completely lose this money. That's a great point. So, automaticity is an important property. Anything else that comes to people's minds?
+Great. So today, we will actually see
+Something about all three of these.
+In today's class. And actually, for atomicity, though, we will assume, in general that atomicity is guaranteed by default somehow. So we won't really care about atomicity that much. We will say that somehow the system manages to do atomicity for us, but we will mostly, worry about the ordering. And in particular, all three of these properties will appear in some form in today's lecture.
+Yes.
+So, let's get… let's go to an example.
+And look at an example and see how the system should behave there.
+So let's say we start with our account of $1,000, we have a primary and a backup, and we have client 1 here and client 2 here, and this client deposits, some money.
+And then in the… before this completes, it also says, also add some interest. Pay interest here doesn't mean pay, actually, it means increase the account by 1% interest. And then let's say that the client, too.
+It says, oh, what's the balance of this account?
+And this… this request arrives there, and… and it's just, we get a response there.
+What should this get returned here? What value should this return? Any thoughts?
+What value should we return for this account?
+So, the black is the deposit request, the red is the interest request, and then the green is the, is the get request. Thoughts? What value should this return?
+In this case, it's probably… Awesome.
+Through it.
+But we don't want that, we want, like, $1,100 plus the 1st 10 members.
+Why do we want the plus tainters?
+Because, like, the request for K1% interest has already gone out, so we want, like, the user to have the most up-to-date.
+Okay, that's a good point. So, what could… what this could return, actually, and let's break this down, because I think there's multiple interesting things here, is that, first of all.
+We know that
+At this point in time, this green line, the primary response to the client one, that I am done with the deposit.
+Right? So at this point.
+We certainly know that the primary is certainly done with the deposit, so there is no way we will get something that does not include the deposit in, okay? The deposit has to certainly be part of this. Another question is the second point that you mentioned, which is the interest. Should the interest be in or not? What do people think about the interest?
+Should interest beam? Thumbs up. Should it not beam? Thumbs down. What do people think? Interesting? Interesting. Interesting? Interesting.
+Interesting? Interesting.
+More hands, more hands. Thoughts, thoughts.
+keep them up, just to get a sense. Okay, this is actually pretty split, but more towards the no, I think.
+The answer is both are fine, actually. So, so, both are fine, but why are they both fine here? The reason is, even though this has arrived as a request.
+We have not told the client, I have processed this request. Imagine you're, you know, you're paying at any, you know, with your Apple Pay or something, you're paying. If it doesn't say approved.
+the request hasn't gone in, even though I said I'm gonna pay. So if two people pay at the same time, you know, with your account and try to overdraft your account.
+one of them will go in first. So the time…
+for which we consider a request to be done. It's not the time it was sent in the system, but rather the time when the system responds to us that it is done.
+So, before this time here, before this particular point here, we do not know, and a system could very well not have actually done the interest, but it could have also, okay?
+Thoughts? Questions?
+In this particular case, I'm saying that, you know, it will have 1100, and this is because in our primary backup implementation.
+This one, because it doesn't… it actually hasn't received the acknowledgement from the backup, this is not, you know, from the perspective of the primary backup, we don't consider this done yet, right? Because if the primary crashed here.
+then we still… we would not return the interest before the backup actually has synchronized. So at this point, it's not considered… this is not considered done.
+What about the seconds yet?
+What… what should this return, and why? Thoughts?
+Yes, so because we have crossed this point, at this point, we are actually ready, and we see all of the writes. The important thing to keep in mind here is that this should never go back in time, so this should never see something that the previous read did not see, and this will become apparent in the later kind of, like, examples that we will see in the later consistency models.
+So, having these examples in mind, let's take a little bit of time to generalize the properties that we want.
+So one property that sounds very reasonable is that all the rights are totally ordered. So if we have rights in our system, then it's a total order of these rights, and then we know exactly, you know, which ride happened first, and second, and third, and so on. So we have a kind of, like, global total order of all the modifications or updates to the system.
+Another problem that we might want is that once a read returns a particular value, all later reads return that value, or the value of a later read. So, essentially, we cannot go back in time. If someone has seen something, we cannot just take it back afterwards.
+And then, another one could be that once the write completes, all the later reads should return the value of that write, or the value of a later write.
+So, why are these properties important?
+Why is the dollar order important? What do people think? Think on the client perspective. Why, why, why do we need this? Why do we want this?
+But, why would we want a total order, from the perspective of the client?
+We have a set of replicas that process requests.
+And, yeah, why would we ever want total order?
+what I've said is that I don't really care what's going on, I just want a certain outcome, and if you guys think… if you guys, like, the system is not able to produce that, it makes a
+Right. So, from the sake of the client.
+there is a… there is a bunch of replicas here, but I don't want to care about replicas. I am… I am just… I just want to pay to buy my coffee. I don't care, you know, that there's replicas behind the scenes. I… I want to have a total order. I want to consider that if I pay for my coffee, you know, after I have deposited money to my account, I will certainly have money in my account to buy the coffee.
+So, from a client perspective, we want a single thread, a single kind of entity processing all of our requests in order, and that's the best kind of model for the client.
+And once the read returns, all the… for the second property, the ones that read returns, all later reads should return that or later value, the reason is that, as I said, the service cannot take back something that it has already confirmed, and it has already performed.
+And finally, for the… once Red completes, all later leads seed.
+We want to see the freshest results in the system. So if something has completed, we don't want to not be able to see that particular value. Again, for the coffee example, I just deposited the money, it completed, so I certainly want to be able to use the money in the account.
+So, the conclusion is that these are very important for the client application on top of the service. So, if you know, as an application developer, that your service offers this, it's much easier for you to implement the service, okay, than your application on top of that service.
+And let's see now…
+linearizability. Linearability is the strongest consistency condition that offers and satisfies all of these properties that we would want.
+Solarisability was introduced by Herlihy and Wing, and it satisfies these properties. There is a total ordering of writes, and then it returns the latest completed write. It sees the latest completed write, for sure. And that gives us a single copy semantics, meaning that,
+All the visible effects from perspective on the client, it's as if we had a single, a single replica running, doing things in order.
+So users are completely oblivious to replication.
+Questions about vulnerability or the properties that we have set out?
+This is not the ordering rights and reads, how is that different?
+What those two things are stated there.
+you can… so there is… your question is, how does this relate to other orders of lights and reads? Yes, so this actually is… is equivalent to other orders of lights and reads, but I'm speeding it up because of another constancy model that we will see a little bit later. But it's equivalent. And actually, there is a lot of ways… I guess this gives me a segue to the next slide, which is that
+There has been a lot of study on these constancy conditions, and a lot of different ways to define them, and there are… there's many equivalent ways to say, oh, a system is linearizable, or what linearizability means.
+And it's sort of… it's a… it's a kind of, like, take whichever definition you prefer, and it's simpler for you. Yes, but… but this is equivalent. Total ordering of reads and rights is equivalent to this.
+Other questions?
+Great.
+So, in this class, we will focus on an observational definition of illizability, and for a formal definition, and many examples, you can read the original paper by Harry Hill Wing, which is actually
+very, very clean and very easy to… not easy, takes time, I mean, it's a dense paper, but also it has very nice examples, and it's, it's understandable in general, as far as these kind of papers go.
+So… to talk about linear's ability.
+before we talk about larvability, and as I said, we will use an observational definition,
+And just to give you a sense of what the other definitions look like, there's definitions of linearizability that, and all of these consistency conditions that we will see, that are operational, meaning that they say a system, is implemented in this way, and therefore is linearizability.
+there is Litmus test-based definition, which say if a system passes these tests and fails these other tests, it is linearizable, or it's not linearizable. And then there's observations, like the one we will see, which defines it based on external observation.
+So, yeah.
+Preliminaries.
+We first assume a system where we have multiple clients that make requests to our system.
+And then we define an execution of, or trace of a system as a sequence of two types of events. Request events with some arguments, and response events with some values, some response value.
+And here's an example trace that we could see in our system. A request.
+for the deposit, deposit operation was made with 100, 100 as the argument. We got the response, okay, and then another request was made for… to give us the balance, and we got the response, 1100.
+And often, and throughout the rest of this class, we will visualize those as follows. We will use the clients as different lines, and we will write boxes to denote the start and the end of a particular request.
+So this here is the start of the request to deposit, and this is the end of the request to deposit. So the boxes essentially show us, in real time, how are these requests, you know, which one is first, which one is second, which ones overlap, and in what ways, okay?
+Questions about… about these preliminaries here, executions, the system, the traces, the visualization?
+We need to… we need to grok through some preliminaries before we get to the actual usability definition, so if there is any questions here, throw them out here so that we can, yeah.
+Great.
+Then, what we need as a definition, as a term, as a concept, is that the concept of a sequential trace. So, a trace is sequential if no requests overlap.
+And we always assume that all clients are actually sequential in our system, so they can only have a single pending request at a time.
+So in this case, this is a sequential, strays, because request 1 box finishes before request 2 box starts. So this one finishes before they start.
+But this one is not sequential, because request 1 overlaps with request 2.
+Questions about this?
+No.
+A linearization is… A T1 trace is a linearization of a trace T2 if
+The overlapping events are made non-overlapping in some arbitrary way, and the order of non-overlapping events is present.
+In this case, this particular execution can be linearized to two executions. This one.
+And another execution where request 2 happens first, and request 1 happens second, because they overlap. So we're… we are free to resolve overlapping requests in any order that we want. We… and the user can take this and pull it first, or can push it second.
+Questions about this, does it make sense, the concept of linearization?
+I guess this won't happen if the trace is sequential, but, like, if there's an overlap,
+For the responses, do we know, like, what responses correspond to which requests, or…
+So, in the visualization, we do, or you mean… you mean in this particular… with this… Yeah, this one. Yeah, so this solution is a little bit simplified, so exactly the way to write this formally is that we also include here which client made the request and which client made the response, and because they're sequential, we know how to match them. But that's a great point. So, we need a way to match them, yeah.
+Other questions about this? So, linearization essentially is a way to relate two different traces. We take a trace that has overlapping requests, and we make out of it a trace that has non-overlapping requests, but that is very similar, because overlapping means it could have gone either way. That's kind of like the intuitive idea, okay?
+You know… That's gonna get… Thanks for listening to me.
+do any harm to Lois Los Angeles.
+Totally. That's a great question. So, exactly, we assume that the linearization of a trace does not introduce any behavior that could not have been observed originally, because we assume that at the end of the day, one or two is… will happen, but if they're overlapping, we couldn't know which one actually happens first, so we can… we are free to take whichever. That's the exact intuition, yeah.
+Other questions about this?
+Great. So… We can now fully describe the observational behavior of a system using a set of these traces.
+So,
+If we assume that each observable execution of the system has a trace, then if we take all of these traces, we have a set of traces, and we say that this is the specification of a system.
+And the specification is sequential if all of its traces are sequential.
+Yeah, and this is important because we discovered standard processes one request at a time.
+So let's look at an example of a system just to get a better sense of what the specification is. And I'm showing you here an example of a 504Q. Not a 50Q that we saw before, but an actual 50Q data structure. And let's say you had a service that implements a 504Q data structure.
+And you have two operations. An enqueue operation, NQX, and a DQ, which, of course, because we're a 5 for Q, DQ is the oldest item from the queue. And in this case, X, because it returns X.
+The semantics of the FIFQ, it's clear, it returns that, yeah, the first item, they all decided, has not been dequeued'd yet.
+So…
+Look at this trace here. We have this client and this client. This is doing an NQ, and this is doing a DQ. Is this a sequential trace?
+Thoughts?
+Is the sequential trace?
+Yes, because the X goes in, and then it goes out. Okay. So, that's a good point. So, this is indeed correct with respect to FIFO trains, certainly, because the X went in and X came out, but is it sequential?
+The answer is actually no, because the definition of the sequence that we came up with is this.
+If a test is considered sequential only if things are not overlapping. So, based on this very pedantic definition of sequential, I'm not even asking yet about whether this is… this is a presenting a real FIFOQ. Is this a sequential trace? And the answer is no, it's not a sequential trace. Does that make sense?
+So, it is, actually, it is representing the FIFOQ, but it's not sequential.
+If we move the DQ a little bit to the right, now it is sequential, okay? So now we're good, it's sequential.
+So now, I'm asking the second question, which you actually answered, which is, is this a valid 5 for Q trace? And the answer here is yes. We in queue, X, with the queue, X, sounds about right. Assuming that the queue was empty in the beginning, of course. Doesn't make sense to people. Questions about this?
+Great. Now, what about this? Is this a FIFO trace?
+If yes, why? If not, why not?
+It's not a part of a trace, because…
+when we do our second V1, Z, but we… our second
+Variable that we incub was Y.
+Right, so we're in QX, we're in QY, we do QX, all good so far, we enqueueZ, we enqueue A, with the QZ, problem.
+The first element was Y with the QZ here, so this is not a FIFO trace. It's a sequential trace, but it's not a FIFO trace, okay? It does not satisfy FIFO.
+So…
+If we gather all the sequential traces that can be observed, then the valid FICOQ traces, so this one we would gather, but this one we would not gather.
+Then, we would have a collection of traces describing all the possible behaviors that a 50Q would have.
+And with this said, we can actually precisely specify what a 5OQ means. If we have all of these traces, what we want to say to check if something is a 5OQ is, okay, I take an execution, is it part of the set of traces? Yes. Therefore, it is… it satisfies the specification, it's a 50Q, okay?
+So, we use this notion of traces and sets of traces to describe a component and what to do, yes?
+Can you explain again why that's on us?
+It is sequential test. It is sequential, but it is not FIFO. This was not sequential previously.
+Because they were overlapping.
+Now it's sequential.
+This is sequential because nothing is overlapping, as far as I see, at least. Yeah, nothing's overlapping. So all of the blocks are separate, nothing's overlapping, there's only one request being processed the system at a time. Questions about this?
+Other questions about this? This is a little bit of a… of a… of an awkward and not very intuitive kind of way to think about the system, and at least it took me some time to kind of understand how this works. So, if there's anything that doesn't feel intuitive now, just ask a question, and we can address this.
+Are you just arbitrary… arbitrarily picking places, or is there a reason that you
+So these… that's a great question. So this… I'm not even making any decision here, as in, I'm just showing you an execution of a system, and I'm asking a question. Or you, imagine you are watching a system execute, and then you see this.
+And you can answer questions about this trace. Is it sequential? Yes. The way I move these boxes around now was completely arbitrary. Yeah.
+Other questions about, about, about traces, specifications, this FIFO queue?
+Okay, so assuming everything here was totally understood, now we can talk about linear ability. So, given a sequential specification, which, as we said, is a set of sequential traces that describe what our object, what we want our service to be doing, and implementation, which is also a set of traces.
+is linearizable if
+for all traces T in our implementation, these do not have to be sequential traces, by the way.
+there exists a linearization, P prime, such that, T prime belongs in spec.
+So…
+Essentially, this would describe our real distributed replica implementation. There is a lot of non-sequential space executions out there. If we can linearize all of them in a way that actually is explainable by the sequential specification, that means it's a linearizable
+It's… this is a linearizable implementation.
+Questions about this?
+How do you guarantee that linearizing it won't, like, change what the VIN state is supposed to be?
+what the intended state was supposed to be. Well, the… so the thing is, we don't really care about what the intended thing was here. What do we care about? We have a system. We have a system that has a bunch of regulators.
+And hence, we don't know how it works. But what we see is that there is some requests.
+With that happening?
+And let's say, you know, we see… we see here this overlapping here, that has a queue. Actually, then this has shown. This has a DQ.
+that returns X, and this wasn't in QX.
+Okay.
+This happened in our system. This is literally what we observed. Climate 1, degrees climb 2 degrees.
+DQ and Q.
+What we do, essentially, what we say, is that,
+actually, this is fine, because there is a way to reorder this that actually is explained by the original queue, so it's fine. And what's the intuition for this? The intuition for reordering is essentially that
+There is… another way to visualize this, is that there is a single point inside the box where the operation happened.
+So, this particular point, let's say, is the point where the DQ actually succeeded.
+If there is an overlap.
+And we don't know what his internal point is. It could be very well the case that this succeeded before him.
+So… so, by having an overlap, it means that the systemic side is free to do… to complete these other requests at any point in this overlap. So, as long as we only… we only, all the overlapping things, we're kind of fine. That's… that's… that's the issue. And since we cannot explain this.
+Is this a fine execution? It's actually pretty valid to say. I mean, this did not return before the AQ.
+Before they killed,
+This did not return after the EQ has started. So, why is this a problematic solution? I don't see why it is a problematic solution, yeah. Thoughts? Questions about this? This is… this is a pretty, pretty intuitive kind of way of thinking about correctness, so yeah, ask more questions about this.
+Yes.
+What does the end field do the rest of the time? Just sitting there idle? The Enfield operation takes a long time before it leaks, yeah. So this is a client.
+That means… these are observed at the client, usually. That means they still could be waiting. That says, something is blocked in some queue, the response…
+until it returns to the client, has to be blocked somewhere, the network is taking time, who knows? Something is happening, but yeah, it took time. Wait, so you're saying, though, it's okay if the order does get switched? It's okay, only for things, though, that are overlapping. Because if these things that are not overlapping, then no matter where we pick this form.
+This exact point, there's no way they're not overlapping, that they happen in different buildings.
+Only the overlapping this point, point of perform… performing that sort of day.
+they can… they can happen in many of the tools. Does that make sense? Yeah.
+Great.
+And a key concept here is that the linear ability is always defined based on specification. So, often you will see in online, kind of, discourse and in blog posts about the specific system, sometimes people talk about linearability in general, but there is always an implicit specification under the hood. We have some
+specification in mind of how the system should be working, and only based on that we can actually define what interability means, okay?
+So now a question. How do we actually check Inert's ability? So…
+A question to you is, what can we do to determine if an execution, a given execution, is analyzable? What do we do?
+I give you an execution of a system, and I, you know, I have you monitor a system executing, and then you observe request after request end times for all clients. And I ask, is this linearizable? What do you do?
+Like, you look at the price, That exists from that execution.
+And then check if some ordering of those events exists to where, one, the order of non-overlapping events is compared, and two.
+the overlapping events are ordered in some way, but they're not overlapped. Right, so it's kind of like a sense… not a sense, but yeah, it's a sense problem, actually. You take… first of all, you determine that you have a specification, and then you take
+For all the non-overlapping events, you check all of the possible orderings of the overlappings until you find one that is part of the sequencing. If you can find that one, you're happy, and it's linearizable. If you can find none, then it's not a linearizable execution. So to show nonlinearability, you have to exhaustively check all of the orderings and show that they are not linearizable.
+And then how do we determine that the distributed system is linearizable?
+How do we do this? Question to you.
+Following up with a building on that ball. What do we do for this?
+You just check all of the executions that are linearizable? You check all the executions of a system, and then you show that all of them are linearizable.
+And that can happen in two ways, often, through proof.
+Where you actually mathematically show that your system, you know, you somehow mathematically describe all of the possible executions, and then you show that they are all linearizability. Or there is also ways that involve dynamic monitors, where you observe execution of a system at runtime, and if some execution violates layersability, you can immediately warn the user something nonlinearizable happened, okay?
+So now that we have seen this.
+Let's look at some example executions. Assume we have a sequential register, initial values are zero, and register, I mean, where you set and get only very simple operations.
+And the question to all of you, which you will discuss with the people next to you, is, are these linearizable? Why or why not? Start discussing, and we'll get back in a few minutes to talk about them.
+First of all… That's just the best.
+Yeah.
+But, you know what they might be asking about?
+I'm not sure that's a bonifying statement, but she also…
+Yes, yes, ma'am.
+Boom!
+What do people think? Let's start taking them one by one. What do people think about the first one? Hans, who… who has thoughts about what the first one, if it's advisable or not? Raise your hands, everyone who wants to share, possibly, whether it is or not. I want to see a lot of hands. Hands, hands. The first one. Hands, hands.
+Hans? More hands?
+Morehans?
+In the book?
+It's not because… The first event is full before the 2nd, which means that…
+Correct. So, this set finishes before the get even starts, so there is no way to linearize them and make them a valid register.
+The second? Hands, hands for the second?
+This one's okay, because there's overlap, we can put the get first and the set. Correct. So, for this one, we put the GET first, the set after, it's exactly like this example that we showed here.
+What about the third, Hans?
+More hunts, more hunts.
+The answer is no, because you set the execute to either 1 or 2, so your GET cannot be born fully through.
+Could you repeat the point?
+I'm thankful.
+Is that X either 1 or 2? Those are over that, I think.
+You beat them, you get both 1 and 2, which is… you're not supposed to get one and two.
+Right, so there is no way to reorder these two only, because they cannot be reordered with the sets at all, in a way that will explain both of them.
+We can explain one of the two if we reorder these sets in… you know, if we put the set one after, we can explain this. If we can put the set two after, we can explain this. But there's no way to explain both, okay?
+Huh? It's like…
+It's sequential, but, like, it's not a good, like, it's not, like, an accurate wording, and you can't…
+Exactly, exactly, yes. Other questions? Other hands?
+The second one works, because I… we are allowed, in linearization, to reorder all overlapping events. So, because these are overlapping, and the initial value of the register is zero, I can move the get first, and see the GET completed first, actually, here, and then the set completed, so I just didn't see the set value.
+Other questions about this?
+Nope.
+C1, C2, where we said that we can't explain both getF1 and get of 2? Could we do the example, like, let's say instead of… we have set X1, but we have setY2?
+If it was two different variables, then it wouldn't be okay, because then you can reorder and shift everything? Yes, correct. So if this were for X, and this is for Y, and this is… we have X, X, and Y again here, X and Y, this could have been explained. Yes, yes. Yeah, the whole point is, if you can find a way
+Where you reordered.
+only overlapping events and nothing that's not overlapping, and you find one that is valid, I will accept layizable. There's no, you know, that's the criterion.
+Great.
+So, concluding lasability. Lizability is the strongest notion of consistency, and it's very easy to reason about.
+Because users cannot distinguish at all between a linearizable implementation and a sequential implementation. From their perspective, it's exactly the same. They cannot determine if the implementation is a linearizable or actually sequential.
+And this is easier for the application developer.
+And why do you think that is? I mean, yeah, why, why…
+why would you want to… to have that as a… I guess I kind of explained this before. So, the system does not expose any concurrency, and if you write an application and you are calling a service that is realizable, you would never expect to see something weird, like, I add… I do a write, and then I don't… I don't even read that right. Because otherwise, in your application, you would have to do all of this defensive logic of thinking, oh, maybe my database will not have
+yet, you know, get my first ride, so the second read might not have the first ride, so I have to do some kind of mental gymnastics to figure out how to deal with this. So, he has a billion dollars to make a very simple application, and, it works because of that.
+Questions about learnersability, I guess, before we go forward.
+Going back to the previous slides,
+like, the top right one, why wouldn't you try to maybe, like, delay the, like, acknowledgement back to the client, so, like, from their side, it does look like the set completed after the get?
+or, like, in the transaction logs, I guess this get would happen for the set, but then…
+like, when they saw it locally, I guess I had one would see that.
+it happened before. I'm a bit confused about that. I guess the question is, why does the client… why can the client determine this happened before, right? So… so the client, the only thing they can know is that I started my call here, I ended my call here.
+I don't know when it actually succeeded, right? It succeeded at any point in between these two.
+At the same time, I know someone else started the GET call here, and ended it here. I don't know where it actually completed.
+So, I mean, we could be late, but then we would be delayed
+We were decreasing the latency of our system for what benefit?
+Right? So if we delay a response, we increase the latitude of the system, because now the client wants to see a response, even though, from their perspective now, it's all fine. I mean, they know something happened at the same time.
+And, oh, I mean, it could have been the case that this happened here, could have been the case that this happened here, I don't know, from my perspective. So anything, anything is, anything is fair from my perspective as a client here. Only if I know I completed it, and then someone started something else, I would be like, okay, that's a problem.
+You can be standing next to your friend, you can see yours go through, then they can see theirs, but theirs actually went through first, along with that.
+Yeah, but that's fine, because, I mean, you would still… that's network, right? You could still expect that yours might even say, oh, I didn't succeed, but still it has succeeded. So the fact that, you know, the information that you get from a system, it's not… it looks… it sounds a little bit not obvious, but it's not actually problematic, because
+your friend… your friends completed first, but they showed the response after. But your friend did not start.
+after you finish. That would have been an actual violation, right? Imagine if your friend starts after you finish, and you have seen completed.
+And then your friend starts. That's a problem, if then your friend sees that they were before you. But if your friend starts up there, then, I mean, who knows? Your network might have been laggy, and your request took so long to get to the actual primary, whereas then it got immediately, you know? So it could have been a delay of the network, who knows what it is.
+Great.
+And this, I guess, the important thing here is that this is… this is provable, so the original paper also proves this, if not the original paper, a follow-up paper, that this is equivalent to sequential, so there is nothing separating
+and it hasn't been removed from a sequential. You cannot distinguish from them. So, that directly implies that it's also… it's… there's nothing in volume that could happen, because there is no way… if you… if you just look from outside, there is no way to determine that this is not sequential.
+From your perspective, it might as well be. There's literally no way, there is no observational kind of behavior that violates a sequential execution. Yes?
+Yes.
+how it gives consistency. Are you saying that the trace is gonna, like, the exact same trace happens every single time?
+Which is why it's… basically, because if you have, like, overlapping regions, could you technically say that either order happens, and then it would…
+result in the same trace, or are we saying that same trace happens every single time? Well, we don't get… what do you mean every single time, I guess? That's the question. Yes, so you run the same
+Operation again on the, like…
+for consistency, it's gonna take the same price. Oh, so consistency here, that's a good… that's a good point, I guess. Consistency here, it's used to mean not consistency that every time I edit out the exact same execution, create the same result, but more that…
+Then, the replicas.
+the… theta is consistent along with others. So, it's not… it doesn't… it doesn't sound that relevant for linearability, but we will see…
+even later, I guess, in a few lectures, you will see some notions of consistency where it talks more about the data. Here, this is… it also talks implicitly about the data, but it's much stronger. So that's why we can talk about it, not from the perspective of the data. We talk about it from the perspective of the clients. They all talk about
+the relationship of the data among replicas. That's essentially what we're trying to talk about here.
+Great.
+So, consistency bothers.
+As we said, we have a set of replicas and implemented application.
+All users observe them by issuing requests to different replicas.
+And, a question is, How do we define correctness for these kind of traces?
+So…
+more broadly compared to liability, given all of the executions of the system, all the traces of the implementation, all of the consistency conditions are defined in the same way. We have some kind of property, P, that often depends on the specification, and we say that
+If…
+the implementation traces satisfy P, maybe P is parameterized by the specification, then they satisfy some kind of correctness… consistency condition. So, out of all the consistency conditions, layer's ability is the strongest. The strongest consistency condition. And then there is,
+kind of like the very weak version of consistency. It's called the ventral constancy. We will see in a few lectures from now.
+And then there's a bunch of, consistent conditions in the middle, like read after right, causal, sequential, and so on.
+The thing that's important here is that when we increase consistency, as I said before, we also make it easier to write programs on top of the existing… of the services.
+So, now the question to you is, should we always aim for lasability? Why… why do we even have this other part here? Why don't we just have liability, since it's the easiest? What do you think? Thoughts?
+Hence? That's… In some cases, there could be serious performance benefits.
+Without peaks, like, without sacrificing correctness at the beginning.
+Right. So, when we have to implement illnessability, we pay.
+So, there might be cases where we can get away with weaker conditions, but get much, much better performance.
+And so there is another kind of dimension that goes in parallel with this too, which is the cost. So the further to the right we go, the easier it is to program, but also the costlier it is to implement such a… such a conditions condition. Make sense?
+Great.
+So, let's now talk about sequential consistency, which is the second one that we saw after visibility on the left.
+Sequential constancy was introduced by Leslie Lampert, and it is in this paper called, How to Make a Multiprocessor Computer That Correctly Executes Multiprocess Programs. And it was originally targeting multiprocessors and not distributed systems, but it's still very use… very useful in distributed system setting.
+The key idea is that there exists a sequential order of all events that can explain the execution.
+So, an example execution is this, where we have set X1, get X1, get X2, setX2,
+The sequential execution that explains this, any ideas? Which execution explains this? With sequential execution? Thoughts, hands, just have a sense of this.
+Thoughts?
+Yes?
+Correct. So, we reorder these two, and then we get a global order. Perfect. This explains the execution, properly. Does this remind you of anything? Hmm. Linear usability. So, let's go back to linear ability and see something.
+This… Easily arrival execution.
+we have a set of X equals to 1, and right after it finishes, C1, the client 1, makes a get, and gets the 1.
+A replicated implementation has to guarantee this execution. So, no matter what, if this finishes just before this, this has to be… this has to be the results.
+How do you implement this? Do you see any performance issues with this? Thoughts about this?
+If you have a replicated, service.
+Thoughts?
+Performance, implementation, what do you think?
+That doesn't mean there's none, or are they obvious, or, you know, how would you implement this?
+What would you need to do to actually make this work? Let's say you have a bunch of replicas, right? And client two talks to some replica, and client one talks to some other replica. What do these two replicas have to do? What if these replicas are in New York and Los Angeles? Thoughts?
+Right, so the replicas have to talk with each other all the time to make this work, and the ride that completes in New York has to be immediately visible to read in Los Angeles. Even, like, in a microsecond. If it starts after, it has to be completed after.
+Which means that this requires a lot of coordination.
+And so, sequential consistency is the same as linear ability, so there is a sequential order, but we allow arbitrary reorderings across the clients.
+So… If we have this execution.
+We consider this to be actually equivalent to this execution.
+So, we are allowed, in sequential consistency, to reorder completely things across clients. If a client… if two clients did things separately, then there is nothing, preventing us from reordering them completely.
+And, essentially, what intuition behind it is, is that the real-time order, and this is the thing that was mentioned at the beginning by someone, the real-world time order, which is satisfied by the ner's ability, we actually don't care about it. Because, you know, if a client
+the client… if the clients only talk to our system, you know, through the request, how would they know that this happened before this? So, from your perspective, it might have done happened after.
+Is there any place where this does not hold? Any thoughts? Any questions about this?
+Why would… why would this not hold, this particular intuition, that the real-time ordering does not matter?
+Two clients, interact with the shared content?
+Right, so if two clients have some other external communication channel, that causes a problem, and we will see how this problem appears even a little bit later, even just in the context of sequential consistency.
+But for now, knowing that sequential constancy allows you to do this in addition to linearizability, let's look at some executions, and the question to you is, are they linearizable? Are they sequentially consistent, or needn't? So talk a little bit with the person next to you, and we'll get back together about this.
+There's true.
+I'm coming back to the other day.
+Have you tried to figure out what is problems?
+So, let's get it back together. So, for the first one, is it linearizable?
+Is it… first of all, is it linearizable? What do people think? Hans, is it linearizable?
+I see some thumbs down. Okay, is it sequentially consistent? I need an explanation for sequential consistency.
+So, hands, not hands. Hands, hands. Is it sequentially consistent?
+We said no, the reason being for, clients 3 and 4, like.
+You have to preserve, like, the ordering of their guests.
+The only way you can make it sequentially consistent is a competitive reorder that gets the same client, which violated
+consistency.
+So there is… there is no reordering that you could do, even across clients. So client 3 and client 4, you are not allowed to reorder. So one of them sees first the 1 and then the 2, another sees first the 2 and then the 1. There is no way to order these sets
+So, the proof is, all the executions where we took all the different reorderings, there is none which actually explains both these and this. Yes, so this is neither. What about the second one? Is it linearizable? Is it sequential? Consistent? Thoughts?
+Thumbs up if it's linearizable, middle thumb if it's sequential constant, down thumb if it's done. Thoughts?
+Learizable middle? No.
+Doesn't sequential? No?
+More thumbs, more thumbs.
+More thumbs.
+Who is willing to explain?
+Erica, anyone, will you explain?
+I'm sick.
+Yes. Okay, so it's okay if you set X to 1 and then set X to 2, and then we see that they're overlapping, which ones that you could ship, like, reorder, get X2 to the right, but the problem is that you're getting X2 and then doing get X1.
+without setting it again, so… Right, so again, we have to take all of the executions. Let's say this completed first.
+If this completed first.
+how can we make this work? We have to move this set after everything, right? So, to make this get, see this set, this has to move after everything.
+But if this moves after everything, then this has no way to see this. So this has to come before this, and this has to come before this, which is impossible, because there's, like, an inconsistency cycle here. So, neither. Again, what about the last one? Which of the three it is? Hans? Hans? What about the last one?
+France? Yep.
+With the blue, yeah. We said it was, only sequentially consistent.
+Because it's already in order, so we can't…
+There's no overlapping executions, we can't…
+reorder anything from that, so it's not legitimizable, but we can move the first get in C2 to be in between the set X1 and set X2.
+It's mostly consistent.
+Great. So it's not… so you have to have two kind of arguments to show that it's in between, that it's sequentially consistent. We have to say it is sequentially consistent, which happens because
+We can reorder them in the following way. Set 1, get 1. Set 2, get 2. Legal ordering, sequential consistency. And we have to show that it's loaded linearization.
+And to say, it's not recognizable, there is no… actually, here there is no reordering in general, because there's nothing overlapping, so this is not a valid sequential execution, yes.
+This is old. Based off, like… full time.
+It's based on real time in the following sense, that, I mean, if you're observing the clients, yes, it's based on real time.
+Other questions on this?
+So here's an interesting thing about sequential consistency.
+There's this execution.
+Initial value zero, Is the sequential consistent? Thoughts?
+At this point, it should be very easy. Hans, Hans. Is it or not?
+Yes?
+Yeah, white? We can just move get X through before the set X1, because it's there on C5.
+Right, perfect. So we do set, 0, get0, set 1.
+Sequentially consistent, perfect. Let's look at this green one. Is the green one only the green? Forget about the blue. Is the green one sequentially consistent? Thoughts, hands, only the green one. Hans?
+Would you explain?
+Right, so set0, get 0, set 1.
+Perfect.
+Is the whole execution sequential consistent? France?
+Because if you reorder, like, either the green exclamation or the blue one, you violate the process we did for
+So, the problem here is that you want, at the same time, to move the get of the green before the set of the green, but also move the blue of the… of the… the blue get before the…
+Blue set. No. So we want to move the get Y before the setY, but also the get X before the set X. But this is not possible. If we try to move one, we have to move the other after. So if you do all of the kind of, like, trying to reiterate in your mind, there is no way. What does this mean here?
+It is the problem that we discussed before.
+that if they have a… if you have a separate channel, essentially, you can violate something. So, the problem with sequential consistency is that it's not compositional. So, if you have two concurrent objects, an X,
+and a Y, that they are both sequentially consistent, and you use them in the same distributed system, then that does not necessarily lead to sequential constant executions. So two sequentially consistent objects, if combined, are not sequential constant necessarily. Yes?
+top operations after, like, the three at the bottom.
+But then, this gets… Wait, you move all three after… wait.
+10. Zero.
+Set 1 gets 0. Set 0, set 1 gets 0. Hmm, that looks… so, you're right, actually, I have a bug in this. But, okay, I have to find what the bug is and what the actual
+Can anyone think of the actual… of an actual execution that is… that is… this is… this statement is true for sure, so I'm sure about the statement. So the problem is my… my… my program here. So this is actually a good… a good counterpoint. This is… this does not… this is actually sequentially consistent.
+Does anyone… can anyone think of how to fix this? If not, quickly, I will… I will do homework and come back.
+There is certainly an execution that violates sequentially consistent if two objects are sequentially consistent.
+I'll come back, Bruce.
+Yes.
+X0 on C2, and then, like, a blue get I0 after a split of green, like… A blue get zero here. In between the second and third.
+Here. If we add a blue get zero.
+Well, that would violate this, though.
+So, yeah, because then this would not… if we had it here, the blue gets zero, this wouldn't work. Yeah.
+I will come back to this. When I came back… when I came up with this example, it took me a lot of time, and I thought, okay, I found it, but then, actually, I didn't find it, as it seems. So yeah, I'll get back and find it and tell you in the next lecture.
+Great. Questions about this? Oh, on the other hand, an important thing is that linearizability is actually compositional. So, there is a proof in the paper also, but this is a very powerful thing about it, that if you have linearizable objects and you compose all of them together, the whole system is linearizable. And that's a very powerful property, in general, but as we said.
+They are very expensive, also. So you get some, you lose some.
+Questions about, sequential consistency and compositionality.
+Great.
+So, implementing sequential consistency, we want global sequential order of all events.
+How can we implement these thoughts? We've seen some techniques in this class. Any thoughts on how could we implement global order of all rights?
+We have seen some things in this class. How could you have a total order, among events?
+You can use Lampert clocks, you can force that a single primary does all the writes, you just have to make sure that only, you know, you have a total order among all the events.
+But let's now think about this, and this is where we started with sequential consistency. We started with this problematic execution, where there was a set 1, and they get one. And I said, wow, that's very expensive. If this happens in New York, and this happens in LA. So now we have a set one, and they get 0. This is sequentially consistent.
+How could we ever get such an implementation? What would we do in our actual system to get this?
+thoughts, when could this… such a thing arise? Differentiating liability and consequences? So, essentially, what does… yeah.
+If you have original read replicas or a cache, then you could actually see stale results, and that's fine, patient records constituency. You're like, okay, I see something stale here, but there is still a global order among all the events. It's just that I didn't see this event, even though it happened in real time before.
+So, yeah.
+Oops, I should not have done this. Any issue with the global order? There is also… still sequential consistency is actually kind of expensive. We still need to block all the writes to have global order. So even though we can have these kind of read replicas and casses to implement sequential consistencies, get some benefits, still writes have to actually sequentialize and synchronize. So now, we will see another consistency condition, which is called causal consistency.
+And this was introduced in 1995, and it has the following, it works in the following way.
+The order of causally related rights must be preserved in values you tend to read, meaning
+If we have W1 happened before W2, and this happens before that we have defined in Sandy Lampert and the vector clocks.
+Then, if a read sees the effect of W2, it must also see the effect of W1.
+An example where this is useful, like a social media feed. It is okay to not see all posts, but if you see a comment, you must certainly see the corresponding post, or, you know, if you see a retweet, you have to see the original tweet for sure. You can't not know, or not be able to see the original tweet.
+The main benefit of this is that it can be implemented with a much lazier synchronization between replicas.
+So finally, we will do the exact exercise with also causal consistency. So, look at this, they are the same as the previous ones. Are they causal? So, we know from before if they are, you know, linearizable or sequential. So now the question is, are they causal? So, discuss for a few minutes, and we'll get back together.
+Stephanie's talking.
+Right? Anything that sleeps right next to it.
+I don't think so, Mr.
+If they were isolated, they'd die. I mean, that's just…
+Why is the cost?
+I saw that, too. I don't know why you would count here.
+Even though the virus, you'll see that I'm being off.
+Yes.
+That was very pretty.
+Yeah, no, you're right.
+Okay, so, thoughts?
+Is the first one causal? Thoughts? Yes or no? Hans, is the first causal? If yes, why? If not, why not?
+Thoughts about the first one?
+Is this causal, or not?
+I'd say both, let's find in four, suggest two different writing orders.
+they do suggest two different right orders, but here, how… how is the happens before relationship? So, actually, these clients don't talk to each other with any methods, so this happens before only itself, we don't… we can't relate it to anything else. Similarly, this, this we can only relate to this, and this we can only relate to this.
+So, actually, the system… this is a… this is a valid causal execution. Why? Because…
+There is no causal kind of causal-related events that they don't… they're not satisfied. So get one, here, this is this first and this second, and this is this first and this second. Causal order does not make any requirement about the total order. No requirement about total order. Maybe the orders have been in different orders for different clients, that's okay. This sounds very weak now, but we will see how we can get even weaker, actually, a little bit in another lecture, and how this can still be used.
+So, this is causal. Questions about this, and if that makes sense or not.
+Wait.
+So here, there is actually… okay, I think, I think that the trick here is that there is no event that is causally linked to another event.
+Okay, so that's kind of the trick. So the only thing this requires is that if W1 happened before W2, then the reads also see this. But here, there's nothing that happened before anything else other than these reads here.
+So, everything else, we're happy to do whatever we want. We can completely destroy it, actually. We're destroying everything, so yeah.
+C2 and C2 can be, like, in any order from the perspective of C3. And that's causally consistent, yeah. Yeah.
+We will see… this might sound like, what the hell, this sounds completely useless, but there is actually… there is actually, even for a weaker notion that we will see in a few lectures, you have to just believe me on this, in a few lectures, we will see an even weaker constancy notion that is still useful. So this is certainly useful, because there's something even weaker that is useful. So, yeah.
+What about the second one? Thoughts about the second one? Is it causal?
+Because…
+for, client too, but it recognizes, like, the set for X to do, but then for causal clearing, it has the most acknowledge.
+This set affects me one.
+So, when it doesn't get X to be one.
+Causing…
+Right, so this one here, this saw this, so it must have seen this, and this one, there's no way now, because it's after this, that it cannot see this. So these two are causally related, these two are causally related, so there's no way that…
+this will not see the effects that this has seen, because they're causally related. So this is not causal. And what about the last one?
+Listen.
+Guy is 2, and then also see if that is…
+Yeah, but the only requirement that we had to preserve here is that… I mean, these two events are only the ones that are related here.
+And these are not related in any way, whereas these ones are related, actually.
+So there is no way… so actually, even if we… okay, I guess, even if I removed this completely.
+Wait, this… no, if I, if I remove this, this is, this is a causal, actually. But yeah, this…
+This one causes related? This one causes related? Yeah, I'm not sure I… I see what the… yeah, question? Is it less, like…
+In the second one, like, it's the same… it's the same client doing both operations, so it has to be, like, in order, but then in the first one, it's two different clients, so it could be, like, switched from the perspective of
+So, exactly, that's the point, that the happens before relationship, we have defined it from before in two ways. If two events are in the same client, then they are considered to be cause… to happens before. If they are also… if there's a message connecting some other process, then there also happens before. In this case.
+there is nothing connecting these two here, so we can reorder them in any way that we want for every client. Whereas here, they have to be ordered the same way, so the fact… and these also have to be ordered the same way, so the fact that we see this means that we also have to see this. Yes?
+specific time, like, because, like, 3 and 4, like, got different values, even though, like, set X and, like, to 1 instead of X to 2 have been, like.
+From our perspective, in the same order, right?
+So, this would happen if they're replicated, and I guess a question that I think is maybe worth surfacing here is really, why is this useful? I think that's kind of, like, the question that I feel like is being asked more, but maybe on the back, you didn't ask this, you mostly asked, why is there a difference?
+But… but there is… I guess, two questions. Why is there a difference between these two? And then, why is it useful? Why is it useful? We will answer in a few lectures, because we will see something even weaker that is useful. But for the…
+For the explanation of why this is not causal, where this is causal? Does this make sense or not? If not, still ask questions.
+And kept everything else the same. Get one would still be causal, but why is that the case? Because he already called set 2.
+But, but this… we can still reorder things. This is not related at all to any of these.
+So, it can just be moved here.
+So the problem here is that we cannot at the same time move this before, but also keep this after. Like, this, this will violate our kind of internal… yeah, we saw…
+what the causality violation here is, is that… and maybe, maybe that's the way to explain it. Maybe I can… I can come back next lecture with a concrete example of… of this violation, but…
+Here, this client, The client saw it too.
+And then, nothing else has happened in the system. The system has been stable, because the 1 has happened before the 2, correct? So the one suddenly happened before the 2, because these are causally related, we know this.
+One succeeded, two succeeded. I see a tool. That means the system, from my perspective, this client's perspective, has reached the two states.
+Now, suddenly, I'm like, what?
+I turn back in time and I see a previous… a past system.
+So that's the violation here, that essentially this, from the perspective of this client and this client, this is a violation. But if we again move these gets to different clients, like here, this is fine, because for each of these two clients, there is a different final system, but that's fine, because causally, this is… this is the… yeah, yeah.
+Okay, so just to clarify, like, C4 can have two different values, like, when it gets X, because it's looking at, C2 and then C1?
+C, C4? Yes, in its perspective, this happened, and then this happened.
+And in the perspective of cities, this happened, and then this happened, and that's fine.
+That's allowed.
+Yeah.
+The question… the question is… again, let's… let's separate the question, why is this useful, with… if it is consistent with what we're describing. If it's consistent with what we're describing, let's proceed and we will see why it's useful in a few lectures. But, yeah, the consistency is what I care about the most now, yeah.
+So then for the third example, we are allowed to move, like, get one a little bit earlier, and then move to, set to a bit
+Like, behind, so that, like, they'll have a constant relationship.
+Yes, so for the third one, actually, we saw it previously that it's sequentially consistent, which is stronger, actually, than causal, because it requires total order, so it actually is sequentially consistent and causal, by implication. Yes, correct. It's causal.
+Questions about consistency here, and about, you know, does this make sense, or if not, yes.
+This is a no.
+Oh, in the chosen.
+Okay, okay, got it. Okay, yes.
+How long are running to primary backup servers, and…
+So, I think the thing that has to be… this is really… this is kind of hard to wrap one skin around, is that
+There is a difference between A consistency condition talks about what I expect from a system.
+No.
+This might allow some executions that make sense normally also you would implement. So… so let's say you have a system,
+This is… this is our system executions. This is a condition that we want to satisfy.
+There is also a bunch of executions.
+that are not part of our system. This is a system, This is consistency's condition, property.
+There's a bunch of executions that are not here, but are here.
+these still satisfy the condition, but they might never… you might… it might be… you might… this is a dumb system, like, it would not make a system that actually has this. So, I think the important thing to keep in mind about these conditions is that
+They are not a complete correct condition of a system. They just are one way to characterize what can go wrong in a system and prevent that. But they don't describe a completely correct system, and they also don't describe all feasible limitations. Actually, there might be another kind of box here that is
+Feas-a-view notifications.
+like, implementable, systems, implementable, and this might… this might have things that are not very implementable. There's no way to be implementable, I can't think of a way to implement.
+So, there is no… there's no guarantee that the product is conditioned, you know, all of its executions are implementable or reasonable. But what it says is that if you are inside it, you are presumably gonna do some… some other types of case things that are outside of it.
+so that they're even worse, that you don't want to do. So that's kind of, like, the idea. So you're going to do some case things, but maybe not some bad things that, you know, that could be even more catastrophic, or some… sometimes bad, yeah.
+Yes?
+Apple… A?
+Or if you have the set X2 versus C2 be on C1's, like, timeline or whatever, would it be not possible then? Which one? Which one? For this, for second or for first? The set X2 of the C2, for the first example.
+This one. Yeah, if you move that up to C1 doing it, then would it not be not helpful? This would be not causal, exactly, yes.
+Okay, I will get back to you with some… some concrete example, although try to explain causal a little bit more… more concretely with another example in the next lecture, because we don't have… we're running out of time.
+But, good news is that I actually came up with an example of the compositionality problem. So now, actually, if we have the red ones being about X,
+and the non-underline being about Y, now this trick does not work. So now, you have to still move. So this is set to, get to.
+Set 1, get 2, so we can… we have to move this before. If we move all of this after, this does not… does not hold.
+And similarly for the while, we have two, set to get to, set 1, get to, and again, we cannot do this trick of moving everything else at once. So, this is…
+Maybe someone finds a bug in this tool. But this should be, show, show the compositionality. Doesn't make sense for this particular one, why this is non-compositional? The underlying ones…
+are sequential consistent, only for the X. I move the get before the set.
+The rest, which are on the Y, are also sequential constant, exactly the same way I moved this before this.
+Now, in total, there's no way to have a sequential constant execution. And even if we do the trick of moving everything afterwards, this is not… this is not… this doesn't work. I will write this down also and bring it in a slide for the next class, so that it's also in the slide, so don't need to take a picture. Yeah.
+Okay, great.
+So, now, just to give you some sense of what's happening in this whole space… oh, before that.
+Brief, brief discussion of comparisons. So, causal is weaker than sequential. So, sequential guarantees total ordering of all rights, while causal only orders related rides. And in sequential, if a read sees the effect of a ride, then all the future reads also see the effect of a ride.
+And the causal, the only thing that you care is if you see an effect of W2, then you have to see W1, but there's no guarantee about going back in time.
+And in layers of Benton sequential, the difference, as we saw, is that they both have a total order, but
+Insequently got allowed to reorder things across clients. And just to kind of, like, give you a sense of what's the real landscape in this.
+This is a graph from 2016 that shows the relationships between multiple consistency conditions. Lizability is here, sequential consistency here is causal is here. So there is a ton of conditions, like you see, like, tens of conditions that people have come up with.
+Each one falls in a different part of the space. What I'm just showing with you, with this, is that this is not a…
+kind of like a solved problem, and there is a lot of leeway to do certain things and get slightly weaker, but still good, and so on. And so, yeah, the last step is huge, and there is continuous research on kind of coming up with better versions of this… of this… of these conditions that are falling in good spaces of the design space, with good points of the design space.
+Please!
+Thank you.
+Holy Blessed, and…
+Yes, she's there.
+I just don't understand how you get, like, just wait to basically execute everything, right?
+Because in these cases, like, client 1 and Client 2 write two different values.
+They have to write us something, like I said earlier, but we're just, like, pooling all the noise.
+And then, like, the longer you wait, the more requests you have, so the more condensation.
+This is what I've said there, so I've been at least impressed.
+But, but, but, yeah, I mean… Oh, one more thing is that…
+So in this case, maybe in Greece we find some validation related, but this is the value solution. But if you have something like this, then doesn't it break your whole backup system? Because…
+But I think, I think…
+Yeah, that's a good point. As I said, you know, Muslim is not meant for most research.
+completely say, you know, what your system used to. So, what do I mean, essentially? What if I can do for correctness, you have to say exactly as soon as I said. And then what you end up doing is saying, okay, it's more than this error. It's more than this error, which talks about some other property.
+It's more than this level. So gradually, if you take the intersection of other circles, you're becoming something that, you know, looks roughly like a system, but still, it doesn't totally describe your system.
+show your light that, you know, this might be a bad property that we might not want to talk about, but Kozo does not… does not mind explaining. I guess I don't really understand that, bro. I think if the subs… like, these are all…
+Our system is a subset of all the systems, like, all the properties. So you can explain all the property and the system with a set of things. A system is a set of executions, but also because it's abstractly, you can come up with some executions that satisfy something. Like, in reality, you cannot do something for executions.
+Then, if you show your system falls into, you know, the sections themselves, you know, it's like a skies, property 2, property2, property P3, and then you are like, okay, my system is locked for, like, you know this. But yeah, this is a problem that you might want in your system, I agree, but COSL does not talk about it, at least that's my understanding. I'll get back to you, but…
+So the point is, in order to give you insight on your system, rather than define.
+If you prevents some bad things, so Kozo prevents some bad things like this. If you say, if it says you, you know, it prevents the bad execution, the second bad execution has shown. Yeah, it still prevents bad execution. For this, the thing that it says is that
+This… this one… this one has never… we never cared, this one, deeply, about what this one knows. That's my mechanic is. But if they ever have to talk with someone, then they suddenly will have to get it. So would you say that…
+like, causes weaker than linear ascible, you need linear ascible is smaller, so 4G. Exactly, exactly, exactly, exactly. So what's exactly what this means? Yeah, so linearizable is like this, sequence is like this, and causal is like this. Yeah, yeah. And this plot over here shows all of these subset relationships between all of these.
+So, the smallest is ability. Some are not even comparable, so the circles are not comparable in some rooms. Yeah, I think I did.
+I had a question, like, in class, somebody mentioned a case where, the… Example here can work.
+What was the, like, example they provided?

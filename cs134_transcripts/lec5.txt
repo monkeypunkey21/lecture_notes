@@ -1,0 +1,631 @@
+Oh, man.
+That should have been.
+What's home.
+I never did, but… Exercise.
+different strategies.
+But thank you.
+What's your perspective?
+I think so.
+We'll touch on the loop.
+Oh, I did not wake up rating.
+Video.
+Crazy. Hi everyone, I guess we can get started.
+So, yeah.
+Distributed Systems, Lecture 5. Let's start, as always, with the Lecture 4 quiz questions.
+So… The first question in the quiz asks the following question. There exists a large enough N
+Such that if we haven't received a response from a process after sending N messages to it, we can safely assume that it has crashed.
+The answer, of course, is no. It could be the case that it could be very slow, the message could be dropped, and so on and so forth. We saw this, that, you know.
+Network failures could lead to this kind of hard situation where we cannot disambiguate between a process having crashed, or a message being dropped, and so on.
+The second question, which is the one that I think is most important to spend a little bit of time on, because of how many people got it right and how many people got it wrong, is that we can recover two deterministic processes
+A and B, if they take a snapshot, at exactly the same time according to the clocks.
+So, what do people think… hear about this? Thumbs up, if this is possible, thumbs down. If not, think about it a little bit. Is this… is this possible? Yes or no?
+And then raise your hand. Two thumbs up, possible, thumbs down, not… More hands, everyone.
+Hello, everyone!
+Everyone's… Morphones?
+More funds.
+I assume whoever does not have their hand down, it's a thumbs up, just kidding. Okay, so it's not really, it's not really possible. Why?
+We had seen this exact example, of these two, processes that take uncoordinated snapshots, and even, as you had seen in the previous, like, Lecture 2 or something, about time.
+even though process clocks could be unsynchronized, so even though they say that the time is exactly the same time, that might not mean that the time is exactly the same. So in this particular case, it could be the case that P1 says it's 4PM, taking a snapshot.
+Sends this message, this says, okay, it's 4PM, taking a snapshot, and so this is inconsistent.
+So, this, no matter, we had seen that there's problems with uncoordinated snapshots, and there is no way to actually get coordination, in a sense, by clocks, at least to this fine granularity, okay? Questions about this? Thoughts?
+Possibly.
+One process makes a vegetable descent.
+No, it doesn't seem.
+Is it also possible that? That one of us, has, like, Mark's message that's in, and one doesn't?
+Go ahead, we can't do that.
+So, for example, that M6, this message here, was sent, but received here.
+later, after the surgery. Or it hasn't been… yeah, this could have been possible, and this could have been a fine example. So the point of this example is not to say that
+And the point of this false statement here is not to say that no two uncoordinated snapshots are actually… so it doesn't say that we cannot recover from any two snapshots. It doesn't say that there exist
+some uncoordinated snapshots, which are actually inconsistent. So that's what we want to keep in mind. The point is to be able to take every time we take snapshots for them to be consistent. In the uncoordinated case, or in the case where we coordinate with clocks.
+This is not always the case. So even if there is one case that it is wrong, it could be… it could be… yeah, yeah. Does that make sense?
+Any other questions from this? About… about, like, 30% of the people, I think, said yes to this. That's why I'm asking, and I want to make sure that, you know, there is no pending kind of lingering question here.
+Other questions?
+Great. The third question was, simply about, the FIFA channel, and the point of this question was that
+This particular execution is not allowed by a FIFO channel, but actually it's totally fine for a channel that does not have the FIFO guarantee. So the only thing we said about FIFO, you know, the only thing to keep in mind about FIFO is that if you require it as a guarantee from your channel, this behavior is not allowed. But if we do not…
+It's a totally fine behavior, okay?
+Questions?
+Great. And finally… oh, they should have said just 4 here.
+Let's look at a Sandy Lampert execution.
+So let's say we have these three processes, and process one sends the message X to process 2, and process 2 sends the message after it receives X, a message Y to process 3, okay?
+If a receipt of X, the receipt of X here, is in the snapshot, meaning that it's either in the state checkpoint, or as a recorded message, as we saw, what do we know about Y?
+What do we know about Y? Will Y be in the snapshot? Not, maybe? Are we sure? What do people think? Thoughts? Hans? What do people think about Y?
+We have X in the snapshot, with Y be in the snapshot.
+Thoughts, Lance?
+It can be, it can't be, doesn't matter.
+Yes, so it can or cannot be. I would slightly rephrase it, doesn't matter to… we don't know. So, yeah,
+X exists, Y is after X, so there is no guarantee that Y will be in the snapshot, okay? So we don't know. It could be, it might not be.
+Let's look at the opposite. If the receipt of X is in the snapshot.
+of Y, sorry, of why is this option? Either part of the state's checkpoint, or as a recorded message. What do we know about X? Thoughts? Fans by people?
+France?
+Why is it a snapshot? Do we know anything about X? Do… the answers could be certainly yes, certainly no, or we don't know. How do people think?
+On the back, yep.
+Certainly, yes, correct. And why is that the case? Because the Sandy Lampert snapshot, the whole point of it is that it preserves this happens before relationship. In this case, clearly, Y happens after X, so since
+see, yeah, Y happened after X, so since Y is in the snapshot, then X should necessarily be in the snapshot, okay?
+Questions about this?
+Great, okay.
+So, if we… We take a snapshot, and we say a message was sent.
+And then… Do we need to check whether the receiver got it or not when we were source 8?
+Repeating… okay, I'm repeating the question just for everyone to hear. If we take a snapshot and the message was sent, do we want to check after recovery whether the receiver received it or not, or did I get it a bit wrong?
+Yeah, so we don't really need to check whether the receiver got it or not at a recovery. What will happen is that at recovery time, the receiver will have recorded the message, for sure.
+Or it's in the state checkpoint, which means it has already processed the receipt of the message also. So it either has received and processed and then took a snap at the checkpoint, or it recorded the message, because it took the state checkpoint and then recorded. So in either case, after recovery, each process knows to
+instantiate state from the checkpoint, and then replay the recorded messages. So we don't need to check anything, just the record… the receiving process will replay the recorded messages.
+Does it make sense?
+Other questions, other thoughts about semi-Lampert before we move to a new topic today?
+Great. So… Today's Adela.
+Today, we will talk about Fault tolerance data.
+Then, when we talk about primary backup replication.
+Then, we will talk about the view service.
+And finally, we'll talk about split brain.
+Whatever that means.
+Booking!
+So…
+We have seen in the class how can we use logical clocks to enable replicas in a replicated state machine to execute updates in the same order. And we said this does not handle replica failures.
+Great. So to handle cross-failures, we talked about the idea of snapshots, and we also talked extensively about Sandy Lampert snapshots, which allows us to do coordinated checkpoints across many processes.
+For the sake of RSMs, we don't really need to care about coordinated checkpoints, so let's just go back to the case of the simple snapshot and checkpoint for a single node.
+So, let's look at, recovery from a snapshot.
+We have a process, it takes… it takes a checkpoint, it does something, and then it crashes.
+How do we recover from this? We have talked about this already, but some hands and thoughts on, you know, what are the steps? After we have this, what do we do, in the system?
+Hans, thoughts? All of the steps, all of the steps that need to happen after this crisis to recover.
+So…
+now you are in a state where you would restart. Now you need to start by restore in the state that you would snapshot it. Then the… then the other sum do something that it did. It was in some channel, so it needs to, like, rebuild that channel somehow, so these two things, and then just do what it's supposed to be.
+Great. One step that is additionally needed here is that we first need to recognize there's a failure in the system, and then exactly as you said, a new or restarted node recovers from the latest checkpoint, it cuts it up, loads everything in memory, cuts up, and then
+Sets up whatever kind of ephemeral state it needs to set up, like connections and so on, and then we are ready to continue.
+Great.
+Are there any problems with this particular scheme if failures are frequent? What do people think? So, let's say we have many failures.
+What do people think about this particular recovery, recovery scheme? Hans, thoughts?
+What do people think?
+No problem with this? Any problem? Whatever, whatever people can, can think of.
+It's really time-consuming, because you'll always have to do that.
+snapshot.
+Right. So, the cost can be very high.
+what other properties may we want from a fault tolerance mechanism? So, yeah, what are all the properties that we might want from a fault tolerance mechanism? Thoughts?
+Correctness guaranteed. Correctness guaranteed, that's correct. So, yeah, that's one. Correctness, cost, other things that people can think of?
+We would want to keep making progress.
+we would want to keep making progress, that's true. I think I would put this together with correctness, but that's totally right, yes. Other thoughts?
+You probably want to make it so that it doesn't fail as for you.
+we want to make it… that's correct, so if we have some kind of control on the system, and we can't control failures, for example, a node fails all the time, we might want to go and change it, that's correct. Other things that we might want to, from the fault tolerance mechanism, you know, the, you know, we want the cost to be… to be not high. What cost are we talking about here?
+Actually, what type of cost? What kind of dimensions does this cost have?
+Thoughts by people?
+When does… when does cost, occur here in Overhill?
+Do we care at all about, you know, when a failure happens, how far in the past, maybe, things are recovered from?
+Okay, pretty dead crowd. Okay, so… so let's go through the fault tolerance trade-offs that… or some of them that are interesting. First of all, correctness is a critical guarantee, and we will not… we will never kind of sacrifice this. So correctness is always the guarantee that we want. We cannot sacrifice correctness in any case. But assuming that we have correctness, now we want to consider some other trade-offs.
+Because essentially, and more broadly, I guess, in system design.
+We always care about trade-offs. There's no way we can somehow build a system that does perfectly in all cases. So what are the trade-offs that we care about here?
+First, there is the cost on normal execution. So, if you remember from Sandy Lampert, the main thing that we wanted to do is, instead of doing a coordinated snapshot where we stop the world, we wanted to allow everything to keep working while we take the snapshot.
+So this can be quantified as the cost on the normal execution. So if the system runs, no errors happening, how much overhead are you paying in the system? And this could be measured in many ways, like in latency, CPU, memory, communication, and so on. Questions about this? Thoughts about this?
+So this is the good case performance overhead.
+Then, there is recovery freshness, so after we recover, how far back do we recover from? And that could… that is also somewhat related, as a concept, with the time it takes to recover.
+So, how long does it take to get back to a state where we can keep running in our system? And this is more of the… these two are related more to the… with the cost of… in the case of failures, okay?
+There are other kinds of tables that we might want.
+where do people think that snapshots fall in this space? So, yeah, how much… how much cost do snapshots have on normal execution? Thoughts by people?
+High, low, thumbs up if you think. And coastal execution is high, thumbs down if coastal execution is low.
+High or low? Hans, more Hans? High or low?
+High or low?
+Okay, we'll see something that hasn't been higher today. So it's actually rather low, because of the snapshot, the main thing it does around execution is, every now and then, it saves the state installments. That's not that heavy, because things can keep being processed. It doesn't really affect the, you know, the critical path of execution.
+things can be processed normally. We will see something today that has a much higher cost of execution, actually, or normal. What about recovery freshness? How good is recovery freshness for Snapshot? Thoughts?
+Thumbs up if recovery freshness is very fresh. No, not fresh at all. Fresh, not fresh. Fresh, not fresh.
+More hands, more hands.
+Morhans!
+Fresh or not fresh? People don't… don't know, is that why you don't… you don't… or you're bored?
+Thumbs up or down.
+Okay, I see some up and some down, actually. So, actually, snapshots are pretty stale, because we take snapshots.
+Or I guess maybe they can be tuned, maybe you can take a snapshot every request, and then you could have, you know, higher costs, but then more… least fresh recovery. But in the case that we described, where you take, you know, snapshots every now and then, the recovery phrase is pretty low.
+So, so you get stale recovery.
+And similarly, it also then takes some time, some amount of time to recover, because you have to, you know, set everything up, reset all the channels, and so on.
+depending on our requirements, we want to choose different points in the design space for a system, always. So, today, what we will see is something that is actually recovers faster
+And in a more fresh state, but puts more heavy burden, actually, on normal execution.
+So, let's do a brief recap before we get into this, of the client-server model.
+So, as we said in lecture 2, I think, the client server is a key abstraction for the control plane in a distributed system, and you have a client that sends requests to a server, and then the server sends responses back.
+The server listens for requests, and it processes one at a time, or, you know, concurrently it processes multiple ones of them when they arrive.
+And yeah, the client makes requests.
+This is exactly the setup that we will think of now, also, and
+The fault tolerance mechanism that we will talk about today is called primary backup replication, and the key idea is that we have two replicas, a primary and a backup, that transparently exist from the side of the client, and the primary talks to the client, so the client talks to the primary.
+And the backup stores a copy of the primary state.
+And we could have multiple backups, also.
+So this, all of this, kind of, like, group of nodes here behaves now as the service to the, to the client, and it has some kind of fault-tolerance guarantee that we will see today.
+So, to understand how this works, we have to think of two types of failures. First of all, how to handle primary failures. So, any ideas by people? How could we handle a primary failure in this particular case? What if a primary fails? What can we do?
+Thoughts?
+Correct. So, once the primary fails, we promote one of the backups to be the new primary.
+And what if there's a backup failure? Then, we add another machine as a backup, or we don't add another machine as a backup if there is none available.
+So, to understand, How primary backup works, we need to look at two key questions.
+When should the primaries sync with the backups, and what information should the primary transfer when communicating with the backups?
+So to start looking at question one, let's think of a, of a, of a case of,
+again, the MapReduce example that we saw in Lecture 2. And let's say, we have, a server that is… this is the, this is the master, the master server in MapReduce that assigns tasks to workers, and it's, it's in a continuous loop, right? So, it receives a message.
+From a… from a worker, and then it picks a new task to assign, it marks the task as assigned, and then responds with a task assignment to that particular worker, okay?
+Let's think that primary and backups are in sync at this specific point in the loop. So, they are totally in sync. We have a bunch of replicas, a primary and some backups, they all run this code, and they're in sync.
+When should they sink again in the context of this code? And what could go wrong?
+So I want you to talk to the person next to you, and start thinking, what could go wrong in their syncing? How frequently do they need to be syncing? When do they need to sync? Again, in this particular example called, okay? So take some time, introduce yourself if you don't know the person next to you, and talk about it for a little bit.
+Decision.
+I mean, so many solutions draft, right?
+What was the worst?
+So, like, you can't help but see what you're saying.
+you can go with it.
+So, what do people think?
+What are some problems here? Hans, thoughts about observations? When should we sync again? Why? What could go wrong? Anything, really. Anything goes. Yeah. Hans? Hans? By people?
+What do you all discuss? More hands?
+More hands?
+Hans?
+The buck?
+Not even too bad.
+basically did anything that… Hardly aware of it.
+If the master… sorry, could you repeat this? If the master did anything such as marking a master sign, corresponding
+And then, like, it crashed immediately after that, of course.
+Right, right, right. So, it would be very bad for the master to do something, like send a message, and then crash before anyone else knows about it.
+Okay? So, let's take this insight and roll with it and see, throughout this example, throughout this code, where could we sync, okay? When.
+So, let's say we start, with the primary and backups in sync here.
+And then we take a next step.
+What if the primary fails here? What would happen? Thoughts? Hans?
+People should have an idea, since you all talked about it.
+So, what if primary fails here? Thoughts?
+There's no actual, like, consequence that it's been done, so, like, there's no state changes to be sold, but maybe, like, the requester would need to, like, re-request, or just hold…
+or something.
+Right, so here, actually, no problem. There has been no real consequential change, only some local little chains. We receive the message and we parse the address, so we don't really need to, you know, get in sync with others.
+Similarly, what if the primary fails here?
+I guess, again, there is no problem in this case. But what about here? So, what's… is there a problem here? And if so, why? What?
+Hans?
+now your primary is, like, sending something out, so, like, did we send it out? Like, you need to keep track of that, right? Like, the receipt of… did you send it back?
+Right, so what do… as we said, the problem now is that the changes have been externalized. So someone else, other than the primary and the backup, has seen something from the primary.
+In this particular case, we cannot actually… we have already diverged, essentially, the primary and the backup, so at this point, if the primary crashes, we have a divergence in the system.
+So the key takeaway from this is that we cannot tolerate primary failures after updates to a state are externally visible, okay?
+And the corollary of that is that it is actually okay for the primary to be out of sync until, let's say, it's externally visible.
+And this is something that is often called observable consistency, or observational. So we often use this term in distributed systems to talk about the system from a perspective of an outsider.
+So, if the… from the perspective of the external world, the system hasn't had any chains, then it doesn't matter. The primary can crash, and so on. Yeah.
+Then, like, why… shouldn't you also want to have, like, consistency among the local scale change as well? Like, it should… because when you want the zoo backup to come up, you would need it to start from the same place that the primary left off at, right? That is… that is totally right. So…
+So you want to start from the exact same place when you, when you, recover.
+Can you do that? If you, if you, if you, let's say, let's say if you, if you crash here.
+And you haven't saved since here. Could you, you know, start from the same place, or no?
+You would have, like, a task that's, like, assigned to nobody, and then the original requester, would not be able to reassign that task within the state would actually be different.
+He'll cross that one.
+So…
+You would not be able… so, actually, what would have happened here, I don't think I actually got it, so you would… you would have an empty task, not assigned? If you, oh, oh, if you, sync after marking the task as assigned, but you never actually, like, dole it out to, like, a worker or something, then that, like, task is, like.
+They assigned, because it's not actually given to anybody.
+So this is after… if we think here. But my question is, is the opposite, which, which directly is connected to your, to your point, which is…
+Let's say we're in sync, and we run this particular line of code, and we crash.
+Can we, can a backup that is here, that lives, that is at this particular point, actually go and recover?
+And the answer is actually yes, because the backup will also have the same messages. Of course, we assume we're in sync, it has the same messages, and then it just picks up the same message from its queue, and then goes to the next step, and is ready to actually keep processing. Thoughts, questions about this?
+If it's not clear, keep asking questions. Didn't we have, like, typo queues when we were talking about message passing, so once we get the thing off of the queue, how would you get the same message?
+So, the thing… the thing was taken out of the queue from the primary.
+Not from the backup.
+So the primary took something out of its cube, hasn't told anyone, and then it crashed.
+The backup, if they are in sync, they have the same queues. So the backup has the same queue. If they say, promote this backup to primary, it is promoted to primary, and now it says, okay, let me pick the first item from my queue. It picks up the first item from its queue, and then it keeps going. Okay? Questions about this? Thoughts? Does it make sense why this works?
+Great. So the corollary is, as we said, that we can… we don't have to actually be always in sync in every step. The times where we need to be in sync are times where some kind of state update is externally visible, because after that point, we cannot take things back. We have already showed the world something, so we cannot take things back.
+So, when should the primary sync with the backups, based on this? Thoughts?
+More hunts?
+To ease your plan of a question.
+Time global state has changed.
+Anytime global state is changed. What is global state?
+I guess… anytime… The state of the primary is visible to all other backup nodes.
+we… we are… you are getting very… it's visible, but not exactly to the backups, because… because the primary here hasn't talked to the backup. It's talking to some other worker, so we are… we are assuming… so I think the way to represent things maybe that might be a bit helpful, is that we have the primary and the backup.
+and they form some kind of, you know, isolated service. And then we have a bunch of clients, and the clients fire off requests to our primary backup replicated service.
+If at any point anything exits from this, from this group, and from the primary, and message, and arrives, and therefore, because it has been sold, we have to assume it has… it could have been arrived, it could have been received by a client, that thing…
+Cannot be taken back. Now we send, we inform the client that we did something. For example, assign a task.
+So when this happens, right before this happens, we actually need to sync, and we have to make sure that at this point, before we send this, we all know we are gonna send this now, actually, okay?
+Questions about this? Thoughts?
+How do you detect when,
+state notation is, like, internal, and then it would be external, because, like, imagine, like, you have some parameters that users can't fetch, right? So, like, how would you quantify, like, how much to
+Thankfully.
+That's a good question. So how do you determine when part of the state update is externally visible or internally visible? And the answer is, you'll have to figure it out for the assignment, but there is
+specific parts of an application code that are very obvious, that send things out. There are things where you send requests to someone else, when you respond to some request that someone sent you, when you store something to a disk or something, that a disk that is not just visible from you. I think the kind of, like, the abstract high-level idea is
+Anytime anything escapes from outside of this circle here, from the primary backup service, then, before that, you have to actually make sure you're in sync, so that every time you will do the exact same thing and nothing else, okay?
+So, if you… You do sync, and then…
+primary crashes right after sending the message, and then you load the backup? Will the backup send the message again? The backup will send the message again, and so this means, and we are not talking about this particular thing in the lecture, but you will have to deal with this assignment. There has to be something at the client
+that is able to say, okay, I have actually received this thing twice, because there could be the following, problem. You send something out of the primary backup, okay.
+The primary classes, And then the backup becomes primary.
+And then it sends back the same exact response. Let's say this is response 1.
+it sends back the response one to the client. So the client has to find a way to determine that this actually has been received before. It's not a new response, it's an old response.
+But that's still fine, it's actually a doable, solvable problem. So sending things more times is actually not that big of a problem. The problem would be if we actually do some chains, and then, you know, things can dividend.
+Questions?
+Some sent a message, but was very declined.
+And before that, I have to sync with the backup. Yes. What if you sync with the backup, and then primary fail, and then you never send the message?
+Right, okay, and then you never send the message. Again, the backup will be promoted to primary. The case that you're describing now is the case where this doesn't even exist.
+The first send hasn't happened.
+But the backup will be promoted, and we'll say, oh, I remember, I was ready to send this to the client, let me send this to the client.
+Folks?
+It can send messages twice, yes. So this protocol allows sometimes for things to be sent twice, and the assignment, you will have to find a way to deal with this. And, and, yeah.
+Great. So, in this particular example, We have clients.
+We have the primary, and we have the backup.
+Clients fire requests to the primary, and then the primary responds to these requests after processing them.
+The green lines denote the point, the latest point, at which we have to actually make sure to sync in the primary.
+So, to do that, we could, you know, we could sync earlier, but after this green line, actually, we should have synced for sure, so we should be…
+both the primary and the backup should know that this is ready to be responded, that we're ready to send a response out, okay? So, things that are externalized are essentially the barriers that dictate when things have to happen by, okay?
+Great.
+So now, a question.
+that, I'm asking to use.
+Does the primary need to consult the backup for all operations? What do people think?
+Do we need to do this for all operations? For some operations? Thoughts?
+If I am the friendly, I say what happens.
+So I would assume that, like, your grantee just does it and doesn't consult for thinking.
+So, could you… so if the primary… the primary is the one who does it, but what was the follow-up point? Like, my point was, like, my state is the real state, because I am, like, I am the one to deal with the client, so my state matters more than the backup state, so I wouldn't really care about the…
+That's a good point. So yeah, I guess this is badly framed. That's a great point. So, consult backup means inform the backup, in this case. There's the primary need to inform the backup for all operations in our, you know, replicated state machine case. Thoughts by people?
+Excuse Let me change the statement.
+That's a good point.
+So if a request is tentless, if it doesn't do any change to the primary, maybe we don't even need to let the backup know.
+So, to, you know, dive a little bit deeper into this, let's look at API request types and workloads.
+So…
+A service that we implement, and you know, a distributed system service, a service in a system, a software system, might support many API methods.
+Thoughts about this? What kind of methods could, for example, an Instagram front-end service support? Thoughts? What kind of… what kind of API methods will it have?
+Hans, Rans?
+Beautiful.
+get posts, other kind of API methods that an Instagram friend could have?
+Send methods, yes, others?
+Click, delete our standard.
+Put, delete, or… Put and delete are standard.
+Endpoints, so…
+Put and delete are standard endpoints, but I guess the question is, so these are, I think, standard endpoints for HTTP, or a service, but I think here we would want to be a little bit more precise in the sense, I think, in that sense. Like, either get posts, get followers, follow, you know, delete the post, send the message, and so on. Put and delete are broad, kind of like.
+ultra categories, kind of, like, of these, of these things. So, usually, get things are… get posts, get followers, and so on, and then, and then, you know, put is when you change the state of the system.
+And in the particular example of our assignment, and even for a simple service, like a key-value store, we still have multiple API methods, like a GET and a set.
+And the methods, different, actually, differ on various properties. What kind of things can you imagine that these methods, different methods differ on? What kind of things can come to your mind? For example, that the get and the put, differ on? Or, you know, more complex service and more complex methods? Thoughts?
+Have a different librarian platforms. Have it, have a different backgrounds?
+Having different parameters, that's correct, yeah?
+They differ in.
+what they change. Some of them actually change the data, others just fetch whatever data is there. Right, so they differ in whether they read or write the data. Other things that could… they could differ on, that could be relevant in the setup of a… in the setting of a distributed system.
+Let's say, let's compare, for example, get, you know, get a single, post, or get the profile of someone.
+What… how do these two differ?
+I'm thinking about, like, an LLM service which can ask, like, for a single conversation, or it can ask for, like, an agent-type conversation, where it can do some other tasks.
+So, like, the parameter you… the endpoint you reach out is the same, but the body of the message would have some information about how agent does the elementary.
+So…
+Yes, and I mean, trying to generalize a little bit, I would say the amount of data that it might modify… I mean, the LLM doesn't really modify… I guess it modifies the KV cache or something, but yeah, the amount of data that it modifies in the service, or that it fetches from the service. So, let's try to categorize some of these things. We could modify or not modify state, read or write, so the request could be read or write.
+They could access a lot of states, so if they access a lot of state, they might become I.O. bounded methods, or sometimes if they just mostly to computation, they might be CPU, CPU-bound.
+And then, if there is a lot of, kind of, different,
+parts of the state, some requests might access a single item, or some requests might access items from various points of the state. And this would lead to less or more coordination. We will see this particular problem later down in the class, like, about, like, you know, two-thirds in, okay?
+Another thing that APIs differ also is load characteristics. Any ideas?
+are, you know, what do you think about the load? When you think of a service, like an Instagram, front-end, like an Amazon, like a web… a web store kind of, kind of service, what happens with these different methods, and their workload?
+Okay, cool.
+Right, some of them I get called frequently, and some others not. Other things about the workload, what do people think?
+Some tasks might be, like, take longer or be more expensive, like, if you want a persistent session or something, like, spin up, like, an actual background cell phone.
+That's a fact.
+Right, so some tasks are more expensive than others. Other… other questions about, and other thoughts about, the input load, like, how many, you know, the requests that are asked by the user. So we said, first of all, there's not uniform load across methods, but, you know, other kind of, like, subcategories of this or other thoughts of this?
+Is this static? Do methods get the same number of calls across time? What do people think?
+like, let's say, like, a sale time, like, Blackpag or something, you would see. Like, for example, just, like, Amazon. You would look at, like, a thousand products and buy a bunch.
+So, it's like the load that is there to, like, get products is, like, 10, like, thousand times higher than the one that you would get on a purchase. Right, so you mentioned two things, actually, in your point. You mentioned that sometimes the SKU is very, very heavy towards reads or towards writes. So, for example, in a social media kind of application, there's much, many more reads than writes, so you more, less frequently make posts.
+But more frequently, just
+browse and scroll the posts of others, versus, like, a real-time monitoring application where there is continuous writes as requests. And the other point was that there was… there is… there is possibly spikes, or changes in time.
+Another thing is also that even for the same types of methods, you could have, you know, many accesses on the same, on a few top accounts, whereas very few accesses to most accounts. So even for the same… for the same type of request, there could be SKUs with respect to your state.
+And then there's load changes during the day, which could happen either, you know, in a normal kind of periodic way, like every morning there is more requests, or every evening there is more requests. There's also load spikes. So, Black Friday was, you know, or, you know, there's something in the news.
+Like, this happens, but, like, how does it…
+like, help you, like, program better, like, I mean, we would still write the same
+Like, the request handler for…
+something that gets more readable, more writes, like, how does it… like, what does it change about the program?
+That's a good point. So, my answer is, you wish you could write the same thing, but actually what happens in reality is that these huge companies that have these services
+hand, like, milliseconds of performance. They can't, like… if you get 5% better performance, you get, you know, huge speedups, or, you know, huge kind of computational savings, which means the money you pay for compute, or, you know, you can keep the 10 latencies low so the clients use your service more. So actually, they hand performance very, very heavily. So this means that what they do to achieve that sometimes
+Is that they have to do special tricks.
+depending on how your load looks, and change the application, how it looks. And so, ideally, always an application would just be, you know, read, yeah, just read, write, just write. But then all these companies would have just one engineer, you know? There is Redis, there is, you know, all of these different database companies, they still do reads and writes, but then they tune things according to how many reads, to how much state, do they touch the same state? Do they touch different states?
+So I just… here I want to kind of show to you that
+an application, and you know, when you design a system, you shouldn't just think of everything as being static, and okay, we optimize the system, and there's only one way to optimize. So, when you optimize an application, there is no perfect solution. And the system design is about making the right assumptions. So, the question that you have to ask when someone says, optimize an application, is.
+is what is my given workload, and what are the characteristics of the service that I'm trying to optimize? So, can someone think, or, you know, of one or two examples of optimizations that do not work for all workloads? Answering this exact point that you brought up.
+Thoughts? What could work for some workloads, but not others?
+That caching works if you're hitting the same type.
+piece of memory, like… very frequently, but it's online if you're doing a variety of…
+That's a great point. So, caching has two kinds of requirements, or maybe more, actually, for it to work, and one of them is that
+You do more reads and writes, because if you write very frequently, all of your caches will always be invalidated, and at the same time, you have to read a small set of keys, usually, otherwise your caches will again be useless.
+So, casing is something that applications can do for really heavy workloads that read a few keys, but if you have rights, then casting is actually detrimental, terrible for performance, okay?
+And there's a lot of other kinds of ways to optimize applications like this. We will see some ways in the College of Distributed Systems later in the class, but yeah, for now, I just want you primarily to have this idea that there is no, you know, there is no golden solution for all workloads, for all assumptions, and so on, okay?
+Great.
+So, in this class, we are designing a key-value store. So, the key-value stores, we can… are often assumed to be read-heavy, and that's usually true. There is often, kind of, like, there is papers out there and, you know, industry traces that show that often there is, like, an 80-20, or even more, of an even more skewed read versus write.
+a kind of, workload for many, for many key-value stores. So…
+If we assume them to be a bit heavy, we might want to optimize according to that. So keep that in mind while designing, while working on the assignment, but also more broadly when designing systems, okay?
+So this completes this side quest. And getting back to our previous question.
+We don't always have to consult the backup for reads.
+Why is that okay? Or when is that okay, actually? Thoughts?
+When is it okay to not inform a backup for a read?
+Okay.
+Yeah, a GET is a read, I guess. Okay, sorry, yes, that's a good point. So, in my… I'll be using interchangeably the terms get and read here. So, GET is assumed to be a read. So, when is that okay?
+I guess we have kind of said already, and maybe this is more of a repeating point, that's why it doesn't come up, but if the backup is externally consistent with the primary.
+So if the backup, if we know the backup, is exactly as consistent as the primary, then we don't need to inform it for the read. Because if the backup takes over, it will generate the identical response as the primary for the read, so we can just go on and serve the read without letting it know, okay?
+Great.
+So… The second question, what do we want to transfer during the sync?
+So we want to send, you know, an obvious thing is send a snapshot of the primary state.
+Any thoughts about this? What do people think about this?
+Is that okay? Not a K?
+Setting all the data that you have in the state.
+So… so the problem with this is that it's slow because, you… sending data through the… across the network is much more, bounded compared to, you know, sending something locally. So this is another kind of assumption that we… usually people make for distributed systems, that sending things across the network is expensive, so you don't want to do it a lot. Of course, there is ways, in, like, state-of-the-art.
+data centers, to… there is, there is kind of, like, cutting-edge research on very fast networks in small, small areas, but in general, that's the assumption that we make. If you're going to send something over the network, it's going to be expensive. Sending the primary state, the whole snapshot? Expensive.
+But is it ever necessary to send the whole snapshot? Thoughts?
+Let me set my default date.
+That's correct, you can sometimes send the delta, but… but… and we will get to that, but there is another question before that. When do we actually have to send a snapshot?
+When our Facebook dies, then we can eat it anymore.
+Okay.
+That's correct. So, if… if a primary dies.
+then the backup was in sync, we are good, we just recover immediately. The problem is, if we have a backup, a new backup, a new node that becomes a backup and enters our system.
+Then, this node knows nothing about the service system. So, when bootstrapping a new backup, we actually need to send it the snapshot.
+And the alternative is to send a delta. Send every operation, actually, or, you know, bast operations together.
+When is this okay? When can we send every operation, one at a time?
+Thoughts about this?
+We did talk about this a little bit last time, too.
+When is it okay to send just the operations and not the state?
+Okay, so this is one point, so we have to send the operations in the same order, otherwise they have to be communicative, so that's one requirement, indeed. We have to send the operations in the same order, but even sending the operations in the same order, is that okay all the time? Is there a problem with this?
+That's weird.
+It has to be deterministic. So, if the request processing is not deterministic, then sending the request on its own, if there is a, you know, a RMZ kind of thing happening for every request, then we would be in trouble.
+So, we also want to send any state necessary for the backup to mimic the execution, so to make it deterministic.
+So, to recap, When should the primary sync with a backup?
+before any state change is externally visible. And how does it sync? In the beginning, it sends the complete state.
+And then, when, you know, things are stable, and the backup and the primary are running all together, then you just send operations and any form of non-determinism, like, you know, random number generation, and any other forms of non-terminism that might appear in the application.
+And we now have a way to recover if the primary fails.
+Yes? A question on backup recovery. Like, when you recover from a backup, like, let's say if you have, like, a database backup. Now, the database backup usually has, like, a bunch of, like, files that execute us on backup.
+But in the context of, like, this class of, like, backup recovery, I think we are assuming it's, like, very fast, or, like, oh, we can get it covered, but that might not be the case, right?
+Sometimes to a backup state, they're not really concisely.
+So how would you handle those things?
+Your point is that you cannot recover because it will be incorrect, or because it will be slow.
+Sometimes, like, let's say there was, like, some sort of, like, hard-coded message, or some sort of, like…
+thing that cannot be, like, reconciled. That was time-different. Let's say, like, there was a query that happened at, like, 2 AM, and it can only happen at 2 AM.
+And now, in order to deconcile that state, we need to wait till 2AM or something.
+Okay, so that's a good point. So, all of these things that we are talking about here now, they still have some assumptions. And one of the assumptions, for example, is that time
+is a weird… especially time, actually, and if you do things at a specific time, this is particularly problematic with fault tolerance. It's particularly hard to… to recreate both order and real time.
+So usually we do not assume that there is, you know, requests that have to do with specific time, there's no requests that say, this will happen at 2 AM. But there's just an order of things, and we'll just make the things in the same order, but, you know, in a different time.
+But that's still fine. That's a good point, yeah, about the time. Other thoughts?
+So you said.
+Bootstrap, you sent all state?
+Who is sending information?
+The primary.
+Oh, so by bootstrap, I mean, let's say we are running, we have just a single primary, and we have one backup, okay? And we are running requests properly, and now a new node wants to become a backup.
+So we have a new node that joins the group. Then that node, even the primary or the backup, have to send everything to it at the first time. You can't just send the operations at this point. And then, once it has everything, you can just start sending operations, okay?
+Great.
+So… As we said, I guess, primary backup.
+compared to snapshots, has a much higher cost than normal execution. Now, every time there is a request, especially a non-read request, you have to inform the backup, so you have to pay for a network communication.
+And then you can proceed. But recovery is very fresh, and instant, actually, because the moment you understand the primary has failed, the backup can immediately pick up and start processing requests, and it has the same… the freshest state possible.
+By the way, the read optimization, is possible, but I don't think
+it's required for the assignment, so I would say do not do it for the assignment, except if you want to make your life harder. But yeah, I don't think you need to do this for the assignment, if I'm not mistaken. The optimization, we don't have to talk to the backups for leads, okay? Because there is some subtle assumptions that have to hold for this to be true, for the assignment call, okay?
+So let's, let's now, take a little break, and,
+give you some brief announcements, I guess, with respect to logistics, as always. You should all have access to GitHub Classroom. If not, reach out to us as soon as possible through private Piazza Post.
+Assignment test cases can sometimes be non-deterministic, so you have to run them many times and understand them very well. So even though something might pass at some point, that doesn't mean you're doing fine. And assignment is hard, so go to discussion, okay?
+Questions about logistics?
+Great.
+So… We have primary backup verification, If the primary fails.
+It works, we promote some backup to a new primary, Everything is good?
+Questions?
+Is there everything? Is everything good? What do people think?
+Sorry, sorry?
+Yeah, fine.
+That's a good point, so this is something actually that you have to figure out in the assignment how to do. So when the primary, you know, if the primary comes back to life, or, you know, it didn't actually class, but it was separated from the network and then comes back to life, you have to figure out what to do about this. This is a problem. Is there any other problem?
+With this, think more about programmability. You are writing a program for the client and the primary and the backup here. Any question, anything that would go wrong?
+This is… Is that that, like, no?
+Totally correct. So, again, your protocol has to guarantee that only one backup node has to become a primary. This, again, is something that you'll have to figure out in the assignment.
+what else could go wrong here? Or, I guess, is there anything wrong here? You know, what does the client do now?
+Like, concretely, vegly, you write a code for the client.
+Probably the back, the back that's yours.
+The binary.
+That's exactly right. So how does the client know who the new primary is? The client was just talking to someone, and now they crashed. What do they do?
+So…
+what does a client know? A client, needs to know, always, which replica is the primary. So there could be something that we could do here. Hard code the primary into client app code. I guess it's kind of…
+And I have solution, and it doesn't really work, because whenever… if we can't coded things, this is exactly this example here. So if we can't code this, then the client would just keep talking to this one, and there would be no kind of, like, way to get… to get rid of this.
+So, primary will get replaced when it fails.
+So how does the client discover the new primary? We need a reliable way to determine, as the client, who is the primary.
+And the answer is… There's the view settings.
+So… A Vue service maintains the current membership of primary backup, and the membership we call a Vue.
+So, each view contains a view number, which we increase as, you know, views change, and with the… what the primary is and what the backup is. So, every time there is a change, the view will have to be updated and know the new primary backup.
+So, yeah, concretely, what kind of things can happen to cause a change that… if you service change review? Thoughts?
+What could happen in the system so that the view service actually goes and changes the view?
+There's a few different things. I agree.
+Primary crashes or backup crashes, anything else that could happen?
+I have a question, like… Programmatically, how would you determine, like.
+which backup becomes the new primary, right? Because, like, some backups, you would have it in a poor storage, some backups would have, like, some sort of weird trade-off between latency, like.
+So, how does that go on? So, so there is, closer to the end of the class, with serial systems and how they do this for many, for many backups, but in this particular, setup and for the assignment, you will actually have to just worry about a single backup at any point in time. So there's a single backup, you always promote that to primary.
+What is another thing that can happen for us to change the view?
+Add the backup, or replace a new backup.
+So, when a primary fails, or any backup fails, or when we want to add the backup, or change the backup, we change the view.
+And then, the Vue service periodically exchanges cartwidth messages to detect failures.
+So how can we ensure the new primary, is up to date?
+Any thoughts on this?
+It'd be, latest information from whichever
+Backups is over that attempted to the…
+Correct. So, so the way to do this, and I think that the way we can do this for views, is that we only promote a node that was already a backup. So if a node is already a backup, we certainly know they are up to date.
+So there is no problem, and that's why the service needs to pick the backups itself. The backups cannot be picked arbitrarily, or by some other entity.
+And how does the Vue service know if a backup is up-to-date?
+I went through the assignment to test cases, so I think the way you guys are checking it is that the backup, like, constantly, like, pinged through the user.
+That's correct, I guess, yeah. So, so, this is a way, so the view service has to communicate with the new primary and backup, and that way, it knows who is alive and who is up-to-date in the system, okay?
+So…
+The view service, let's say we want to transition between views now. The view service needs to broadcast a view change to all the replicas, and then the new primary must acknowledge the new view once the backup is up to date.
+Are there any issues with this?
+Notes?
+What could go wrong here?
+We require, before the viewed change has been completed, that the primary acknowledges the new view.
+Yes. The primary control, the new primary can die before it acts?
+Right, so the new primary might actually die before it contacts and acts the new view, and this is an assumption and an issue that will exist in the assignment, and we will not… we will just handle it away. So if, you know, we will assume that the primary cannot crash, or it won't crash between the, you know, between the view chains and hacking the new view, so that we, you know, we simplify things a little bit.
+In reality, I mean, the way to address this, there is ways to address this. In reality, even for this case, what we essentially say is that you would have to manually go and override and restart something in the system. But yeah, we will assume this away for the purpose of the assignment.
+So, the summary of the view service.
+The ViewChains has 3 steps.
+The view service announces a new view to all the replicas, the primary syncs with a new backup, if there is one, and then the primary acknowledges the new view.
+And we are stuck if primary fails in the middle of this process, of the few chains, okay?
+So, are there any issues here?
+What do people think?
+This is the Vue service. Any questions with the Vue service, or any issues that people see with the Vue service?
+What if the view service comes down? What if the view service goes down? What if the view service is slow?
+Hmm.
+So, the view maintains, the view service maintains the current membership of primary backup service.
+So what if it's down or unreadable? What happens then? Thoughts?
+What happens in the system, then?
+The view service is down.
+So, fine, blank.
+The last, set of paper would be service, and then off to the
+So that's a possibility, the client could have cast things, but if they have not cast things, then they cannot find the primary.
+So, one question I'm asking to you now.
+Is, we started at the place, Where…
+If the primary fails, we are bad. And now, at the place where if the view service fails, we are bad. But I'm happy, and you might be like, well, what's happening here? So…
+Let's think a little bit about the requests and how they flow through the system, okay?
+So, does the client need to contact the food service before every operation?
+What do people think?
+Something was mentioned very, very, very, very recently on this.
+Should the clients contact the new service before every operation?
+No, it's, like, before every session to get them started to talk to.
+Before every session, that's correct. And why… how would that work?
+What do they do in between?
+What do they do in the session?
+Exactly. So in a session, the client can cache the view, and then just keep… keep running, and asking the same… yeah.
+What happens in the case where, like, the…
+Primary, like, temporarily goes down, and then, like, another primary gets promoted.
+And then that memory comes back.
+the client may never, like, realize that this primary everyone down, I can never requested during that time, so… Keep that, keep that, keep that thought. So there is, there is… you're asking a very pointed question, and keep, keep it, keep it, and we will, we will get back to it, very quickly. So…
+The clients can cast the view across operations, but the question now is, when can we invalidate the cast view? When does the client invalidate the cache view? When do they need to do this? Thoughts?
+Yeah, I already knew.
+when operation fails. So the client invalidates the CAS when they get no response, or they actually get a negative response from a replica, that, you know, I am not the primary, actually. You're contacting me, but I'm not the primary.
+So, the view-service fault tolerance sounds…
+as bad as what we started, but it's not as bad, actually. Because the queue service is not on the critical load path.
+So, the client asks one, once, the view service, and then starts firing requests in the primary backup. Starts firing requests all the time.
+That means that
+The view service is not a critical part of the component, it does not add cost in the main critical part of the component, and this makes it also easier to provide fault tolerance for it. And actually, we will see in some lectures from now how this exact
+kind of property is, is, exploited by systems like, ZooKeeper, Apache Zookeeper.
+to, to get good performance with very high fault tolerance guarantees. So, essentially, if you know, if you can somehow make the part of your application that meets the fault tolerance to not be in the critical path.
+you also have more, have more space to make it slower. If your component attempts to default tolerant is in the critical path, that causes a lot of overhead in the main critical part of your application. But so… so there is benefit if you can make
+a component in your system that doesn't take a lot of requests to be… to be the one that really needs to be fault tolerant? Doesn't make sense at a high level? Is there anything that's not clear?
+Particle here.
+I have a question, like, on the change when, like, when does a new service number get updated? When does a new number get updated?
+Because, in principle, whenever a state hinge, you should update.
+But if the assignment, you expect us to update it when you act on the package.
+No.
+I don't fully understand why we need to wait for that act, right? Like, if there is a state change, I would want to respond, like, I would want to update the view as soon as possible, so that the other applications don't get lost, but why do you need to wait for the act?
+So, this is something that you will have to figure out for the assignment. And in general, I guess, in this lecture, I'm giving you the kind of, like, high-level idea of the queue service and primary backup, but for the assignment, it's more of a primer, I guess, for the assignment. So, the assignment, you have to figure out why this is important, okay?
+Other questions about the primary backup and the view service?
+Great. So for now, since this is a list… a converted sort of the critical path, let's assume it's reliable, actually. And in a few lectures, we will see how we can make something like the Vue service reliable, okay?
+So…
+Let's now look at a specific view service execution. Let's say we have the view service, the view is 1, S1 is the primary, and there is no backup, and this also knows, S1 also has the same view in mind.
+S2 joins, talks to the FQ service, the FQ service now says, okay, let's change the view to S1, S2, so S2 is the new backup.
+They both agree.
+And they have a communication time between them now.
+And then the client at some point says to the view service, okay, I need to do a request here, tell me who is the primary, who's the backup.
+So, is there any issue here? Think about a specific type of failures, and yeah, talk to the person next to you. What could go wrong in this particular case?
+And we'll get back to it. So there is, there is a problem that could happen.
+Discuss, and then we'll get back to you.
+Hi, guys.
+What is?
+Totally.
+Because I was like, I love people.
+So one of the things…
+That means the clients just use the cash, like, oh, we did start, and it's good.
+Which is a bit difficult.
+Say, surely, it's like, I got a big practice.
+As we know them.
+There's nobody to reside from, right?
+So, what do people think?
+what is something that could go wrong here? You know, what things could go wrong? Thoughts, observations? Even something, you know, some small idea about something that could go wrong.
+Hans?
+Hans?
+Pointed questions?
+What could go wrong? Yeah, more hands, more hands.
+Even observations are useful. You know, just whatever you observe is a problem here. More hands.
+Yes, more hands, more hands.
+Smart.
+More.
+Few more.
+A few more?
+Come on.
+You're not hands.
+Okay, on the back?
+You.
+Sweet.
+But I had a, like, is it just, like, if you kept the albums, or, like, there's, like, different versions that it tastes from, and then it's not sure which one?
+So that's… the problem is very related to this. So there is… it's a problem with different versions. Exactly what, though, is… or, you know, or we want to get to that, so more thoughts from people. What could be a problem with the versions?
+Hans?
+This is a great observation.
+Maybe there's, like, a double curtain
+on the B surface, so an F1 can't commute into the new surface anymore, and then the B surface promotes S2 to be the primary.
+And then S1 thinks it's, like, still the primary.
+And so, that gives us to… Right. So, as was mentioned previously, a problem that could happen here is that there could be
+a network error here. If you remember from the different types of failures, there could be a network failure here, or just, you know, all the messages from this could be delayed to the review service.
+And that means that now the view service says, okay, this is actually dead, I need to do something about it, let me just change the view to have S2 to be the new primary, okay?
+Peso agrees.
+And then, the client… who still knew this view, talks to us, and Aswan's like, yeah, I'm the primary.
+So, this is what's called the split brain problem here.
+So, two partitions of the nodes disagree on the state of the system. In this case, one partition is the primary, and the other partition is the replica and the view service.
+And this could lead to arbitrary inconsistency of the system, because both partitions think they are right, so they do whatever they thought, you know, they think that they can just do, and so there's no, there's no, there's absolute divergence of the system.
+So how can we avoid this? Any thoughts? How can we avoid this?
+Nope.
+Instead of just having, like.
+You'll run hard to keep directly from the view service to get credit, like.
+check by going through the other, like, S2, check if there's any way to reach S1. If there's no way to reach S1 through any of the other servers, then you know that they can't communicate with it either, so it is actually offline.
+That's a great point. So, your point is, let's check through all servers that you cannot communicate with this.
+And so, I'm saying, though, what is the… what if? So in this case, you know, we would be able to find that S1 is alive through S2, so we wouldn't change the view. But what if this is also down, and only the client has still an active channel with S1? Now we're actually screwed. So what can we do here?
+Thoughts?
+Can we do something?
+I mean, when, like, the view fails, maybe you could… or when the view changes, you can also communicate that to its client?
+You could communicate that to the client, but you might change it, and do you have to wait for all your clients to agree that you have sense before you can proceed?
+If you don't wait for all of them to agree, maybe one of them hasn't yet agreed, and then still makes the request to the other primary.
+Thoughts?
+Yes.
+and, like, sync with S1, and then when it's trying to say, because it's, like, what it takes the most recent V number is, S1, and S1, it's like, oh, you're more than just, like, takes S1. So they have to talk to each other, that's correct.
+But if they just talk periodically, then there is still the case that in between two periods of talking, this happens.
+So the question that I'm asking you now is, when should S1 and S2 talk in this case?
+S1 can't see the view service, then it should… complaining somewhat.
+This, this could be the case. I guess…
+Yes, this could be the case, though this now puts the view service back in the critical path that we wanted to avoid, because now, for every operation, S1 has to first go to the view service and say, are you still up? Can I still reach you? Do I have the right view? Which means that now the view service became part of our critical path, which we want to avoid.
+We are almost there.
+How, like, how is another server that would change?
+So this is… this is… this is a way, and this is kind of, like, infrequent, but again, because the client has no idea, the client just lives there.
+So…
+The answer is, I guess maybe it is not obvious, because we did say that before, that's also necessary, but here, the primary actually has to forward all operations to the backup. So the primary, we have to reconcile this kind of partition, and there has to be no way for the primary and the backups to be partitioned.
+So, we have to get acknowledgements from the backups anytime that we have to process a request to make sure that they also recognize the primary, that there is no way someone else in the system thinks they're primary, okay?
+And just as an example of how this works, you have a client, has this old view, primary has the old view, and the new primary is the old backup.
+Now, we make the request, we make the request, and now the backup says, you're not the primary anymore, actually. So, you cannot do this request, now the primary says failure to the client, and then the client goes to the new service and finds a new primary.
+So why can't the backups be actually mistaken about who is the primary?
+And why, why does this work, also? Yeah.
+Is it because, like, they, like, directly got the message from the news service? Like, they got the most recent
+Message, so they're the most correct.
+Yes, that's actually correct. I think, actually, this question is a little bit misfaced here. I guess the real question that I want to ask here, is…
+why does the primary know who is, who is, you know… I guess the point is that the backup
+the new primary was a backup, so the old primary also will always talk to that backup. There's no way for some external
+other kind of node to suddenly become primary, and then the primary doesn't even know this exists, and doesn't even talk to it. So the point is that because then… this is very badly written. So what I mean by this is that
+The primary will always talk to what it thinks was the backup.
+Only a backup can ever be promoted to a primary, which means that if there is a new primary, the primary will certainly talk to it, because it used to be a backup, and therefore the primary knows about it.
+like, S1 is completely split from the view service, and S2 itself, so there can't be
+Communication becomes less to us when we're doing better.
+That's a great question. So, in this particular case, what would happen is that the primary would try to contact S2, and then it would not get a response because of the interpretation would say, actually would block and wait.
+And this, this exact problem is one problem that is fundamentally distributed systems, and we will see something in a few classes.
+About how?
+network partitions with crashes actually make some things impossible, completely impossible in distributed systems. So we always have to kind of, like, agree and get something that's suboptimal in a case. So this is a fundamental problem. So we will be slowing down completely. We will not be able to respond until we can get back in touch with the new primary.
+Okay?
+The primary needs to, like, talk to the backups on every single operation.
+So, this is slow, and that's why we also said the primary and backup replication has a lot of cost on the normal execution. It's not…
+I mean, the benefit is that we don't have to talk to the view service, and this we will see later why it's a benefit, but it is indeed slow. And there's another problem also, it's not just slow, but it also requires… has this kind of hierarchy built in it.
+that the primary is, like, the key critical kind of component that always has to be contacted, and the backup. So we will, in the next lecture, or in two lectures from now.
+show a protocol that can deal with this in a more symmetrical way, where even if some nodes are down, we can still progress, or even some nodes are unreadable. But yeah, we will see how to get better later in the class about this.
+Other questions?
+So, this requires, before the primary…
+addresses or, like, gives a response back to the client, they must get the
+tracking all the backups? Yes.
+Correctness.
+Great. So, the view service. This is a valid sequence of views, also for your… for the assignment.
+You start with one primary, S1, a backup is… a node is promoted to backup, S1, S2. The backup fails, so you change to S3, but the primary stays the same.
+Then, you change the primary, promote the backup to the primary because the primary failed, and get a new backup, and then you could also lose the backup, sorry, promote the backup into primary, but not have another backup waiting.
+And here are also some examples of invalid transitions between views.
+If you have…
+a view where you have the primary and a backup, you can never transition to a view where both have changed, and that would lead to the problems that, you know, some problems correct these problems. You have to keep that in mind while you implement the assignment.
+Similarly, there is no way we can transition to a view where there is no priming. This is also illegal.
+It's also illegal to take the primary and turn it into a backup, and create a new primary from scratch, from nowhere. And it's also illegal for a view to go back, for views to kind of, like, go back in time, okay?
+Any questions for view service?
+Or anything I've just talked about throughout this lecture.
+Oh, obvious.
+When the view safe is what?
+How's good, Mike?
+So… so we will… we assume it's reliable, but we will… in the next… in the… in the… in the… in, I think, in two lectures, we will see a way to have
+a replica, a replication system that does not have some kind of hierarchy. So you could use this to replicate the view service, or you could do even better tricks that we will see later down in the class, where you have some kind of centralized master service that has replication, and then there is worker services.
+So yeah, there is ways that we can do for now, we can assume, and for the assignment, you will assume the view is… view services align.
+What about for the view service? Like, it only keeps track of, like, primary and backup, but it also has nodes that are, like, constantly, like, clinging it, or is constantly telling it that they… or they are also backup.
+Boom.
+Does the Vue service, like, ever make that something, or that something that's, like, the local state of view service itself? Yeah, I'm trying to link it with, like, unique local and external state that you're setting. I mean, the view, as long as everything is alive, doesn't mean to change anything.
+I think that's the point. If anyone fails, or if a new node wants to be a backup and there is no backup, then the view decides to make an externally reasonable change and creates this view change protocol, initiates the view change protocol, and change the view. So that's the only way the ViewSense can externalize something.
+Yep.
+Other questions?
+Great. So, please.
+filling this post-lecture quiz. I hope it's unlocked this time. And next time, we'll talk about consistency of data across replicas.
+Wait a minute, what happened.
+Okay, yeah.
+Okay, okay, alright, good.

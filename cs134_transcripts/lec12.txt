@@ -1,0 +1,720 @@
+Well, yeah, for partly to meet one of them.
+Just one.
+Or, like, we need to write one book, and it's very simple.
+Oh, good.
+Wait, like, all you do is you, you know, for each sequence access they get, you, like, spawn a new crib, and you have, like, rock as a matter.
+Very similar to the work remotely
+Hope you don't soon.
+Yeah, so you just call the RPC phone, everyone, and you can assume they terminate, so you just call up how many CC.
+That's what?
+So that's fine, you can block it after a little bit.
+Well, I guess I'll name it, I'm just very clear.
+He said, he said, okay, You've done that 60 times a day.
+So, developer.
+Yo, he said 70. He said 70, so… 70 seconds for part A.
+Like, that seems by the country science.
+Great folder.
+But let me try to include this there, and also to be honest, I'm also.
+That's fantastic.
+Wait, I did watch the lecture, let me tell you about something.
+It was about meat consistency that came out there.
+Does anyone know why this camera… how to control this camera? It's pointing just then, to… So, again.
+Oh, I'm supposed to be on the blog, I think.
+Oh, you have channels, I don't think I have units.
+See things, you know, basically.
+Wait, let me show you how to do it.
+Oh, I know why.
+I also must be guilty in those moments. So, unfortunately.
+We'll do that.
+Like, it's like the same value.
+That's what I was diagnosed in the first time.
+I couldn't change my password because I was going to talk.
+Okay, it was like, hello, everyone!
+I hope you are doing well. I hope, you're having fun with, Bruinland being down.
+Yeah, and I guess this is this time of year that all of your friends probably who are in the semester system are now, like, okay, summer is here, and we are still here, so I'm sorry about that, but we'll try to make it as interesting as possible for the rest of the quarter.
+Yeah, so today we're doing Lecture 12, and we had two previous lectures that we didn't do the quiz questions for, Lecture 10 and Lecture 11, so let's review both of those, and let's answer any questions that might be pending from these two lectures before we start with today's Lecture 12.
+So, the first quiz question of, Lecture 10 was asking the following question about,
+lock services, and this is what Sabi does, and also, and we discussed at that, at that lecture some kind of pros and cons of, of this, of these, of this,
+pattern, so providing a log service compared to, let's say, some Paxos Library. So, the… the things that are true is that,
+it's easier to modify an application to use a service instead of a library, because with a library, you have to do more invasive changes. At the same time, using a library requires deploying several replicas from the client, because the library is deployed together with the application. So the benefit of a service is that you can deploy it separately and not worry about it.
+And therefore, Chubbig, what it does is that it says, we will take care of deployment of the fault-tolerant service, and you just implement your client, you do whatever you want there, no fault tolerance, we implement for you.
+The thing that is not true is that none of these actually has different fault-tolerant properties. You could implement very similar fault-tolerance characteristics for both the service and the library.
+Any questions?
+Great. Lecture… the quiz question 2. What happens if a topic client that has a lock fails? And the following two things, were wrong here. The service realized once the failure happens and releases the lock to pass it to another client.
+So the service has no way to realize that the failure has happened, and the client has failed, and that's exactly part of the problem. So that's what cannot happen. This cannot happen, the first one.
+The last one, similarly, the lock is lost, another topic clients need to create a new lock. This is also problematic, because how do they know that the lock is lost definitively? How can they create the lock and still be correct?
+The correct thing here is that the service realizes once enough time passes, and it doesn't receive a keep alive from the client. And because the contract is that as long as you don't send the keep alive.
+there, then you are not able to have the lock. If you don't keep sending… keep our lives, that means that both the client and the service can agree at this point, after this time has passed.
+that no one has the lock at this point in time, okay?
+Great.
+Quiz question 3.
+Can we implement logs using ZooKeeper's consistency model? The answer is yes, and we showed also in the class a way to implement logs using ZooKeeper.
+The second point was, is it possible to implement linearizability without blocking in ZooKeeper?
+And the answer for this is actually no. ZooKeeper does not implement linearizability. If you remember what I showed you here, ZooKeeper allows these executions where set X1, set X2, get X1, get X2, this is allowed by ZooKeeper, but it's not linearizable, because this… nothing is overlapping here. And if we take the global order of this
+Executions, they are not, linearizable.
+So, in general, the thing I want you to keep in mind from this, from ZooKeeper, and this particular question, is that you cannot…
+guarantee linear's ability without blocking. There is no way, no matter what you do, if someone tells you they get linear's ability without blocking, this is not possible. So, this is fundamental, and therefore, yeah, it's not possible to have both linear's ability and not block, okay?
+Great. So…
+Let's… any more questions about Lecture 10? Because I didn't have time… I didn't ask… answer any questions about Lecture 10, Lecture 11. Any more questions about Lecture 10? Chabi is your keeper.
+Kun, cool, cool.
+Okay, let's switch to Lecture 11.
+So the first thing that… the first question was about cap and parcel C. And what the question asked is that, what do these systems tell us about a system's behavior during a period where there is no network partitions? And that was a very important part of the question.
+So, during the period of no network partitions, actually, neither CAP nor PassLC say that we cannot have both consistency availability. So, when we have no network partitions, we can actually have both, consistency and availability.
+At the same time, passenger tells us that if there is no network partitions, the actual trade-off that we need to decide between is consistency and latency. So, you can have consistency, but then you have high latency. You can reduce your latency, but then you miss… you drop some amount of consistency.
+And just to remind you, Pass and C had these two kind of parts. If partition, we go back to CAP, we choose availability or consistency. If not partition, and that's exactly what the question asked here.
+You have to just choose between latency and consistency.
+Questions by people on, on, on, CAP, or…
+Passel C, or however it's pronounced.
+Great.
+So, the next two questions, I think most people got them right. and the first one was talking about stone convergence.
+and it was asked whether it's a liveness property, and the answer is that it's a safety property, because total convergence can be disproved by finite trace, and it does not talk about anything eventually in the execution of the system. So it's a safety property.
+And the second question was… the third question was about, what methods can be used to prove, and that was the important one here, that the system is linearizable.
+And the answer is that you cannot use techniques that do not have exhaustive execution and guarantees to prove anything.
+So with testing and monitoring, you can only show that the executions that you explored actually are in the resible, but nothing about the rest. So, the only way to prove that this is a resible is with deductive verification, model checking, episode bound, and so on, okay?
+Great. And finally, question 4. The last question was asking whether we can implement any data type as a CRDT.
+And the answer is no. There is some data types, like, imagine a bank account, where you have deposit, add interest, and so on, where the updates are actually non-commuting, and we also need strong consistency, so in this case, you cannot implement some data types with CRDT.
+and the idea more broadly about CRDT that I want you to keep in mind is that CRDT is not, is not a,
+A way to solve all of our distributed systems problems, but rather, it's a framework
+In cases where we have some data type or some service that can be described in this nice commutative way, we can write it as a CRTT and prove that it's correct. That's essentially what CRTTs give us. They are a best-case way for some particular data types that do fall under this paradigm to, in a principled manner, construct
+This, commutative and strong eventual consistent data type out of there.
+Okay?
+Questions about anything in Lecture 11?
+Okay.
+So, let's get to today's lecture. So, today we're going to talk about sharding, and we're coming to the end of foundations.
+And yes, after today's lecture, we will talk about Dynamo, and then we will also have a lecture by a guest speaker. So next Thursday, we'll have a guest speaker, from MongoDB, who will talk about some cool stuff about consensus.
+But for today, the Zelda, includes the Higgs.
+First, we will talk about charging.
+Then, we will talk about data lookup.
+And finally, we'll talk about the code protocol.
+So… Looking back.
+what you've seen so far in the class. We've talked about order, we've talked about LAMP port and vector clocks, we've talked about different ways to do fault tolerance, primary backup.
+Paxos, and so on. And we've talked about consistency models and their trade-offs. Linearability, sequential consistency, causal consistency, eventual consistency, strong versus… stronger versus weaker consistency models.
+What have we overlooked for distributed systems?
+two key problems.
+Every replica, the first one is that every replica, so far in what we've seen in this class, has to handle every operation.
+Why is that a problem? What do people think? We've talked about this in the beginning of the class, when I asked you about some things we might want from a distributed system, but yeah, why is that a problem?
+Thoughts?
+Why is the problem if every replica has to handle every operation in a system?
+You can't really scale for additional users, because you can't really split up, like, what the work's being packed.
+Right, so you cannot scale very well, because we have to handle the complete workload by every replica. And actually, it's even worse. The weakest replica, the weakest link in our system, is the one that determines how much load we can have. So in all of these kind of replication schemes we've seen,
+The weakest link in the system is the one that determines how fast can we process requests. So this doesn't scale.
+At the same time, every replica has to store the complete state.
+Why is that a problem?
+Thoughts?
+A lot of overhead, and it hurts a lot of space, but…
+Let's say every… if we relax the assumption of every replica having to handle every operation, it would be stored in an alternate state that it doesn't need to complete operations, and it does no longer needs to,
+So that's correct, that if we did relax this, we would have to store state in redundantly, but what you said initially is what I was mostly caring about here, which is that
+Again, we have… if we have a ton of state, our replica has to be able… our smallest replica has to be able to hold all of our states, so we are replicating a state… like a state machine, a key-value store. Now, every replica has to have the complete state. That means that if we have a small machine, we can't actually even fit it, we can't even use it as a replica.
+What solutions are there to both of these problems?
+There are some obvious solutions to these problems, thoughts. What could we do?
+You are… you are… imagine you are a company, you are running your service, you know, you… you have some scalability problems, some storage problems, what can you do?
+Thoughts?
+It's able to store some subset of the state, this is what we will see today. Other solutions that you could have?
+There is a very obvious solution.
+That's good, but expensive.
+mate.
+Yeah, you just get a more powerful machine. So, this is called vertical scaling, and up to a period of time, this was really what companies could do, you know. You just buy a bigger machine, you buy a bigger machine, and then… or, you know, you get more, you, you beef up your existing server, and so on, so now you're good, you can handle the application again and the load.
+The second thing that you can do, and the problem with this, is that it's very expensive, actually. So, getting a big machine
+It's much more expensive than getting a collection of small machines that have the same kind of, like, aggregate, you know, processing power and storage and so on.
+So, another way to scale is horizontal scaling. You buy more machines, but we actually need some protocols to do that, and we will see today how can we actually horizontally scale a service and be able to use a lot of small machines to actually support and implement what the service needs to do.
+Yeah, and as I said, horizontal scaling is much cheaper, and that's why it's much more also desirable, because it's much easier to keep buying small, cheap machines rather than, you know, buying the even more expensive, even more expensive big machine every time your load increases, okay?
+Great. So, this is the whole idea behind charging.
+So starting is a technique that partitions state across machines.
+Let's say we have a machine that has the values for 3 keys, X, Y, and Z. We could split, you know, each key to each machine.
+What problem of the two that we talked about in the beginning, this… the processing all the requests and holding all the state, which problem does it address?
+Thoughts?
+One of the problems was every machine has to process every request, and the other problem was we have to put all the state in all machines.
+What do people think?
+Less overhead per machine.
+So, so maybe, as you said, we need to process fewer things in its machine, and that's correct.
+What about the other? Actually, is it certainly the case that we will always process, you know, will always process less on its machine?
+So for the first question, is it always the case? What's a counterexample of that?
+This error only is the sponge.
+our system… Yes?
+So then, yeah, that one, it's just doing everything.
+Okay, oh, okay, that's a good point. So, this assumes… I am assuming here that we have done some kind of, you know, fair splitting, and there is some machines. But even in this case, is it always the case that we are reducing the… the… who needs to be talked to?
+Maybe if you're searching for some value, you'd have to check, like, every place where you have data if it's valid.
+Great. So… so we don't actually know whether we… we can… we don't always reduce the… how many requests go to which machine, because some requests might need, actually, all the data. Maybe a request says, brings me… bring me X, Y, and Z, and some of these values. So, for this request, we can actually do something.
+What about the other problem about storage? Do we solve this problem this way or not?
+the storage problem.
+Yes, yes, exactly. So, yeah, sometimes both. Always it allows us to separate the state across machines, so we solved the second problem.
+But the first problem, in some cases, we still have a single server that might need to, you know, requests might have to go to all servers, because… or to more than one server, okay?
+Are there any problems? This might be a bit too vague, the way I see this question written now, but
+Throughout all the things we've seen in class so far.
+Now you see this thing called sharding.
+Are there any problems with this thing here? Let's say you, you know, you have your service, you deploy it like this. Are there any problems?
+like, reliability.
+Sponsorable.
+Right. So, there is the problem of reliability.
+So, one thing I want you to keep in mind is that sharding is not about fault tolerance. If a shard fails, we lose that state forever.
+So how can we make, actually, sharding fault-tolerant? How can we make it fault-tolerant?
+The hub?
+I read up the sweet chart.
+We can have replicas for each chart, and that is actually a way that some systems that we will see use. So, the thing I want you to keep in mind from this, and for today's lecture, is that
+Fault tolerance and sharding are completely orthogonal techniques, or at least can be completely orthogonal techniques. You can, of course, build a system that considers both at the same time, but
+While they both…
+require adding more machines to our system, they serve a very different purpose. Sarding serves the purpose of improving the performance of our system, whereas replication serves the purpose of fault tolerance. And these are very, very, very different goals, okay?
+So if there's one thing you are keeping from today's lecture, I think this should be the thing. Sharding and application are very different things, even though they both add machines to our system, okay?
+Questions about this?
+Great.
+Of course, there is also sharding and replication hybrids, and through the rest of this class, we will see even today, and some systems, and systems later, that try to deal with both of these problems. They have some kind of solution for sharding, some kind of solution for replication, maybe these solutions are sometimes trying to do both things at the same time.
+So, an example of that is, is, partial.
+sarding a replication, and this is actually what Hadoop, the Hadoop Distributed File System uses by default as a scheme. So, Hadoop, by default, sards things, but also has some notion of, I will replicate also each chunk at least twice, or three times, or four times. So, it sards everything, but then also makes sure that, you know, X is in 2,
+machines, Y is in two machines, Z is in two machines, and so on. So you can have, you know, in your system, when you build these two systems, you both want to think about, how can I make sure my data is reliably stored, but also, how can my service be scaled to handle additional load, okay?
+Great.
+So…
+I showed you this nice little figure of, you know, you take your data, you split them in some servers, but how do we actually do that? So the goal of sharding is to partition a set of data items to a set of machines.
+So I want you to now think, with the person next to you, or behind you, or in front of you.
+of what problems could exist there? What are some concerns you have to deal with? What are issues that might come up? What are all the problems we need to solve? So if we do that, it's not as simple as, you know, getting scalability, it's not as simple as putting our data in different machines. So there is more questions here. So I want you to think, what could go wrong, what do we need to solve, and so on. Discuss it for a few minutes, and then we get back together.
+And, yeah, talk about it.
+That's a New Year's Eve.
+I should give us just code.
+I've never seen children with you.
+You never deferred the law.
+Wait, what? You know what I'm saying?
+So… What do people think?
+thoughts about problems that we have to solve, or in general, like, yeah, what could go wrong here? What are your observations? This is really the most,
+vague and abstract kind of goal that we might have here. So, yeah, I want to hear all of your thoughts. So, Hans, I want to hear thoughts, and we'll write them down, and then we'll see, what we have collected in. Hans.
+Lord Hans.
+Lord.
+Great, on the back?
+on.
+A couple issues, it's like… Give us, give us one, so that, so that, you know, yeah. Yeah, yeah.
+If a machine dies, you don't have a way to get the state back.
+No, you said that in a previous slide, so, like, I'll… I guess something else to keep on, but… Identity is an important problem, so I will keep this. Yes.
+Other, other, other guns, again,
+On the… not you, the one behind… yeah, you. One of the things, if you have data items that are, like, tightly coupled, where when a user asks for A, they almost always also ask for B. Sometimes they could be partitioned away from each other, so now you'll have to prompt more
+Great, great point. So, data names might have relationships, and you might, when you ask one, you also want to get the other. So you have to take into consideration. More hands?
+Might be slower if you have request data from a bunch of other applicants by the…
+So, so now, you might get back to slower if you have to talk to a lot of replicas. So, cross, I will call those shards, not replicas, really, but cross-shard communication.
+Yes? Your client needs to know which chart to talk to when it requests data or… Right.
+We'd start to talk to. Great.
+Another? Focus need to maintain consistency.
+replicas need to maintain consistency. There is a consistency problem So…
+You mean in a single shard, or across shard? Across shards. So there's a cross shard consistency? Yes.
+Any other…
+let's say…
+For example, one state for multiple machines, and in the process of aggregating all of that state, what is the state on one of those machines changes?
+So this is… I guess I will put it… I think I would put it together with a cross-sharp consistency, because it has… it asked about this question, when you are pulling data from multiple servers… from multiple shards, and you… this data has meaning together.
+then you can't just let some of this data change. So, this… I'll put this underneath across some consistency. That's a great point.
+How to sharp the data, that's also related to the type of decouple, but how to sharp, exactly.
+Anything else?
+This might fall under that category. Is there ever a case that you just can't chart a specific data.
+there is cases that you, you, you, that you… that you… I think you can always do it, but… but… but there is some cases that it's catastrophic for performers to do it. So… so that's… that's… I would put it together with a title couple, but that's… that's a great point, yeah.
+other…
+I think this is related to the private shard, but, like, considering the balancing, like, maybe, like, passion.
+considering load balancing, this is… this is important. So…
+when we… when we put the data somewhere, even though we split this XYZ, that doesn't mean that, you know, people ask for XYZ similarly frequently. Okay, other points?
+Great. I think these are probably all the ones I have too, but let me see. Okay, so we need an efficient way to find the machine for its data item.
+So, which are to talk to? So, we need to find a way to find the items.
+We need our partitions to be relatively uniform across machines, and this has to do with how to shard and with load balancing. So how do we shard things in a way that is uniform, both with respect to the items and the store, but also with respect to the usage by the clients?
+A consideration that we have is, do the machines need to communicate with each other, or someone in general, to find the item? And this, I guess, has to do both with start to talk to, but also with the cross-chart communication and the consistency question.
+Another thing, actually, that we did not mention, is that
+What if we have a set of machines that changes? What if we add or remove machines frequently? Because now we talk about scaling. This is different than replication, where you say, okay, I have 3 machines for my application, and if one fails, I replace it.
+Now we're talking about a case where you might be adding machines, a lot of machines, to your system throughout the day, or removing, based on the law that changes very rapidly.
+Okay?
+And what if the data actually changes very often? That's another question that we need to keep in mind.
+And what if the load is skewed? And this is related to, again, load balancing.
+Tightly coupled also has to do with this cross-chart communication, and reliability is a thing that we also talk about, and we'll talk about throughout the rest of this lecture.
+So, for the rest of this lecture, we will talk about all of these points, other than the… all the things that talk about cross-shards.
+So, closer things, we will see in the lecture about distributed transactions. So, there will be a lecture, a few lectures from now, where we will talk about distributed transactions, and we will think about what happens when you need to pull data from multiple sources. How do you make sure this data is consistent? How do you make sure you put the right things close to each other? How do you make sure you minimize communication?
+Across shards when you need to do these kind of things, okay?
+Questions?
+Where's the music coming from?
+This is very spooky, great. Okay, so…
+Let's start with, data lookup.
+And we'll move to this… this part of the election. So…
+An approach we could have to do data lookup, is to have a lookup service and know the location of each item.
+And every time a new server joins our system, it contacts the lookup service.
+Learns what items it needs to get from other servers, and then every time we have a new item, we need to contact the lookup service to assign it, to assign the item to someone.
+This is actually how HDFS works. HDFS is Hadoop Distributed Filing System.
+So, HDFS uses a name server that does the lookups, so the name server is the server that, holds the information about where each piece of data is stored, and then we have data servers that have the actual data, and they join and exit from the system accordingly.
+Can you think of pros and cons about this system? What do you think? The centralized data lookups? What do people think? Pros? Cons?
+Is it great?
+It's not great?
+would be just the fact that the service has to know the location of each item, so extra data that needs to be stored.
+So, one of the problems is indeed that the server needs to know the location of which side of all the items, and taking this a bit further, I would say this has to do with scalability of some sort. This single server is… needs to know about everything in our system. Are there other pros or cons that people can think of?
+This is clearly a call. The lookup service?
+like, pretty much becomes a bottleneck for any time you want to look up information. Right, so everything, everything that happens in our system, if we want to find items, if we want to add service, if we want to add items, we have to go and talk to this service, because otherwise we don't know where to find anything, and nothing works. So this is, this is a big problem, yeah.
+Are there any benefits with this?
+It's pretty simple, yeah. So, exactly. So this is very simple. It's a straightforward protocol, and that's why Hadoop also uses it.
+But there are these problems of this hierarchical centralized design, and also limited scalability, because everything has to go through this lookup service. Why does… do you think that this works for its defense? And why do they use it for its defense? Why does that sound reasonable to use it? It can't be just because it's simple.
+Thoughts?
+Why is, scalability Not that big of a problem, or how could it not be a big problem?
+Close?
+in comparison to, like, how much, like, work each of the data server has to do to, like, I guess, like, transfer the data or something, we, a lot of work, like, the name server has to do as well for us.
+So… so there is… there is some relationship of work here, and you are getting towards the right place. Other people's thoughts… so there is some relationship of work, and some ratio of work that is actually, good here. What do people think? How could… how could HDFS make this work, and… and be okay with this, be able to scale?
+It's all about the ratio of work, indeed.
+rehabbing versus right now.
+that…
+could be the thing, but still, we need to reach… at least the system that I've talked to you here, which doesn't have any caching about where the data is, it still has to talk to the name server. But if we had some caches, that would be true, because then with caches, you would be able to, you know.
+have a cache of where the data is if you look at it once, and then not look again. That's a great point, but there's also another reason, huh? Could it be treated?
+Could it be what?
+3LOOKUP. That could work, but no, in this case, I'm talking about the simple protocol. Why does it work? Yeah, the simple, this exact protocol. Literally, I ask the name server for everything, but it's still fine for its defense. Why?
+Any thoughts?
+This is what you're asking, but, like, I guess lookups are pretty light data-wise, because you only need to manage the keys and not, like, the rest of the row, I guess, and then…
+Just looking up that mapping, it's not so, like, slow.
+So, this is a good point, and there is something about the cost of the lookups versus the amount of work. So, let me give you the… this is… this is part of the right answer, and the things you said before are also part of the right answer. So, the key reason is that
+Hadoop Distributed File System, and the way that Hadoop works is it doesn't
+shared data, or this tiny granular that I showed you before, XYZ. It says, here is a 100 megabyte, or a 1GB,
+time of data. This is the granularity of the data, 1 gigabyte, okay? If you… if you want to find… you can't just ask the HDFS, oh, where do I find this particular little thing? You ask, where can I find this 1GB time?
+But then when you find the data by chance, you then go and look and do whatever you want with it. So, you do lookups every time that you want to find data, when you want to add data, but these lookups are infrequent because you don't have all huge amounts of data. The times are huge, okay?
+And why is that okay? Why does it align with HDFS's computing model?
+Why is it okay to not have random access, and just, you know, pass these huge chunks?
+Why is it okay for Ace difference?
+Any thoughts?
+Why is it okay for HDFS to not be able to just point, oh, I need this specific little thing? What kind of computations do we describe in HDFS, usually?
+Or what kind of computations can you imagine that work very well with this particular paradigm, where you fetch huge sums of data, and not just, you know, little items?
+These are very different from the ones you're doing for the key-value store, for example, for the assignment. Maybe it's just used for, like, batch processing of, like, iterating through a bunch of things.
+Exactly, it's this huge bots processing. If you remember in the second lecture, we talked about these Xenomics applications, like data processing, processing some huge amount of logs. In these applications, you don't care to find, you know, small data items in your data set.
+What we're saying is I have a huge dataset, I want to go and grok through the whole dataset. I want to go read the whole data set, do something for every data item in the dataset.
+So these are completely different workflows and workflows than ones where you are just saying, I need this, literally, this one key, give me one key, or, you know, update this one key. So that's why XDFS makes this work, okay? HDFS makes this work because you have these huge chunks, and you fetch them very infrequently, and therefore, this works, okay?
+Great.
+So…
+In our… in this class, though, we think about cases where we have much smaller items. So let's now think about other approaches. So let me think of decentralized approaches.
+So we'll see a couple in this class. And instead of having a single node for lookup, each node can determine where to find the item.
+with or without communicating to other nodes, but there is no centralized node that knows everything. So, we have to think of some… we will think of some protocols during this class, where the different shards
+talk to each other, possibly, and are able to find items. But there is no central, you know, data lookup, cells, okay?
+So let's look at some strawman approaches.
+First of all, we have one upload that randomly assigns data to loans.
+And then we have another approach that puts everything on one machine.
+Thoughts on these two? Pros and cons? I mean, the second one is kind of obvious, but what about the first? What are the… what are pros and cons of the first one?
+Maybe your, like, data access is not actually uniform or there are, like… Like, couplings where I mean…
+maybe intentionally knowing the semantics of what the data is, you want a more specific grouping?
+So that's a good point. So you do… you do have no knowledge of where you're putting the data, and that's a good point. We will not address this today, though, but that's… that's a great point. So, the things… the distribution is even, but could be even in a bad way, depending on your load, or, you know, depending on coupling, and so on.
+Is there any, any other problem, with, with a random assignment?
+How do you do data lookup on random assignment?
+Well, I guess there is no way to do that, because you just put it somewhere randomly. That's the whole point. So, this throwman means just put the item somewhere, and we'll worry about this later. So when you want to find it afterwards, you want to have to look through all of the nodes to find where it is.
+And similarly, the other Stroman is bad in the opposite way. There is no skew, everything… all the data is in one machine, but it's very easy to find things, okay? So let's now look at the first approach of today, the first standardized approach that kind of works.
+And, we'll think of an approach that… where we assign keys to nodes based on ranges.
+So, let's say we have integers, and we say, okay, let's put 0 to 100 to node 1, 100 to 200 to node 2, and so on.
+Does this work?
+Problems with this?
+Computer function.
+What key you're trying to look up to the…
+You need a delegator function, that's correct, yes. You do need a delegator function. Other problems with this, in addition to this, this doesn't have to be a service, though.
+The distribution is not even. Actually, the distribution could be even if you actually take your notes correctly, but…
+The request distribution might be completely uneven, and that's because not all keys are used the same, and in particular, it's, you know, usually in datasets, small numbers might be used more than big numbers, words that start with an A are used more than words that start with a Z, and so on.
+So, if you just do a linear, the point of this is a linear split, is a problem, possibly, for, for distribution.
+So, what can we do?
+Hassing.
+So, has functions are a key part of all of the solutions that we will see, and in general, most solutions that have to do with starting in distributed systems literature. So, a has is a function that takes values from an input space and maps them to an output space. And this space usually will be think of it as some kind of integer space.
+What does a good passing function do?
+This is a… just a quick, first of all, you all have seen Hassan fractionation.
+So what does a good Hassing function do?
+It appears to be, like, basically random, but it's deterministic. It's deterministic, for sure, because we have to find a way to actually map it, but it minimizes collisions, so what does it do? It spreads the keys to the output space somewhat evenly.
+We still have this problem of load balancing, so you… you don't have… if you have, some keys might be accessed more than others, but we will see some kind of statistical reasoning about why this might or might not be okay a little bit later.
+So the simplest way to use hasing and do partitioning and sorting is to use modulo has. So you apply has to a key, you compute the modulo of the hass based on the number of servers.
+So if you have, like, 4 servers, you say, get my house, module of 4, and if it's 0, put it to server 0, server 1, server 2, or server 3, and and then store it, store it to that server, or then fetch it from that server.
+So an example then is, to store students' transcripts, across four surveys with, let's say, hash on the year of death, or on the date of birth, and so on.
+The pro… the benefits of caching are that there is no communication needed, and it's very, very, very, very efficient, okay? Because you just run this cache, and you are done.
+Are there any problems, with casting?
+And I want you to think of the problems we also talked about in the beginning of the class, the ones you mentioned, and the ones I mentioned.
+When you have, like, a new server, when that increases, then the distribution is not even…
+Oh, so when you add a new server, the distribution is not even.
+So, there is some workload skew, we discussed this already, but when you add a new server, then you now either don't have any data on the new server, or you have to move data, actually, to the new server if you want to incorporate this. And what does this mean? Let's look at a careful example here.
+Let's say we have this system here, where the y-axis is servers, and let's say we start with 3 servers… with 4 servers, sorry. 0, 1, 2, 3, 4 servers, and we have these data… data items.
+If we use a has, this very sophisticated HAS, X plus 1, modulo 4, then we end up with this, with this distribution. So the green indicates where all of these data items would fall if we use this has, modular 4. Does that make sense to people?
+Let's say now that we add one more machine, and we use the same CAS, of course, and now do module 5.
+What will happen here is that actually almost all of the data will move to different servers. So…
+all of our data needs to be mapped and moved to new nodes every time we add new nodes. So we need to do a lot of data movement. Does that make sense to people? Why this happened here?
+Great.
+So…
+There is a key problem we need to think about when we do sharding. It's not just how to put items uniformly and evenly, but also what happens if we add or remove nodes to our system.
+So, we want to eventually have an even partition of the keys across the nodes, but then we have to be able to tolerate
+Not the dishes.
+So, assuming that we started with even nodes, what is the minimum of keys we need to move, in this case, to the new node?
+Any thoughts?
+This is a calculation.
+How many keys do we need to move?
+to get an even split. Now that we have… we go from 3 to 4 nodes.
+How many keys do we need to move?
+Like, whatever, and where you're, like, when you know, when we're adding clips you're moving.
+So, I was asking about the concrete question, like, three, but yes, in general, actually, it's keys.
+divided by nodes. So all of your keys divided by your nodes, that's the kind of, like, minimum, minimal movement that you need to do, okay? So here is… this is a… this is a hypothetical scenario. I showed you in the caching, in this caching, how we move everything, right?
+So this is a hypothetical scenario. In this hypothetical scenario, I say, what is the minimum amount of movement that needs to happen
+And the minimal is actually keys divided by nodes. So no matter what, if you add a new node to your system, you can't avoid moving keys divided by node keys. This is, like, the minimum amount of communication that needs to happen, and movement. Does that make sense to people?
+To get back to an even split, okay?
+Excellent. So let's now see the key idea of today's lecture.
+Consistent hashing.
+So, what if we present?
+Cass, output.
+as a circle.
+where each input maps to one point after hassle. So we have 0, 4, 8, 12, up to 16.
+By the way, this consistent… of consistent hash has nothing to do with consistency that we talked about before. This is unfortunate, but these two terms are used, here. They do not have any kind of,
+relationship. This is a different type of consistent, okay? So, every node ID, we also have our node IDs, so it has data items, but also node IDs, and we also map them to some point in the node. So, let's say the node has some kind of IP address or something that we have.
+And then what we do is that we partition the keys across the servers.
+And then its server is responsible for the keys between its predecessor and itself. So let's say we're talking about server S1. Server S1 has to have the keys in between these two.
+Server 2 has to have the keys in between these two.
+Several 3 goes to have the keys in between these two, and several 4 codes have the keys in between these two.
+Okay?
+Questions about this scheme?
+How to locate a key to a server in this scheme? How can we determine, given a data item, where to find it?
+Thoughts?
+research or something?
+So, if you can house your server IDs, you… you don't even need to do a… I mean, if you have all of them, actually, so…
+Yeah, I guess you could do a binary sets. But there is also… the very simple way is to hash the key, and then find the next server, which, with a binary sets, you can do it faster if you have them sorted. Exactly. So you find the next server right after you, and that's the one who has you. Correct.
+This technique, is widely used in practice, constellation, for example, in many database applications, like MongoDB, Cassandra, MemcassD, and so on.
+And today, we will see
+how it's used in the context of CORD, which is this foundational paper that came out in 2001 and got a Test of Time Award in 2011 at CICOM. And yeah, it's a foundational paper describing how to implement this idea with more detail and with more consideration for, yeah, a lot of issues.
+So, great!
+We have this setup now, we put our data with the schema that we talked about, and we want to add the new server.
+So…
+Where's the new server? Oh, here's the new server. So we start with this, and we add the new server S5 here.
+Which keys need to move in this case?
+Which keys do we need to move around our system?
+Hans.
+So we added this, this little server here. That's fine.
+Which keys need to move? Who needs to send to whom? And who needs… yeah.
+Morehans?
+Maybe it's just 12, 13, and 14?
+So, it's…
+Exactly. So… so this was the whole… whole amount of keys that S2 used to have, and now S2 needs to have this, but not this. So S2 needs to actually send all of his keys to S5.
+How many keys do we have to move in general here?
+I guess maybe that's not easy to know, but on average, the cool thing about chord is that on average, you have to actually move
+the minimum amount of keys. On average, you move the minimum number of keys, so really… code really solves this problem with consistent hashing. It minimizes the amount of communication that needs to happen when nodes enter and exit a system.
+And another benefit that's also very… a signed benefit, but it's very cool, is that only one server needs to send the keys.
+Right? Because only the server S2 now needs to do some kind of communication with S5, and all the rest of the servers are completely agnostic to this. They're like, I don't even know what's happening in the system, but yeah, the system keeps processing.
+What about removal? What happens to removal?
+Let's say we remove… this guy here. What, what, what needs to be moved around here?
+Mortgage would be in specific servers. I mean, if you remove something.
+you're sending more keys to someone, but… but my question is, very concretely, which keys need to move in this case? Yeah, so more about data movement, again, yeah.
+Notice cube.
+So, which keys need to move?
+Hans?
+Why is 01?
+0 and 1. Exactly. So, S2 before had this.
+now, and S1 had this, now S2 stuff needs to go to S1. So now S1 needs to also get this. That's excellent. So, movement is actually exactly the same, the movement as addition. So, only the successor takes over the sound. So, this is the, as I said before, the amazing thing about chord.
+The… both for addition and for removal, you have exactly the same characteristics, and you move, the minimum number of fees on average.
+Great.
+So, usually, the number of keys is very, very, very large, and so the space is also possibly large, and the N is small.
+Is there any problem with this? And this is related to something that was mentioned very, very recently, by someone.
+Is there any problem with this kind of mismatch between the space being big of the keys and the number of servers being small? What do people think?
+Might get unlucky.
+You might get unlucky with your hashing. So on average, nodes are evenly distributed, but in many cases, some servers will have much bigger issues. So there is a lot of examples where you might get unlucky, and then you don't have, you know, a good split.
+So how can we solve this problem? What's a way to solve this problem? Is there a way to solve this problem?
+I'm losing.
+Can we take the server that has, like, the smallest amount of keys and move it?
+In between the services. Oh.
+That would be great. I don't know how exactly we could do this, though, because we would have to essentially tell everyone, like, somehow this server has to change.
+This would require some things to happen, because the server would have to know that I have a big ratio
+And who else is in the system? And what is the number I need to change to? So yeah, maybe this is possible, but actually, I haven't seen any solution that uses it. Possible, it's used, though. I'm not fully familiar with the literature, but there is also another way to solve this.
+Please space the servers.
+I mean, this is, I guess, similar to this, why don't we space them evenly? But how can we know to space them evenly? Because we're hashing them. If we could space them evenly, we would just, we would… but then we're not hashing, we're just picking some numbers.
+actions.
+Classic the server ID.
+Yes.
+Would it work to not hush them, to just put them… put them on,
+That's a good question.
+I haven't thought about this, but I thought that
+This doesn't make any sense to not cast them, but let me check.
+Would there be any, any clear drawback if we didn't touch those, huh? Have to, like, broadcast all of the things for a solution.
+Right, right, right, right, right. Yeah, so, exactly. So we have now this problem that we don't know which server has which number, and we have to have a decision process that says, okay, this server has this good number, this server has a good number, when we add a new server, what's their new number, and so on. So the benefit of Hassing was exactly that we deal with the problem of having to have any kind of communication, exactly.
+Great, thank you. So yeah, we want to have, we want to be able to do this kind of movement easily. So, what can we do?
+We could, like, re-roll this variety a couple things until, like, Is roughly reasonable.
+Mmm…
+this is similar to the previous one. I guess the solution that we have is somewhat similar to this. So, the solution that actually the proposal called is that we… we don't… we are not actually restricted to having a single ID per server. So we can say a server has multiple IDs, actually, and then we hash those, but… but by having multiple, then we play the numbers game.
+And the more we have, the more evenly, the more unlucky we have to be to actually be spaced out.
+So, essentially, lead server now is using it together with its IP, with some other kind of, you know, four identifiers, let's say, that are random, and then we're hashing them, and then we are splitting them around the circle, okay?
+So if we have N servers with V virtual nodes per server, then each virtual node owns
+on average, 1 over VN of the hashed space.
+And the larger the V, the better the load balancing.
+Is there any other benefit of this, of this, of this scheme, of using virtual nodes per servers?
+What do people think?
+What else can we do with this new knob that we have, the V?
+Any thoughts?
+What can we do with it?
+Is this an almost hand?
+So we have this V. What can we do with it?
+I said that each node gets, you know, V.
+Can we give to one node V and to another node some other number that's not V? Why would that be useful? Wouldn't be useful?
+What do people think?
+Major machines are different specs.
+Right, so a side benefit is that now we can vary this V across the servers to account for the heterogeneity.
+So bigger nodes take larger V than smaller nodes. So we also have a very, very easy way to assign different part of the space to different servers, and we also solve the problem of, you know, lack of bad luck.
+Great!
+So, what happens now upon server addition?
+Let's say we added these two, so we added server 3 here. What happens here?
+What changes from before, I guess?
+Thoughts? What changes compared to before?
+The server's gonna have to send these to the newsroom.
+Exactly. So now, we don't have… we need to contact up to V
+possible different successors to get items. So, this has a slight drawback now, that many nodes need to move the data, but it also has a slight benefit, that many nodes need to move the data, which means that we also can load balance a little bit how much… who sends what. So, if there was a network kind of bottleneck from a node, we might be able to get, to kind of, like, balance it out.
+Great.
+taking a brief stop from virtual nodes before we continue with lookup, and I want to remind you that, assignment theory is due soon, and I hope you're all done with it.
+Even though Brilliant is down, that doesn't have anything to do with it, actually. And here is a… to motivate you, a photo of
+a real photo from the beautiful island of Paxos. so yeah, please be done with your Assignment 3.
+It's, it's coming up soon. After that, there will be assignment 4, which is even harder. And, so yeah, so please, work on it, finish it, yes. Any questions about the logistics?
+Great.
+So, data lookup. Let's get back to data lookup. A server… let's think of the following scenario. A server receives a request to read or write a key. Great.
+How do we know which server has it? One alternative is to
+for each node to know just its successors, right? And this… in this scheme, we have a minimal routing information that is needed. So, let's say we have these nodes across the link, and every node knows only the next node, nothing else.
+In this case, if… let's say we have… we reach number 10 with data item that hashes to 110,
+then this would have to talk to this, would have to talk to this, would have to talk to this, would have to talk to this, and this, until we actually find the data, okay? So this is a…
+If we don't have the value for the key, this has a very simple algorithm.
+you forward to your successor, and then your successor will be able to find the data for you. So in this case, let's say this was, P80 arrives here, it would go here, it could go here, and then we're like, oh, this is my successor. Actually, because it's larger than me, it has the value for me.
+Any downside of this approach?
+That's me.
+You make a lot of network requests, and in particular, you make worst-case linear network requests to the amount of nodes or virtual nodes you have in the system.
+So, what's required to enable, 0-1 lookups? What would you do if you were, you know, to get 0-1 lookups in this case?
+What, what could you do?
+To consult… to get consult time.
+Any other, Hans?
+Is there a way to get constant dial lookups?
+I didn't know it comes sometime, but I just wanted to have requested to manage, like, a state.
+of all of them.
+Haching values of each.
+So, you can get a concept exactly if you know all the other nodes, but that is exactly the problem, you know, in the… the whole point of this card system is that it's used in this case where you have a lot of nodes, you know, a lot of, like, its end of nodes, so then knowing
+Who all the other nodes are, and where they are, is kind of prohibitive.
+So…
+Are there any ideas here? And there is actually an idea that some of you mentioned, so I will immediately jump to this, which is we want binary sets. So, the idea is to maintain log n pointers to other nodes, and we will call this in the protocol a finger table.
+And now I want you to think.
+with the person next to you, on the back of you, and I see some of you are, you know, on your own, but there is people back of you or ahead of you, you know? So talk to the person next to you, in your vicinity, and come up with a protocol that is able to keep log n pointers to other nodes, from every node. Log n pointers.
+Discuss, and then we can proceed.
+Bye.
+Okay, hi.
+Yeah, it's true.
+Yeah, clearly.
+Just like Leo.
+It's always nice because it's so much unique.
+Yeah, definitely.
+Yeah, that is fully important.
+Yeah, don't feel so…
+I think there's another 100 being required.
+If I'm not, I don't map, so…
+Can I just didn't figure that out.
+No, it's not. No, it's true.
+That is… Yeah, it's too bad.
+I don't know.
+You know, I probably ran the host, I'm getting updates.
+If that is what it is.
+Absolutely.
+So, so, what do people think, what are some thoughts that people have? What do you need here to get, login pointers and binary sets?
+thoughts, observations? Hans, very quickly? How can we get this to work? Yeah.
+what, what kind of, structure would you need, or, you know, what is, what is some kind of, like, key insight that you might have, or, you know, observation of what you can or cannot do? Yeah, Hans?
+100.
+More.
+Observations, you know, your thoughts, more, more hands. You have something to share. You're talking about something, you know. So, yeah. So, more hands.
+1, 2… Two more.
+Some observations, you know?
+Is there any way to get binary sites here?
+Oh, three. It's a belief.
+I will get fired, let's get 5.
+Please, speak.
+Okay, two more hands.
+Okay, one more? One more?
+What? I see, I see it, okay, okay, good. Great. So, let's go here. I think if we have a pointer to, you know, that's half a circle away, and a quarter of a circle away, and a half circle away, all the way down to about 12 o'clock.
+And we also track which step of the binary search we're on.
+So, like, the first step, you do half a circle away.
+That's… that's, this is… this is… okay, so this is exactly the intuition, and we actually don't even need to track the thing that we are saying for the second thing. We don't need to care about where we are in the sense.
+So the only thing we need to do, actually, is to keep entries for the node that is half a circle away, exactly, a quarter of a circular way, an eighth, 16th, 13th, 32nd.
+64, blah blah blah.
+So…
+If we have a finger table with four entries, let's say, then each entry will go further down this kind of path. And then we get a binary lookup tree, essentially, rooted at every node.
+And we get this binary lookup tree by threading through the other nodes' finger tables. So, we start from the first node, and then we take a step in our finger table, and then we take a step in the other node's finger table, and so on.
+So, let me now explain to you how this algorithm works. So, the lookup works the following way.
+You have a key, and you have a node. And, the node that we are in currently.
+So, we look up in our local finger table for the highest F, which is a node, such that
+the hash of F is smaller than the hash of K. This means that we are looking for the node that is highest in our finger table, but smallest than the node itself, okay?
+On the data item itself.
+If this exists, we actually call that… lookup on this node, so we send the request to this node. Note that here,
+we don't really care at all about the computation cost, so we don't care in a node to do a computation and check all of the entries in the lookup table. The thing we care about is to not send a lot of messages, so we actually look through our figure table for all the nodes.
+Okay.
+If this exists, then we call the lookup. If it doesn't exist, what does this mean? That our successor is actually the one that has this. So we're done. Okay?
+So, let's look at this example here with, is it readable by the people in the back?
+If not, you can find the slides also in slide 39 on Piazza. Is it data, actually? The people on the back.
+Can you read these numbers?
+I see some thumbs up, okay. So…
+What this shows is, the… the circle.
+the… the nodes are these little grayed-out circles, and these are their finger tables. And on the left side, we have the finger table entry numbers, so this is finger table entry 1, 2, 3, 4, 5, and on the right, we have the actual node that they point to. So 28
+we…
+our 1 away is 1, 2 away is 1, 3 away is 1, and then the next one is 4, and the next one's in 14, okay?
+And similarly, for 1, 4, 9, 11, and so on.
+So let's say you wanted to resolve key 26 from node 1.
+And let's say you wanted to also resolve key 2L from node 28. How would you do the first of this, or the… yeah, whichever of these two. Hans. How would you resolve key 26 from node 1? So we start here. Where would you go first? Hans. You can just give me one step, actually. Let's resolve key 26 from node 1.
+What, what do we do? First step.
+Hand to implement the first steps.
+We start here.
+We got this finger table.
+And we have this number that we're looking… where to find.
+5, which is node entity.
+you go to your last one, because it's 18, and 18 is the largest one that we know, that's still smaller than this, okay? So this is the largest one that's still smaller than this, great. So then we would jump to 18. Great. What do we do now? Han?
+So we're here now. We are an A team. What do we do now to find 26?
+Behind you, yep.
+Entry number 2 to Keys 1.
+Entry number 2, this is the largest one, 20, so we go to 20. What do we do here? So we're now at 20.
+What do we do here?
+Entry 1 loses 21, and then finally, what do we do at 21?
+we know that now there is… there is… this is the… this is the… this is actually our succession. So, oops, I resolved the other one too, but… I guess let's look at this, and then let's look at the other one, too. So we start from this, we start from the number.
+18, we follow it. The largest one, 20, we follow it. The largest one, 21, we follow it, and then, oh, we are going to 28, and we are done. This is… this is it.
+Let's now resolve 12 from node 28.
+So in this case, we would start at 28, we would go, get the biggest, which is 4,
+Get the biggest, which is 9, get the biggest, which is 11, and then get the next one, which is 18. Great.
+So, the lookups, and you'll, you'll, you should at home look at this a little bit carefully, and, you know, follow, follow this a couple times. But the lookups in this… oh, yes.
+You've got two.
+Like, if you get to know 28, do you still have to go back to, or… No, because 28, we know it's us, actually. So Note 28 knows it has it.
+So every node knows the thing it has, also. I know I have all of these. I literally have the keys.
+Hopefully not.
+Yes, so every node has the keys before it, exactly.
+Yup.
+that it thinks that all of its entries are greater than the node, so with this algorithm.
+Is the target notice less than 9? 0 from 4. First of all, 4 knows it doesn't have it, right? So it would go to the largest one. That… I mean, 0 is after 31, right? So it would go to the largest one, 20. So it will go to 20. Then 20 would say, the largest one that's not 0, 28.
+The largest one, that's, that's, that's not zero here.
+It doesn't exist in the first, you know, figuring table, so we just go to one, and one has it. So if all the entries are graded?
+If all the entries are greatest at the target? Yes, exactly, exactly, exactly. So… so I guess it goes from the… from the… if it can go to the biggest one, it goes to the biggest one. And then if not, it goes to… yeah, yeah, yeah, exactly, exactly.
+Other questions about the lookups?
+Great.
+So, the lookups, in this algorithm take log n hopes,
+In worst, worst case. Log N with some kind of constant factors. And again, we can see the lookup 19 would go first to 99, then to 5, then to 10, and then to 20, and 20 has it. Great.
+The key question, though, that appears, though, is what needs to happen when a node joins? What do we need to do now? So we talked about how to find the data with these fingertips, but what do we do when a node joins?
+Thoughts? What do we need to do, actually, now?
+So everyone knows some, you know, some other nodes on their finger table.
+So you have to update all the finger tables, first of all, you have to update the new node's finger tables, and then you have to update all other nodes' finger tables, that would have this node inside now, and we need to move data around accordingly afterwards.
+And this sounds scarce, because now we have to, you know, for every time there is a new node, all nodes have to suddenly run a computation protocol.
+But there is actually a way to simplify these updates, and this can be done if we also keep our predecessor as a node in the system.
+So, let's see now a high-level version of the join protocol. And buckle up, this is confusing, okay? So, the removals are similar, so we're not gonna look at the removals. So, let's look at node join, part one.
+node then joins the ring. And it has the contact of a random node, N0, okay?
+It first starts N0,
+to find the successor of N, as if n was a key in the table. So, you know, N0 is here.
+and joins here, and then asks this, who is my successor?
+So we are able to find the successor, N2, as if this was a data item. We start following the finger tables until we find it.
+Then, we find its predecessor by asking this node that we now know is our successor, who is your predecessor? So now we have our predecessor. Let's say, I don't have an input.
+Then, it updates vStode's predecessor to us.
+So we update… these are predecessors to this. Great.
+And now, the hard part, or I guess not yet. Then, for each of the finger table locations, this is the easy, this is the easy part, we ask.
+some other node, whichever node, to find the successor. So that's easy. We point to where the finger table would point to, and then we say, who is the successor of this? And so we do finger table lookups for successors. This is like looking for data items. That's easy, still.
+And now comes the interesting part. How do we modify the finger tables of everyone else? So up to here, we have modified Israel's predecessor, we're good. We have modified our finger tables and our predecessor, we are good. How do we modify others' finger tables that we don't know? They could be here, they could be here. How do we know whose finger tables do we need to touch here?
+So the way we do this, ease,
+and I guess I will give away these answers, is actually we don't need to look at all the finger tables of all the nodes, but there's a key, there's a key, inside here.
+the new node, N, will become the i finger table entry of P if Load B,
+precedes n by at least 2 to the power of i minus 1.
+What does that mean? That if only the node that is, you know, far away, far enough.
+from L can be possibly modified by its finger table. Otherwise, if it's too close, then it would never modify its it entry, right? So if I was here, there is no way I would modify my, you know, my fifth entry.
+For N. I could only modify my first or my second, okay?
+So this is an important thing. So this really cuts out part of the ring that we have to look at.
+And this allows us to only look at i nodes in the best case. So, the algorithm is the following. We find the predecessor, P,
+of N for its, for its i, for its I finger table, we find the predecessor P of N minus 2 to the power of i minus 1.
+So we go and ask for the predecessor of that particular value. So we go back to the table, we go back and say to half… half the table.
+And then we find a predecessor. Here.
+And I was saying, If its IF entry currently is later.
+So if its entry is actually N2, let's say, not N, or something else, then we know, actually, we are its new… we are its new closest entry. So that means it had some kind of loss. So we are… we are closer, we are… we are better than this.
+And then, if that's true, we also get each predecessor, and keep checking for the same… for the same finger table entry, because it could be the case that someone else also needs to be modified.
+Okay, questions here at this point?
+We will see an example of the protocol, but is there any question about what have I described so far, and about this insight?
+Close ones? We do, but… but we do… so this protocol is for i in as many entry figure table enters we have, but what I'm saying here is that
+For the fifth entry in the finger table, I would immediately jump
+Half the circuit away, and start looking at only these nodes.
+There's no way for the iThwing and all of these nodes here
+They are less than 2 to the power of i minus 1 than nu, so there is no way that I finger table, which would point after me, that I would be its successor.
+So, essentially, we're cutting and we're going straight to the first one that could be potentially interested in us, huh?
+understand what first step means by head minus 2x.
+minus 1, because is an N just an old ID? Yeah, it's another ID. So, we do this calculation, right? We do this… we find this number. This is a number.
+Right? And then we ask, as if it was a data item, imagine this is key key, a key, a key K. We ask some node in the system, find me the succession and then predecession of this, of this key. So some… the system actually runs, runs its protocol with a binary lookup, finds the predecession.
+And now we start actually updating finger tables.
+Questions?
+This is, like, not assignment 3, bro, if… This is not what? Is this not assignment…
+Not on assignment 3. Also, not on assignment form.
+It's in the exam, but yeah.
+Huh.
+Last time, asking if Prime was accepted on the website in front of me?
+For… could you repeat your question? What is the last slide say again?
+Oh, that… that… how do we fill our own finger table here? So we have… we have our own finger table, so we calculate how far these are, and then we ask someone in the system to find their succession. So, we would say this point's here, this point's here, this point's here, and I would say, okay, find me the succession of this.
+And then I would fill it in, it's entered.
+Find me the successor of this. It's NZM.
+Finally, it's actually show this, with 10. Exactly, exactly. So these are just… the whole cool thing about this is that a lot of things can be reduced to just looking for an item in the circle. That's the cool thing.
+Questions?
+Questions?
+Okay, hopefully things will get a little bit better with this example. So…
+We have node 6, who just joined, okay?
+And we have node 0, node 1, node 3, and these are the partial finger tables, and we have the, the, the,
+They are written a little bit differently than before. They're written from start. Start is really… instead of writing 1, 2, 3, 4, 5, we really write, in the start the actual key that they should point to.
+So, this is what we write in the start part of these finger tables, okay? And then the…
+If we know the successor, and then the int is just in between, in between these two values. And then if we know this, and then we find the successor, okay? So we have this, this, this, and this one joins, and I want you to…
+Discuss with the person next to you how to, find the finger tables after join 6, joins. After node 6 joins.
+Start, in the node position.
+plus, 2 to the power of i. Oh, yeah, this is what I was describing here, what the start? Successor is the actual successor for the start, and int is simply the range between this and this. 1 to 2, 2 to 4, 2 to 3, 3 to 5, and so on. So yeah.
+Please, work it through a little bit, and then we'll get back together.
+I guess the final successor, which is the zero.
+It's gonna happen in 2023.
+So, the three ones are…
+So, I think that decision?
+Oh, it's like the first girl, it's like, oh, this dude is also sweet on it.
+The star will be 0 plus 1. I guess so it's 0. Okay, so it's like 2 to 0, so it's like 0 plus 1, but it's correct. And then the second row will have to start with 0, so the first one has starved 0 plus 0.
+Okay.
+But, like, more today.
+Yeah, because,
+Yeah, yeah, so I'm sorry.
+Yeah, 5 and 6.
+Okay!
+So, let's start getting things back, and let's start by the simple things first. So, what are these three numbers gonna be here? So, the start… the start numbers for the finger tables. So, what are the start numbers for 6 going to be? Hans, for this.
+7, 0, and 2. Correct. Now, what is the first succession of this going to be?
+The succession of the first finger table entry.
+Right.
+Oops.
+So, so, I should have a list, I did a list just this first. Did everyone see this? I guess I can assume everyone sees this. Okay, so, so, this one is 0, of course. The succession of 7 is 0. The succession of 0 is 0, and the succession of 2 is 3. By the way, here, I didn't… I'm not asking you, and I didn't ask you, in this particular example, to run the protocol. You are an all-knowing being.
+that can actually go and determine this. Imagine that in practice, what was hard about what we saw before is also that this has to be run by each node that only knows the other finger tables, and so on. So, while now you should be able to come up with the answers to this, you should also be able to
+understand how to find these numbers with following the information that is given by the protocol, and not just, you know, magically determining what it is. Does that make sense?
+Great. So now, what is… what is the value of this finger table, let's say, of, of, of zero?
+What's the left and the right? What's the start, and what's the succession?
+Hans?
+Or what is any of these three? If anyone, any of this, 1, 2, 3, 4? Yeah. Hans, Hans?
+Morehans?
+At least one more.
+confirmed?
+This one, the start will be 4, and the thing will be 6, not 0, because 4… the successor is 6.
+Similarly here, 5 is the number, the successor is 6. And here, 4, the successor is 6, 5, the successor is 6. The previous hasn't changed. From 7, we still keep to 0.
+Questions about this, hmm?
+purple.
+I'll be talking.
+The interval is really, is really, is really just a, a complementary measure to show you
+the connection between these different points here. So, essentially, it says.
+The first entry of the finger table talks from 7 to 0, the second from 0 to 2, the second… the last one from 2 to 6. This is the only thing it says. It's not really… that's why I didn't ask you to fill it in, because it's not the semantically meaningful bits of information. It can just be immediately derived if you have a stat.
+Yeah,
+Something gets these values, it just…
+Like, ask some random note, too.
+find the successor, and that's how it's finding that number. Exactly. And the way it would update, it would know who's to update, it would go back to 2, right? It would go back to 2 for the third entry. It would go back to 2, find the predecessor, 1,
+and say, is there any way the last entry of one now needs to be updated? And the answer is yes, actually. Now we are updating it. So, since we've updated it, we keep going.
+And is there any way we're doing it for 0? Yes, we're doing it for 0, too. And then we would keep going, we would find 6, we would stop. For the previous entry, we would do… we would just go here, some state to 3 in the table, and do the same. So this is the protocol that I showed you before, how to update the nodes, okay?
+This has to be groced through at home. By the way, I said this will be in the exam, not because… and this is not because I'm just gonna… I'm just sadistic with you, you know, like, oh, I want you to… but this is… because this is an interesting and cool kind of protocol that is useful in practice. So, it's not like, oh, I just want you to, you know, have pain in your mind at home and be like, you know, how is this, you know, it's useful, that's why.
+I'm clarifying this because they said you could be in the exam, but why is it in the exam?
+Okay?
+So, is there an issue with high code send here? High note send, not sorry, not cold send. High note send in this particular case.
+Do we have any problem? We started with this very nice scenario where we have, you know, only the successor, and this was very simple, but it has these long lookups. Now, do we have another problem with high node search?
+You have a lot of communication to update this?
+So, there is a lot of communication in maintaining the finger tables, actually. This is in particular, because the finger tables have all of this information, so now, every time a node enters, we need to jump at least and look at, you know,
+One node for each of those, and possibly more, and so on.
+So, a key observation that Chord makes, and it's very important, it will be very important also for Dynamo, we'll see next time, is that we can separate correctness from performance, and when a node joins, we can just maintain, first of all, the adequate information for correctness, just the succession.
+So chord starts when a node joins and just says, okay, give me my successor, and then I'm ready to start working in the system.
+Then, periodically, We also… and why is succession important?
+Hands. Why, why is accession important, necessarily? Otherwise, it doesn't even work?
+you can forward the request where it belongs, and you know what data items to have, also, because the whole point is to have some data items. So, if we don't know your successor, you don't know whose items you need to have. So, this is critical for corrections. The system just can't run without this. But!
+The finger tables and the predecessors are actually not necessary for correctness, and they can just be updated periodically using a stabilization protocol. So, we can maintain them less frequently.
+And with this, we can have a good case performance, where the fingertips are intact, Which is still login.
+In the bad case, where successful pointers are correct, but thinker table is not accurate, in the worst case, we have to follow all successful pointers.
+Not fantastic, not terrible either.
+The thing, though, that is…
+cool is that they have this theorem that if we have a stable network with n nodes, stable means all the finger tables are good to go, and then we add n nodes with no finger tables at all, but with correct successors.
+then lookups still take all of log N with high probability.
+So, the intuition behind this theorem is that
+the only pointers you have to follow is until you get to a node with the finger tables. So, if this node is, you know, if there is half the nodes, half finger tables, half nodes, then with probability of 50%, you will get to a node that has the finger tables, and then you will be able to actually jump straight to them. So, so…
+Even though we don't, you know, we don't continuously hold them updated, we can still have good performance, statistically, on average.
+Are we done?
+We have talked about node, joints and removals. Have we missed anything in code? What else could go wrong? And this is… we're getting close to the end of the… of the class. What do people think? Have we missed anything?
+Any, any,
+That's cool.
+Yes, okay, forgetting about load balancing, that's correct. We're also thinking about load balancing, we'll think about… we'll not exactly think about load balancing, even in distributed transactions, but this is a separate product we're not going to deal with at this class. Have we talked… we started this class talking about the things we've seen already, and now we talked about, you know, the scored protocol.
+Does this… the scales… does it have any problems, though, that we want to solve with distributed systems?
+I'm a sharp edges.
+A shared could get too big for one machine, but again, I'm talking about something much more simple here.
+Fault tolerance, yes. So, something could crash here, actually, and crashes are worse than voluntary removals here, because no successor might not be alive anymore, at all.
+So…
+let's focus on lookup first. Actually, I think that we are out of time, so let me… let me… let's keep fault tolerance, but remember, we haven't talked about fault tolerance. We talked about… today, we talked about…
+Starting, data lookup, and call.
+Entry.
+Let's jump straight to the, to the,
+to the quiz, which is a bigger QR here today, because the link is not short. so fill us in. Next time, we'll talk about fault tolerance for card and dynamo. And, remember, from today, serving is not the same as fault tolerance, and that's the key kind of thing I want you to keep in mind.
+With a lot of them to know about what we've been through.
+11.
+Or, like, what a function of the government.
+Thank you.
+Okay, great. Yeah.
