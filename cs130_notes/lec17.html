@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 17 — Scrum &amp; Scaling Agile · Interactive Textbook</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 17 · Scrum</div>
+  <a href="#part1">Part I — Why Scrum &amp; Empiricism</a>
+  <a href="#agile-context" class="sub">From Agile to Scrum</a>
+  <a href="#empiricism" class="sub">The Empiricism Foundation</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — The Three Pillars</a>
+  <a href="#transparency" class="sub">Transparency</a>
+  <a href="#inspection" class="sub">Inspection</a>
+  <a href="#adaptation" class="sub">Adaptation</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — The Three Roles</a>
+  <a href="#developers" class="sub">Developers</a>
+  <a href="#product-owner" class="sub">Product Owner</a>
+  <a href="#scrum-master" class="sub">Scrum Master</a>
+  <a href="#conflict" class="sub">The Built-in Tension</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — The Three Artifacts</a>
+  <a href="#product-backlog" class="sub">Product Backlog</a>
+  <a href="#sprint-backlog" class="sub">Sprint Backlog</a>
+  <a href="#increment" class="sub">Increment &amp; Definition of Done</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — The Scrum Events</a>
+  <a href="#sprint-planning" class="sub">Sprint Planning</a>
+  <a href="#daily-standup" class="sub">Daily Standup</a>
+  <a href="#sprint-review" class="sub">Sprint Review</a>
+  <a href="#retrospective" class="sub">Sprint Retrospective</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part6">Part VI — Scaling Scrum (SAFe)</a>
+  <a href="#art" class="sub">The Agile Release Train</a>
+  <a href="#safe-roles" class="sub">Roles at Scale</a>
+  <a href="#conway" class="sub">Conway's Law</a>
+  <a href="#tradeoffs" class="sub">When SAFe Pays Off</a>
+  <a href="#quiz6" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#synthesis">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">COMSCI 130 · Software Engineering</div>
+  <h1>Scrum &amp; Scaling Agile</h1>
+  <p class="hero-sub">An interactive guide to Lecture 17 — the empiricism behind Scrum, its three pillars, three roles, three artifacts, and five events, and how SAFe scales it all to hundreds of developers.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>Why Scrum, and the Idea Underneath It</h2>
+</div>
+
+<p>This entire lecture is about <strong>process</strong> — the human-and-organizational machinery that turns a team of developers into delivered software. That can feel like a strange thing to study in a computer science course, where most of our time goes into algorithms, correctness, and tests. So before any definitions, let's answer the obvious question: <em>why are we learning this?</em></p>
+
+<p>The professor's argument is a forecast about the next decade. As AI automates more of the <em>writing</em> of code, the durable, hard-to-automate skills become the <strong>human and process</strong> sides of software engineering — coordinating people, eliciting what a customer actually needs, and adapting a plan as reality pushes back. Those skills will stay relevant no matter what the tools do. Scrum is the most widely used framework for organizing that work, so it is the natural place to start.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>Scrum is <strong>not</strong> fundamentally about software. It is a general <em>process framework for construction under uncertainty</em>. You can run Scrum to build a Lego island. It just happens to be, by a wide margin, the most popular way to organize software teams.</p>
+</div>
+
+<h3 id="agile-context">From the Agile Manifesto to Scrum</h3>
+
+<p>Scrum lives inside a larger movement called <strong>Agile</strong>. A few weeks of this course back, we studied the <em>Agile Manifesto</em> — a short document written by a group of software-construction veterans who wanted to share a different philosophy of building software. It states four preferences:</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The Agile Manifesto</div>
+  <p>It values <strong>individuals and interactions</strong> over processes and tools; <strong>working software</strong> over comprehensive documentation; <strong>customer collaboration</strong> over contract negotiation; and <strong>responding to change</strong> over following a plan. Note the word "over" — the items on the right still have value, but when they conflict, the left wins.</p>
+</div>
+
+<p>Agile is not one method; it is a family. The professor cited the adoption numbers to show how dominant it is: about <strong>71% of all organizations</strong> use some kind of agile process, and of all agile teams, roughly <strong>63% adopt Scrum</strong> — making Scrum the single most popular agile methodology in existence.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Watch Out — "We Do Scrum" ≠ Doing Scrum</div>
+  <p>Put an asterisk on those adoption numbers. Leadership announcing "we do Scrum" — installing the titles and booking the meetings — does <em>not</em> mean the team actually practices Scrum. When the philosophy underneath is missing, the lecture calls it <strong>zombie Scrum</strong> (or "water-scrum-fall"). The pillars, not the org chart, are what make it real.</p>
+</div>
+
+<h3 id="empiricism">The Foundation: Empiricism</h3>
+
+<p>Underneath all of Scrum's roles and rituals sits one philosophical commitment: <strong>empiricism</strong>. Everything else in the lecture is downstream of this idea, so it is worth slowing down on.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Empiricism</div>
+  <p><strong>Empiricism</strong> is the stance that we make design decisions based on <em>experience, observation, and experimentation</em> rather than on detailed up-front planning, prediction, and reasoning. It assumes the world is too uncertain to plan precisely in advance — so we only predict what we can actually see, and we learn the rest by doing.</p>
+</div>
+
+<p>Why adopt such a humble stance? Because software is built under deep uncertainty. How hard a feature is, how long it takes, what obstacles will appear — these are nearly impossible to predict accurately more than two or three weeks out. So instead of pretending we can forecast six months of work, empiricism says: predict the short horizon you can actually see, do that work, observe the result, and then plan the next short horizon from real data.</p>
+
+<p>This also explains the <em>political</em> problem Scrum is really solving — a point the professor stressed and that many people miss. There are two parties with opposing instincts:</p>
+
+<table class="compare-table">
+  <tr><th>Management wants…</th><th>Developers want…</th></tr>
+  <tr><td>To know whether the project is on time</td><td>To work the way engineers work as people, not as coding machines</td></tr>
+  <tr><td>Honest data on progress and risks</td><td>Autonomy to make their own technical choices</td></tr>
+  <tr><td>To promise the customer features by a date</td><td>Freedom from being micromanaged top-down</td></tr>
+</table>
+
+<div class="callout insight">
+  <div class="callout-title">Scrum as a Compromise</div>
+  <p>Scrum is the negotiated truce between these two interests. It gives <strong>developers</strong> an autonomous, self-tailored process, while feeding <strong>management</strong> honest, real-time data on progress — no sugar-coating, no "we're on track, we're on track" right up until the day before the deadline. Empiricism is what makes the data honest: you can only predict what you can see, and you report exactly that.</p>
+</div>
+
+<p>The practical takeaway: empiricism-based processes shine wherever uncertainty is high — when requirements may change, when the solution isn't obvious, when many approaches exist. If your problem is genuinely predictable, you may not need this; but most real software is not.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Where This Leads</div>
+  <p>Empiricism is the root of the tree. The next part — the <em>three pillars</em> — is just empiricism made operational: to learn from observation, you first have to <em>see</em> the work (transparency), regularly <em>check</em> it (inspection), and then <em>change</em> based on what you saw (adaptation). Keep that chain in mind.</p>
+</div>
+
+<div class="quiz" id="quiz1">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">According to the lecture, what core problem does Scrum exist to solve?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Giving teams autonomy to tailor their own process while still feeding management honest data on real progress</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Letting management dictate exactly what each developer works on each day</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Eliminating the need for any meetings during a project</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Guaranteeing that long-range, six-month predictions are accurate</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','a')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct — A.</strong> Scrum is a compromise between management's need for visibility and developers' need for autonomy, made possible by empiricism: predict only the short horizon you can see and report it honestly. B is the opposite of self-organization; C is wrong because Scrum is famously meeting-heavy; D contradicts empiricism, which exists precisely because long-range prediction is unreliable.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>The Three Pillars</h2>
+</div>
+
+<p>If empiricism is the philosophy, the <strong>three pillars</strong> are how that philosophy is enforced day to day. The professor was emphatic on one point: these three pillars are <em>more</em> Scrum than the roles, the artifacts, or the meetings. A team can have all the titles and ceremonies and still not be doing Scrum if these pillars are absent.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>Scrum stands on <strong>Transparency → Inspection → Adaptation</strong>. They form a chain: you cannot inspect what you cannot see, and there is no point inspecting if you have no power to adapt. Each pillar enables the next.</p>
+</div>
+
+<h3 id="transparency">Pillar 1 — Transparency</h3>
+
+<p><strong>Transparency</strong> means giving visibility into the significant aspects of the process to everyone responsible for the outcome. Concretely: be brutally honest about progress. If you promised ten user stories and finished nine, you say "we finished nine" — you do not dress it up. The slogan the professor used is <strong>"the work is on the wall"</strong>: everybody can see everything.</p>
+
+<p>Who needs this visibility? Management (to prioritize and report to the customer), the customer (to know what they're getting), and crucially <em>other developers</em> — if your user story depends on mine, you need to know when mine is done.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The Kanban Board</div>
+  <p>The classic tool that makes work visible is the <strong>Kanban board</strong> (from the Japanese for "signboard"). It has columns — typically <em>To-Do → In Progress → In Review → Done</em> — and you physically move each item rightward as it advances. One glance shows whether only a small fraction of the sprint's stories are done, which is a bad sign the day before the sprint ends. This was introduced back in the agile-practices lecture.</p>
+</div>
+
+<p>The professor framed transparency as the <em>enabler</em> of everything else: before Scrum, a project manager kept a private internal dashboard, and only they knew whether the project was on time. With Scrum, everyone sees it — and only because everyone sees it can everyone respond to it.</p>
+
+<h3 id="inspection">Pillar 2 — Inspection</h3>
+
+<p><strong>Inspection</strong> means frequently and timely checking progress toward the sprint goal so you can <em>detect undesirable variances</em> early. The whole point is to learn you're running late <em>while you can still do something about it</em> — not to hide it and discover it at the deadline.</p>
+
+<p>Inspection is broader than just "are the features done?" It also covers deviations from the process itself, including interpersonal friction. The professor's favorite example: some people love working right up against a deadline, while others are deeply uncomfortable as deadlines approach — and these two types often clash. Scrum doesn't <em>judge</em> this; it simply makes the mismatch <strong>visible</strong> so the team can account for it.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Notice the Dependency</div>
+  <p>Inspection is impossible without transparency. You can only inspect what you can see. That's why "the work is on the wall" comes first — the Kanban board <em>is</em> the surface you inspect.</p>
+</div>
+
+<h3 id="adaptation">Pillar 3 — Adaptation</h3>
+
+<p><strong>Adaptation</strong> means adjusting the process as soon as possible to minimize further deviation. Inspection only has value if it leads to change. If you discover you're late, you adapt: reduce the scope (in collaboration with the product owner and customer), pull in a more experienced developer, or talk to the customer to resolve uncertainty about what's actually needed.</p>
+
+<p>The professor tied adaptation to <strong>self-organizing teams</strong>: it is not enough to let people <em>inspect</em> — they must also have the <em>power</em> to change things themselves. Giving qualified people autonomy to act on what they observe is the most effective way to get the job done. A vivid example: if a team realizes a 2–3 week sprint genuinely doesn't work for them, they should have the authority to switch to a 4-week sprint.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Scrum Has a Growth Mindset Baked In</div>
+  <p>The professor loves Scrum partly because of this attitude: it <em>assumes</em> every person is imperfect and can't perfectly predict how long things take — and says that's totally fine. Things can be late. What matters is that we <strong>know</strong> about it (transparency + inspection) and do our best to deal with it (adaptation). The framework is built around growth, not blame.</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="150" viewBox="0 0 420 150" style="display:block; margin:0 auto;">
+      <!-- Empiricism label -->
+      <text x="210" y="20" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#c0510a">EMPIRICISM</text>
+      <line x1="210" y1="28" x2="210" y2="48" stroke="#d9d0c4" stroke-width="2"/>
+      <!-- three boxes -->
+      <rect x="14" y="55" width="118" height="44" rx="9" fill="#fff" stroke="#d9d0c4" stroke-width="1.5"/>
+      <text x="73" y="82" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="600" fill="#2a2520">Transparency</text>
+      <rect x="151" y="55" width="118" height="44" rx="9" fill="#fff" stroke="#d9d0c4" stroke-width="1.5"/>
+      <text x="210" y="82" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="600" fill="#2a2520">Inspection</text>
+      <rect x="288" y="55" width="118" height="44" rx="9" fill="#fff" stroke="#d9d0c4" stroke-width="1.5"/>
+      <text x="347" y="82" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="600" fill="#2a2520">Adaptation</text>
+      <!-- arrows -->
+      <line x1="132" y1="77" x2="149" y2="77" stroke="#c0510a" stroke-width="2"/>
+      <polygon points="149,77 142,73 142,81" fill="#c0510a"/>
+      <line x1="269" y1="77" x2="286" y2="77" stroke="#c0510a" stroke-width="2"/>
+      <polygon points="286,77 279,73 279,81" fill="#c0510a"/>
+      <!-- loop back -->
+      <path d="M347 99 L347 125 L73 125 L73 99" fill="none" stroke="#d9d0c4" stroke-width="2"/>
+      <polygon points="73,99 69,107 77,107" fill="#d9d0c4"/>
+      <text x="210" y="143" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">…and the cycle repeats every sprint</text>
+    </svg>
+  </div>
+  <div class="figure-caption">The pillars as a chain rooted in empiricism: see the work, check it, change based on what you saw — then loop.</div>
+</div>
+
+<div class="quiz" id="quiz2">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Why does the lecture insist transparency must come <em>before</em> inspection?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Because transparency is more important than delivering working software</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Because you can only inspect progress that has been made visible — no visible work means nothing to check</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Because only the project manager is allowed to inspect the board</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Because inspection is optional in Scrum</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct — B.</strong> The pillars form a dependency chain: inspection operates on whatever transparency exposes, so "the work is on the wall" must come first. C describes the <em>pre-Scrum</em> world (a private manager dashboard) that Scrum deliberately replaced; D is false — inspection is one of the three core pillars; A confuses the manifesto's value statements with the pillars.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>The Three Roles</h2>
+</div>
+
+<p>Scrum defines exactly three roles. The recurring theme — and the most common misunderstanding — is that <strong>nobody in Scrum is "in charge"</strong> in the traditional boss sense. There is no team leader who assigns work and evaluates performance. Power is distributed deliberately.</p>
+
+<h3 id="developers">Developers</h3>
+
+<p>A <strong>developer</strong> in Scrum is anyone who contributes to creating a usable increment — and the definition is wide. A UI/UX engineer is a developer. Someone who only writes CSS is a developer. A database engineer is a developer. Someone who writes tests is a developer. Whatever your specialty, if your work helps produce the increment, you are a developer.</p>
+
+<p>This breadth exists because Scrum teams must be <strong>cross-functional</strong> and <strong>self-organizing</strong>. Each sprint must produce a <em>valuable</em> increment on its own — recall the <strong>INVEST</strong> criteria for good user stories, where <em>V</em> stands for Valuable. To ship value end to end, a team needs people spanning the whole stack: design, implementation, and testing all on the same team. If your org has specialized test engineers, every Scrum team should include one — you cannot produce a working increment if you can't test it.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The Two-Pizza Team</div>
+  <p>How big should a Scrum team be? "The number of people you can feed with two big pizzas" — in practice about <strong>7 to 9 people</strong>. Smaller teams suffer high overhead: with only two developers plus a product owner and scrum master, your two non-coding roles are ~50% overhead. Larger teams lose the tight coordination Scrum depends on.</p>
+</div>
+
+<p>Developers also create the plan for the sprint and pick what they'll work on, because they best know their own skills — who knows a given library, who's strongest on the database. And they commit to quality through a shared <strong>definition of done</strong> (covered in Part IV).</p>
+
+<h3 id="product-owner">Product Owner</h3>
+
+<p>The <strong>product owner (PO)</strong> is, in the purest sense, a <strong>requirements-engineering expert</strong>. The professor's metaphor: the PO is the <em>value navigator</em> — they chart the map toward the vision the customer needs. Their single goal is to <strong>maximize the value</strong> the team produces. Critically, they don't create that value themselves; they make sure developers understand what the customer values.</p>
+
+<p>In an ideal team, the PO spends much of their time talking to <em>real customers</em>, understanding what is genuinely needed, and then translating that into terms the development team understands. They write user stories, order them by priority, communicate dependencies, answer the team's questions on demand ("if you're unsure what to do, call your product owner"), and check whether acceptance criteria are met.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Why Requirements May Be the Last Job AI Automates</div>
+  <p>Recall the five waterfall activities: <strong>requirements → design → implementation → test → deployment</strong>. The professor argues AI will increasingly automate design, implementation, and testing — but <em>requirements engineering</em> is hardest to automate, because it needs real-world understanding and reading between the lines of what people say versus what they mean. Henry Ford: "If I'd asked people what they wanted, they'd have said faster horses." Steve Jobs built what people <em>wanted</em>, not what they asked for. This is the PO's craft.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Watch Out — The Product Owner Is NOT a Manager</div>
+  <p>A PO is a requirements engineer, <em>not</em> a personnel manager. They don't hire, don't fire, don't conduct performance reviews. The common failure of traditional orgs adopting Scrum is treating the PO as a boss who hands down a five-year vision they don't fully understand and have no autonomy over — and who never talks to the actual customer. That's zombie Scrum. A real PO needs autonomy, domain knowledge, and ideally some development experience so they can ask the questions a developer would ask.</p>
+</div>
+
+<h3 id="scrum-master">Scrum Master</h3>
+
+<p>The <strong>scrum master</strong> is the most frequently misunderstood role. Based on the name, people assume "the manager," "the CEO of the team," "the team lead." Wrong. The scrum master is a <strong>coach</strong> — sometimes called a <em>servant leader</em>. They master the <em>process</em> of Scrum, which is why they're called "master."</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Remove Impediments</div>
+  <p>The textbook definition of the scrum master's job is to <strong>remove impediments</strong>: identify every obstacle preventing the team from being the best team in the world, and spend the whole week clearing them. Need a license paid for? A cloud subscription approved? Blocked waiting on the legal team? You tell the scrum master, and they take it to management or to legal so developers can stay focused on design, implementation, and test.</p>
+</div>
+
+<p>The professor's images for the role: a coach who is intrinsically motivated to make the team perform better, or a figure with <em>a shield and a sword</em> — the shield protects the team from outside interference, the sword fights the team's battles for them. They facilitate meetings, keep them time-boxed, take notes, handle stakeholder communication, coach the team on self-management, and enforce the rules the team has agreed to. They do <em>not</em> lead the team or evaluate who the best engineer is.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Watch Out — Not a Project Manager Either</div>
+  <p>A scrum master should not be anyone's organizational superior. It's contradictory to be the boss of someone whose every request you're supposed to fulfill. Despite this, the scrum master must be a <strong>highly trained software engineer</strong> — often with more development experience than anyone on the team, plus deep knowledge of software architecture — because removing technical impediments and reasoning about internal quality requires understanding the trade-offs. Picture a basketball coach who has never been on the court: you wouldn't trust them.</p>
+</div>
+
+<h3 id="conflict">The Built-in Tension: PO vs. Scrum Master</h3>
+
+<p>Here is a subtle and important point. The PO and the scrum master are <em>not</em> natural best friends — their goals can be antagonistic, and that's by design.</p>
+
+<table class="compare-table">
+  <tr><th>Product Owner advocates for…</th><th>Scrum Master advocates for…</th></tr>
+  <tr><td><strong>External quality</strong> — what the customer sees</td><td><strong>Internal quality</strong> — code, process, team health</td></tr>
+  <tr><td>More features, faster release timeline</td><td>Maintainability, sustainability, clean process</td></tr>
+  <tr><td>Represents the customer's needs</td><td>Represents the developers' needs</td></tr>
+</table>
+
+<p>When everyone's on time, both are happy. The friction appears when a team is <em>behind</em>: the PO says "we promised these features to the customer," while the scrum master says "shipping that now sacrifices code quality and forces overtime, which reduces our ability to deliver in the future." Both concerns are legitimate. You must satisfy the customer to <em>keep the lights on now</em>, but you must protect internal quality to <em>still have the lights on ten years from now</em>.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Biggest Anti-Pattern in Scrum</div>
+  <p>Never make the same person both the <strong>product owner and the scrum master</strong>. Their goals are deliberately in tension — external value vs. internal sustainability — and that healthy conflict is what keeps both forces represented. Collapsing them into one person makes the framework "miserably fail."</p>
+</div>
+
+<p>(On very small teams — say a startup — roles can be shared, and a scrum master or PO might write a little code. But on normal ~8-person teams, each is a full-time job, and the PO/scrum-master combination specifically must never be merged.)</p>
+
+<div class="quiz" id="quiz3">
+  <div class="quiz-question">Which statement best captures the difference between the product owner and the scrum master?</div>
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Both are managers who assign tasks; the PO outranks the scrum master</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>The PO maximizes external value (features the customer sees) while the scrum master, a coach, protects internal quality and removes impediments</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>The scrum master writes the user stories and the PO removes impediments</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>They have identical goals, so combining them into one person is recommended</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct — B.</strong> The PO is a requirements engineer maximizing customer-visible value; the scrum master is a servant-leader coach guarding internal quality and clearing obstacles. A is wrong — neither is a traditional manager and nobody "outranks"; C swaps their duties; D is the single biggest Scrum anti-pattern, precisely because their goals are deliberately antagonistic.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>The Three Artifacts</h2>
+</div>
+
+<p>Scrum produces and tracks work through three <strong>artifacts</strong>. They form a pipeline: a big prioritized wish-list narrows to a sprint-sized commitment, which is realized as a shippable piece of value.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="430" height="120" viewBox="0 0 430 120" style="display:block; margin:0 auto;">
+      <rect x="6" y="36" width="128" height="48" rx="9" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="70" y="58" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12.5" font-weight="700" fill="#2a2520">Product</text>
+      <text x="70" y="74" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12.5" font-weight="700" fill="#2a2520">Backlog</text>
+      <rect x="151" y="36" width="128" height="48" rx="9" fill="#fff" stroke="#d9d0c4" stroke-width="1.5"/>
+      <text x="215" y="58" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12.5" font-weight="700" fill="#2a2520">Sprint</text>
+      <text x="215" y="74" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12.5" font-weight="700" fill="#2a2520">Backlog</text>
+      <rect x="296" y="36" width="128" height="48" rx="9" fill="#edf7f0" stroke="#2d8a4e" stroke-width="1.5"/>
+      <text x="360" y="58" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12.5" font-weight="700" fill="#2a2520">Product</text>
+      <text x="360" y="74" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12.5" font-weight="700" fill="#2a2520">Increment</text>
+      <line x1="134" y1="60" x2="149" y2="60" stroke="#c0510a" stroke-width="2"/>
+      <polygon points="149,60 142,56 142,64" fill="#c0510a"/>
+      <line x1="279" y1="60" x2="294" y2="60" stroke="#c0510a" stroke-width="2"/>
+      <polygon points="294,60 287,56 287,64" fill="#c0510a"/>
+      <text x="142" y="26" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10.5" fill="#6b6560">select for sprint</text>
+      <text x="287" y="26" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10.5" fill="#6b6560">build the sprint</text>
+      <text x="70" y="104" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10.5" fill="#6b6560">all backlog items, prioritized</text>
+      <text x="215" y="104" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10.5" fill="#6b6560">this sprint's items + goal</text>
+      <text x="360" y="104" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10.5" fill="#6b6560">shippable value</text>
+    </svg>
+  </div>
+  <div class="figure-caption">The artifact pipeline: the product backlog narrows into a sprint backlog, which produces a product increment.</div>
+</div>
+
+<h3 id="product-backlog">The Product Backlog</h3>
+
+<p>The <strong>product backlog</strong> is the list of <em>all</em> the things that would improve the product but haven't been built yet. Its items are formally called <strong>backlog items</strong>; in most cases they're <em>user stories</em>, but they don't have to be — they can also be quality-improving items. The professor's tip: "if you think of them as user stories, you'll get very far."</p>
+
+<p>The backlog is an <strong>emergent, ordered list</strong> — ordered by priority, from most to least important. It usually originates from customer input, and it's the PO's domain. Items live in a hierarchy of granularity:</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The Requirements Pyramid</div>
+  <p>From most to least detailed: <strong>user stories</strong> at the bottom, then <strong>features</strong>, then <strong>epics</strong>, then the overall <strong>vision</strong>. (An epic consists of multiple features; a feature is made of multiple user stories.) Above the sprint sits the <strong>product goal</strong> — the long-term objective of what the product should look like, say, a year out.</p>
+</div>
+
+<p><strong>Product backlog refinement</strong> is the act of taking a backlog item and making it more detailed — turning an abstract epic or feature into concrete, estimable user stories.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Connection — Why the Product Goal Matters</div>
+  <p>Knowing the long-term product goal lets the team <em>anticipate change</em>, which is exactly what <strong>information hiding</strong> (from the design lectures) requires: you can only hide a design decision behind a module boundary if you know which changes are likely. The product goal feeds that foresight.</p>
+</div>
+
+<h3 id="sprint-backlog">The Sprint Backlog</h3>
+
+<p>The <strong>sprint backlog</strong> is the subset of backlog items the developers select to complete in <em>one sprint</em> (a 2–3 week iteration of uninterrupted development), together with the <strong>sprint goal</strong> — a single sentence explaining <em>why</em> this sprint is valuable.</p>
+
+<p>Who picks it? Earlier the lecture said the team picks it; later it said developers pick it. The real answer is a <strong>negotiation</strong>: the PO clearly signals priorities and dependencies ("this matters more than that"; "doing X without Y isn't valuable"), and then the <em>developers</em> choose which items they believe they can finish — because, on a self-organizing team with specialized skills, you don't assign work to someone who doesn't feel equipped to handle it.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Connection — INVEST Powers Selection</div>
+  <p>This is why writing good user stories with <strong>INVEST</strong> pays off here. If a story isn't <em>Estimable</em>, you can't tell if it fits the sprint. If it isn't <em>Independent</em>, you can't pick it cleanly. If it isn't <em>Small</em>, it won't fit. And if it isn't <em>Valuable</em>, it defeats the whole purpose of Scrum — delivering value.</p>
+</div>
+
+<h3 id="increment">The Increment &amp; the Definition of Done</h3>
+
+<p>The <strong>product increment</strong> is a concrete, working piece of software that adds value — a stepping stone toward the product goal. It's <em>additive</em> and <em>thoroughly verified</em>. Importantly, merging code to master is <em>not automatically</em> an increment; the team needs a rule for when work truly counts as complete.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Definition of Done</div>
+  <p>The <strong>definition of done (DoD)</strong> is a checklist every developer must satisfy before declaring an item complete. Each Scrum team creates its own. It always includes the PO accepting the item's acceptance criteria, but it can also require documentation, 100% statement coverage, or whatever the team decides signals high quality in their context. "Done" means: <em>we won't touch this again unless a new requirement appears.</em></p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Why "Done" Is Your Problem Too</div>
+  <p>As a developer you may help author your team's DoD, which means choosing the right testing and test-adequacy criteria. So understanding what "high quality" means in a given environment — and which coverage criteria express it — is a skill you'll actually use, not just theory.</p>
+</div>
+
+<div class="quiz" id="quiz4">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A developer merges their feature branch to master. Is the work necessarily a completed product increment?</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Yes — merging to master always means the increment is done</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>No — it counts only once it satisfies the team's definition of done, including PO acceptance of the acceptance criteria</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>No — only the scrum master can declare an increment done</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Yes — as long as it compiles, it is a valid increment</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct — B.</strong> "Done" is defined by the team's definition of done, which goes beyond merging — it requires the PO to accept the acceptance criteria plus any quality bars the team set (coverage, docs, etc.). A and D treat a merge or a successful compile as sufficient, which the lecture explicitly rejects; C is wrong because the scrum master is a coach, not the authority on acceptance — that's the PO's job.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>The Scrum Events</h2>
+</div>
+
+<p>Scrum has up to <strong>five events</strong> (the sprint itself, which contains the other four). They are the rhythm that turns the pillars into routine. A useful exam lens, which the professor drilled in class: for each event, ask which pillar it emphasizes most — transparency, inspection, or adaptation.</p>
+
+<h3 id="sprint-planning">1. Sprint Planning</h3>
+
+<p><strong>Sprint planning</strong> initiates the sprint and answers three questions:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Why is this sprint valuable?</strong> Led by the PO proposing a vision of what would increase user value; the team refines it together into a <em>sprint goal</em>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>What can be done?</strong> Estimate the user stories and pick what realistically fits. This is where <strong>Planning Poker</strong> (the most common, most fun estimation technique) comes in — others include <em>infinity planning</em>, where you sort stories into a total order by size and pick those that fit.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>How will the work get done?</strong> Split each cross-cutting user story (UI down to database) into individual <strong>tasks</strong>, since front-end and back-end specialists implement different layers. Tasks — not whole stories — are what get assigned, which also helps avoid overloading any one part of the team.</p>
+</div>
+
+<p>The output: a sprint goal and a sprint backlog.</p>
+
+<h3 id="daily-standup">2. The Daily Standup (Daily Scrum)</h3>
+
+<p>Every day the whole team meets for a tight <strong>5–10 minutes</strong> to inspect progress toward the sprint goal. It's called a <em>standup</em> for a reason: once people sit, they start talking about the weekend, their dog, their kids — and you're spending everyone's time. Standing keeps it short and focused. Each person answers three questions:</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The Three Standup Questions</div>
+  <p>(1) <strong>What did I do yesterday?</strong> (2) <strong>What will I do today / how will I contribute to the sprint goal?</strong> (3) <strong>What obstacles are in my way?</strong></p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Watch Out — Standup Anti-Patterns</div>
+  <p>The standup is <em>not</em> a status report to a manager ("I wrote 1,000 lines and 50 tests yesterday!") to justify your job. Its real purpose is to tell <em>teammates</em> what you finished so they know what they can reuse and build on, and what you're stuck on. And if you mention an obstacle ("I'm struggling with Rust"), the goal is <em>not</em> for everyone to dive into solving it on the spot — those conversations happen <em>after</em> the standup, with whoever can help. The scrum master takes note and follows up.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Which Pillars? Transparency &amp; Inspection</div>
+  <p>The professor had the class vote: the daily standup focuses on the <strong>first two pillars</strong> — making deviations <em>visible</em> (transparency) and <em>checking</em> progress (inspection). It is deliberately <em>not</em> about adaptation: you surface problems here, but you don't spend the standup re-planning the backlog. That's what follow-up meetings are for.</p>
+</div>
+
+<h3 id="sprint-review">3. The Sprint Review</h3>
+
+<p>The <strong>sprint review</strong> inspects the <em>outcome</em> of the sprint: what was built, and whether each element meets the definition of done. The key participant is whoever deeply understands how value is provided — the <strong>product owner</strong>, and ideally a <em>real customer</em>.</p>
+
+<p>Crucially, a sprint review is a <strong>live demo</strong>, not a slideshow of checkboxes. It's a working session where you show the new features in action and gather as much data as possible on how the increment performs. The mindset is counterintuitive: <em>the more flaws you find, the better</em> — that's the whole point of demoing it.</p>
+
+<h3 id="retrospective">4. The Sprint Retrospective</h3>
+
+<p>The <strong>sprint retrospective</strong> is the team-only meeting (no customer) where they inspect <em>how the last sprint went</em> — across individuals and interactions, processes and tools, and the definition of done — and decide how to change their process to run more smoothly next time. The professor called this "where real agile comes into play": you adapt the process to your organization rather than blindly following the book.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Which Pillar? Adaptation</div>
+  <p>The retrospective's focus is clearly <strong>adaptation</strong> (with the other two pillars present in support). It's the deliberate counterpart to the standup: where the standup surfaces problems, the retrospective is where the team actually changes how it works. Concrete outputs might be "switch to a 4-week sprint" or "improve our code-review process."</p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Pigs and Chickens</div>
+  <p>From the old fable: a pig and a chicken plan a "ham and eggs" restaurant — but the pig is <em>committed</em> (its whole body), while the chicken is merely <em>involved</em> (just lays an egg). In Scrum, the <strong>pigs</strong> are the team — developers, PO, scrum master — whose careers are on the line. The <strong>chickens</strong> are interested outsiders. Chickens may attend the sprint <em>review</em>, but the sprint <em>retrospective</em> is <strong>pigs only</strong>.</p>
+</div>
+
+<h4>The Cadence</h4>
+<p>The events flow continuously: the sprint ends → sprint review (chickens may join) → sprint retrospective (pigs only) → next sprint planning → repeat. This is why Scrum is meeting-heavy: out of a 2–3 week sprint, roughly 1.5 days are meetings.</p>
+
+<table class="compare-table">
+  <tr><th>Event</th><th>Purpose</th><th>Main Pillar</th></tr>
+  <tr><td>Sprint Planning</td><td>Set sprint goal &amp; backlog; estimate &amp; split into tasks</td><td>—</td></tr>
+  <tr><td>Daily Standup</td><td>Surface progress &amp; obstacles in 5–10 min</td><td>Transparency + Inspection</td></tr>
+  <tr><td>Sprint Review</td><td>Live demo to PO/customer; find flaws in the increment</td><td>Inspection</td></tr>
+  <tr><td>Sprint Retrospective</td><td>Improve the team's own process</td><td>Adaptation</td></tr>
+</table>
+
+<div class="quiz" id="quiz5">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Which event is "pigs only," and which pillar does it primarily serve?</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>The daily standup; adaptation</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>The sprint review; transparency</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>The sprint retrospective; adaptation</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Sprint planning; inspection</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct — C.</strong> The retrospective excludes chickens (it's team-only) and is centered on <em>adaptation</em> — changing how the team works. B is wrong because the <em>review</em> may include chickens/customers and emphasizes inspection; A misattributes the standup, which serves transparency + inspection, not adaptation; D's pillar is wrong since planning is about setting up the sprint.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART VI ═══════════════════════ -->
+<section id="part6" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part VI</div>
+  <h2>Scaling Scrum — SAFe</h2>
+</div>
+
+<p>Plain Scrum works for a two-pizza team of ~8 people. But what if you have <strong>800 developers across 100 teams</strong>? You can't just hold one giant standup. This is the problem <strong>SAFe</strong> — the <em>Scaled Agile Framework</em> — solves. (Other scaling frameworks exist too, like LeSS, "Large-Scale Scrum.")</p>
+
+<p>The class derived SAFe's core ideas by reasoning, and the key insight was this: at scale, you can treat <strong>an entire team as if it were a single, very powerful "developer"</strong> — a team that can write a whole feature. Sprints become "sprints of sprints," with roles and ceremonies lifted up one level. But the hard part is synchronization.</p>
+
+<h3 id="art">The Agile Release Train</h3>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The Agile Release Train (ART)</div>
+  <p>An <strong>Agile Release Train</strong> is a <em>team of teams</em> — many Scrum teams working together on a single program. The metaphor: each team is a wagon, and the whole train departs on a <strong>reliable, synchronized schedule</strong>. All teams on a train <em>start and end their sprints at the same time</em>, so they can integrate. If a user story misses this train (didn't make the cut), it simply catches the next one — there's always a next train.</p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The Program Increment (PI)</div>
+  <p>At the train level, the increment is the <strong>Program Increment (PI)</strong> — the assembled output of multiple synchronized sprints. A sprint is ~2 weeks; a PI is typically <strong>8–12 weeks</strong> — not by accident, that's about a financial <em>quarter</em>. Big companies plan in quarters, so the train's cadence lines up with quarterly delivery promises.</p>
+</div>
+
+<p>Planning happens at a <strong>PI Planning</strong> event — and unlike a scrum-of-scrums where you send one ambassador, SAFe sends <em>everyone</em>: a massive two-day session where all 100+ people meet (in person or virtually) to identify dependencies, visualize risks, and commit to a set of objectives each team then implements through its individual sprints.</p>
+
+<h3 id="safe-roles">Roles at Scale</h3>
+
+<p>Each Scrum role gets a scaled-up counterpart at the train level:</p>
+
+<table class="compare-table">
+  <tr><th>Scrum (team level)</th><th>SAFe (train / ART level)</th><th>Job</th></tr>
+  <tr><td>Scrum Master</td><td><strong>Release Train Engineer (RTE)</strong></td><td>The "chief scrum master" — facilitates the train, removes major blockers</td></tr>
+  <tr><td>Product Owner (owns product backlog)</td><td><strong>Product Management</strong></td><td>Owns the <em>program backlog</em> — features, epics, the vision</td></tr>
+  <tr><td>Developers</td><td>+ <strong>System Architect</strong></td><td>Gives high-level technical guidance so all the increments fit together</td></tr>
+</table>
+
+<p>Coordination happens through two recurring cross-team meetings: the <strong>Scrum of Scrums</strong>, where each team's scrum master (or an ambassador/team lead) meets ~2–3 times a week to discuss shared impediments; and a <strong>Product Owner Sync</strong>, where the POs align on high-level requirements — features and epics — for the next PI. (Recall: an epic consists of multiple features.) A real-world challenge: teams in different time zones can make it hard to find one slot when every team can send its scrum master — itself a deviation the process must adapt to.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Who Actually Uses This?</div>
+  <p>Almost every large, traditional software-building company on the S&amp;P 500 / Fortune 500 uses scaled agile: Cisco, Oracle, Dell, Capital One, American Express, CVS, Lockheed Martin, John Deere, Porsche. If a big company builds its own software and must hit quarterly numbers, it has likely adopted something like SAFe.</p>
+</div>
+
+<h3 id="conway">Conway's Law &amp; Microservices</h3>
+
+<p>Scaling to many teams forces a confrontation with a famous observation:</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Conway's Law (Melvin Conway, 1968)</div>
+  <p>Any organization that designs a system will inevitably produce a design whose <strong>structure mirrors the organization's communication structure</strong>. Two teams building an analysis pipeline will produce a two-phase pipeline; five teams will produce a five-phase one. Empirically validated many times: the way people talk to each other becomes the way their software is built.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Causality Runs Both Ways</div>
+  <p>You can exploit Conway's Law deliberately. Many organizations design the <em>architecture first</em>, then structure their teams to mirror it — pushing the causality in the direction they want. If you <em>don't</em> manage it, you get the reverse: an architecture that accidentally mirrors however your teams happened to communicate, often not what you intended.</p>
+</div>
+
+<p>The professional way to manage Conway's Law in agile-at-scale is a <strong>microservice architecture</strong>: each team owns a part of the system that is <em>deployed independently</em>. This depends on a distinction from earlier in the course:</p>
+
+<table class="compare-table">
+  <tr><th>Module</th><th>Component</th></tr>
+  <tr><td>A unit of <strong>code</strong> — a class, a package; something you see in your IDE</td><td>A unit of <strong>deployment</strong> — an individually deployable runtime unit you execute</td></tr>
+  <tr><td>Exists at any scale of code organization</td><td>Can be scaled independently at runtime</td></tr>
+</table>
+
+<p>In a microservice architecture, each team owns not just its own <em>module</em> but its own <em>component</em>. The payoff is <strong>independent scalability</strong>: if one component becomes the bottleneck, you can spin up ten times as many instances of <em>just that component</em>, without touching the others.</p>
+
+<h3 id="tradeoffs">When SAFe Pays Off — and What It Costs</h3>
+
+<p>No process is universally right or wrong; each is designed for a situation. SAFe is a deliberate trade-off:</p>
+
+<table class="compare-table">
+  <tr><th>Pros</th><th>Cons</th></tr>
+  <tr><td>Works in large organizations — moves hundreds of people in one direction</td><td>Very complex — endless meetings, 100-person PI planning</td></tr>
+  <tr><td>High predictability — fits quarterly delivery promises</td><td>Bureaucratic; jokingly called "water-scrum-fall" because it starts to resemble waterfall</td></tr>
+  <tr><td>Integrates many teams reliably via the train</td><td>Less agile — teams lose self-organization; sprint length, start/end, and high-level requirements are imposed from above, eroding the three pillars</td></tr>
+</table>
+
+<div class="callout warning">
+  <div class="callout-title">Watch Out — The Agile Spectrum</div>
+  <p>Scrum sits in the <em>middle</em> of the agile spectrum: heavy on empiricism and management data, hence meeting-heavy. At the other end, <strong>Lean</strong> and <strong>Extreme Programming</strong> drop most meetings — Lean has no sprint planning at all and instead does <em>global optimization</em>, where any free developer always picks the single highest-value task available. Scrum, by contrast, fixes 2–3 week sprints and faces a <strong>knapsack problem</strong>: fit the highest-value items into the sprint, which forces in some smaller, lower-value items. SAFe pushes even further toward control and predictability — great for a Fortune 500 making quarterly promises, wrong for a startup that just wants maximum value each cycle.</p>
+</div>
+
+<details>
+<summary>Case study: Lockheed Martin builds the F-16 with SAFe</summary>
+<div class="details-body">
+<p>The professor closed with a case study: Lockheed Martin used SAFe to develop the <strong>F-16 fighter jet</strong> — a highly safety-critical embedded system with severe performance and safety constraints. The exam-style question: <em>what challenges arise when applying SAFe to such a system, and what benefits of agility might you lose?</em></p>
+<p>The hint is that safety-critical systems are generally <em>less</em> agile than ordinary software — but the point the professor stressed is to reason about <em>why</em> rather than just citing authority. Heavy verification, certification, and the cost of failure all push toward more up-front rigor and away from "respond to change over following a plan." (Tellingly, Lockheed's program increments were named Requirements Analysis, Design, Implementation One, Implementation Two — which "tells you how Scrum this actually was," i.e. it looked rather waterfall-like.)</p>
+</div>
+</details>
+
+<div class="quiz" id="quiz6">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A company wants 100 Scrum teams to stay integrated and deliver on a quarterly schedule. Which SAFe mechanism most directly enables this?</div>
+  <div class="quiz-options" data-quiz="q6">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Letting each team choose its own sprint length and start dates independently</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>The Agile Release Train — synchronized sprints across teams, producing a Program Increment roughly every quarter</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Eliminating all planning meetings the way Lean does</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Merging the product owner and release train engineer into one role</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q6','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q6">
+    <strong>Correct — B.</strong> The ART synchronizes all teams' sprints so they start and end together and can integrate, producing an 8–12 week Program Increment that aligns with a quarter. A is the opposite — desynchronizing teams breaks integration; C describes Lean/XP, which sacrifices the predictability big orgs need; D repeats the anti-pattern of collapsing antagonistic roles, now at the train level.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SYNTHESIS ═══════════════════════ -->
+<section id="synthesis" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>Every piece of this lecture hangs off a single root: <strong>empiricism</strong> — we can't predict far into an uncertain future, so we learn by observing short cycles. Everything above is that idea, operationalized at increasing scale.</p>
+
+<p>The <strong>three pillars</strong> turn empiricism into a daily discipline: make work visible (<em>transparency</em>), check it often (<em>inspection</em>), and change based on what you saw (<em>adaptation</em>). The <strong>three roles</strong> distribute the power to do this without a traditional boss — developers build, the product owner guards external value, the scrum master guards internal quality, and their deliberate tension keeps both alive. The <strong>three artifacts</strong> give the pillars something concrete to act on: a prioritized product backlog narrows to a sprint backlog and is realized as an increment, "done" only when it clears the team's definition of done. The <strong>five events</strong> are the heartbeat — planning sets direction, the standup keeps things transparent and inspected, the review inspects the increment with the customer, and the retrospective is where adaptation actually happens.</p>
+
+<p>Then we asked: what breaks when you go from 8 people to 800? <strong>SAFe</strong> answers by treating whole teams as super-developers riding a synchronized <em>Agile Release Train</em> toward a quarterly Program Increment — and in doing so trades away much of the self-organization and the visibility of the three pillars for predictability. That trade-off, plus <strong>Conway's Law</strong> and the module-vs-component distinction behind <strong>microservices</strong>, shows that organizational structure and software structure are the same problem viewed from two sides.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The One Sentence to Remember</div>
+  <p>There is no universally correct process — Lean/XP, Scrum, and SAFe sit along a spectrum from maximum developer autonomy to maximum managerial predictability, and your job as an engineer is to pick the right one for the organization and the uncertainty you face.</p>
+</div>
+
+<div class="callout tip" style="margin-top: 32px;">
+  <div class="callout-title">What's Next</div>
+  <p>The lecture flagged a gap to close: <strong>microservices</strong> deserve their own treatment, likely next week — what they are, how they realize Conway's Law in practice, and how independent deployability enables independent scaling. Keep the module-vs-component distinction handy; it's the hinge that discussion will turn on. (And review your earlier architecture and INVEST lectures — they're load-bearing here, and the exam rewards the recall.)</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

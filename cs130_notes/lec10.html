@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 10 — Software Testing — Interactive Textbook</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 10 — Testing</div>
+  <a href="#part1">Part I — Why Test?</a>
+  <a href="#knight-capital" class="sub">The Knight Capital Disaster</a>
+  <a href="#what-is-testing" class="sub">What Testing Is</a>
+  <a href="#goals" class="sub">The Three Goals</a>
+  <a href="#vv" class="sub">Verification vs Validation</a>
+  <a href="#testing-vs-debugging" class="sub">Testing vs Debugging</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Levels of Tests</a>
+  <a href="#three-levels" class="sub">Unit / Integration / System</a>
+  <a href="#why-mix" class="sub">Why Keep Unit Tests?</a>
+  <a href="#gherkin" class="sub">Gherkin, Cucumber & CI</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — Black Box vs White Box</a>
+  <a href="#bb-wb" class="sub">A Design Philosophy</a>
+  <a href="#bb-strengths" class="sub">Trade-offs</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — Equivalence Classes</a>
+  <a href="#validator" class="sub">The Password Validator</a>
+  <a href="#boundaries" class="sub">Boundary Values</a>
+  <a href="#combine" class="sub">Combining Criteria</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Strong, Weak & Brittle</a>
+  <a href="#oracles" class="sub">Oracles & Assertions</a>
+  <a href="#state" class="sub">Testing State</a>
+  <a href="#brittle" class="sub">The Brittle Test</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part6">Part VI — Coverage</a>
+  <a href="#adequacy" class="sub">Test Adequacy Criteria</a>
+  <a href="#three-coverages" class="sub">Statement / Branch / Path</a>
+  <a href="#cfg" class="sub">Control Flow Graphs</a>
+  <a href="#quiz6" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#together">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">COMSCI 130 · Software Engineering</div>
+  <h1>Testing — Finding the Bugs Before They Find You</h1>
+  <p class="hero-sub">An interactive guide to Lecture 10 — why we test, the levels and styles of tests, equivalence classes, the difference between strong and brittle tests, and how coverage measures what we've actually checked.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>Why Test At All?</h2>
+</div>
+
+<p>Before we learn <em>how</em> to test, we need to feel <em>why</em> it matters. The cheapest way to convince an engineer that testing is non-negotiable is a horror story — a real one, with a real price tag.</p>
+
+<h3 id="knight-capital">The Knight Capital Disaster</h3>
+<p>Knight Capital was a high-frequency trading firm — the kind that buys a stock and sells it milliseconds later for a sliver of profit. By 2012 they were the largest trading house on Wall Street, handling roughly 17% of all volume on the major exchanges, about <strong>$121 billion of trades a day</strong>. Then, on August 1st, 2012, they deployed a new software version to support a new exchange feature.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>8:00 a.m.</strong> — Everyone in the company received mysterious warning emails. Nobody acted on them. (Why would you panic over a vague warning at 8 a.m.?)</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>9:31 a.m.</strong> — One minute after the market opened, Knight's program began flooding Wall Street with buy orders at <strong>$148 million a minute</strong>. It would not stop.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>They tried to <strong>roll back</strong> to the previous version. This made it worse: the program now traded at <em>eight times</em> the volume. They had eight servers; seven had the new code, but the eighth had never received a critical patch — so rolling back put all eight on the broken path.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>28 minutes</strong> to find the off switch (trading systems don't have a big red button). In those 28 minutes they lost <strong>$440 million</strong> — more than they had in cash reserves. The company was effectively bankrupt.</p>
+</div>
+
+<p>The root cause: an old <em>feature flag</em> that, nine years earlier, had activated "Power Peg" — dead code that deliberately simulated a dumb trader (buying high, selling low). That code had been dormant for nine years. The new feature <em>reused the same flag</em>. Flipping it on reawakened the nine-year-old dead code. It earned a place in the Guinness Book of Records as the most expensive software failure in history.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Lesson the Class Drew</div>
+  <p>Students brainstormed three engineering principles that would have caught this: (1) <strong>test in a separate sandbox environment before deploying to production</strong>, (2) use <strong>automated static analysis</strong> to flag dangerous patterns, and (3) <strong>delete dead code</strong> you no longer need. Today's lecture is about the first one: testing before deployment.</p>
+</div>
+
+<h3 id="what-is-testing">What Testing Actually Is</h3>
+<p>It's tempting to treat "testing" as a vague good habit. The lecture gave it a precise definition you should be able to recite.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Testing</div>
+  <p>Testing is the <strong>execution of a program with selected inputs in a controlled environment, with assertions on its behavior and output.</strong></p>
+</div>
+
+<p>Unpack that definition word by word, because every clause does work:</p>
+<ul style="margin: 0 0 18px 22px;">
+  <li><strong>Execution of a program.</strong> Testing is <em>dynamic analysis</em> — you can only test code you can actually run. (Contrast with static analysis, which inspects code without running it.)</li>
+  <li><strong>Selected inputs.</strong> You can't test exhaustively — most programs have an effectively infinite input space. You must deliberately <em>choose</em> a small, telling set of inputs.</li>
+  <li><strong>Controlled environment.</strong> You need <em>observability</em>: you can only assert on something you can actually see. A stock-trading platform is hard to test precisely because it's hard to run safely in a controlled way.</li>
+  <li><strong>Assertions on behavior.</strong> The whole point. You state the expected behavior, then check it — usually on outputs, but sometimes on other observable properties.</li>
+</ul>
+
+<div class="callout insight">
+  <div class="callout-title">Testing Can Only Prove Bugs Exist</div>
+  <p>A famous slogan (Dijkstra): <strong>testing can prove the presence of bugs, but never their absence.</strong> Because testing is dynamic, it only ever exercises the finite inputs you picked. This connects to theory of computation: deciding whether an arbitrary non-trivial property holds for all inputs is <em>undecidable</em> (Rice's theorem) — at best semi-decidable. So no test suite, however large, certifies "bug-free."</p>
+</div>
+
+<h3 id="goals">The Three Goals of Testing</h3>
+<p>Why write tests? The obvious goal is finding bugs — but the lecture pulled out three reasons, and the third is the deepest.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Reveal bugs.</strong> The headline purpose. Find faults before your users — or Wall Street — do.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Document what the code should do.</strong> When you join a new project, the tests are the best place to learn the intended behavior. And because tests are <em>executed</em>, they can't silently rot out of date the way comments do. They are an <strong>executable specification</strong>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Cognitive offloading → confidence to change.</strong> The professor's favorite. Tests give you the confidence to make changes <em>without</em> manually re-verifying everything by hand. That frees your limited cognitive load — and your teammates' — to focus on the actual design problem. Tests are how a team safely keeps moving.</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>You are not paid to write code, and you are not even paid to write tests. You are paid to <strong>think about what might happen in the future</strong>. Tests are cognitive offloading: they let you and your team stop holding the whole system in your heads, so your attention goes to design instead of fear.</p>
+</div>
+
+<h3 id="vv">Verification vs Validation</h3>
+<p>Quality assurance splits into two questions that sound similar but are not. The course calls this "V&amp;V."</p>
+
+<table class="compare-table">
+  <tr><th>Verification</th><th>Validation</th></tr>
+  <tr><td>"Did we build the system <em>right</em>?"</td><td>"Did we build the <em>right</em> system?"</td></tr>
+  <tr><td>Does the implementation conform to the specification?</td><td>Does the specification actually solve the real-world problem?</td></tr>
+  <tr><td>This is what <strong>testing</strong> (today's topic) does.</td><td>This is what <strong>manual testing with real users</strong> does — not today's focus.</td></tr>
+</table>
+
+<p>Today we live entirely in the <strong>verification</strong> world: we assume a specification and check whether the code matches it.</p>
+
+<h3 id="testing-vs-debugging">Testing Is Not Debugging</h3>
+<p>People blur these two, so the professor drew a sharp line:</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Testing vs Debugging</div>
+  <p><strong>Testing</strong> is the act of <em>detecting and revealing</em> errors — it surfaces a symptom. <strong>Debugging</strong> begins only <em>after</em> a fault has been revealed: it's the process of tracing that error to its root cause and fixing it. No symptom yet? Then you're not debugging.</p>
+</div>
+
+<div class="quiz" id="quiz-1-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A developer adds a new feature, runs the suite, and one test turns red. Which describes what happens next, in order?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Debugging revealed the fault; testing then traces it to its source.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Testing revealed the fault; debugging then traces it to its source and fixes it.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Validation revealed the fault; verification then fixes it.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>The red test proves the code is now bug-free.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct: B.</strong> Testing is detection — the red test is the revealed symptom. Debugging is what follows: tracing that symptom to its root cause and fixing it. A reverses the two roles. C confuses V&amp;V (those are QA categories, not a detect-then-fix sequence). D is the classic fallacy — testing can show a bug is present but never that <em>all</em> bugs are gone.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>Levels of Tests</h2>
+</div>
+
+<p>Not all tests look at the same amount of code. The level of a test is essentially a question of <em>size</em>: how much of the system does this one test exercise at once?</p>
+
+<h3 id="three-levels">Unit, Integration, System</h3>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The Three Levels</div>
+  <p><strong>Unit tests</strong> exercise one small piece — a single class or method in isolation. <strong>Integration (component) tests</strong> check that several units work together correctly. <strong>System tests</strong> are end-to-end: a user supplies input and you assert on output the user can actually see.</p>
+</div>
+
+<p>Think of a chest of drawers. Each drawer slides on its own (units pass), but if the frame is misaligned you still can't open one of them (integration fails). The professor's running example: every unit test is green, yet the combination of components doesn't do its job. You need tests at every level.</p>
+
+<p>The terminology isn't perfectly crisp. A single class or method is <em>always</em> a unit test. A larger chunk might be called a "component test" — really just a big unit test — and the categories can overlap. The professor prefers the clean trio: <strong>unit → integration → system</strong>.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="380" height="180" viewBox="0 0 380 180" style="display:block; margin:0 auto;">
+      <!-- system pyramid: wide bottom -->
+      <polygon points="40,150 340,150 280,110 100,110" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <polygon points="100,108 280,108 235,68 145,68" fill="#eff4ff" stroke="#2563eb" stroke-width="2"/>
+      <polygon points="145,66 235,66 190,26 190,26" fill="#f3effe" stroke="#7c3aed" stroke-width="2"/>
+      <text x="190" y="138" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#c0510a">UNIT — many, fast, small</text>
+      <text x="190" y="93" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#2563eb">INTEGRATION</text>
+      <text x="190" y="52" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" font-weight="700" fill="#7c3aed">SYSTEM</text>
+      <text x="358" y="135" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#6b6560">size ↑</text>
+      <line x1="355" y1="40" x2="355" y2="125" stroke="#d9d0c4" stroke-width="2"/>
+    </svg>
+  </div>
+  <div class="figure-caption">The test pyramid: many small, fast unit tests at the base; fewer, larger system tests at the top. Size grows upward.</div>
+</div>
+
+<h3 id="why-mix">If Integration Tests Are "Better," Why Keep Unit Tests?</h3>
+<p>A natural question: end-to-end tests prove the whole thing works, so why bother with unit tests at all? The class surfaced four good reasons:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Bug localization.</strong> A failing system test tells you "something is broken" but not where. A broken unit test points to a tiny, specific unit — the bug's location is almost handed to you.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Speed.</strong> Change one unit, run only that unit's tests. The professor's e-book tutorial suite takes ~30 minutes end-to-end; re-running just one unit's tests is near-instant.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>You can test before integrating.</strong> While you're still developing a component, the rest of the system may not exist yet. You literally can't run an integration test until things are integrated — but you can unit-test the piece in your hands today.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Coverage of the input space.</strong> The deepest reason. A system test only exercises the paths the <em>current</em> composition forwards down to a sub-component — a narrow slice of that sub-component's possible inputs. But software grows and changes; future code will drive different inputs into that sub-component. Unit tests let you cover a much wider input range for the piece directly, so it stays correct as the system evolves.</p>
+</div>
+
+<h3 id="gherkin">From Acceptance Criteria to Tests: Gherkin, Cucumber & CI</h3>
+<p>Earlier in the course you learned to write <strong>user stories</strong> with good <strong>acceptance criteria</strong>. The payoff arrives here: well-written acceptance criteria translate almost mechanically into tests.</p>
+
+<p><strong>Gherkin</strong> is the language of <strong>Cucumber</strong>, an end-to-end testing framework. It takes structured natural language and, using <em>deterministic rules</em> (not an LLM), turns it into executable tests. The structure mirrors acceptance criteria exactly:</p>
+
+<pre><code><span class="cm"># Gherkin — Given / When / Then</span>
+<span class="kw">Given</span> the user has no prior passwords    <span class="cm"># precondition / setup</span>
+<span class="kw">When</span>  they submit "Sunfl0wer!" as new   <span class="cm"># the action under test</span>
+<span class="kw">Then</span>  the password should be accepted   <span class="cm"># the assertion / oracle</span></code></pre>
+
+<ul style="margin: 0 0 18px 22px;">
+  <li><strong>Given</strong> — the preconditions: everything that must be true before you exercise the feature.</li>
+  <li><strong>When</strong> — the action under test: the sequence the system actually performs.</li>
+  <li><strong>Then</strong> — the assertions: what the outcome must be.</li>
+</ul>
+
+<div class="callout tip">
+  <div class="callout-title">Why This Matters For the Exam</div>
+  <p>When you write acceptance criteria, make each <strong>Given</strong> describe a precondition, the <strong>When</strong> the action, and the <strong>Then</strong> the assertion. Do this carefully and the translation to tests becomes "easy — barely an inconvenience." The exam's user-story question rewards exactly this discipline.</p>
+</div>
+
+<p>One caveat the professor stressed: <strong>Cucumber pays off only when you have a non-technical stakeholder</strong> on the team — a product owner who can read the plain-language criteria, confirm "yes, that's what I want," and even write more. Without such a stakeholder (as in this class's projects), Cucumber's overhead isn't worth it.</p>
+
+<p>Once you have tests, run them in a <strong>continuous integration (CI)</strong> system — GitHub Actions, Travis, Jenkins — on <em>every merge to the main branch</em>, so main is always continuously verified. This is the automated version of "test in a sandbox before deploying" that would have saved Knight Capital.</p>
+
+<div class="quiz" id="quiz-2-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Why does a thorough test suite still keep unit tests even when it has full system tests?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>System tests are unreliable, so unit tests replace them entirely.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>System tests only exercise the input paths the current composition forwards to a sub-component; unit tests cover the sub-component's wider input space as the system evolves.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Unit tests are required by Gherkin syntax.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Unit tests run slower, which gives more thorough coverage.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct: B.</strong> A system test only drives the inputs that today's composition happens to forward downstream — a narrow slice of any sub-component's possible inputs. Since software grows, future paths will feed it different inputs, so you unit-test the component directly across its full input range. Unit tests are also faster and better at localizing bugs (D is backwards — they're faster, not slower). C is invented.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>Black Box vs White Box</h2>
+</div>
+
+<p>The next classification cuts a different way. It's not about <em>size</em> — it's about <em>how you design the test</em>: do you look inside the code or not?</p>
+
+<h3 id="bb-wb">A Philosophy of Design, Not a Property of the Test</h3>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Black Box vs White Box</div>
+  <p>A <strong>black-box test</strong> is designed without knowing the implementation. You derive it purely from the <em>specification / interface / contract</em> — the method signature, parameters, and documented behavior. A <strong>white-box test</strong> is designed while looking <em>inside</em> the code, choosing inputs to cover its paths, branches, and statements.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">It's About How You Came Up With the Test</div>
+  <p>Crucially, black vs white box is <strong>a property of the test's <em>design process</em>, not of the finished test</strong>. Once written, two tests can look identical; you often cannot tell from the code alone which philosophy produced it. The difference is the information you had in hand: black box = "here is the interface only"; white box = "here is the interface <em>and</em> the source."</p>
+</div>
+
+<p>This connects directly to the <strong>information hiding</strong> principle from earlier in the course. Black-box tests respect the interface — exactly the public contract that information hiding exposes — and stay ignorant of the hidden internals.</p>
+
+<h3 id="bb-strengths">Why Have a Mix? The Trade-offs</h3>
+
+<h4>Strengths of black-box tests</h4>
+<ul style="margin: 0 0 18px 22px;">
+  <li><strong>No implementation bias.</strong> If you know how the code is written, you tend to write tests that <em>confirm</em> your implementation rather than challenge it. Working from the spec alone keeps you honest.</li>
+  <li><strong>Less brittle.</strong> Because they make no assumptions about internals, black-box tests usually don't have to change when the implementation changes.</li>
+</ul>
+
+<h4>Strengths of white-box tests</h4>
+<ul style="margin: 0 0 18px 22px;">
+  <li><strong>They target risky internal structure.</strong> Maybe there's one critical <code>if</code> condition, or one rarely-taken branch, that hides the bug. If you don't look at the code, you don't know that branch exists — so you can't deliberately write a test that exercises it. White-box design ensures every branch gets covered.</li>
+</ul>
+
+<div class="callout tip">
+  <div class="callout-title">Use Both — They Catch Different Things</div>
+  <p>Black-box tests catch "the spec isn't met" without bias and survive refactors. White-box tests catch "this specific branch is wrong" by guaranteeing structural coverage. A good suite designs from both hats. We'll wear the black-box hat first in Part IV, then switch to the white-box hat in Part VI.</p>
+</div>
+
+<div class="quiz" id="quiz-3-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A teammate hands you a finished test file with no other context. Can you tell whether each test is black-box or white-box?</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Yes — white-box tests always assert on private fields, black-box ones never do.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Usually not — black vs white box describes the design process, not a property visible in the finished test.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Yes — black-box tests are always at the system level and white-box at the unit level.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>No, because every test is simultaneously both at once.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct: B.</strong> The distinction lives in <em>how the test was conceived</em> — from the interface only, or with the source in view. Two tests can be byte-for-byte identical yet come from different philosophies. A is wrong because white-box doesn't imply touching internals (that's a separate sin called brittleness); C wrongly conflates this axis with the size/level axis from Part II.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>Equivalence Classes &amp; Boundary Values</h2>
+</div>
+
+<p>Now we put on the black-box hat. The core question of input selection: a program has infinitely many possible inputs, so which <em>few</em> do we pick? The answer is <strong>equivalence partitioning</strong> plus <strong>boundary value analysis</strong>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Equivalence Classes</div>
+  <p>An <strong>equivalence class</strong> is a group of inputs the program should treat the same way. If two inputs fall in the same class, testing one is as good as testing the other. So you pick <strong>one representative per class</strong> instead of testing every value. The valid inputs typically form one class; the <em>invalid</em> inputs split into several — one per way of being invalid.</p>
+</div>
+
+<h3 id="validator">The Worked Example: A Password Validator</h3>
+<p>The system is <code>PasswordValidator.validPassword(username, password)</code>. A password is valid only if all four criteria hold:</p>
+
+<pre><code><span class="cm">// PasswordValidator — the contract (black box)</span>
+<span class="kw">boolean</span> <span class="fn">validPassword</span>(<span class="tp">String</span> username, <span class="tp">String</span> password)
+
+<span class="cm">// 1. length is 8–20 characters (inclusive)</span>
+<span class="cm">// 2. not a password used previously (needs a PasswordDatabase)</span>
+<span class="cm">// 3. has ≥1 uppercase, ≥1 lowercase, ≥1 digit, ≥1 special char</span>
+<span class="cm">// 4. must not contain the username</span></code></pre>
+
+<div class="callout tip">
+  <div class="callout-title">The Mark of a Great Engineer</div>
+  <p>Before writing a single test, the professor asked: "What else do you need to know about this system?" A <em>good</em> engineer starts coding; a <em>great</em> engineer asks questions first. Here the missing piece was the existence of a separate <code>PasswordDatabase</code> class (with functions to check past passwords and to store new ones) — and, as we'll see, an under-specified detail about case sensitivity.</p>
+</div>
+
+<h3 id="boundaries">Criterion 1: Length — Why Four Tests, Not Three</h3>
+<p>Focus on "8–20 characters." There are three equivalence classes: <em>too short</em>, <em>valid length</em>, and <em>too long</em>. So why not just three tests? Because <strong>bugs hide at boundaries</strong>: the place developers most often slip is <code>&lt;</code> vs <code>&lt;=</code>. To pin down <em>both</em> boundaries exactly, you test the values right on either side of each:</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="130" viewBox="0 0 420 130" style="display:block; margin:0 auto;">
+      <line x1="20" y1="70" x2="400" y2="70" stroke="#d9d0c4" stroke-width="2"/>
+      <!-- regions -->
+      <text x="55" y="40" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#c53030">too short</text>
+      <text x="210" y="40" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#2d8a4e">valid (8–20)</text>
+      <text x="365" y="40" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#c53030">too long</text>
+      <!-- boundary markers -->
+      <line x1="110" y1="62" x2="110" y2="78" stroke="#c0510a" stroke-width="2"/>
+      <line x1="310" y1="62" x2="310" y2="78" stroke="#c0510a" stroke-width="2"/>
+      <!-- test points -->
+      <circle cx="95" cy="70" r="5" fill="#c53030"/><text x="95" y="98" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">7</text>
+      <circle cx="125" cy="70" r="5" fill="#2d8a4e"/><text x="125" y="98" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">8</text>
+      <circle cx="295" cy="70" r="5" fill="#2d8a4e"/><text x="295" y="98" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">20</text>
+      <circle cx="325" cy="70" r="5" fill="#c53030"/><text x="325" y="98" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">21</text>
+      <text x="210" y="122" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#6b6560">four tests: 7 (reject), 8 (accept), 20 (accept), 21 (reject)</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Boundary value analysis for the 8–20 length rule. Three equivalence classes, two boundaries → four tests, one straddling each boundary.</div>
+</div>
+
+<p>With only three tests you can nail just one boundary; with four — testing 7, 8, 20, and 21 — you confirm <em>both</em> the lower and upper boundary land in exactly the right place. The other three criteria are held valid in these length tests so they don't interfere.</p>
+
+<h3 id="combine">Criterion 3: Character Classes — Four Tests, Not Five</h3>
+<p>The password needs an uppercase, a lowercase, a digit, and a special character. The instinct is five tests (one all-valid, plus one missing each). But the all-valid case is <em>already</em> covered by a valid-length test from criterion 1. So you only need to <em>add</em> four negative tests: one missing uppercase, one missing lowercase, one missing a digit, one missing a special char.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Build the Suite Incrementally</div>
+  <p>Notice the pattern: each new criterion <em>adds</em> only the tests not already covered. This is how you optimize for the smallest suite that still gives confidence. A more exhaustive engineer might test all <em>combinations</em> (e.g., 16 or 48 tests) — and that's a legitimate choice for a truly critical feature. But for a password <em>validator</em> (a bug here won't bankrupt you, unlike a flaw in password <em>storage</em>), the lean per-criterion suite is the better trade-off. Testing is part science, part art, calibrated to how critical the feature is.</p>
+</div>
+
+<h3>Criterion 4: The Under-Specified Case</h3>
+<p>"Must not contain the username" needs one test (e.g., username <code>testuser</code> embedded in the password). But it exposes a hidden ambiguity: if username is <code>testuser</code> and the password contains <code>TestUser</code>, is "contains" <strong>case-sensitive or not?</strong> The spec doesn't say.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Testing Is a Dialogue</div>
+  <p>Systematically writing tests forces you into exactly these under-specified corners. When you hit one, the right move isn't to guess — it's to <strong>ask the stakeholder who owns the requirements</strong>. Testing is not a one-way street; it's a conversation with whoever defines the spec. Good tests surface the questions the requirements forgot to answer.</p>
+</div>
+
+<div class="quiz" id="quiz-4-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">For the "8–20 characters" rule, why does black-box testing prefer four tests over three?</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>There are four equivalence classes, so four tests are required.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Three tests can pin down only one boundary; four (7, 8, 20, 21) pin down both boundaries, where off-by-one bugs hide.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Four is the minimum for full path coverage of the validator.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>You always need exactly N+1 tests for a range of length N.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct: B.</strong> There are three equivalence classes (short / valid / long) but two boundaries. Each boundary needs a value just inside and just outside it to catch the common <code>&lt;</code> vs <code>&lt;=</code> slip — hence 7&amp;8 and 20&amp;21. A miscounts (there are three classes, not four). C invokes path coverage, which is a white-box notion irrelevant to this black-box reasoning.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>Strong, Weak &amp; Brittle Tests</h2>
+</div>
+
+<p>Picking good inputs is half the battle. The other half is the <em>assertion</em>: what does the test actually check? This is where tests succeed or fail at their job.</p>
+
+<h3 id="oracles">Oracles and Strong Assertions</h3>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The Oracle</div>
+  <p>The <strong>oracle</strong> is the part of a test that decides, for a given input, what the correct output is. A <strong>strong oracle</strong> has as many (correct) assertions as possible: it should <em>fail for every incorrect program</em>. The more relevant aspects of the specification you assert, the more bugs you catch.</p>
+</div>
+
+<p>Two opposing forces define a good test, and balancing them is the heart of the craft:</p>
+
+<table class="compare-table">
+  <tr><th>A test should...</th><th>...but a test should NOT...</th></tr>
+  <tr><td>fail for <em>every incorrect</em> program (strong, not permissive — a <strong>weak</strong> test lets broken behavior pass)</td><td>fail for any <em>correct</em> program (not too strong / <strong>brittle</strong> — it must pass for all valid implementations)</td></tr>
+</table>
+
+<div class="callout warning">
+  <div class="callout-title">A Test That Lies</div>
+  <p>The professor's Gandalf meme: "You shall not pass!" — pointed at a <strong>lying test</strong>, one that passes when it should fail (it fails to catch the bug it was meant to catch). A common cause is a test that <em>fails for the wrong reason</em>. To guard against this, write the test <em>before</em> the implementation: see it go red, implement the feature, watch it go green. That's <strong>TDD (Test-Driven Development)</strong>, and seeing the red first proves the test can actually fail.</p>
+</div>
+
+<h3 id="state">Testing State: A Sequence of Steps</h3>
+<p>The first three criteria were single calls with single assertions. But "must not be a password used previously" means the system has <strong>state</strong> — and testing stateful behavior gets trickier, because you need a <em>sequence</em> of steps.</p>
+
+<pre><code><span class="cm">// Testing the "no reuse" rule — a stateful sequence</span>
+<span class="cm">// 1. sanity-check: the chosen password is valid to begin with</span>
+<span class="kw">assert</span> validator.<span class="fn">validPassword</span>(<span class="str">"testuser"</span>, pw) <span class="op">==</span> <span class="kw">true</span>;
+
+<span class="cm">// 2. change the user's password to pw (now pw is "used")</span>
+database.<span class="fn">changePassword</span>(<span class="str">"testuser"</span>, pw);
+
+<span class="cm">// 3. pw must now be rejected as previously-used</span>
+<span class="kw">assert</span> validator.<span class="fn">validPassword</span>(<span class="str">"testuser"</span>, pw) <span class="op">==</span> <span class="kw">false</span>;</code></pre>
+
+<p>Why is the step-1 assertion there? To make the test <strong>fail for the right reason</strong>. If <code>pw</code> were accidentally invalid (a typo, or a changed definition of validity), step 3 would still see "rejected" — but for the wrong reason. Asserting validity up front guarantees that a later rejection is genuinely caused by reuse, not by a bad starting password.</p>
+
+<h4>Making the assertion stronger</h4>
+<p>You can strengthen this test without writing a whole new one — cheaper than a separate test, and it catches more:</p>
+<ul style="margin: 0 0 18px 22px;">
+  <li><strong>Repeat with a second new password</strong> — maybe reuse-rejection only works for the most recent password, not earlier ones. Cycle through multiple changes.</li>
+  <li><strong>Also assert on the hash</strong> — if there's a <code>hashPassword</code> function, assert the stored value equals the hash. Semantically linked assertions belong together.</li>
+  <li><strong>Use assertion failure messages</strong> — e.g. "hashPassword incorrect" vs "validPassword incorrect" — so when one of several assertions fails you instantly know which behavior broke.</li>
+</ul>
+
+<h3 id="brittle">The Brittle Test — Testing Internals</h3>
+<p>Now the cautionary version. Suppose the <code>PasswordDatabase</code> stores passwords as a dictionary from username to a list of passwords, and a test reaches in to check that the new password appears in that dictionary:</p>
+
+<pre><code><span class="cm">// ⚠ A brittle test — reaches into internals</span>
+database.<span class="fn">changePassword</span>(<span class="str">"testuser"</span>, pw);
+<span class="kw">assert</span> database.passwords.<span class="fn">get</span>(<span class="str">"testuser"</span>).<span class="fn">contains</span>(pw);  <span class="cm">// 👎</span></code></pre>
+
+<div class="callout warning">
+  <div class="callout-title">Why This Is the Worst Test</div>
+  <p>Two problems. <strong>First</strong>, it asserts on an <em>implementation detail</em> — the exact data structure used for storage — not the contract. Change the dictionary to anything else and the test breaks even though behavior is correct. <strong>Second</strong>, security: storing the <em>clear-text</em> password is a serious flaw; the password should be <strong>hashed</strong>. Asserting on the stored hash is slightly better, but if you hard-code a specific hash function you're <em>still</em> tied to an implementation detail that can change.</p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Weak vs Brittle</div>
+  <p>A <strong>weak test</strong> lets broken behavior pass (too permissive). A <strong>brittle test</strong> rejects correct implementations (too strict — it breaks on a refactor that didn't change behavior). The goal: accept <em>all</em> correct implementations, reject <em>all</em> the important incorrect ones.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Information Hiding Applies to Test Code Too</div>
+  <p>The way passwords are stored is hidden behind the contract — no client, <em>including a test</em>, should depend on it. A brittle test is a <strong>violation of information hiding</strong>. This is why the professor calls this "the most interesting insight in testing," and why information hiding had to come first: brittle tests only make sense once you understand it.</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Bad Tests Slow You Down</div>
+  <p>Real student feedback from a prior course: every tiny UI change broke their end-to-end tests, so the tests "gave us anxiety, not confidence." <strong>Good tests speed you up; bad (brittle) tests slow you down.</strong> The fix: test <em>behavior</em>, not implementation — and for parts of the system still in flux (a UI that may change next week), <em>delay</em> writing brittle tests until that part stabilizes. You're paid to anticipate the future: design tests that won't break when correct code legitimately evolves.</p>
+</div>
+
+<div class="quiz" id="quiz-5-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A test asserts that a private dictionary field contains the new password after <code>changePassword</code>. Behavior is correct, but the test fails after the team swaps the storage structure. What kind of test is this?</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>A weak test — it lets broken behavior pass.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>A brittle test — it rejects a correct implementation by depending on hidden internals, violating information hiding.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>A strong oracle — more assertions is always better.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>A white-box test, which by definition must touch private fields.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct: B.</strong> The behavior is right yet the test fails — that's the signature of brittleness: it rejects a correct implementation because it depends on a hidden storage detail, violating information hiding. It's the opposite of weak (A), which would <em>pass</em> broken behavior. D is the common confusion the lecture warned against: white-box means designing inputs from the code's structure, <em>not</em> asserting on internals.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART VI ═══════════════════════ -->
+<section id="part6" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part VI</div>
+  <h2>Coverage — Measuring What You've Tested</h2>
+</div>
+
+<p>Now switch to the white-box hat. We've been choosing inputs from the spec; now we look <em>inside</em> the code and ask: have we actually exercised all of it? The yardsticks are <strong>test adequacy criteria</strong>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Test Adequacy Criteria</div>
+  <p>Adequacy criteria answer "have we tested enough?" by measuring coverage. They guard against two failures: writing <em>too few</em> tests (missing behavior) and writing <em>redundant</em> tests (wasting execution time). There are three, in increasing strength: <strong>statement</strong>, <strong>branch</strong>, and <strong>path</strong> coverage.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Why Efficiency Matters</div>
+  <p>If a suite takes longer than ~10 minutes, developers stop running it on every change — they'll just push and hope. So you want the <em>minimum</em> tests that reach your chosen coverage level. More tests beyond that add quality-assurance overhead without proportional benefit.</p>
+</div>
+
+<h3 id="three-coverages">Statement, Branch, and Path Coverage</h3>
+<p>Consider this function with three independent <code>if</code> statements (no early returns):</p>
+
+<pre><code><span class="kw">void</span> <span class="fn">f</span>(<span class="kw">int</span> x) {
+  <span class="kw">if</span> (cond1) { x<span class="op">++</span>; }
+  <span class="kw">if</span> (cond2) { x<span class="op">--</span>; }
+  <span class="kw">if</span> (cond3) { x <span class="op">=</span> x; }
+}</code></pre>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The Three Coverages</div>
+  <p><strong>Statement coverage:</strong> has every statement been executed at least once? <strong>Branch coverage:</strong> for every condition, has it evaluated to <em>both</em> true and false? <strong>Path coverage:</strong> has every possible route through the program been executed?</p>
+</div>
+
+<p>How many tests does each need for <em>this</em> function?</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Statement coverage → 1 test.</strong> A single input where all three conditions are true runs every statement (<code>x++</code>, <code>x--</code>, <code>x=x</code>) at least once. Done.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Branch coverage → 2 tests.</strong> Each condition needs both a true and a false evaluation. One test with all conditions true plus one with all conditions false covers every branch. (This clean "just 2" works <em>because</em> there are no return statements interrupting the flow — it is <em>not</em> the general rule.)</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Path coverage → 8 tests.</strong> Three independent two-way conditions give 2×2×2 = 8 distinct routes through the function. You'd need all eight true/false combinations to reach 100%.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">The Counter-Intuitive One Is Branch Coverage</div>
+  <p>Students kept guessing "8" for everything. The trap: statement coverage feels like it needs many tests but here needs just one; branch coverage feels like it needs eight but here needs two. The reason branch ≠ statement here is the <em>missing else branches</em> — when there are no <code>else</code> blocks, the "false" outcome of a condition runs no extra statement, so statement coverage can be hit without ever evaluating a condition to false. (When conditions <em>do</em> have else branches, statement and branch coverage tend to coincide.)</p>
+</div>
+
+<h4>A cumulative worked example</h4>
+<p>Now run three concrete tests against this function and track coverage as it accumulates. Each test is the (cond1, cond2, cond3) tuple:</p>
+
+<table class="compare-table">
+  <tr><th>After running...</th><th>Statement</th><th>Branch</th><th>Path</th></tr>
+  <tr><td>Test 1: (T, T, T)</td><td>100%</td><td>50%</td><td>1/8</td></tr>
+  <tr><td>+ Test 2: (F, F, F)</td><td>100%</td><td>100%</td><td>2/8</td></tr>
+  <tr><td>+ Test 3: (F, T, T)</td><td>100%</td><td>100%</td><td>3/8</td></tr>
+</table>
+
+<p>Read the story in the table. Test 1 (all true) runs every statement → <strong>100% statement</strong> immediately, but only exercises the "true" side of each condition → <strong>50% branch</strong>, and one route → <strong>1/8 path</strong>. Test 2 (all false) fills in every "false" branch → <strong>100% branch</strong>, and adds a second route → 2/8 path. Test 3 adds only a third distinct route → 3/8 path, but contributes nothing new to statement or branch coverage.</p>
+
+<div class="callout tip">
+  <div class="callout-title">The Lesson of Test 3</div>
+  <p>If your goal had been 100% statement coverage, test 1 alone sufficed. If 100% branch coverage, tests 1–2 sufficed. Test 3 added neither — only a marginal path bump that still doesn't reach 100% path coverage. The systematic move is to pick a target criterion and write the <em>minimum</em> tests to hit it, rather than adding tests that don't advance your chosen goal. Order matters too: running only test 2 first would <em>not</em> give 100% statement coverage, because its all-false inputs skip <code>x++</code>, <code>x--</code>, and <code>x=x</code>.</p>
+</div>
+
+<h3 id="cfg">Control Flow Graphs: Doing This Systematically</h3>
+<p>How do you reason about coverage rigorously instead of by eyeballing? Draw a <strong>control flow graph (CFG)</strong>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Control Flow Graph</div>
+  <p>A <strong>CFG</strong> is a graph from the program's entry to its exit. At every branching point it shows how control can split, and it labels each path with the statements executed along it. It makes coverage mechanical: <strong>branch coverage</strong> = cover every outgoing edge of every condition; <strong>path coverage</strong> = cover every full route from entry to exit (all combinations of those edges).</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="240" height="300" viewBox="0 0 240 300" style="display:block; margin:0 auto;">
+      <!-- entry -->
+      <circle cx="120" cy="24" r="12" fill="#c0510a"/><text x="120" y="29" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#fff">in</text>
+      <!-- cond1 -->
+      <line x1="120" y1="36" x2="120" y2="56" stroke="#d9d0c4" stroke-width="2"/>
+      <polygon points="120,58 150,80 120,102 90,80" fill="#eff4ff" stroke="#2563eb" stroke-width="2"/>
+      <text x="120" y="84" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">c1</text>
+      <text x="160" y="72" font-family="DM Sans, sans-serif" font-size="10" fill="#2d8a4e">T: x++</text>
+      <text x="46" y="72" font-family="DM Sans, sans-serif" font-size="10" fill="#c53030">F</text>
+      <line x1="150" y1="80" x2="170" y2="80" stroke="#2d8a4e" stroke-width="1.5"/>
+      <line x1="90" y1="80" x2="70" y2="80" stroke="#c53030" stroke-width="1.5"/>
+      <line x1="170" y1="80" x2="170" y2="120" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="70" y1="80" x2="70" y2="120" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="70" y1="120" x2="170" y2="120" stroke="#d9d0c4" stroke-width="1.5"/>
+      <!-- cond2 -->
+      <line x1="120" y1="120" x2="120" y2="130" stroke="#d9d0c4" stroke-width="2"/>
+      <polygon points="120,130 150,152 120,174 90,152" fill="#eff4ff" stroke="#2563eb" stroke-width="2"/>
+      <text x="120" y="156" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">c2</text>
+      <text x="160" y="144" font-family="DM Sans, sans-serif" font-size="10" fill="#2d8a4e">T: x--</text>
+      <line x1="150" y1="152" x2="170" y2="152" stroke="#2d8a4e" stroke-width="1.5"/>
+      <line x1="90" y1="152" x2="70" y2="152" stroke="#c53030" stroke-width="1.5"/>
+      <line x1="170" y1="152" x2="170" y2="192" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="70" y1="152" x2="70" y2="192" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="70" y1="192" x2="170" y2="192" stroke="#d9d0c4" stroke-width="1.5"/>
+      <!-- cond3 -->
+      <line x1="120" y1="192" x2="120" y2="202" stroke="#d9d0c4" stroke-width="2"/>
+      <polygon points="120,202 150,224 120,246 90,224" fill="#eff4ff" stroke="#2563eb" stroke-width="2"/>
+      <text x="120" y="228" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">c3</text>
+      <line x1="150" y1="224" x2="170" y2="224" stroke="#2d8a4e" stroke-width="1.5"/>
+      <line x1="90" y1="224" x2="70" y2="224" stroke="#c53030" stroke-width="1.5"/>
+      <line x1="170" y1="224" x2="170" y2="264" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="70" y1="224" x2="70" y2="264" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="70" y1="264" x2="170" y2="264" stroke="#d9d0c4" stroke-width="1.5"/>
+      <!-- exit -->
+      <line x1="120" y1="264" x2="120" y2="272" stroke="#d9d0c4" stroke-width="2"/>
+      <circle cx="120" cy="284" r="12" fill="#2a2520"/><text x="120" y="289" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#fff">out</text>
+    </svg>
+  </div>
+  <div class="figure-caption">CFG for <code>f(x)</code>: each diamond is a condition with a true edge (executes the statement) and a false edge (skips it). Branch coverage = every edge taken; path coverage = every entry-to-exit route (2×2×2 = 8).</div>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Picking a Realistic Target</div>
+  <p>In real codebases, full path coverage can mean tests that "run all weekend" — combinatorially infeasible. Branch coverage is the practical minimum bar: it guarantees every condition has been tried both ways. Even full <em>statement</em> coverage is rare in industry. So you pick the strongest criterion you can afford for the criticality of the code, then write the minimum tests to reach it.</p>
+</div>
+
+<div class="quiz" id="quiz-6-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">For <code>f(x)</code> with three independent <code>if</code>s and no <code>else</code> or <code>return</code>, how many tests give 100% statement, branch, and path coverage respectively?</div>
+  <div class="quiz-options" data-quiz="q6">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>8, 8, 8 — three conditions means eight cases for each criterion.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>1, 2, 8 — one all-true test for statements; an all-true plus an all-false for branches; all 2³ combinations for paths.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>3, 6, 24 — one test per <code>if</code>, doubled per criterion.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>1, 1, 1 — a single all-true test reaches 100% of all three.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q6','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q6">
+    <strong>Correct: B.</strong> One all-true test runs every statement (statement = 1). Adding an all-false test makes every condition evaluate both ways (branch = 2) — this clean "2" works only because there are no early returns. Path coverage needs every route: 2×2×2 = 8. A is the seductive wrong answer the class kept blurting; D fails because all-true never evaluates any condition to false, leaving branch and path coverage incomplete.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SUMMARY ═══════════════════════ -->
+<section id="together" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This lecture moved from <em>motivation</em> to <em>mechanism</em> to <em>measurement</em>, and the pieces interlock. The <strong>Knight Capital</strong> disaster (Part I) is the whole course in one story: untested dead code, reused behind a flag, cost $440M in 28 minutes. Testing — execution with selected inputs and assertions — is verification's answer, and its deepest value isn't catching that one bug but the <strong>confidence to change</strong> safely.</p>
+
+<p>That confidence only materializes if you test at the right <strong>levels</strong> (Part II): unit tests for fast, localized, future-proof coverage; integration and system tests for the assembled whole. You then <em>design</em> tests through two complementary lenses (Part III): the <strong>black-box</strong> hat derives tests from the contract — and in Part IV that meant carving the input space into <strong>equivalence classes</strong> and probing their <strong>boundaries</strong>, where off-by-one bugs live. The password validator showed both the technique and the meta-skill: a great engineer asks the spec questions first, and treats testing as a <em>dialogue</em> when the requirements turn out ambiguous.</p>
+
+<p>Part V was the moral center: a good test has a <strong>strong oracle</strong> (fails for every incorrect program) yet is <strong>not brittle</strong> (passes for every correct one). The line between them is <strong>information hiding</strong> — assert on the contract, never on hidden internals — which is why bad tests give anxiety and good tests give velocity. Finally the <strong>white-box</strong> hat (Part VI) gave us a ruler: statement < branch < path coverage, made systematic with a control flow graph, always balanced against what's affordable.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Through-Line</div>
+  <p>Black-box thinking (equivalence classes, boundaries) chooses <em>which inputs</em> to test. White-box thinking (coverage, CFGs) checks <em>which code</em> you've reached. Strong-vs-brittle thinking decides <em>what to assert</em>. A professional suite uses all three — and respects information hiding so that tests survive the future you're actually paid to anticipate.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">What's Next</div>
+  <p>This was day one of testing — the <strong>black-box</strong> half plus an intro to white-box coverage. Thursday continues with the rest of <strong>white-box testing</strong>: finishing control flow graphs and the full mechanics of statement, branch, and path coverage, and the test-adequacy criteria sketched here. Also flagged for later: techniques for testing systems that are hard to run safely (like trading platforms), and tools such as <strong>Playwright</strong> for end-to-end web testing. Note for exams: material <em>newly introduced</em> in this testing lecture is not on the midterm — but everything it builds on (information hiding, user stories, acceptance criteria, design patterns, UML) very much is.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

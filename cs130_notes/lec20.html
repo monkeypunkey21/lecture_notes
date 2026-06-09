@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 20 — Designing Monopoly: An End-to-End Case Study</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 20 · Week 10</div>
+  <a href="#part1">Part I — Requirements</a>
+  <a href="#why-requirements" class="sub">Why Start With Requirements</a>
+  <a href="#functional-reqs" class="sub">Functional Requirements</a>
+  <a href="#shall-statements" class="sub">The "Shall" Form</a>
+  <a href="#user-stories" class="sub">User Stories vs. Acceptance Criteria</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Quality Attributes</a>
+  <a href="#qa-anatomy" class="sub">Anatomy of a QA Scenario</a>
+  <a href="#interoperability" class="sub">Interoperability</a>
+  <a href="#modifiability" class="sub">Modifiability &amp; Extensibility</a>
+  <a href="#usability-access" class="sub">Usability &amp; Accessibility</a>
+  <a href="#legal-constraints" class="sub">Legal Constraints</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — Architecture</a>
+  <a href="#req-vs-design" class="sub">Requirement vs. Design Decision</a>
+  <a href="#design-options" class="sub">Generating Design Options</a>
+  <a href="#client-server" class="sub">Client-Server vs. Peer-to-Peer</a>
+  <a href="#blocked-decision" class="sub">When a Decision Gets Blocked</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — UML Modeling</a>
+  <a href="#components" class="sub">Component Diagrams</a>
+  <a href="#sequence" class="sub">Sequence Diagrams</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Creational Patterns</a>
+  <a href="#creation-problem" class="sub">The Object-Creation Problem</a>
+  <a href="#factory-builder" class="sub">Factory vs. Builder</a>
+  <a href="#subproblems" class="sub">Orthogonal Subproblems</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part6">Part VI — Testing</a>
+  <a href="#coverage" class="sub">Coverage Criteria</a>
+  <a href="#symbolic-exec" class="sub">Symbolic Execution</a>
+  <a href="#adequacy" class="sub">Test Adequacy</a>
+  <a href="#quiz6" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#synthesis">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">COMSCI 130 · Software Engineering</div>
+  <h1>Designing Monopoly: An End-to-End Case Study</h1>
+  <p class="hero-sub">The Week 10 exam-prep lecture — walking the full software design cycle on a UCLA-themed online Monopoly, from requirements through architecture, UML, design patterns, and symbolic-execution testing.</p>
+</header>
+
+<!-- ═══════════════════════ INTRO ═══════════════════════ -->
+<section class="reveal">
+<p>This lecture was deliberately built as a live <strong>system design interview</strong> — the exact exercise you will face when applying for software jobs. The professor took one concrete problem, <em>build a multiplayer online Monopoly</em>, and ran it through every aspect of the course: turning stakeholder needs into requirements, choosing an architecture, modeling it in UML, picking design patterns, and planning tests. Along the way the class competed against an AI (Claude Opus 4.8) that had been asked to do the same thing.</p>
+
+<p>Because the final exam is itself a case study of this shape, this page is organized as the design cycle itself. Each part is a stage in that pipeline, and the connections between stages — how a requirement forces an architecture, how an architecture forces a pattern — are the real lesson. We teach every term from scratch, so no prior software-engineering vocabulary is assumed.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Through-Line of This Lecture</div>
+  <p>Software design is a chain of <strong>decisions driven by requirements</strong>. You identify what the system must do and how well it must do it, then you generate <em>multiple</em> design options for each sub-problem and choose between them by how each one scores against those requirements. Every part of this lecture is one link in that chain.</p>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>Requirements — Saying What, Not How</h2>
+</div>
+
+<h3 id="why-requirements">Why Start With Requirements?</h3>
+<p>Before you write a single line of code — or even decide on a database or a server — you have to know <em>what the system is supposed to do</em>. That sounds obvious, but the discipline of <strong>requirements engineering</strong> is harder than it looks, because the natural temptation is to immediately start describing <em>how</em> you would build it. Requirements are the first stage of the cycle precisely because every later decision (architecture, patterns, tests) is justified by them. If you skip them, you have nothing to design <em>toward</em>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Requirement</div>
+  <p>A <strong>requirement</strong> is a statement of what the system must do or how well it must do it, written so that it leaves the development team <em>maximum freedom in how to implement it</em>. Requirements describe the problem; design decisions describe the solution.</p>
+</div>
+
+<p>The professor pushed on this distinction repeatedly. When a student suggested "the system should keep track of the game state," he flagged it as drifting into <em>implementation territory</em>: <em>who</em> keeps track of state is a design decision. Why does this matter? Because, as he put it, the developer "will probably be more experienced... in the right ways to implement than the people specifying the requirements." Over-specifying the requirement ties the implementer's hands for no reason.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Common Mistake — Smuggling In Implementation</div>
+  <p>"The game keeps track of state" and "each player should have a..." both leak <em>how</em> into a <em>what</em>. The fix is to describe the requirement from the perspective of someone <strong>using</strong> the system: instead of saying who stores the balance, say <em>"the game shall display the balance of each player."</em> Display is observable behavior; storage is an implementation choice.</p>
+</div>
+
+<h3 id="functional-reqs">Functional Requirements</h3>
+<p>A <strong>functional requirement</strong> states a specific behavior the system must exhibit — an input/output relationship a user can observe. For our Monopoly board, the class brainstormed the things the UI must show. Notice that all of them are phrased as observable display behaviors, not storage mechanisms:</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Functional Requirement</div>
+  <p>A <strong>functional requirement</strong> describes <em>what the system does</em>: a concrete, testable behavior. "The game shall display the board layout" is functional. Contrast this with quality attributes (Part II), which describe <em>how well</em> it does those things.</p>
+</div>
+
+<h4 id="shall-statements">The "Shall" Form</h4>
+<p>Requirements are conventionally written as <strong>"shall" statements</strong>. This is not bureaucratic decoration — the fixed grammar forces precision and makes each requirement individually checkable. The class converged on a single functional requirement covering the board display:</p>
+
+<pre><code><span class="cm"># Functional requirement (shall statement)</span>
+The game <span class="kw">shall</span> display:
+  • the board layout (which fields exist, what event each triggers)
+  • the balance of each player
+  • the location of each player
+  • who owns each field
+  • how many houses are on each field
+  • whose turn it is</code></pre>
+
+<div class="callout tip">
+  <div class="callout-title">Why Phrase It As "Display"</div>
+  <p>Every item became a <em>display</em> requirement. By describing the system "from the perspective of somebody actually using the game," you specify the <strong>observable</strong> behavior and stay silent on internals — exactly the freedom-preserving move from the concept box above. This is the single most repeated piece of advice in the requirements segment.</p>
+</div>
+
+<p>One more lens the professor applied: he asked specifically for requirements that are <strong>architecturally significant</strong> — ones that "can really impact our architecture." Not every true statement about the system deserves to be a tracked requirement; the ones worth your attention early are those that will <em>constrain how you build it</em>. This idea returns in Part III, where a single interoperability requirement rules out an entire architectural option.</p>
+
+<h3 id="user-stories">User Stories vs. Acceptance Criteria</h3>
+<p>Two other requirement formats came up, and the professor was careful to keep them separate because students kept blending them.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — User Story</div>
+  <p>A <strong>user story</strong> states a need from the point of view of a specific user: <em>"As a &lt;concrete role&gt;, I want &lt;goal&gt; so that &lt;benefit&gt;."</em> It has three parts: who, what, and — crucially — the <strong>"so that"</strong> giving the motivation.</p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Acceptance Criteria</div>
+  <p><strong>Acceptance criteria</strong> describe how you can <em>test</em> that the system conforms to a requirement. They use <em>"the player can see..."</em> (a checkable assertion), <strong>not</strong> "the player wants to see..." (a desire). Acceptance criteria have <strong>no "so that"</strong> clause — they are about verifiability, not motivation.</p>
+</div>
+
+<p>The cleanest demonstration was when a student offered "given that the game has started, the player wants to see the board." The professor diagnosed it as a <em>mix</em> of two formats and split it into the two clean versions:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>As a user story:</strong> <em>"As a player, I want to see the board (including its layout) so that I know what consequences will occur."</em> Note the concrete role, the want, and the "so that."</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>As acceptance criteria:</strong> <em>"Given that the game has started, the player can see the board including its layout."</em> Note the precondition ("given that..."), "can see" instead of "wants to see," and no "so that."</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Don't Mix The Formats</div>
+  <p>The recurring error all lecture was stapling a "so that" benefit onto an acceptance criterion, or phrasing a testable check as a desire. Keep them in separate sections of your design doc. A later example showed the professor sharpening the role from a vague "user" to a <strong>"game master"</strong> — the more concrete the user, the better the story.</p>
+</div>
+
+<div class="quiz" id="quiz1">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Which of the following is correctly written as an <em>acceptance criterion</em> (not a user story or a leaked implementation detail)?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>"As a player, I want to see my balance so that I can make decisions."</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>"The Game class shall store each player's balance in a hash map."</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>"Given the game has started, the player can see the board layout."</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>"The player wants to see the board so that they know the consequences."</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>C is correct.</strong> An acceptance criterion has a precondition ("given..."), uses the testable form "the player <em>can</em> see," and has no "so that." A is a user story (it has the "so that" benefit). D mixes formats — "wants to see" is a desire, not a checkable assertion, yet it carries a "so that." B leaks implementation: <em>how</em> the balance is stored (a hash map) is a design decision, not a requirement.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>Quality Attributes — How Well, Not Just What</h2>
+</div>
+
+<p>Functional requirements say what the system does. But two systems can do the same things and still be wildly different: one is fast, secure, and accessible; the other is none of those. <strong>Quality attributes</strong> (also called non-functional requirements) capture the <em>how well</em>. They are usually the <em>architecturally significant</em> requirements — the ones that actually decide your structure — which is why the professor said our quality attributes turned out to be "much more useful" than Claude's for shaping the design.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Quality Attribute</div>
+  <p>A <strong>quality attribute</strong> is a measurable property of <em>how well</em> the system performs its functions — performance, interoperability, modifiability, usability, accessibility, security, robustness, and so on. These are the requirements most likely to drive your architecture.</p>
+</div>
+
+<h3 id="qa-anatomy">The Anatomy of a Quality-Attribute Scenario</h3>
+<p>You cannot just write "the system should be fast." A quality attribute is only useful if it is <strong>measurable</strong>, and the professor gave an explicit recipe for making it so: describe a concrete <em>scenario</em>, then attach a <em>measure</em>.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The QA Recipe — Scenario + Measure</div>
+  <p>To specify any quality attribute: <strong>(1)</strong> describe a concrete scenario (what happens, under what stimulus), then <strong>(2)</strong> attach a precise, independently-measurable metric. In this course we call them the <strong>stimulus</strong> and the <strong>measure</strong>; in the formal six-part framework these map to the <em>stimulus</em> and the <em>response measure</em>.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">The Measure Must Be Independent</div>
+  <p>When a student proposed measuring modifiability by "testability," the professor rejected it: the two are correlated, so the metric becomes <em>circular</em> — you'd be defining one quality attribute in terms of another. Pick a metric you can measure <strong>on its own</strong>, like developer-hours.</p>
+</div>
+
+<h3 id="interoperability">Interoperability</h3>
+<p>Because this is a networked multiplayer game, the most important quality attribute is <strong>interoperability</strong> — different clients exchanging data and agreeing on what it means. A key insight: interoperability "is not just about the sending. It's also about the <em>interpretation</em> of the data." Two clients can successfully transmit bytes and still disagree about the game state.</p>
+
+<p>A student suggested a 50% threshold as the measure. The professor pushed back hard — would you be happy if only half your fields showed up correctly for your opponent? The bar belongs much higher:</p>
+
+<pre><code><span class="cm"># Interoperability quality-attribute scenario</span>
+<span class="kw">Scenario:</span> Data exchanged between any two Monopoly clients.
+<span class="kw">Measure:</span>  The exchanged data shall be interpreted correctly
+          with an accuracy of <span class="nb">100%</span>.
+<span class="cm"># "There's no excuse for Monopoly not to have correctly</span>
+<span class="cm">#  interpretable data."</span></code></pre>
+
+<h3 id="modifiability">Modifiability &amp; Extensibility</h3>
+<p>We want "a gazillion different themes" — UCLA-themed, Christmas-themed, and so on. The ability to change a system is called <strong>modifiability</strong> (sometimes "changeability").</p>
+
+<div class="callout warning">
+  <div class="callout-title">"All Software Can Be Changed" — So Be Precise</div>
+  <p>You can't just say "the game rules shall be modifiable" — by definition, all software can be changed; that's why it's <em>soft</em>ware. A good modifiability requirement names <strong>exactly which aspect</strong> may change and attaches a <strong>concrete metric</strong>. Some rules should stay fixed; only specified aspects are changeable.</p>
+</div>
+
+<p>The class enumerated the changeable aspects — graphics shaders for seasonality, the properties/fields, the number of dice, the chance and community-chest cards, and the currency types — and then chose a measure in <strong>developer time</strong>:</p>
+
+<pre><code><span class="cm"># Modifiability scenario (developer-time measure)</span>
+Changing the set of properties / number of dice / cards
+shall take a developer less than <span class="nb">1 week</span>.</code></pre>
+
+<div class="callout insight">
+  <div class="callout-title">Runtime Modifiability Is Stronger</div>
+  <p>The professor singled out Claude's wording — "new chance cards can be added <em>without recoding the game</em>" — as an especially good modifiability requirement. Why? It is a <strong>runtime</strong> modifiability attribute: no code changes at all. This stronger form will, in Part V, <em>eliminate</em> every factory pattern as a valid option. A requirement that sounds like a small wording choice quietly decides your design.</p>
+</div>
+
+<h4 id="extensibility">Extensibility — A Special Case</h4>
+<p>Late in the lecture the professor distinguished a sibling term. <strong>Extensibility</strong> is the special kind of modifiability where you only <em>add</em> something new, without changing or removing anything existing. General modifiability covers all three — adding, removing, or replacing. So:</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="320" height="150" viewBox="0 0 320 150" style="display:block; margin:0 auto;">
+      <ellipse cx="160" cy="80" rx="150" ry="62" fill="none" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="160" y="34" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="14" font-weight="700" fill="#c0510a">Modifiability</text>
+      <text x="160" y="52" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">add · remove · replace</text>
+      <ellipse cx="160" cy="95" rx="78" ry="34" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="160" y="92" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#2a2520">Extensibility</text>
+      <text x="160" y="110" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">add only</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Extensibility is a <em>subset</em> of modifiability: extension adds without altering what exists.</div>
+</div>
+
+<h3 id="usability-access">Usability &amp; Accessibility</h3>
+<p>Two more architecturally significant attributes surfaced. <strong>Usability</strong> is specified with the same scenario+measure recipe:</p>
+
+<pre><code><span class="cm"># Usability scenario (learnability / discoverability)</span>
+A new user shall be able to learn how to play a complete
+game successfully within less than <span class="nb">5 minutes</span> of tutorial.</code></pre>
+
+<p>This is really a <em>discoverability</em> requirement — how easily a newcomer finds out how the system works. (Note: the professor caught himself mislabeling a network-latency property as accessibility; "the system continues to operate under latency" is actually <strong>robustness</strong>, not accessibility. The categories matter.)</p>
+
+<h3 id="legal-constraints">When a Standard Becomes a Legal Constraint</h3>
+<p>The best discussion of the lecture: is "follow accessibility standard WCAG 2.1 AA" a <em>design decision</em> or a <em>requirement</em>? The professor's answer — it depends on whether you have a <em>choice</em>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Legal Constraint</div>
+  <p>A <strong>legal constraint</strong> is a requirement you do not get to negotiate, because the law imposes it. For commercial / public-serving systems, accessibility standards (WCAG 2.1 AA) are legally mandated — if you don't comply, "you can be fined, and you will be fined." Because you have no freedom to choose otherwise, it is a <strong>requirement, not a design decision</strong>.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Choice Is What Separates Requirement From Design</div>
+  <p>This is the deep idea behind the whole requirements/design split. If meeting WCAG were optional — say you chose AA to please your target audience when AA wasn't required — it would be a <em>design decision</em>. The moment the law removes your choice, the same line of text becomes a <em>constraint you design around</em>. "We do not have the choice to affect them, so we consider them requirements." This is exactly why UCLA is updating its systems to comply.</p>
+</div>
+
+<div class="quiz" id="quiz2">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A teammate writes: "Modifiability shall be measured by how testable the cards module is." Why does the professor reject this metric?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Testability is not a real quality attribute.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>The metric is circular — it defines one quality attribute in terms of another correlated one, so it can't be measured independently.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Modifiability can never be measured at all.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Testability is a functional requirement, not a quality attribute.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>B is correct.</strong> Modifiability and testability are correlated, so measuring one by the other is circular — you've smuggled a second quality attribute into the metric. The professor insisted on a metric you can "measure individually," like developer-hours ("changing properties should take less than a week"). C is wrong: modifiability is measurable, just not via another attribute. A and D mischaracterize testability, which is a legitimate quality property in its own right.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>Architecture — Choosing Among Design Options</h2>
+</div>
+
+<p>With architecturally significant requirements in hand, the next stage is design: deciding the high-level structure that <em>satisfies</em> those requirements. The professor framed the whole activity as generating <strong>multiple alternatives</strong> per sub-problem and then evaluating each against the requirements — never picking the first idea.</p>
+
+<h3 id="req-vs-design">Requirement vs. Design Decision — The Exam-Critical Distinction</h3>
+<p>The professor explicitly flagged this contrast as something to "remember for the exam," using examples Claude generated:</p>
+
+<table class="compare-table">
+  <tr><th>Requirement (the "what")</th><th>Design Decision (the "how")</th></tr>
+  <tr><td>"Players see balance updates as soon as money changes hands." (functional + quality mix)</td><td>"Use a publish-subscribe event bus to propagate updates."</td></tr>
+  <tr><td>"New chance cards can be added without recoding the game." (a clean <em>runtime modifiability</em> requirement)</td><td>"Store card definitions in a database loaded at startup."</td></tr>
+  <tr><td>Describes observable behavior / quality, leaving freedom.</td><td>Commits to a specific mechanism or structure.</td></tr>
+</table>
+
+<div class="callout warning">
+  <div class="callout-title">Not Everything Is A Requirement</div>
+  <p>The professor rejected Claude's "the game state is consistent for every connected player" as a functional requirement — "it's just not, really." Be skeptical: a true-sounding sentence isn't automatically a well-formed requirement. The good ones are concrete, testable, and architecturally meaningful.</p>
+</div>
+
+<h3 id="design-options">Generating Design Options Per Sub-Problem</h3>
+<p>The first sub-problem: <strong>how do clients exchange data?</strong> The class generated two alternatives, then weighed each against the requirements rather than committing immediately.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Option 1 — Publish/Subscribe.</strong> When a player moves, the event is published and all subscribers are automatically notified. Pub/sub is generally good for modifiability — it's "scalable in terms of events" if you want to add new event types.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Test it against <em>our</em> requirements.</strong> Pub/sub helps general modifiability — but is it the <em>kind</em> of modifiability we need? Our modifiability need is about cards and properties, not adding event types. The professor's verdict: pub/sub's strength "doesn't really apply to the situation." A pattern being good in the abstract doesn't make it good <em>here</em>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Option 2 — Peer-to-peer (decentralized).</strong> No central server; clients talk directly. This separates the <em>data-exchange</em> sub-problem from the <em>networking</em> sub-problem, which is still unsolved at this point.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">"Generally Good" ≠ "Good Here"</div>
+  <p>The recurring move: an option has generic advantages (pub/sub is modular and scalable), but you must check whether those advantages line up with <em>your specific</em> requirements. The whole point of having written precise quality attributes in Part II is so you can answer this question instead of cargo-culting a popular pattern.</p>
+</div>
+
+<h3 id="client-server">Client-Server vs. Peer-to-Peer</h3>
+<p>The networking sub-problem produced a genuine trade-off the professor called "a really interesting situation":</p>
+
+<table class="compare-table">
+  <tr><th>Client-Server</th><th>Peer-to-Peer</th></tr>
+  <tr><td><strong>Con:</strong> you must provide and run your own server → operating cost goes up.</td><td><strong>Pro:</strong> no server to pay for.</td></tr>
+  <tr><td><strong>Pro:</strong> can be more scalable/performant — the server fans out messages.</td><td><strong>Con:</strong> every client must send messages to every other client, putting heavy drain on each client's local network.</td></tr>
+  <tr><td><strong>Pro:</strong> a central authority — you can actually <em>monetize</em> the game.</td><td><strong>Con:</strong> hard to monetize — peers could just send each other a "you bought it" message and the seller disappears.</td></tr>
+</table>
+
+<p>That last row decided it. The business goal — "we want to code this and become rich" — means you need a server you control so people can't bypass payment. <strong>The class chose client-server.</strong> Note how a <em>business requirement</em> (monetization) settled an architectural decision that performance alone left ambiguous.</p>
+
+<h3 id="blocked-decision">When a Decision Gets Blocked: Ask the Scrum Master</h3>
+<p>Choosing client-server surfaced a requirement nobody had considered: <strong>what is our operating budget?</strong> You can't decide whether you can afford your own server without knowing the budget. This is a teaching moment about <strong>Agile process</strong>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Scrum Master</div>
+  <p>In an Agile/Scrum team, when a decision is <strong>blocked</strong> by something outside the team's authority (here, the budget), you escalate to the <strong>Scrum Master</strong>, whose job includes removing impediments. The Scrum Master goes and figures out whether the budget exists — and in our story, came back with: yes, there's enough operating cost budgeted for a server.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Design Surfaces Hidden Requirements</div>
+  <p>This is a real pattern: making a design decision can <em>reveal</em> a requirement you never elicited (the budget). Requirements and design aren't strictly sequential — they iterate. When a design decision exposes an unconsidered requirement, that's normal; you go get the answer and continue.</p>
+</div>
+
+<div class="quiz" id="quiz3">
+  <div class="quiz-question">For the networked Monopoly, what ultimately decided client-server over peer-to-peer?</div>
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Peer-to-peer was strictly slower in every benchmark.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>The need for a central authority to enable monetization — peers could otherwise bypass payment.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Peer-to-peer can't support publish/subscribe.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>The accessibility (WCAG) legal constraint forbade peer-to-peer.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>B is correct.</strong> Performance left the choice ambiguous (each architecture had pros and cons there), but the <em>business</em> requirement of monetization broke the tie: without a central server, players could send each other "I bought it" messages and the seller could disappear, making it hard to collect money. A overstates performance (it was a genuine trade-off). C and D are unrelated — pub/sub is a separate sub-problem, and WCAG is an accessibility constraint, not a networking one.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>UML Modeling — Drawing the Design</h2>
+</div>
+
+<p>Once you've made high-level architectural decisions, the next interview-standard step is to write a <strong>design doc</strong> and model the system. In this course you model with <strong>UML</strong> (Unified Modeling Language). The professor noted the sequence diagram is "the most important one for this" problem, but the class also produced component and class diagrams.</p>
+
+<h3 id="components">Component Diagrams — And What a Component <em>Is</em></h3>
+<p>A student-drawn component diagram showed a client app, game server, game database, event bus, and game engine, wired with different connector types — WebSockets for live updates, REST + JSON for request/response, SQL between engine and database. Using <em>different connectors for different purposes</em> earned praise. But it also exposed a precise definition.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Component</div>
+  <p>A <strong>component</strong> is an <em>independently deployable runtime unit</em>, like a process. By this definition the "game server" is <strong>not</strong> a component — it's a <em>device</em> on which the other components (game engine, database process, event bus) are deployed. The database, running in a separate process, <em>is</em> its own component.</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="430" height="200" viewBox="0 0 430 200" style="display:block; margin:0 auto;">
+      <!-- client -->
+      <rect x="10" y="80" width="90" height="44" rx="6" fill="#fff" stroke="#c0510a" stroke-width="2"/>
+      <text x="55" y="100" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#2a2520">Client App</text>
+      <text x="55" y="115" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" fill="#6b6560">component</text>
+      <!-- engine -->
+      <rect x="180" y="20" width="100" height="44" rx="6" fill="#fff" stroke="#c0510a" stroke-width="2"/>
+      <text x="230" y="40" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#2a2520">Game Engine</text>
+      <text x="230" y="55" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" fill="#6b6560">component</text>
+      <!-- event bus -->
+      <rect x="180" y="136" width="100" height="44" rx="6" fill="#fff" stroke="#c0510a" stroke-width="2"/>
+      <text x="230" y="156" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#2a2520">Event Bus</text>
+      <text x="230" y="171" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" fill="#6b6560">pub/sub</text>
+      <!-- db -->
+      <rect x="350" y="78" width="70" height="44" rx="6" fill="#fff" stroke="#c0510a" stroke-width="2"/>
+      <text x="385" y="98" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#2a2520">DB</text>
+      <text x="385" y="113" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" fill="#6b6560">component</text>
+      <!-- connectors -->
+      <line x1="100" y1="95" x2="180" y2="48" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="135" y="62" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#6b6560">WebSocket</text>
+      <line x1="100" y1="108" x2="180" y2="155" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="132" y="146" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#6b6560">REST/JSON</text>
+      <line x1="280" y1="48" x2="350" y2="92" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="318" y="62" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#6b6560">SQL</text>
+      <text x="215" y="14" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" fill="#6b6560">(all deployed on the game-server device)</text>
+    </svg>
+  </div>
+  <div class="figure-caption">A corrected component diagram. The "game server" is a deployment device, not a component; connectors are labeled by protocol.</div>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">An Event Bus Needs Subscribers, Too</div>
+  <p>The diagram showed publishing <em>to</em> the event bus, but nothing <em>subscribing</em> from it — "just publishing would not be enough." A pub/sub connection only delivers value when something is on the receiving end. Also: a separate process for the database must show <em>how</em> it communicates (which protocol), not just that an arrow exists.</p>
+</div>
+
+<details>
+<summary>Where Claude went wrong on the component diagram</summary>
+<div class="details-body">
+<p>The professor critiqued Claude's component diagram as not following UML standards. The main faults:</p>
+<ul style="margin-left: 20px;">
+<li>It drew the database <em>inside</em> a process rather than as its own separately-running component.</li>
+<li>It didn't specify <em>how</em> components communicate — over the network? which protocol/wire format?</li>
+<li>It mislabeled relationships with stereotypes like <code>&lt;&lt;observer&gt;&gt;</code>, <code>&lt;&lt;update&gt;&gt;</code>, <code>&lt;&lt;provide&gt;&gt;</code> — these are not valid component-diagram views ("absolutely terrible," in his words). Model/controller/observer stereotypes belong to other diagram types, not a component diagram.</li>
+</ul>
+</div>
+</details>
+
+<h3 id="sequence">Sequence Diagrams — Modeling Interactions Over Time</h3>
+<p>A <strong>sequence diagram</strong> shows the messages exchanged between participants over time, and it was the right tool to capture a subtle accessibility-driven design: supporting multiple simultaneous UIs on the same game logic.</p>
+
+<div class="callout insight">
+  <div class="callout-title">One Game Logic, Many UIs (Dynamic Registration)</div>
+  <p>For accessibility, the same game logic must drive a 2D visual UI for sighted players <em>and</em> a text UI for blind players. The professor's solution from a real prior project: each UI <strong>dynamically registers itself</strong> with the game logic. Once registered, whenever the balance changes, every registered UI receives an "balance changed" update. The sequence diagram captures exactly this register-then-receive-updates protocol — which is the Observer pattern in action.</p>
+</div>
+
+<div class="quiz" id="quiz4">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In a UML component diagram for this game, why should "Game Server" <em>not</em> be drawn as a component?</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Servers are never modeled in UML.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>A component is an independently deployable runtime unit; the server is the <em>device</em> the components are deployed on, not a unit itself.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>The server is an actor, like the player.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Components can only appear in sequence diagrams.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>B is correct.</strong> A component is an independently deployable runtime unit (a process), and the game server is the hardware device on which the game engine, database process, and event bus are actually deployed. C confuses this with the actor mistake from the use-case discussion — the <em>bank</em> was wrongly drawn as an actor when it's part of the system. A and D are simply false claims about UML.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>Creational Design Patterns — How Objects Get Built</h2>
+</div>
+
+<p>Now a detailed-design sub-problem: the game aggregates many fields, chance cards, and community-chest cards. <strong>How are those objects created?</strong> The professor first cleared up a vocabulary confusion, then walked the options.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Object vs. Interaction</div>
+  <p>An <strong>object is an instance of a class</strong> — a programming-language construct. "The user creates the object" confuses an <em>interaction</em> (the user uses a UI) with a <em>software design decision</em> (which <em>code</em> instantiates the class). The design question is: <em>which code is responsible for creating these objects?</em></p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Design Pattern</div>
+  <p>A <strong>design pattern</strong> is a common, well-accepted solution to a recurring problem. You don't always need one — but for recurring problems like "how do we construct this object structure," a catalog of patterns (factory method, abstract factory, builder, ...) gives you proven options.</p>
+</div>
+
+<h3 id="creation-problem">The Object-Creation Problem</h3>
+<p>The class surfaced several options for creating the cards and fields:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>The Game creates them directly</strong> — the game object is responsible for instantiating its own community-chest cards, chance cards, and fields.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Load them from a database</strong> — read card/field definitions from storage at startup. (This solves a <em>different</em> sub-problem; see below.)</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>A Factory / Abstract Factory creates them</strong> — a dedicated creational pattern encapsulates the instantiation logic.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>A Builder constructs them from a spec</strong> — "if you take a spec and then you build it, it's a builder."</p>
+</div>
+
+<h3 id="factory-builder">Factory vs. Builder — Evaluated Against the Requirement</h3>
+<p>Here the lecture pays off the modifiability requirement from Part II. Recall the strong, <em>runtime</em> form: a <strong>non-technical game master</strong> must add new cards/properties <em>without changing any code</em>. The professor walked the class to the key insight:</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Insight — Factories Require Code Changes</div>
+  <p>If a <strong>non-technical user must add new cards without touching code</strong>, then <em>none of the factory patterns apply</em> — adding a new product to a factory means editing the factory's code. The factory's pro is flexibility; its con is that "code changes are necessary." A <strong>builder</strong>, by contrast, takes a <em>spec</em> as input and constructs the object from it — <strong>no code changes needed</strong> to support a new card the game master designs.</p>
+</div>
+
+<table class="compare-table">
+  <tr><th>Option</th><th>Pro</th><th>Con (vs. our requirement)</th></tr>
+  <tr><td>Abstract Factory / Factory Method</td><td>Flexible object creation</td><td>Adding a new card requires <strong>code changes</strong> — fails the "non-technical user, no recode" requirement</td></tr>
+  <tr><td>Builder</td><td>Takes a <strong>spec</strong> as input → no code changes to add a new card</td><td>(Satisfies the runtime-modifiability requirement)</td></tr>
+</table>
+
+<div class="callout warning">
+  <div class="callout-title">Where Even Claude Failed</div>
+  <p>The professor's punchline: Claude picked a <em>factory</em> for card creation — even though Claude had <em>itself</em> written the requirement that adding cards "should not require changes to the code." A factory contradicts that requirement. The lesson: always trace your pattern choice back to the actual requirement; don't reach for the famous pattern reflexively.</p>
+</div>
+
+<h3 id="subproblems">Orthogonal Sub-Problems</h3>
+<p>A crucial clarification: "load from a database" and "use a builder" are <strong>not competing</strong> options — they answer <em>different</em> questions.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Decompose Into Orthogonal Sub-Problems</div>
+  <p><strong>Storage</strong> (disk? database?) and <strong>construction</strong> (factory? builder?) are <em>orthogonal</em> sub-problems — they're complementary, not alternatives. "Who is responsible for creating the object" is yet a third axis (a <em>responsibility-assignment</em> question). The disciplined process: split the design into independent sub-problems, list the options <em>within</em> each, evaluate those options against your requirements, then decide each axis separately.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">This Mirrors The Whole Lecture</div>
+  <p>This is the same move as Part III, where data-exchange and networking were separate sub-problems. Recognizing that two "options" actually answer different questions is half the skill of system design — it prevents false either/or choices and lets each axis be optimized on its own.</p>
+</div>
+
+<div class="quiz" id="quiz5">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Given the requirement "a non-technical game master must add new cards without changing any code," why is a <em>Builder</em> preferred over an <em>Abstract Factory</em>?</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Builders are faster at runtime than factories.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>A Builder constructs the object from a spec supplied at runtime, so a new card needs no code change; adding a product to a factory requires editing code.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Abstract Factory cannot create more than one product type.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Builders store data in a database and factories do not.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>B is correct.</strong> The runtime-modifiability requirement forbids code changes for new cards. A factory must be edited to add a new product, so it fails; a builder takes a <em>spec</em> as input and builds from it, satisfying the requirement. D is wrong — storage (database/disk) is an <em>orthogonal</em> sub-problem, not part of the factory-vs-builder distinction. A and C misstate the patterns' actual properties.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART VI ═══════════════════════ -->
+<section id="part6" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part VI</div>
+  <h2>Testing — Coverage and Symbolic Execution</h2>
+</div>
+
+<p>The final stage of the cycle is planning how to <em>test</em> the system. The class chose to focus on the functional requirement of <strong>game logic</strong>. Two questions organize good testing: <em>what makes a test good?</em> and <em>how thoroughly are we exercising the code?</em></p>
+
+<h3 id="good-tests">Two Properties of Good Tests</h3>
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Two Properties of a Good Test</div>
+  <p><strong>(1) Specification-dependent, not implementation-dependent:</strong> a good test checks the <em>specification</em> (what the system should do), not the particular implementation — so refactoring doesn't break it. <strong>(2) High coverage:</strong> the test suite should exercise as much of the code's behavior as possible.</p>
+</div>
+
+<h3 id="coverage">Coverage Criteria</h3>
+<p>Coverage metrics quantify how much of a program your tests exercise. The professor was emphatic about terminology and listed a hierarchy:</p>
+
+<div class="callout warning">
+  <div class="callout-title">"Line Coverage" Does Not Exist In This Course</div>
+  <p>Say <strong>statement coverage</strong>, not "line coverage." They are different: one source line can hold several statements (or none), so there's no 1-to-1 mapping. On an exam, "line coverage" is the wrong term.</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="300" height="170" viewBox="0 0 300 170" style="display:block; margin:0 auto;">
+      <rect x="60" y="10" width="180" height="34" rx="6" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="150" y="32" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#c0510a">Path coverage</text>
+      <rect x="60" y="68" width="180" height="34" rx="6" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="150" y="90" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#2a2520">Branch coverage</text>
+      <rect x="60" y="126" width="180" height="34" rx="6" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="150" y="148" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#2a2520">Statement coverage</text>
+      <line x1="150" y1="44" x2="150" y2="68" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="150" y1="102" x2="150" y2="126" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="268" y="32" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">strongest</text>
+      <text x="270" y="148" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">weakest</text>
+    </svg>
+  </div>
+  <div class="figure-caption">The coverage hierarchy. Achieving a stronger criterion implies the weaker ones beneath it.</div>
+</div>
+
+<table class="compare-table">
+  <tr><th>Criterion</th><th>What it requires</th></tr>
+  <tr><td>Statement coverage</td><td>Every statement is executed at least once.</td></tr>
+  <tr><td>Branch coverage</td><td>For every <code>if</code>, both the <em>true</em> and <em>false</em> branches are taken.</td></tr>
+  <tr><td>Path coverage</td><td>Every <em>feasible combination</em> of branches (every path through the program) is exercised — minus paths that are infeasible.</td></tr>
+</table>
+
+<h3 id="symbolic-exec">Symbolic Execution — Finding Inputs for Path Coverage</h3>
+<p>How do you determine whether a path is feasible, and what inputs would drive the program down it? You draw a <strong>control-flow graph</strong> and run <strong>symbolic execution</strong>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Symbolic Execution</div>
+  <p><strong>Symbolic execution</strong> walks the program with <em>symbolic</em> (not concrete) values, tracking two things at each statement: the <strong>path condition</strong> — the set of conditions that must hold for control to <em>reach</em> this statement — and the <strong>effect</strong> the statement has on program state (e.g. an assignment updates a variable's symbolic value). Its purpose: find concrete test inputs that drive execution down each path, so you can achieve 100% path coverage.</p>
+</div>
+
+<p>The professor traced this worked example live:</p>
+
+<pre><code><span class="kw">if</span> (x <span class="op">&gt;</span> <span class="nb">0</span>) {        <span class="cm">// branch F1</span>
+    y<span class="op">++</span>;
+}
+<span class="kw">if</span> (y <span class="op">&gt;</span> <span class="nb">5</span>) {        <span class="cm">// branch F2</span>
+    x<span class="op">++</span>;
+}</code></pre>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Entry.</strong> The first <code>if</code> is always reached, so its path condition is simply <code>true</code>. Evaluating the condition has no effect on state.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Inside the first <code>if</code> (F1 true).</strong> Path condition: <code>x &gt; 0</code>. Effect of <code>y++</code>: <code>y = y + 1</code>. The program state now records the new symbolic value of <code>y</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Reaching the second <code>if</code>.</strong> This statement is reached from <em>two</em> incoming paths: F1-true (<code>x &gt; 0 ∧ y = y+1</code>) and F1-false (<code>x ≤ 0</code>, the <em>negation</em> of the true branch's condition, with no effect since <code>y++</code> never ran). Its path condition is the OR of these two.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Inside the second <code>if</code> (F2 true), on top of F1-true.</strong> Path condition: <code>x &gt; 0 ∧ (y + 1) &gt; 5</code> — note <code>y+1</code>, because <code>y</code> was already incremented on this path. Effect of <code>x++</code>: <code>x' = x + 1</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <p><strong>Inside the second <code>if</code> (F2 true), on top of F1-false.</strong> Here <code>y</code> was never incremented, so the path condition is <code>x ≤ 0 ∧ y &gt; 5</code>, with effect <code>x' = x + 1</code>. Each distinct path yields a distinct path condition — and solving each one gives a concrete test input.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Why The "y + 1" Matters</div>
+  <p>The subtlety the professor drilled: on the path where the first branch ran, <code>y</code> has <em>already</em> changed before the second condition is evaluated. So the second condition is <code>y + 1 &gt; 5</code>, not <code>y &gt; 5</code>. Symbolic execution carries the <em>accumulated effects</em> forward — that's what lets it compute exactly which inputs reach each statement.</p>
+</div>
+
+<h3 id="adequacy">Test Adequacy — How Much Coverage Is Enough?</h3>
+<div class="callout big-idea">
+  <div class="callout-title">Path Coverage ≠ Exhaustive Testing</div>
+  <p>Reaching <strong>100% path coverage is usually feasible</strong>: paths are finite unless you have unbounded recursion or reflection — plain <code>if</code>/<code>else</code>/loops keep the path set finite (infeasible paths are simply discarded). But <strong>exhaustive testing — covering every single execution case — is impossible</strong>, because the space of inputs/states is effectively unbounded. Don't conflate the two.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Choose Adequacy By Requirements</div>
+  <p>How much coverage is "enough" is a judgment call set by your <strong>test adequacy criteria</strong>, which depend on your requirements. A <em>spacecraft</em> system warrants 100% path coverage; a <em>digital Monopoly</em> does not — you only need the level of confidence appropriate to the use case. Once again, requirements drive the decision — the same theme as every other part.</p>
+</div>
+
+<div class="quiz" id="quiz6">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In the symbolic-execution example, after <code>if (x &gt; 0) y++;</code>, what is the path condition for entering the body of <code>if (y &gt; 5)</code> <em>along the path where the first branch was taken</em>?</div>
+  <div class="quiz-options" data-quiz="q6">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div><code>x &gt; 0 ∧ y &gt; 5</code></div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div><code>x &gt; 0 ∧ (y + 1) &gt; 5</code></div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div><code>x ≤ 0 ∧ y &gt; 5</code></div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div><code>true</code></div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q6','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q6">
+    <strong>B is correct.</strong> On the path where <code>x &gt; 0</code> held, <code>y++</code> already executed, so the symbolic value of <code>y</code> is <code>y + 1</code> by the time the second condition is evaluated — making the condition <code>(y + 1) &gt; 5</code>, conjoined with <code>x &gt; 0</code>. C is the <em>other</em> incoming path (where the first branch was skipped, so <code>y</code> was never incremented). A forgets the accumulated effect of <code>y++</code>. D is the path condition of the very first statement, not this one.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SYNTHESIS ═══════════════════════ -->
+<section id="synthesis" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>Read end to end, this lecture is one unbroken chain — and every link is the same principle: <strong>requirements drive design, and design is choosing among options by how they score against those requirements.</strong></p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>In <strong>Part I</strong> we elicited <em>functional requirements</em> as freedom-preserving "shall display" statements, and kept user stories (with "so that") cleanly separate from acceptance criteria (testable, no "so that").</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>In <strong>Part II</strong> we wrote <em>quality attributes</em> as scenario + measure. One in particular — "add cards at runtime without recoding" — and one legal constraint (WCAG accessibility) turned out to be the architecturally significant ones.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>In <strong>Part III</strong> those requirements selected an <em>architecture</em>: we generated pub/sub vs. peer-to-peer, client-server vs. peer-to-peer, and let the requirements (and a budget unblocked by the Scrum Master) decide — landing on client-server for monetization.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p>In <strong>Part IV</strong> we <em>modeled</em> the design in UML — components as independently deployable units, and a sequence diagram capturing the multi-UI registration that the accessibility requirement demanded.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <p>In <strong>Part V</strong> the runtime-modifiability requirement reached all the way down into <em>detailed design</em>: it eliminated factories and selected a <em>builder</em>, while we kept storage and construction as orthogonal sub-problems.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">6</div>
+  <p>In <strong>Part VI</strong> we <em>tested</em>, choosing an adequacy criterion (again, by requirements) and using symbolic execution to compute the path conditions that yield inputs for path coverage.</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Single Skill The Exam Tests</div>
+  <p>Notice the same diagnostic recurs everywhere: <strong>distinguish the "what" from the "how."</strong> Requirements vs. design decisions, specification vs. implementation in tests, observable behavior vs. internal storage, a choice vs. a legal constraint. The professor even beat the AI on exactly this — Claude wrote "no recoding" as a requirement, then picked a factory that contradicts it. Holding "what" and "how" apart, and tracing every design choice back to a requirement, is the heart of the course.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">What's Next — The Final Exam</div>
+  <p>This lecture <em>is</em> the exam blueprint. The final is a single end-to-end case study of this exact shape (a past one was a perishable-storage system optimizing for temperature and humidity). It is three hours, with a one-page handwritten cheat sheet (front and back), and a mix of open- and closed-ended questions — the professor prefers open-ended because they test whether you can <em>generate</em> an answer, not merely recognize one. Practice by running an unfamiliar system through all six stages above: requirements → quality attributes → architecture options → UML → design patterns → testing. If you can hold "what" apart from "how" at every stage, you're ready.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

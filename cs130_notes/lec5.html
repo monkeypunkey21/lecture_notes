@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 5 — Information Hiding &amp; Modular Design</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 5</div>
+  <a href="#part1">Part I — The Software Crisis</a>
+  <a href="#why-crisis" class="sub">Why Software Got Hard</a>
+  <a href="#quadratic" class="sub">The Quadratic Problem</a>
+  <a href="#big-ball" class="sub">The Big Ball of Mud</a>
+  <a href="#quiz-crisis" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — The Payment Example</a>
+  <a href="#bad-code" class="sub">Code That Mentions PayPal</a>
+  <a href="#the-fix" class="sub">Hiding PayPal Behind a Gateway</a>
+  <a href="#quiz-payment" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — Information Hiding</a>
+  <a href="#what-module" class="sub">What Is a Module?</a>
+  <a href="#parnas" class="sub">Parnas's Criterion</a>
+  <a href="#iceberg" class="sub">Interface vs Implementation</a>
+  <a href="#secrets" class="sub">What Counts as a Secret</a>
+  <a href="#quiz-hiding" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — Contract or Secret?</a>
+  <a href="#decisions" class="sub">Worked Decisions</a>
+  <a href="#paypal-revisited" class="sub">The PayPal Dilemma</a>
+  <a href="#quiz-contract" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Deep vs Shallow</a>
+  <a href="#deep-shallow" class="sub">Module Depth</a>
+  <a href="#when-shallow" class="sub">When Shallow Is Right</a>
+  <a href="#quiz-depth" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part6">Part VI — Coupling &amp; Dependencies</a>
+  <a href="#coupling-cohesion" class="sub">Coupling vs Cohesion</a>
+  <a href="#semantic-dep" class="sub">Hidden Semantic Dependencies</a>
+  <a href="#more-principles" class="sub">Related Principles</a>
+  <a href="#quiz-coupling" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#synthesis">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">COMSCI 130 · Software Construction</div>
+  <h1>Information Hiding &amp; the Art of Modular Design</h1>
+  <p class="hero-sub">An interactive guide to Lecture 5 — why software became humanity's hardest engineering problem, and how hiding the right decisions behind the right interfaces is what keeps 150-million-line systems buildable.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>The Software Crisis — Why Any of This Matters</h2>
+</div>
+
+<h3 id="why-crisis">Why Are We Learning This?</h3>
+<p>In the professor's words, today's topic is, in his personal opinion, <em>the most important topic in all of software engineering</em>. Some courses squeeze it into a ten-minute aside. This course gives it an entire lecture, because every other technique you will learn — design patterns, testing strategy, architecture — is ultimately in service of the one problem this lecture names.</p>
+
+<p>That problem is <strong>complexity</strong>. Software is not hard because computers are hard; it is hard because programs grow larger than any single human brain can hold. The whole discipline of software engineering exists to answer one question: <em>how do we keep building systems that are far too big for any one person to understand?</em></p>
+
+<p>The story starts in the 1960s. During NASA's Apollo program, <strong>Margaret Hamilton</strong> led the flight software effort. She noticed something startling: the complexity of the <em>software</em> had come to exceed the complexity of the <em>hardware</em> of the entire mission. She coined the very term "software engineering" to argue that this was a new engineering discipline, unlike mechanical or electrical engineering before it.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Term — The Software Crisis</div>
+  <p>The <strong>software crisis</strong> is the observation, first formalized at a 1968 NATO conference, that software is routinely delivered <em>late</em>, fails to <em>meet its specification</em>, and <em>exceeds its estimated cost</em>. The crisis was declared resolved by no one — the professor notes it is "kind of still true today."</p>
+</div>
+
+<p>That 1968 NATO conference gathered, in one room, an astonishing concentration of future Turing Award winners — Edsger Dijkstra, Alan Perlis (the very first laureate), Tony Hoare, Niklaus Wirth, Peter Naur, Brian Randell. The greatest minds in computing agreed software complexity was an existential problem. And it has only grown since.</p>
+
+<h4>The Numbers Keep Climbing</h4>
+<p>Track the lines of code in safety-critical systems over the decades and the growth is staggering:</p>
+
+<table class="compare-table">
+  <tr><th>System</th><th>Approx. Lines of Code</th></tr>
+  <tr><td>Apollo guidance computer</td><td>~145,000</td></tr>
+  <tr><td>Space Shuttle</td><td>~500,000</td></tr>
+  <tr><td>F-22 fighter jet</td><td>~1.7 million</td></tr>
+  <tr><td>Boeing 787 Dreamliner</td><td>~6.5 million</td></tr>
+  <tr><td>A modern car</td><td>~100–150 million</td></tr>
+</table>
+
+<p>A modern car carries roughly three orders of magnitude more code than the Apollo mission that first triggered the crisis. No single person can understand a 150-million-line system. So how do we build them at all?</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>We build incomprehensibly large systems by designing them so that you can understand <strong>each module individually, without looking inside the other modules</strong>. Human IQ has been flat since the 1960s while system complexity has grown exponentially — the only way to close that gap is structure, not smarter people.</p>
+</div>
+
+<h3 id="quadratic">The Quadratic Problem of Connections</h3>
+<p>Why does complexity grow so much faster than size? Because the trouble is not the number of modules — it is the number of <em>connections between them</em>. The possible connections between nodes in a graph grow <strong>quadratically</strong>.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="360" height="160" viewBox="0 0 360 160" style="display:block; margin:0 auto;">
+      <!-- 4 nodes left -->
+      <circle cx="40" cy="40" r="9" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <circle cx="120" cy="40" r="9" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <circle cx="40" cy="120" r="9" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <circle cx="120" cy="120" r="9" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <line x1="40" y1="40" x2="120" y2="40" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="40" y1="120" x2="120" y2="120" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="40" y1="40" x2="40" y2="120" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="120" y1="40" x2="120" y2="120" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="40" y1="40" x2="120" y2="120" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="120" y1="40" x2="40" y2="120" stroke="#d9d0c4" stroke-width="1.5"/>
+      <text x="80" y="150" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" fill="#6b6560">4 modules → 6 links</text>
+      <!-- arrow -->
+      <text x="185" y="85" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="22" fill="#c0510a">→</text>
+      <!-- 8 nodes right -->
+      <circle cx="250" cy="25" r="7" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <circle cx="320" cy="25" r="7" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <circle cx="235" cy="65" r="7" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <circle cx="335" cy="65" r="7" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <circle cx="235" cy="105" r="7" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <circle cx="335" cy="105" r="7" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <circle cx="250" cy="135" r="7" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <circle cx="320" cy="135" r="7" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <line x1="250" y1="25" x2="320" y2="25" stroke="#d9d0c4" stroke-width="0.8"/>
+      <line x1="235" y1="65" x2="335" y2="65" stroke="#d9d0c4" stroke-width="0.8"/>
+      <line x1="235" y1="105" x2="335" y2="105" stroke="#d9d0c4" stroke-width="0.8"/>
+      <line x1="250" y1="135" x2="320" y2="135" stroke="#d9d0c4" stroke-width="0.8"/>
+      <line x1="250" y1="25" x2="235" y2="65" stroke="#d9d0c4" stroke-width="0.8"/>
+      <line x1="320" y1="25" x2="335" y2="65" stroke="#d9d0c4" stroke-width="0.8"/>
+      <line x1="235" y1="105" x2="250" y2="135" stroke="#d9d0c4" stroke-width="0.8"/>
+      <line x1="335" y1="105" x2="320" y2="135" stroke="#d9d0c4" stroke-width="0.8"/>
+      <line x1="250" y1="25" x2="335" y2="65" stroke="#d9d0c4" stroke-width="0.8"/>
+      <line x1="320" y1="25" x2="235" y2="65" stroke="#d9d0c4" stroke-width="0.8"/>
+      <line x1="235" y1="65" x2="335" y2="105" stroke="#d9d0c4" stroke-width="0.8"/>
+      <line x1="335" y1="65" x2="235" y2="105" stroke="#d9d0c4" stroke-width="0.8"/>
+      <text x="285" y="155" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" fill="#6b6560">8 modules → 28 links</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Double the modules (4 → 8) and the possible connections more than quadruple (6 → 28). Complexity rides on the edges, not the nodes.</div>
+</div>
+
+<p>The number of possible pairwise connections among <code>n</code> modules is <code>n(n-1)/2</code>. Four modules give six possible links; eight modules give twenty-eight. So every new module you add forces you to think about <em>quadratically</em> more potential connections. If you don't put abstractions in place to cut those links, each new feature becomes quadratically harder to add than the last.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Cost of Change Rises Over Time</div>
+  <p>On any long-lived system, early features are easy to add and later ones are brutally hard — precisely because of this quadratic growth. The professor notes this is true for humans <em>and</em> for AI coding agents: vibe-coding the first few diagrams "just works," but adding constraints later "introduces new bugs that don't work."</p>
+</div>
+
+<h3 id="big-ball">The Big Ball of Mud</h3>
+<p>When complexity is left unmanaged, the result has a name: the <strong>big ball of mud</strong> — the modern term for the software crisis playing out in a single codebase.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Term — Big Ball of Mud</div>
+  <p>A <strong>big ball of mud</strong> is an architecture with no discernible structure: spaghetti code, hidden bugs everywhere, where a simple change request requires touching dozens of unrelated files. Its symptoms: an immense cost of change, very low understandability, painful onboarding, and extreme fragility.</p>
+</div>
+
+<p>The professor's example: a friend joined a large financial institution whose system had become a big ball of mud. Onboarding was nearly impossible — you could not understand any module in isolation, so you always had to read every other module too. The <em>mental model</em> required to hold the whole system in your head was simply too large for a human. And it was fragile: forget one place that needed to change, make the edit ad hoc, and the system filled up with bugs.</p>
+
+<div class="quiz" id="quiz-crisis">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">According to the lecture, why does the complexity of a system grow <em>faster</em> than its number of modules?</div>
+  <div class="quiz-options" data-quiz="qcrisis">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Because each module always contains more lines of code than the last</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Because the number of possible connections between modules grows quadratically</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Because CPUs have stopped getting faster since Moore's Law slowed</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Because human IQ has been declining since the 1960s</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('qcrisis','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="qcrisis">
+    <strong>Correct — B.</strong> With <code>n</code> modules there are <code>n(n-1)/2</code> possible connections, so doubling from 4 to 8 modules jumps the links from 6 to 28. Complexity lives on the edges between modules. C is a real phenomenon but the lecture explicitly rejected it as the cause; D is a joke the professor made — IQ has been <em>flat</em>, not declining, which is exactly why we need abstraction rather than smarter brains.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>A Concrete Example — The Payment System</h2>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Where We're Headed</div>
+  <p>Part I told us <em>what goes wrong</em> (the big ball of mud) and <em>why</em> (quadratic connections). Now we work a single example end-to-end. The principle we are about to discover by hand — hide what is likely to change — is the spine of the entire rest of the lecture.</p>
+</div>
+
+<h3 id="bad-code">Code That Mentions PayPal Everywhere</h3>
+<p>Consider an online shop's payment system, written in Python. It has three services: an <code>OrderService</code>, a <code>RefundService</code>, and a <code>WalletService</code>. Each one takes an order and a PayPal account and does its job. Assume the functionality is perfectly correct — all error handling works, refunds work. The professor's question is deliberately <em>not</em> about functionality: <em>where is the big ball of mud hiding in this code?</em></p>
+
+<pre><code><span class="cm"># Every service hard-codes the decision: "we use PayPal"</span>
+<span class="kw">class</span> <span class="tp">OrderService</span>:
+    <span class="kw">def</span> <span class="fn">checkout</span>(self, order, <span class="op">paypal_account</span>):
+        <span class="op">paypal</span>.authenticate(paypal_account)   <span class="cm"># PayPal mentioned</span>
+        <span class="op">paypal</span>.charge(order.total)            <span class="cm"># PayPal mentioned</span>
+
+<span class="kw">class</span> <span class="tp">RefundService</span>:
+    <span class="kw">def</span> <span class="fn">refund</span>(self, order, <span class="op">paypal_account</span>):
+        <span class="op">paypal</span>.authenticate(paypal_account)   <span class="cm"># PayPal mentioned</span>
+        <span class="op">paypal</span>.refund(order.total)            <span class="cm"># PayPal mentioned</span>
+
+<span class="kw">class</span> <span class="tp">WalletService</span>:
+    <span class="kw">def</span> <span class="fn">top_up</span>(self, order, <span class="op">paypal_account</span>):
+        <span class="op">paypal</span>.authenticate(paypal_account)   <span class="cm"># PayPal mentioned</span>
+        <span class="op">paypal</span>.create_payment_method(...)     <span class="cm"># PayPal mentioned</span></code></pre>
+
+<p>The defect is structural, not behavioural. <strong>Every single module knows that PayPal exists.</strong> The word <code>paypal</code> is a literal scattered across all three services.</p>
+
+<p>Now ask: what change is <em>likely</em>? Not some exotic quantum-crypto upgrade to PayPal's API. Something ordinary — <strong>a user wants to pay with Bitcoin, or Stripe, or WeChat Pay instead.</strong> The moment you support a second payment method, every red line that mentions PayPal in every service has to change. The decision "we use PayPal" has leaked into every module, so changing it means changing everything.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Smell — A Decision That Leaked</div>
+  <p>When a single design decision (which payment provider) appears verbatim in many modules, that decision becomes impossible to change cheaply. The number of modules you must edit to make one change is a direct measure of how bad your modularization is.</p>
+</div>
+
+<h3 id="the-fix">The Fix — Hide PayPal Behind a Gateway</h3>
+<p>The cure is to create an <strong>abstraction</strong> for "a payment provider" and make PayPal just one instance of it. We define a <code>PaymentGateway</code> interface listing what every payment provider must be able to do — <code>charge</code>, <code>refund</code>, <code>create_payment_method</code>. Then <code>PayPalGateway</code> is one implementation behind that interface; <code>StripeGateway</code> or <code>BitcoinGateway</code> would be others.</p>
+
+<pre><code><span class="cm"># The stable contract — what any provider must do</span>
+<span class="kw">class</span> <span class="tp">PaymentGateway</span>(ABC):
+    <span class="kw">def</span> <span class="fn">charge</span>(self, payment_details): ...
+    <span class="kw">def</span> <span class="fn">refund</span>(self, payment_details): ...
+    <span class="kw">def</span> <span class="fn">create_payment_method</span>(self, payment_details): ...
+
+<span class="cm"># The ONLY module that knows PayPal exists in this world</span>
+<span class="kw">class</span> <span class="tp">PayPalGateway</span>(<span class="tp">PaymentGateway</span>):
+    <span class="kw">def</span> <span class="fn">charge</span>(self, payment_details):
+        <span class="op">paypal</span>.authenticate(payment_details.token)
+        <span class="op">paypal</span>.charge(payment_details.amount)
+    <span class="cm"># ...refund, create_payment_method...</span>
+
+<span class="cm"># Services now speak only to the interface — no "paypal" anywhere</span>
+<span class="kw">class</span> <span class="tp">OrderService</span>:
+    <span class="kw">def</span> <span class="fn">checkout</span>(self, order, <span class="op">gateway</span>: <span class="tp">PaymentGateway</span>, details):
+        <span class="op">gateway</span>.charge(details)</code></pre>
+
+<p>Now the services say only <code>gateway.charge(details)</code>. There is no <code>paypal</code>, no <code>stripe</code>, no <code>bitcoin</code> anywhere in them. The <code>payment_details</code> object carries the per-transaction specifics (which card, which account) that let the chosen gateway identify the user's selection.</p>
+
+<div class="callout insight">
+  <div class="callout-title">The Aha Moment</div>
+  <p>The decision "we use PayPal" is now known by exactly <strong>one</strong> module — the <code>PayPalGateway</code>. As the professor put it: no other module even knows PayPal exists in this world. They don't even know about it — "and that's exactly how it should be." Adding Bitcoin means writing one new gateway and changing <em>zero</em> services.</p>
+</div>
+
+<div class="quiz" id="quiz-payment">
+  <div class="quiz-question">After refactoring to a <code>PaymentGateway</code> interface, what makes the design better — even though functionality is unchanged?</div>
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-options" data-quiz="qpayment">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>It runs faster because there are fewer function calls</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Adding a new payment provider now requires changing only one module instead of all of them</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>It uses less memory because PayPal is only stored once</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It removes the need for any error handling</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('qpayment','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="qpayment">
+    <strong>Correct — B.</strong> The decision likely to change ("which provider") is now isolated in a single gateway module, so a future change is localized. The lecture stressed that this is about <em>changeability</em>, not functionality, speed, or memory — A, C, and D are all about runtime behaviour, which was explicitly held constant in the example.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>The Information Hiding Principle</h2>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">From Example to Principle</div>
+  <p>We discovered by hand that hiding the "which provider" decision in one module fixed everything. Now we generalize that intuition into a named, theory-backed principle — the one the professor calls the most important idea in software engineering.</p>
+</div>
+
+<h3 id="what-module">First, What Is a Module?</h3>
+<p>Before we can talk about hiding things <em>inside</em> modules, we need to know what a module is.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Term — Module</div>
+  <p>A <strong>module</strong> is a self-contained piece of code that does one job, or a few closely related jobs. Crucially, "module" is <em>hierarchical</em> — it exists at many levels of abstraction at once.</p>
+</div>
+
+<p>From smallest to largest, every one of these is a module: a <strong>function</strong> → a <strong>class</strong> (many functions) → a <strong>directory</strong> (many classes) → a <strong>package</strong> (many directories) → a <strong>library</strong> (many packages). This nesting matters enormously later — when we talk about dependencies "between modules" vs "within a module," the answer always depends on which level of the hierarchy we're standing at.</p>
+
+<h3 id="parnas">Parnas's Criterion for Decomposing Systems</h3>
+<p>Twenty years after the software crisis was named, <strong>David Parnas</strong> answered the question we'd been circling: <em>how do you decide what goes in which module?</em> His landmark paper is titled, literally, <em>"On the Criterion to Be Used in Decomposing Systems into Modules."</em></p>
+
+<p>The naive criterion — split by processing steps, or by "things more than ten lines long," or by alphabetical order — is wrong. Parnas's criterion is:</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Information Hiding Principle</div>
+  <p>Begin with a list of <strong>difficult design decisions, or decisions which are likely to change</strong>. Then pick each module to <strong>hide one such decision</strong> from all the others. The only assumptions allowed to appear in the interfaces between modules are the ones <em>not</em> likely to change.</p>
+</div>
+
+<p>Read that twice — it is a deceptively simple sentence carrying very deep thought. The criterion for splitting a system into modules is not "what does this code do" but "what might change, and how do I quarantine that change to a single module?"</p>
+
+<div class="callout tip">
+  <div class="callout-title">Study Note — A Paper to Actually Read</div>
+  <p>The professor singles out Parnas's paper as one of the very few software-engineering papers he recommends <em>every</em> undergraduate read. Students who think they already understand information hiding gain a much deeper grasp after reading it. (Aside: Parnas was, astonishingly, denied tenure at CMU — at the time, the idea that you must "care about the humans building the software" was not considered real science.)</p>
+</div>
+
+<p>A <strong>modularization</strong> is simply one way of carving a system into modules — and many different modularizations are possible. The "three services that each mention PayPal" version and the "PaymentGateway interface" version are two different modularizations of the same system. A <em>good</em> modularization is one built around the set of changes likely to happen, so that each such change stays <strong>localized</strong> to one module.</p>
+
+<h3 id="iceberg">The Iceberg — Interface vs Implementation</h3>
+<p>Picture every module as an iceberg. The small tip above the water is the <strong>interface</strong>: <em>what</em> the module does, the stable contract other developers see. The vast bulk below the water is the <strong>implementation</strong>: <em>how</em> it does it — hidden, for nobody else to know.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="300" height="200" viewBox="0 0 300 200" style="display:block; margin:0 auto;">
+      <!-- water line -->
+      <line x1="20" y1="70" x2="280" y2="70" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="5,4"/>
+      <text x="278" y="64" text-anchor="end" font-family="DM Sans, sans-serif" font-size="11" fill="#2563eb">waterline</text>
+      <!-- tip (interface) -->
+      <polygon points="150,20 118,70 182,70" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="150" y="55" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#c0510a">interface</text>
+      <!-- body (implementation) -->
+      <polygon points="118,70 182,70 230,185 70,185" fill="#eff4ff" stroke="#2563eb" stroke-width="2"/>
+      <text x="150" y="120" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#2563eb">implementation</text>
+      <text x="150" y="142" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">data structures, algorithms,</text>
+      <text x="150" y="157" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">libraries, the decisions</text>
+      <text x="150" y="172" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">likely to change</text>
+    </svg>
+  </div>
+  <div class="figure-caption">A module as an iceberg: a tiny visible interface (the stable contract) above a huge hidden implementation (everything free to change).</div>
+</div>
+
+<p>The professor's favourite real-world analogy is the <strong>power outlet</strong> — in his view the single most complexity-hiding interface you will ever touch. Three holes in a wall. Behind them: the entire power-generation grid. You plug in your laptop without knowing or caring whether the electricity comes from solar, nuclear, or wind — and the grid can rebalance between those sources <em>at runtime</em> without you noticing. That is a perfect interface: trivial to use, hiding immense, changing complexity. Design every interface so that anyone looking at it knows exactly how to use it, with all the mutable complexity sealed behind.</p>
+
+<h3 id="secrets">What Counts as a "Secret" to Hide?</h3>
+<p>So which design decisions belong below the waterline? The lecture lists the classic secrets a module should hide:</p>
+
+<table class="compare-table">
+  <tr><th>Secret (hide it)</th><th>Why it's likely to change</th></tr>
+  <tr><td>Data structures &amp; formats — array vs binary tree vs hash table</td><td>Everything you learned about data structures must stay behind the interface; you may want to swap one for another</td></tr>
+  <tr><td>How data is stored on disk / table layout</td><td>Database schemas and storage formats evolve</td></tr>
+  <tr><td>Algorithms &amp; implementation logic</td><td>You may switch from one algorithm to a faster one later</td></tr>
+  <tr><td>Library dependencies — Axios vs Fetch, OpenGL vs another renderer</td><td>Libraries come and go; you want to switch without rewriting callers</td></tr>
+  <tr><td>Database technology — MongoDB vs MySQL vs Supabase</td><td>"Database technologies come and go" — only one module should name the one you chose</td></tr>
+</table>
+
+<div class="callout warning">
+  <div class="callout-title">Hide It in the Docs, Too — Not Just the Syntax</div>
+  <p>Algorithms are tricky: the syntactic interface usually hides them already, but documentation can leak them. If you write "this method uses merge sort," callers may <em>overfit</em> to that — relying on properties of merge sort — and break when you switch algorithms. Hide implementation details in the documentation as well as the signature.</p>
+</div>
+
+<p>The professor's rule of thumb from his other course: a student may use Supabase for a project <em>only</em> if exactly one module knows Supabase is being used. If every module knows, the answer is no — because then the database choice can never be swapped. You isolate it into a single <strong>data storage engine module</strong> that hides the specific technology and table format, and talks to the rest of the system through a small abstract interface that does <em>not</em> expose raw SQL.</p>
+
+<div class="callout insight">
+  <div class="callout-title">It Is NOT Just "public vs private"</div>
+  <p>The professor's strongest warning: practitioners constantly reduce information hiding to "oh, that's just making fields private." It is not. Marking getters, setters, or methods private is <em>data hiding</em>, and it is not enough. Information hiding is about the <strong>structure of your modules</strong> — where you draw the boundaries — not merely the access modifiers on individual members. He says the name itself was Parnas's worst mistake; it should be called the <strong>"design-decision encapsulation principle."</strong></p>
+</div>
+
+<div class="quiz" id="quiz-hiding">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Per Parnas's criterion, what determines where you draw a module boundary?</div>
+  <div class="quiz-options" data-quiz="qhiding">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Each module should hide one design decision that is difficult or likely to change</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Each module should contain exactly one class with all members marked private</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Each module should correspond to one step in the program's processing order</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Each module should be no more than ten lines of code</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('qhiding','a')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="qhiding">
+    <strong>Correct — A.</strong> Parnas's whole point is that modules are chosen around <em>decisions likely to change</em>, so each change stays localized. B is the "it's just public/private" misconception the professor explicitly debunked — that's data hiding, not information hiding. C (decomposing by processing steps) is the naive criterion Parnas argued <em>against</em>, and D is the kind of arbitrary rule he mocked.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>Contract or Secret? — Making the Call</h2>
+</div>
+
+<p>The principle is only useful if you can apply it under pressure. The heart of the lecture was a series of judgment calls: for a given design decision shared between two modules, should it be a <strong>visible contract</strong> (part of the interface, both modules know it) or a <strong>hidden secret</strong> (one module hides it from the other)? There is a rule of thumb: if the modules genuinely <em>cannot</em> function without sharing the decision, it must be a contract; otherwise, hide it.</p>
+
+<h3 id="decisions">Worked Decisions From Class</h3>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Stateful vs stateless protocol, between client and server?</strong> → <strong>Contract.</strong> If the client doesn't know whether the protocol carries session state, it literally cannot know what messages to send. The server must tell the client. The two modules cannot communicate otherwise.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Network protocol, between the network component and the database component (both inside the server)?</strong> → <strong>Secret.</strong> Only the network component needs to know the network protocol. The database component has no need to know, so it should be hidden from it.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Relational vs NoSQL database?</strong> → <strong>Secret.</strong> Unanimous in class. The database technology is a textbook example of a decision likely to change; only the storage module should know it.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Server's language (Node.js / Java / Dart), between client and server?</strong> → <strong>Secret.</strong> Client and server talk over HTTP, a common language — they don't make direct function calls — so the client never needs to know the server's implementation language, and you should be free to rewrite the server later.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <p><strong>Implementation language, between the <code>User</code> class and the <code>Payment</code> class?</strong> → <strong>Contract.</strong> Here the modules are classes that call each other directly. The <code>User</code> class cannot invoke the <code>Payment</code> class without knowing its language. A design where it could would be terrible to write.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">The Same Decision, Different Answers</div>
+  <p>Notice steps 4 and 5 ask the <em>same</em> question — "should the implementation language be hidden?" — but get opposite answers. Across the HTTP boundary (4) it's a secret; between two classes calling each other (5) it's a contract. The answer depends on <strong>how the two modules actually communicate</strong>, not on the decision itself.</p>
+</div>
+
+<h3 id="paypal-revisited">The PayPal Dilemma — When Hiding Conflicts With Security</h3>
+<p>The richest case: <strong>should "we use PayPal" be a contract between client and server, or a secret one side hides?</strong> The class split nearly 50/50, and the professor loved it because both sides have real arguments.</p>
+
+<p>You <em>could</em> hide it from the server entirely: handle all payment in the client, then have the client just send the server a message saying "payment handled." Now the server doesn't even know which payment methods exist — a beautifully hidden secret. But there's a fatal flaw:</p>
+
+<div class="callout warning">
+  <div class="callout-title">Security Beats Hiding Here</div>
+  <p>Client-side code can always be manipulated. If the server has no idea what payments exist and just trusts a "payment handled" message, an attacker can reverse-engineer that message and send it without ever paying. The server has no way to verify. So here the payment decision <strong>must</strong> be a visible contract — the "cleaner" hidden design is defeated by security.</p>
+</div>
+
+<p>One student offered a brilliant resolution: introduce a <strong>third component</strong> — a trusted third-party payment gateway — known to both client and server. This is exactly Parnas's move of <em>picking a new module to hide the decision</em> when neither existing module can. It's also how real web services work: they delegate to an external payment provider. We arrive right back at the gateway architecture from Part II — now justified not just by changeability, but by security too.</p>
+
+<div class="quiz" id="quiz-contract">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">The class agreed a server's implementation language can be a <em>secret</em> from the client, but must be a <em>contract</em> between two classes that call each other. What explains the difference?</div>
+  <div class="quiz-options" data-quiz="qcontract">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Servers are always more secure than classes</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Client and server communicate over HTTP, a shared protocol, while two classes communicate by direct calls that require a common language</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Implementation language is never a real design decision</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>The client is written in HTTP</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('qcontract','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="qcontract">
+    <strong>Correct — B.</strong> Because client and server speak HTTP rather than calling each other's functions, the client never needs the server's language — so it can be hidden. Two classes invoking each other's methods <em>must</em> share a language, making it an unavoidable contract. The lesson: whether a decision can be hidden depends on the communication mechanism between the modules. D is nonsense (HTTP is a protocol, not a programming language), and C contradicts the lecture.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>Deep vs Shallow Modules</h2>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Why This Matters</div>
+  <p>Information hiding tells you <em>what</em> to hide. Module <em>depth</em> tells you how much you should be hiding relative to how much interface you expose — it's the quality metric for "is this a good module?"</p>
+</div>
+
+<h3 id="deep-shallow">Measuring a Module by Its Depth</h3>
+<p>Compare the size of a module's <strong>interface</strong> against the amount of <strong>code hidden behind it</strong>. This ratio names two kinds of module:</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Terms — Deep vs Shallow Modules</div>
+  <p>A <strong>deep module</strong> hides a <em>large</em> amount of implementation behind a <em>small</em> interface. A <strong>shallow module</strong> hides only a <em>little</em> implementation behind a <em>relatively large</em> interface. The power outlet is the ideal deep module: three holes, an entire power grid behind them.</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="320" height="180" viewBox="0 0 320 180" style="display:block; margin:0 auto;">
+      <!-- Deep module -->
+      <rect x="40" y="20" width="80" height="14" rx="3" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="80" y="31" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" font-weight="700" fill="#c0510a">small interface</text>
+      <rect x="40" y="34" width="80" height="110" rx="3" fill="#eff4ff" stroke="#2563eb" stroke-width="2"/>
+      <text x="80" y="92" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#2563eb">lots of</text>
+      <text x="80" y="106" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#2563eb">hidden code</text>
+      <text x="80" y="168" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#2d8a4e">DEEP ✓</text>
+      <!-- Shallow module -->
+      <rect x="200" y="20" width="80" height="46" rx="3" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="240" y="46" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" font-weight="700" fill="#c0510a">large interface</text>
+      <rect x="200" y="66" width="80" height="34" rx="3" fill="#eff4ff" stroke="#2563eb" stroke-width="2"/>
+      <text x="240" y="87" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" fill="#2563eb">little code</text>
+      <text x="240" y="168" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#c53030">SHALLOW ✗</text>
+    </svg>
+  </div>
+  <div class="figure-caption">A deep module pays off: a small surface to learn, enormous complexity sealed away. A shallow module makes you learn a big interface for little benefit.</div>
+</div>
+
+<p>In general you should <strong>optimize for deep modules</strong>, because they best serve the whole purpose of information hiding: reducing the things a human must understand. A great example is an operating-system call like <code>read</code> or <code>write</code> — a tiny interface concealing a mountain of state exceptions and hardware-specific decisions.</p>
+
+<h3 id="when-shallow">When Is a Shallow Module Actually Right?</h3>
+<p>Deep is the default, but the professor pushed the class to find the exceptions — and there are legitimate ones:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Orchestration code meant to be read.</strong> A top-level module that wires together calls to many others, whose purpose is to let a human read the overall flow, <em>should</em> be simple and small on the surface even if it does little itself.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Adapters whose entire reason for existing is to hide one decision.</strong> The <code>PaymentGateway</code> from Part II is deliberately shallow — it has little code, just translating checkout / refund / payment requests into PayPal's specific API. But that shallowness is the point: the module exists <em>only</em> to hide the existence of PayPal. When the whole value of a module is the decision it conceals, shallow is correct.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Shallow Can Still Hide a Lot</div>
+  <p>A tempting "shallow" example — authentication, "just returns true/false" — turns out to be deep: behind that boolean hide two-factor flows, cryptographic details, and session state. Don't confuse a <em>small interface</em> with a <em>small secret</em>. The gateway adapter is genuinely shallow; authentication only looks shallow.</p>
+</div>
+
+<div class="quiz" id="quiz-depth">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Why is a thin <code>PaymentGateway</code> adapter — with very little code of its own — still a justified module?</div>
+  <div class="quiz-options" data-quiz="qdepth">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Because shallow modules are always preferable to deep ones</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Because its whole purpose is to hide one decision — the existence of PayPal — even though it holds little code</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Because it makes the program run faster</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Because every module must have a large interface</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('qdepth','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="qdepth">
+    <strong>Correct — B.</strong> The gateway is deliberately shallow, but its existence is justified because it hides the design decision "we translate to PayPal" from every other module. The general rule is the opposite of A — prefer deep modules — and you accept a shallow one only when, as here, hiding the decision is the module's entire reason to exist.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART VI ═══════════════════════ -->
+<section id="part6" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part VI</div>
+  <h2>Coupling, Cohesion &amp; Hidden Dependencies</h2>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Connecting the Vocabulary</div>
+  <p>The next few concepts heavily overlap with information hiding — the professor warns they can feel like "the same idea over and over." That's fine: they give you precise vocabulary and new angles on the one core insight. Group together what changes together; separate what changes for different reasons.</p>
+</div>
+
+<h3 id="coupling-cohesion">Coupling vs Cohesion</h3>
+<div class="callout concept">
+  <div class="callout-title">Key Terms — Coupling &amp; Cohesion</div>
+  <p><strong>Coupling</strong> is the dependencies <em>between</em> modules. <strong>Cohesion</strong> is the dependencies <em>within</em> a module. The goal is <strong>low coupling and high cohesion</strong>: few links across module boundaries, tightly related contents inside each module.</p>
+</div>
+
+<p>Why is low coupling good but high cohesion <em>also</em> good, when both are "dependencies"? Because low coupling lets people work on each module without fear of breaking another's. And high cohesion means a module is a coherent set of related things — if the contents <em>aren't</em> related to each other, why are they one module? Split unrelated halves apart so each can be understood on its own. Group together what is semantically related.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Change-Ripple Effect</div>
+  <p>High coupling almost always produces a ripple: you change one module, which forces a change in another, which forces another. Such architectures are hard to understand, hard to reuse, and hard to test in isolation. Low-coupling modules with small interfaces are easy to set up, test, and understand.</p>
+</div>
+
+<p>Remember that "between" vs "within" is relative to the hierarchy level. Functions <em>within</em> a class should call each other freely (high cohesion); functions <em>across</em> classes should have few dependencies. Classes within a package may depend on each other; classes across package boundaries should not. <strong>Keep dependencies local — don't let them cross the big branch boundaries of the hierarchy.</strong></p>
+
+<h3 id="semantic-dep">Syntactic vs Semantic Dependencies</h3>
+<p>Not all dependencies are visible. The lecture draws a sharp line between two kinds:</p>
+
+<table class="compare-table">
+  <tr><th>Syntactic dependency</th><th>Semantic dependency</th></tr>
+  <tr><td>A can't compile/run without B</td><td>A doesn't <em>function correctly</em> without B</td></tr>
+  <tr><td>Visible: a call, a class name, an interface reference</td><td>Invisible to the compiler: e.g. B assumes A pre-processed the data</td></tr>
+  <tr><td>Any static analyzer finds them automatically</td><td>A static analyzer sees nothing — yet the bug is real</td></tr>
+  <tr><td>Errors caught by compiler/interpreter</td><td>Logical/runtime errors, far harder to find</td></tr>
+</table>
+
+<p>Two modules that both "use PayPal" may make no calls to each other — zero syntactic coupling — yet they share a <strong>semantic dependency</strong>: change the payment decision in one and forget the other, and you get a bug a static analyzer will never flag. One practical way to surface semantic dependencies: mine your commit history for files and methods that <em>frequently change together</em>.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Dependency Injection Doesn't Delete a Dependency</div>
+  <p>People often hide a syntactic dependency with dependency injection and declare it "gone." It is not gone — you've only made it <em>less obvious</em>. Aim to eliminate the dependency entirely; if you can't, make it <strong>explicit</strong> so others can plan for it, rather than burying it.</p>
+</div>
+
+<h3 id="more-principles">Related Design Principles</h3>
+<p>Information hiding sits among a family of overlapping principles, all pointing the same direction:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Separation of concerns.</strong> A slight generalization of information hiding: separate the implementation of different requirements (a "concern" is essentially a requirement). A 1972 result warns it's impossible to separate <em>all</em> concerns — you'll always have <strong>cross-cutting concerns</strong> that span module boundaries (the "tyranny of the dominant decomposition"). Information hiding is the special case where the concerns are <em>design decisions likely to change</em>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>The single choice principle.</strong> Whenever you have a set of alternatives — payment methods, customer types — <em>only one module</em> should know the exhaustive list. Replicate the list across many modules and every new alternative forces you to remember to edit all of them. In practice you implement this with <strong>polymorphism</strong>: an interface with many implementations, instantiated and injected in one place.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Change impact analysis.</strong> How do you grade a modularization? List the changes that could reasonably happen, prioritize them by likelihood, and evaluate the effort each would take against your current architecture. Pick the modularization that best absorbs the high-probability changes.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Hard to Change ≠ Hardly Changes</div>
+  <p>A subtle distinction the professor drilled: hide what is <em>hard to change</em> — not what <em>hardly changes</em>. The whole point is that something likely to change becomes hard to change <em>if you don't isolate it</em>, because the edit then sprawls across many modules. Isolate it now so the future change stays cheap.</p>
+</div>
+
+<div class="quiz" id="quiz-coupling">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Two modules both hard-code "use PayPal" but never call each other. A static analyzer reports no dependency between them. What's actually going on?</div>
+  <div class="quiz-options" data-quiz="qcoupling">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>There is genuinely no dependency, so the design is fine</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>They share a semantic dependency — both implement the same design decision — that the analyzer can't see</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>They have high cohesion, which is always good</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Dependency injection has removed the dependency entirely</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('qcoupling','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="qcoupling">
+    <strong>Correct — B.</strong> Sharing a design decision creates a semantic dependency: change PayPal in one and you must change it in the other, or you get a logical bug — yet no call links them, so static analysis is blind to it. A is the dangerous illusion the lecture warns against; this is exactly why semantic dependencies, being invisible and runtime-only, are harder to find than syntactic ones.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SYNTHESIS ═══════════════════════ -->
+<section id="synthesis" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This whole lecture is one argument, told in six movements. <strong>Part I</strong> named the disease: software outgrew the human brain in the 1960s and has only gotten worse, because complexity rides on the quadratically-growing connections between modules, producing the big ball of mud. <strong>Part II</strong> showed the disease in miniature — a payment system where every module mentioned PayPal — and discovered the cure by hand: hide the changeable decision behind one gateway.</p>
+
+<p><strong>Part III</strong> gave that cure its name and theory: Parnas's <em>Information Hiding Principle</em> — decompose a system by hiding each likely-to-change design decision inside its own module, exposing only stable assumptions in the interfaces. The iceberg and the power outlet make it concrete: a tiny visible contract over a vast hidden, mutable implementation. <strong>Part IV</strong> turned the principle into judgment — contract or secret? — and revealed the answer depends on how modules communicate and on cross-cutting forces like security, sometimes forcing you to invent a third module (the trusted payment gateway) to hold the secret.</p>
+
+<p><strong>Part V</strong> gave a quality metric — prefer <em>deep</em> modules that hide much behind little, accepting <em>shallow</em> ones only when hiding the decision is itself the whole point. And <strong>Part VI</strong> supplied the surrounding vocabulary — low coupling, high cohesion, the invisible semantic dependencies that bite you at runtime, and the sibling principles (separation of concerns, single choice, change impact analysis) that all restate the same truth in different words.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The One Sentence to Remember</div>
+  <p>Uncle Bob (Robert C. Martin) compresses the entire lecture: <em>"Gather together the things that change for the same reasons. Separate those things that change for different reasons."</em> Design for <strong>changeability</strong>, not just functionality — optimize code for <em>readability</em> over write-ability, because program comprehension eats <strong>58%</strong> of a developer's time, and anything that lowers cognitive load lets you (and your AI coding agent) build more.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">What's Next</div>
+  <p>Two threads continue from here. First, the professor will pick up <strong>change impact analysis on a Java example</strong> at the start of the next lecture — read some Java beforehand, since the midterm and final use it. Then the course turns to <strong>design patterns</strong> — concrete, reusable templates that are, in essence, codified ways to achieve good information hiding and low coupling for recurring problems. Every pattern you're about to learn is this lecture's principle, made specific. And do read Parnas's paper: it's one of the few the professor recommends every undergraduate read in full.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

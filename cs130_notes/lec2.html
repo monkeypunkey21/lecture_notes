@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 2 — Modeling &amp; UML — Interactive Textbook</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 2 — Modeling &amp; UML</div>
+  <a href="#part1">Part I — INVEST Warm-Up</a>
+  <a href="#invest-recap" class="sub">What INVEST Stands For</a>
+  <a href="#dependency" class="sub">Dependency &amp; Testability</a>
+  <a href="#blazing" class="sub">"Blazingly Fast" Story</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Why We Model</a>
+  <a href="#shared-picture" class="sub">The Skyscraper Problem</a>
+  <a href="#cost-of-bugs" class="sub">Cost of Fixing Bugs</a>
+  <a href="#mapping" class="sub">Models as Mappings</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — UML</a>
+  <a href="#three-amigos" class="sub">The Three Amigos</a>
+  <a href="#semi-formal" class="sub">Semi-Formal &amp; Optional</a>
+  <a href="#views" class="sub">The Family of Diagrams</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — Use Case Diagrams</a>
+  <a href="#uc-elements" class="sub">Actors, System, Use Cases</a>
+  <a href="#uc-flow" class="sub">Flow of Events</a>
+  <a href="#uc-relations" class="sub">Include / Extend / Generalize</a>
+  <a href="#uc-extpoints" class="sub">Extension Points</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Beyond User Stories</a>
+  <a href="#lufthansa" class="sub">The Lufthansa Crash</a>
+  <a href="#qas" class="sub">Quality Attribute Scenarios</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part6">Part VI — State Machines</a>
+  <a href="#sm-transitions" class="sub">States &amp; Transitions</a>
+  <a href="#sm-hierarchical" class="sub">Hierarchical States</a>
+  <a href="#sm-protocol" class="sub">Protocol State Machines</a>
+  <a href="#quiz6" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#synthesis">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">COMSCI 130 · Software Engineering</div>
+  <h1>Modeling &amp; UML — Drawing the System Before You Build It</h1>
+  <p class="hero-sub">Week 1 — why software engineers reach for the whiteboard, and the UML diagrams (use case &amp; state machine) that let us find bugs before we write a single line of code.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>Warming Up: Stress-Testing User Stories with INVEST</h2>
+</div>
+
+<p>The lecture opened with a "software-engineering workout": the professor put a couple of <strong>user stories</strong> on the board and asked the class to hunt for flaws. Before we can judge a user story, we need to remember what a user story <em>is</em> and what makes a good one — so let's catch ourselves up from scratch.</p>
+
+<h3 id="invest-recap">What Is a User Story, and What Is INVEST?</h3>
+<p>A <strong>user story</strong> is a short, plain-language description of a feature told from the point of view of the person who wants it. It follows the template <em>"As a &lt;role&gt;, I want &lt;goal&gt; so that &lt;benefit&gt;."</em> User stories are the lightweight way agile teams capture <strong>requirements</strong> — statements of what the system should do.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — INVEST</div>
+  <p>INVEST is a checklist of six qualities a good user story should have: <strong>I</strong>ndependent, <strong>N</strong>egotiable, <strong>V</strong>aluable, <strong>E</strong>stimable, <strong>S</strong>mall, <strong>T</strong>estable. You use it as a lens to spot weak stories. This lecture's warm-up only exercised four of the letters — Independent, Negotiable, Estimable, and Testable — so those are the ones to know cold.</p>
+</div>
+
+<h3 id="dependency">Story #1 — When a Story Leans on Unfinished Work</h3>
+<p>The first story: <em>"As a customer, I want to pay for my items using a credit card so that I can complete my purchase."</em> The catch the professor planted: user registration and card management <em>are not done yet</em>.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>Paying with a card assumes you have an account and a stored card. But those stories (registration, card management) aren't built. So the payment story <strong>depends on</strong> them — it violates <strong>Independent</strong>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>A natural follow-up: if it's not independent, is it also not <strong>Testable</strong>? The professor's nuance: <em>not necessarily</em>. Once the stories it depends on are implemented, this one becomes testable. Dependence does not automatically destroy testability.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>And how do we size a dependent story? You estimate only the <strong>delta</strong> — the additional work this story adds on top of what it depends on — not the cost of everything underneath it.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Testable and Estimable Are Independent Axes</div>
+  <p>The professor pressed the class to find a story that is testable but <em>not</em> estimable, and vice versa. <strong>Testable but not estimable:</strong> "solve P vs NP" — we can check a proof, but we have no idea how long it takes. <strong>Estimable but not testable:</strong> "give the page a modern design" — we can guess the effort (it's roughly the same whatever "modern" means), but we can't write a test for "modern." The two properties are not 100% correlated, so always check each one separately.</p>
+</div>
+
+<h3 id="blazing">Story #2 — "Blazingly Fast and Extremely Modern"</h3>
+<p>The second story: <em>"As a website visitor, I want the homepage to load blazingly fast and look extremely modern so that I have a pleasant browsing experience."</em></p>
+<ul style="margin: 0 0 18px 22px;">
+  <li><strong>Not Estimable</strong> — "blazingly fast" has no number. Ten milliseconds every time means duplicate servers, load balancing, caching, eventual consistency — a huge job. "A few seconds" is trivial. You can't estimate a target you can't measure.</li>
+  <li><strong>Not Testable</strong> — both "modern" (subjective) and "blazingly fast" (unquantified) can't be turned into a pass/fail test.</li>
+  <li><strong>Arguably not Small</strong> — you could split "blazingly fast" from "modern look" into two separate stories, since they're quite different concerns.</li>
+</ul>
+
+<div class="callout tip">
+  <div class="callout-title">Exam Tip Straight From the Professor</div>
+  <p>For story #2 the "correct" exam answers are <strong>Estimable</strong> and <strong>Testable</strong>. Picking <em>Small</em> as well — or not picking it — would both be accepted. When two readings are defensible, say so and justify; you won't be marked down for the well-argued one.</p>
+</div>
+
+<div class="quiz" id="quiz1-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A story to "pay with a credit card" depends on an unfinished "card management" story. According to the lecture, which INVEST property is <em>definitely</em> violated right now?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Independent</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Testable</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Valuable</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Both Independent and Testable</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','a')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct — Independent.</strong> The story leans on card management, so it is not independent. The professor explicitly warned against assuming it's <em>also</em> untestable: once the dependency is built, the story can be tested, so testability is not automatically violated. That subtle point is exactly what the warm-up was designed to teach.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>Why We Model: The Whiteboard Is Our Favorite Tool</h2>
+</div>
+
+<p>Having sharpened our requirements thinking, the lecture pivots to today's real topic: <strong>modeling</strong>. But before any notation, the professor answers the only question that matters — <em>why bother drawing pictures of software at all?</em></p>
+
+<h3 id="shared-picture">Reason 1 — Words Build Different Pictures in Different Heads</h3>
+<p>Imagine a COMSCI 130 team talking about "the structure they want to build." One person pictures a skyscraper, another a mall, another a factory, another a government building. Speech is <strong>one-dimensional</strong> — a sequence of words — so it's terrible at conveying spatial structure. A model on the whiteboard is <strong>multi-dimensional</strong>: it synchronizes everyone's mental image and shares your idea with someone else.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>Software's complexity has grown <em>exponentially</em>, while human cognition has stayed flat. The main bottleneck in software engineering isn't writing code — anyone can write complex code — it's transferring the idea in <em>your</em> head into <em>another developer's</em> head. Modeling exists to overcome that bottleneck. Nobody reads a thousand lines of code to understand your design; they want a higher-level, visual abstraction.</p>
+</div>
+
+<h3 id="cost-of-bugs">Reason 2 — Find Bugs Early, When They're Cheap</h3>
+<p>Like a civil engineer analyzing a bridge blueprint before pouring concrete, we analyze software models before writing code. Many models can even be <em>automatically</em> checked for certain properties — and our human intelligence can spot still more. The payoff is timing: <strong>the earlier you find a bug, the cheaper it is to fix.</strong></p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Requirements phase</strong> — nearly free. Nothing is built; you just realized a requirement was missing (e.g. the user never told us what counts as a "strong password").</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Design phase</strong> — still cheap. Little code is written, so a fix is easy.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Implementation phase</strong> — more expensive. Code now exists and must be reworked.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Maintenance phase</strong> — most expensive. The original developer has left the company, and a stranger must reverse-engineer the code to fix it.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Why Modeling Pays Off</div>
+  <p>Modeling <em>moves the bug-finding earlier</em> in the life cycle. The sooner you can criticize your own ideas and spot an issue, the cheaper the fix. That single sentence is the economic justification for everything else in this lecture.</p>
+</div>
+
+<h3 id="mapping">Reason 3 — A Model Is a Deliberate Mapping (and a Deliberate Abstraction)</h3>
+<p>In modeling theory, a model is a <strong>mapping from elements in the real world to elements in the model</strong>. Crucially, the mapping is partial in <em>both</em> directions: some real-world things appear in the model, some real-world things are intentionally left out, and the model may even contain elements that don't exist in the world. Leaving things out is not a flaw — it is the entire point.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="380" height="170" viewBox="0 0 380 170" style="display:block; margin:0 auto;">
+      <text x="80" y="24" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#2a2520">Real World</text>
+      <text x="300" y="24" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#2a2520">Model</text>
+      <rect x="20" y="40" width="120" height="110" rx="10" fill="#f5f0e8" stroke="#d9d0c4" stroke-width="1.5"/>
+      <rect x="240" y="40" width="120" height="110" rx="10" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <circle cx="60" cy="70" r="9" fill="#c0510a"/>
+      <circle cx="60" cy="105" r="9" fill="#c0510a"/>
+      <circle cx="60" cy="138" r="9" fill="#6b6560"/>
+      <circle cx="300" cy="70" r="9" fill="#c0510a"/>
+      <circle cx="300" cy="105" r="9" fill="#c0510a"/>
+      <circle cx="300" cy="138" r="9" fill="#7c3aed"/>
+      <line x1="69" y1="70" x2="291" y2="70" stroke="#c0510a" stroke-width="2"/>
+      <line x1="69" y1="105" x2="291" y2="105" stroke="#c0510a" stroke-width="2"/>
+      <text x="80" y="166" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">left out ↑</text>
+      <text x="300" y="166" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#7c3aed">model-only ↑</text>
+    </svg>
+  </div>
+  <div class="figure-caption">A model maps <em>selected</em> real-world elements to model elements. Some real things are deliberately omitted; the model may add things of its own.</div>
+</div>
+
+<details>
+<summary>Deep dive: the "perfect model" debate (the Quine / Mount Everest tangent)</summary>
+<div class="details-body">
+<p>During the break, students debated whether a self-printing program — a <strong>quine</strong> — is the one case where the perfect model of a thing is the thing itself, because every component is mission-critical and nothing can be abstracted away. The professor's resolution: <strong>every model is designed with a specific goal.</strong> A map of the climbing path and a weather map are both models of Mount Everest, each useful for a different purpose. A "model" that contains <em>all</em> the information (the object itself) is perfect at completeness but useless for any goal that benefits from leaving information out. So the ideal model is not the object — it's the abstraction that best serves your purpose.</p>
+</div>
+</details>
+
+<div class="quiz" id="quiz2-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">According to the lecture, the cost of fixing a bug is lowest in which phase?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Maintenance, because the code is mature and stable</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Requirements, because almost nothing has been built yet</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Implementation, because the developer is still on the team</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>The cost is the same in every phase</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct — Requirements.</strong> The cost rises monotonically through requirements → design → implementation → maintenance. In the requirements phase nothing has been built, so fixing a missing or wrong requirement is nearly free. By maintenance, the original developer has often left and a stranger must reverse-engineer the code — the most expensive case. Modeling's value is that it pulls bug-finding toward the cheap end.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>UML: One Language to Draw Them All</h2>
+</div>
+
+<p>We now know <em>why</em> we model. But there are over 50 historical modeling languages — state machines, entity-relationship diagrams, data-flow diagrams, and more. Which one do you use? The industry converged on a single standard, and this section is its origin story and ground rules.</p>
+
+<h3 id="three-amigos">The Three Amigos and the Birth of UML</h3>
+<p>In the 1980s, <strong>object-oriented programming</strong> rose to prominence. OO is a great fit for modeling because a program is built from separate <em>classes</em> that interact and that mirror real-world things. This sparked an explosion of competing visual notations. Then three researchers — <strong>Grady Booch, Jim Rumbaugh, and Ivar Jacobson</strong> (the "Three Amigos") — merged their notations into the <strong>Unified Modeling Language (UML)</strong>, which became <em>the</em> industry standard.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — UML</div>
+  <p>The <strong>Unified Modeling Language</strong> is the most widely used modeling language in software. Learning it means you can <em>read</em> diagrams others made and <em>write</em> diagrams others will understand. Its full specification is 700+ dense pages — but that spec is written for tool builders, not for you. Don't read it.</p>
+</div>
+
+<h3 id="semi-formal">Semi-Formal, and Almost Everything Is Optional</h3>
+<p>UML is deliberately <strong>semi-formal</strong> and graphical. Two ground rules follow from that:</p>
+
+<div class="callout insight">
+  <div class="callout-title">The "Leave It Out" Rule</div>
+  <p>In UML, <strong>almost everything is optional</strong>. If you draw an element, you make a claim ("these two things are connected"). If you leave it out, that part is simply <em>unspecified</em> — you're making no claim. Models are never "complete"; they're intentionally abstractions. Remember this — it returns as the key difference between the two kinds of state machine in Part VI.</p>
+</div>
+
+<p>Being <em>semi-formal</em> means some elements have a defined meaning but many are not formalized. The upside: it's flexible enough for anything. The downside: it can be ambiguous. UML is also built to be <strong>extended</strong> — e.g. <strong>SysML</strong> extends UML for systems engineering (NASA uses it) to enable automatic analysis. Contrast this with purely textual, fully-formal modeling languages used in aerospace: powerful, but hard for humans to read. UML's graphical nature is precisely why it spreads ideas between people so well.</p>
+
+<h3 id="views">The Family of UML Diagrams</h3>
+<p>UML offers many diagram types, which split into <strong>structural</strong> views (what the system is made of) and <strong>behavioral</strong> views (how it acts over time). This course teaches several:</p>
+
+<table class="compare-table">
+  <tr><th>Diagram</th><th>What it describes</th><th>Best for</th></tr>
+  <tr><td>Use case</td><td>Functional requirements, end-user view</td><td>What the system should do (like user stories)</td></tr>
+  <tr><td>Class</td><td>Structure: classes, methods, attributes</td><td>The developer's view of the system</td></tr>
+  <tr><td>Sequence</td><td>Messages exchanged over time</td><td>Protocols</td></tr>
+  <tr><td>State machine</td><td>States an entity moves through</td><td>Systems whose behavior changes sharply by state</td></tr>
+  <tr><td>Activity / Component</td><td>Behavior &amp; high-level architecture</td><td>Order of interactions; module structure</td></tr>
+</table>
+
+<div class="callout warning">
+  <div class="callout-title">Descriptive vs Prescriptive — Check Which One</div>
+  <p>A diagram can be <strong>prescriptive</strong> (describing a system you're <em>about to build</em>) or <strong>descriptive</strong> (describing the system as it <em>currently is</em>). If a diagram claims to be descriptive, treat it with suspicion — it's probably <em>outdated</em>, because most diagrams are maintained by hand. Inferring accurate diagrams automatically from source code is still extremely hard (the professor's own PhD work on auto-generating component diagrams for robots was a research prototype).</p>
+</div>
+
+<div class="quiz" id="quiz3-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In UML, what does it mean when you <em>leave an element out</em> of a behavioral diagram?</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>You are asserting that element cannot exist</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>That aspect is unspecified — you're making no claim about it</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>The diagram is invalid and won't compile</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>The element is required by default</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct.</strong> UML is semi-formal and almost everything is optional: drawing something makes a claim, omitting it leaves that aspect unspecified. The "asserting it cannot exist" reading (A) is specifically wrong for <em>behavioral</em> state machines — but, as Part VI shows, it becomes the right reading for <em>protocol</em> state machines, which is exactly why the distinction matters.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>Use Case Diagrams: Requirements You Can Show the User</h2>
+</div>
+
+<p>The first concrete UML diagram. A <strong>use case diagram</strong> captures <em>functional requirements</em> from an end-user-facing perspective — think of it as user stories drawn as a picture. The running example is an <strong>automatic train</strong>: an unmanned people-mover (a "Waymo on tracks") that loops a circular track, stopping at stations A and B when a passenger presses a request button.</p>
+
+<h3 id="uc-elements">The Notational Elements</h3>
+<p>A use case diagram has exactly five kinds of element:</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="220" viewBox="0 0 420 220" style="display:block; margin:0 auto;">
+      <!-- system boundary -->
+      <rect x="150" y="20" width="250" height="180" rx="6" fill="none" stroke="#2a2520" stroke-width="1.5"/>
+      <text x="275" y="40" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#2a2520">Train System</text>
+      <!-- actor: passenger -->
+      <circle cx="50" cy="75" r="8" fill="none" stroke="#c0510a" stroke-width="2"/>
+      <line x1="50" y1="83" x2="50" y2="108" stroke="#c0510a" stroke-width="2"/>
+      <line x1="35" y1="93" x2="65" y2="93" stroke="#c0510a" stroke-width="2"/>
+      <line x1="50" y1="108" x2="38" y2="125" stroke="#c0510a" stroke-width="2"/>
+      <line x1="50" y1="108" x2="62" y2="125" stroke="#c0510a" stroke-width="2"/>
+      <text x="50" y="142" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#2a2520">Passenger</text>
+      <!-- actor: technician -->
+      <circle cx="50" cy="165" r="8" fill="none" stroke="#c0510a" stroke-width="2"/>
+      <line x1="50" y1="173" x2="50" y2="190" stroke="#c0510a" stroke-width="2"/>
+      <line x1="38" y1="181" x2="62" y2="181" stroke="#c0510a" stroke-width="2"/>
+      <text x="50" y="208" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#2a2520">Technician</text>
+      <!-- use cases -->
+      <ellipse cx="250" cy="80" rx="55" ry="22" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="250" y="85" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#2a2520">Ride</text>
+      <ellipse cx="330" cy="150" rx="55" ry="22" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="330" y="155" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#2a2520">Maintain</text>
+      <!-- associations -->
+      <line x1="60" y1="100" x2="196" y2="82" stroke="#6b6560" stroke-width="1.3"/>
+      <line x1="60" y1="160" x2="276" y2="150" stroke="#6b6560" stroke-width="1.3"/>
+    </svg>
+  </div>
+  <div class="figure-caption">The five elements: <strong>actors</strong> (stick figures), the <strong>system boundary</strong> (box), the <strong>system name</strong>, <strong>use cases</strong> (ovals), and <strong>associations</strong> (lines).</div>
+</div>
+
+<ul style="margin: 0 0 18px 22px;">
+  <li><strong>System boundary &amp; name</strong> — a box that's mostly <em>symbolic</em>; it labels the system (so readers know this is the train system, not the ticket machine) and shows that actors live <em>outside</em> it.</li>
+  <li><strong>Actor</strong> — a stick figure that represents a <em>role</em>, not a specific human. A technician can also be a passenger in their free time; one person may play several actors, and one actor may be played by many people.</li>
+  <li><strong>Use case</strong> — an oval, essentially a user story.</li>
+  <li><strong>Association</strong> — a line meaning the actor is <em>involved</em> in that use case (as primary, secondary, or even tertiary actor). Multiple actors can connect to one use case — e.g. both a customer and an admin can initiate "cancel order."</li>
+</ul>
+
+<h3 id="uc-flow">Inside a Use Case: The Flow of Events</h3>
+<p>A use case can be detailed with a sequence of events: the actor name, an <strong>entry condition</strong>, an <strong>exit condition</strong>, and the step-by-step flow. For the train's "normal ride":</p>
+
+<div class="flow-step"><div class="step-num">1</div><p>Passenger P arrives and presses the request button.</p></div>
+<div class="flow-step"><div class="step-num">2</div><p>The train arrives and stops at the platform; the doors open.</p></div>
+<div class="flow-step"><div class="step-num">3</div><p>The passenger steps into the train; the doors close.</p></div>
+<div class="flow-step"><div class="step-num">4</div><p>The passenger presses the request button for the final stop.</p></div>
+<div class="flow-step"><div class="step-num">5</div><p>At the final stop the doors open and the passenger exits.</p></div>
+
+<p>You don't write this flow for <em>every</em> use case — modeling is context-dependent, so you detail only the use cases that need it.</p>
+
+<h3 id="uc-relations">Relationships Between Use Cases: Include, Extend, Generalize</h3>
+<p>Use cases can relate to each other. The professor admits the exact notation is "tedious" — and that you'll need it memorized or on your exam cheat sheet. All three arrows point <strong>in the reading direction</strong>.</p>
+
+<table class="compare-table">
+  <tr><th>Relationship</th><th>Notation</th><th>Meaning (quantifier)</th></tr>
+  <tr><td><strong>«include»</strong></td><td>Dashed line, open arrow, keyword <code>«include»</code> (base verb, not "includes")</td><td><strong>For all</strong> — every run of the base use case <em>always</em> performs the included one. "Ride «include» Push Button": riding always involves pushing the button.</td></tr>
+  <tr><td><strong>«extend»</strong></td><td>Dashed line, open arrow, keyword <code>«extend»</code></td><td><strong>There exists</strong> — in <em>some</em> exceptional runs, the extending use case is part of the flow. "Pay Fine «extend» Ride": only some rides include paying a fine.</td></tr>
+  <tr><td><strong>Generalization</strong></td><td>Solid line, hollow (open) <em>triangle</em> arrowhead</td><td><strong>is-a</strong> — a specialized use case inherits the parent's behavior and can override parts. "Push Train Button" is a specialization of "Push Button."</td></tr>
+</table>
+
+<div class="callout warning">
+  <div class="callout-title">Notation Footguns to Memorize</div>
+  <p>The arrows are <strong>dashed, not dotted, not solid</strong>, with an <strong>open</strong> (not filled) arrowhead, and the keyword goes in <em>double</em> angular brackets in its <strong>base form</strong> — <code>«include»</code>, never "includes." A <em>filled</em> arrowhead or a <em>solid/dashed</em> line means something completely different in class diagrams. Conform to the notation exactly or the diagram says the wrong thing.</p>
+</div>
+
+<h4>Reading the direction of association — a clever rule</h4>
+<p>Notice "Pay Fine" has <em>no</em> association line to the Passenger, but "Push Button" does. The rule: an actor's association means that actor can <strong>initiate</strong> the use case. The passenger initiates pushing the button; the passenger does <em>not</em> initiate paying a fine — the <em>system</em> initiates that. The missing line is itself a meaningful claim.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Include vs Generalization — When to Use Which</div>
+  <p>Both decompose a use case, but they say different things. <strong>«include»</strong> means "every flow through the parent contains this smaller sub-use-case" (a for-all hierarchy). <strong>Generalization</strong> means "here are different <em>variants</em> of the use case," like class inheritance — and it lets you <em>name</em> the special case so you can refer to it elsewhere. The same generalization triangle, with the same is-a meaning, reappears in class diagrams later in the course.</p>
+</div>
+
+<h3 id="uc-extpoints">Extension Points and UML Notes</h3>
+<p>To say <em>where</em> in a use case an extension kicks in, you mark an <strong>extension point</strong> — a named location in the flow of events (e.g. "status validation"). You then attach a <strong>UML note</strong> (a box with a folded corner on a dotted leader line) holding the <strong>condition</strong>. Example from a library: <em>"Refuse Loan «extend» Borrow Book"</em>, at the <code>status validation</code> extension point, under the condition <code>too many books borrowed</code>.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="170" viewBox="0 0 420 170" style="display:block; margin:0 auto;">
+      <ellipse cx="120" cy="60" rx="70" ry="26" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="120" y="58" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#2a2520">Borrow Book</text>
+      <text x="120" y="74" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#6b6560">·status validation·</text>
+      <ellipse cx="320" cy="60" rx="62" ry="24" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="320" y="64" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#2a2520">Refuse Loan</text>
+      <!-- extend arrow, dashed, pointing to Borrow Book (reading direction) -->
+      <line x1="258" y1="60" x2="195" y2="60" stroke="#6b6560" stroke-width="1.4" stroke-dasharray="6 4"/>
+      <polygon points="195,60 207,54 207,66" fill="none" stroke="#6b6560" stroke-width="1.4"/>
+      <text x="226" y="50" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#2a2520">«extend»</text>
+      <!-- note -->
+      <path d="M300 110 H400 V150 L388 162 H300 Z" fill="#f5f0e8" stroke="#d9d0c4" stroke-width="1.3"/>
+      <path d="M388 150 H400 L388 162 Z" fill="#fff" stroke="#d9d0c4" stroke-width="1.3"/>
+      <text x="345" y="132" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9.5" fill="#2a2520">condition:</text>
+      <text x="345" y="146" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9.5" fill="#2a2520">too many books</text>
+      <line x1="320" y1="84" x2="333" y2="108" stroke="#6b6560" stroke-width="1" stroke-dasharray="3 3"/>
+    </svg>
+  </div>
+  <div class="figure-caption">"Refuse Loan" extends "Borrow Book" at the <code>status validation</code> extension point; a UML note (folded-corner box on a dotted leader) carries the condition.</div>
+</div>
+
+<p>One use case can have multiple extension points, and multiple extensions can attach to the same point (each as its own note with its own condition). These notes have <em>no formal meaning</em> — they're explanatory annotations layered onto the diagram.</p>
+
+<div class="callout tip">
+  <div class="callout-title">What Use Case Diagrams Are For</div>
+  <p>Use case diagrams describe <em>requirements</em>, not <em>design</em> — they say what the system should do, never how it's built. That makes them <strong>boundary objects</strong>: artifacts you can show actual users and ask "is this the functionality you want?" You can supplement them in side documents with preconditions, postconditions, main/alternative flows, and non-functional requirements.</p>
+</div>
+
+<div class="quiz" id="quiz4-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">"Purchase Item «include» Login." What does this assert?</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Some purchases optionally involve logging in</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Every purchase always involves logging in (a for-all)</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Login is a specialized kind of Purchase Item</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>The system, not the user, initiates the purchase</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct.</strong> «include» is a universal ("for all") claim: every flow through Purchase Item always performs Login. Option A describes «extend» (a "there exists" / exceptional flow). Option C describes generalization (the is-a triangle). The whole point of separating these three relationships is that they carry different quantifiers.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>The Limits of User Stories: A Crash, and a Better Tool</h2>
+</div>
+
+<p>The professor circled back to finish the requirements thread with a sobering case study — because it reveals exactly what user stories <em>cannot</em> do.</p>
+
+<h3 id="lufthansa">The Lufthansa Runway Crash</h3>
+<p>A plane is supposed to engage <strong>reverse thrust</strong> if and only if it is on the ground. The engineers implemented the "on the ground" check as <em>"are the wheels spinning?"</em> One day a plane landed on a <strong>wet runway</strong>: there wasn't enough friction, the wheels didn't spin fast enough, the system concluded the plane wasn't on the ground, reverse thrust never engaged, and the plane couldn't stop and crashed.</p>
+
+<div class="flow-step"><div class="step-num">1</div><p><strong>Intended requirement:</strong> reverse thrust ⇔ on the ground. Reasonable.</p></div>
+<div class="flow-step"><div class="step-num">2</div><p><strong>Design decision:</strong> approximate "on the ground" by "wheels spinning." This is where the assumption was baked in.</p></div>
+<div class="flow-step"><div class="step-num">3</div><p><strong>Reality:</strong> a wet runway breaks the assumption — wheels can be on the ground yet not spinning. The proxy was wrong.</p></div>
+
+<div class="callout warning">
+  <div class="callout-title">A Design Bug, Not a Requirements Bug</div>
+  <p>The class proposed user stories to prevent it (e.g. a manual override button, echoing the 737 MAX). But the professor's key point: the requirement ("reverse thrust iff on ground") was <em>fine</em>. The failure was the <strong>design choice</strong> of how to detect "on the ground." User stories only capture requirements — they couldn't have caught this. A story trying to encode the design fix would even violate <strong>Negotiable</strong>, because it bakes a design decision into the requirement.</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>User stories are great for end-user-facing <em>functional</em> requirements, but they are poorly suited for <strong>formal</strong> requirements (safety-critical logic) and for <strong>quality</strong> requirements (reliability, safety, performance, availability). For safety-critical formal requirements, reach instead for <strong>state machines</strong> or <strong>predicate logic</strong> — which is precisely where this lecture is headed next.</p>
+</div>
+
+<h3 id="qas">Quality Attribute Scenarios</h3>
+<p>So how <em>do</em> we specify quality requirements? With <strong>quality attribute scenarios</strong>. Every such scenario pairs a <strong>stimulus</strong> (an event arriving at the system) with a <strong>response measure</strong> (a measurable outcome).</p>
+
+<table class="compare-table">
+  <tr><th>Quality attribute</th><th>Stimulus</th><th>Response measure</th></tr>
+  <tr><td>Performance</td><td>A web request arrives</td><td>Average response time ≤ 10 ms (or a max/min bound per request)</td></tr>
+  <tr><td>Maintainability</td><td>A change request: swap the backend database</td><td>Takes less than one developer-week, without touching certain modules</td></tr>
+</table>
+
+<p>The professor noted that a fuller treatment uses a <strong>six-part</strong> framework (as taught in CMU's <em>Software Architecture in Practice</em>), but for this course it's enough to think in terms of a stimulus and a measurable response.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Engineer's Takeaway</div>
+  <p>Match the requirement format to the requirement type. End-user functionality → user stories / use cases. Quality attributes (performance, maintainability, availability) → quality attribute scenarios. Safety-critical formal logic → state machines or predicate logic. Picking the wrong format is itself a modeling mistake.</p>
+</div>
+
+<div class="quiz" id="quiz5-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Why does the lecture call the Lufthansa wheels-spinning failure a <em>design</em> bug rather than a <em>requirements</em> bug?</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>The requirement "reverse thrust iff on ground" was correct; the flaw was the chosen way to detect "on ground"</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>The pilots were never told the requirement</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>The requirement itself was logically impossible</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>User stories can capture safety-critical formal requirements perfectly</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','a')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct.</strong> The requirement was sound; the design's proxy for "on the ground" (wheels spinning) broke on a wet runway. Because user stories capture requirements and not design, no story could have caught this — which motivates using state machines / predicate logic for safety-critical systems. Option D is the opposite of the lecture's point: user stories are poorly suited to formal safety requirements.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART VI ═══════════════════════ -->
+<section id="part6" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part VI</div>
+  <h2>State Machine Diagrams: Behavior You Can Verify</h2>
+</div>
+
+<p>This is the tool the crash story pointed us toward — and the professor's favorite. A <strong>state machine diagram</strong> describes behavior: the various stages an entity passes through in its lifetime, the transitions between them, and what it means to be in each state. UML state machines build on the general idea of an <strong>automaton</strong> (a finite-state machine) but add UML's own notation.</p>
+
+<h3 id="sm-transitions">States, Transitions, and the Trigger / Guard / Effect Anatomy</h3>
+<p>A <strong>state</strong> is a condition the entity is in; it's drawn as a rounded rectangle. The <strong>initial state</strong> is a solid filled circle; the <strong>final state</strong> is a circle-within-a-circle. A <strong>transition</strong> is a straight arrow between states, labeled with up to three optional parts:</p>
+
+<pre><code><span class="fn">trigger</span> <span class="op">[</span><span class="kw">guard</span><span class="op">]</span> <span class="op">/</span> <span class="tp">effect</span></code></pre>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — trigger [guard] / effect</div>
+  <p><strong>Trigger</strong> = the event/action that fires the transition (a button press, a received message). <strong>Guard</strong> = a condition in square brackets, checked after the trigger; the transition only fires if it's true. <strong>Effect</strong> = a side effect after the slash (increment a variable, show a message). <em>All three are optional</em> — show only the parts that are relevant.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Action vs Activity — Time or No Time</div>
+  <p>An <strong>action</strong> is <em>atomic and timeless</em> — it completes instantly without interruption (it's what happens on a transition). An <strong>activity</strong> is something that <em>takes time</em> — it's what happens <em>while in</em> a state, where time can pass. Keeping this straight matters: triggers/effects are actions; staying in a state can run an activity.</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="430" height="130" viewBox="0 0 430 130" style="display:block; margin:0 auto;">
+      <circle cx="30" cy="65" r="9" fill="#2a2520"/>
+      <rect x="80" y="42" width="110" height="46" rx="14" fill="#fff" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="135" y="70" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" fill="#2a2520">Enrolled</text>
+      <rect x="285" y="42" width="110" height="46" rx="14" fill="#fff" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="340" y="70" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" fill="#2a2520">Dropped</text>
+      <line x1="39" y1="65" x2="78" y2="65" stroke="#6b6560" stroke-width="1.5"/>
+      <polygon points="80,65 70,60 70,70" fill="#6b6560"/>
+      <line x1="190" y1="65" x2="283" y2="65" stroke="#6b6560" stroke-width="1.5"/>
+      <polygon points="285,65 275,60 275,70" fill="#6b6560"/>
+      <text x="237" y="40" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c0510a">drop [students &gt; 1]</text>
+      <text x="237" y="83" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#6b6560">/ remove student</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Solid circle = initial state. Transition <code>drop [students &gt; 1] / remove student</code>: trigger <code>drop</code>, guard <code>[students &gt; 1]</code>, effect after the slash.</div>
+</div>
+
+<p>State machines can include <strong>decision points</strong> with guarded branches. In the lecture's class-enrollment example, a <code>drop</code> transition hits a decision point that checks "is at least one student left?" — modeling a class that survives until the very last student drops, and where grades are only submitted after exam week.</p>
+
+<h3 id="sm-hierarchical">Hierarchical State Machines — States Inside States</h3>
+<p>The professor's favorite feature: a state can <em>contain its own state machine</em>. Consider an online shop. We start in <strong>Browsing</strong>; selecting an item moves us to <strong>Items Chosen</strong> (where we can pick more); clicking checkout drops us into a <strong>Checkout</strong> super-state that has its own internal machine: <code>Incomplete → Credit Card Validation → (Complete | Transaction Denied)</code>.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Finding Design Bugs by Reading the Diagram</div>
+  <p>This is modeling's whole promise in action — the class spotted real flaws just by <em>looking</em>, no code required:</p>
+  <ul style="margin: 8px 0 0 20px;">
+    <li><strong>No way to un-select items.</strong> You can only add to the cart, never remove (except by entering bad card info and bailing out).</li>
+    <li><strong>You can't leave checkout without entering credit-card data.</strong> Change your mind about paying? You're stuck.</li>
+    <li><strong>Ambiguous cart state after purchase.</strong> The diagram never says whether returning to Browsing empties the cart — so the claim is unspecified and must be clarified.</li>
+  </ul>
+  <p style="margin-top:8px;">Catching these in a diagram is far cheaper than digging through millions of lines of code — and it's exactly the conversation to have with your product owner.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">The Superpower of Hierarchical States</div>
+  <p>How do you fix "can't leave checkout"? You <em>could</em> draw a cancel transition from every internal state — a spider-web. Instead, draw <strong>one</strong> transition from the <em>super-state itself</em> to Browsing, labeled <code>cancel</code>. It automatically applies to <em>every</em> state nested inside. One arrow replaces many. A <strong>history state</strong> (an <code>H</code> in a circle) adds more power: re-entering a super-state resumes where you left off instead of restarting at the initial substate.</p>
+</div>
+
+<h3 id="sm-protocol">Protocol State Machines — Pre/Post Conditions You Can Formally Verify</h3>
+<p>Recall the "leave it out" rule from Part III. It's exactly what separates the two kinds of state machine:</p>
+
+<table class="compare-table">
+  <tr><th>Behavioral State Machine</th><th>Protocol State Machine</th></tr>
+  <tr><td>Shows behavior the system <em>can</em> go through</td><td>Shows only what is <em>possible</em></td></tr>
+  <tr><td>A missing transition = <em>unspecified</em> ("don't know")</td><td>A missing transition = <em>definitely impossible</em></td></tr>
+  <tr><td>Uses <strong>guards</strong> <code>[…]</code> on transitions</td><td>Uses <strong>preconditions</strong> (before trigger), <strong>postconditions</strong> (after trigger), and state <strong>invariants</strong></td></tr>
+  <tr><td>For shared understanding &amp; conversation</td><td>For strong guarantees &amp; formal verification</td></tr>
+</table>
+
+<p>In a protocol state machine you write <code>[precondition] trigger / [postcondition]</code>. A condition <em>before</em> the trigger is a <strong>precondition</strong> ("this action is only available if this holds"); a condition <em>after</em> is a <strong>postcondition</strong> ("this is guaranteed afterward"). A condition attached to a state that always holds while in it is an <strong>invariant</strong>. In a bank-account example: you can only <code>activate</code> a <code>new</code> account if <code>is verified</code> (precondition); afterward <code>is unique ID</code> is guaranteed (postcondition); and the <code>closed</code> state carries the invariant <code>has no balance</code>.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>Protocol state machines can reference real <em>methods/predicates from your code</em> (e.g. <code>isUniqueID()</code>), so a <strong>formal verifier</strong> can prove the diagram's invariants and conditions always hold. This is how Amazon hardened the <strong>AWS kernel</strong>: they specified state machines, paid modeling experts for ~two years to formally verify it with a model checker like <strong>TLA+</strong>, found a handful of deep bugs, and could then tell customers they didn't just <em>test</em> — they <em>formally verified</em>. Use this heavyweight detail (pre/postconditions, invariants) when you need strong guarantees — avionics, medical devices, infrastructure — and use lightweight behavioral machines when you just need everyone on the same page.</p>
+</div>
+
+<div class="quiz" id="quiz6-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In a <em>protocol</em> state machine, a transition you wanted is simply <strong>not drawn</strong>. What does that mean?</div>
+  <div class="quiz-options" data-quiz="q6">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>It's unspecified — the diagram makes no claim either way</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>That transition is definitely impossible</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>It will be inferred automatically by the verifier</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It always fires when its guard is true</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q6','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q6">
+    <strong>Correct — it is definitely impossible.</strong> This is the crucial difference from a <em>behavioral</em> machine, where an omitted transition just means "unspecified." Protocol machines show <em>only</em> what is possible, so absence is a hard claim of impossibility. That stronger semantics is what makes them suitable for formal verification with tools like TLA+. Note also that protocol machines use preconditions/postconditions/invariants, not the "guards" of option D.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SYNTHESIS ═══════════════════════ -->
+<section id="synthesis" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This lecture moved from <em>requirements</em> to <em>models</em>, and the through-line is a single question every engineer must keep asking: <strong>what is the cheapest place to find a problem, and which notation lets me find it there?</strong></p>
+
+<p>We started by stress-testing <strong>user stories</strong> with INVEST (Part I) — and immediately bumped into their ceiling. The <strong>Lufthansa crash</strong> (Part V) showed user stories can't catch design bugs or formalize safety, and they can't express quality requirements — those need <strong>quality attribute scenarios</strong> (stimulus + response measure). That gap is the motivation for <strong>modeling</strong> (Part II): the whiteboard synchronizes mental images, and it pulls bug-finding to the cheap, early end of the life cycle.</p>
+
+<p><strong>UML</strong> (Part III) gives us one shared, semi-formal, graphical vocabulary — with its defining "leave-it-out = unspecified" rule. We then saw that rule animate two diagrams. <strong>Use case diagrams</strong> (Part IV) draw the functional requirements as a picture you can hand to a real user — a boundary object — with «include» (for-all), «extend» (there-exists), and generalization (is-a). <strong>State machine diagrams</strong> (Part VI) capture behavior: <em>behavioral</em> machines for shared understanding (where omission means "unspecified"), and <em>protocol</em> machines for ironclad guarantees (where omission means "impossible," and pre/postconditions/invariants enable formal verification with TLA+). Notice the same idea threading through: an absent element is itself a claim, and which claim it is depends on the diagram type.</p>
+
+<p>The meta-lesson the professor kept returning to: <strong>every model serves a goal, and the engineer's hard task is matching the notation to the property you want to analyze.</strong> Functional, end-user requirements → user stories / use cases. Quality attributes → quality attribute scenarios. Safety-critical guarantees → protocol state machines + predicate logic + a verifier. There is no single perfect model — the perfect model of Mount Everest is Mount Everest, and that's useless. Leaving information out is the entire value of a model.</p>
+
+<div class="callout tip" style="margin-top: 32px;">
+  <div class="callout-title">What's Next</div>
+  <p>The professor flagged where these ideas reappear. The <strong>generalization triangle</strong> from use case diagrams returns with identical "is-a" meaning in <strong>class diagrams</strong> — the developer's structural view of the system (classes, attributes, methods) coming up next. <strong>Sequence diagrams</strong> will model protocols (message order over time), and you'll keep meeting <strong>SysML</strong> and formal verifiers as the course pushes toward systems where "it compiles" isn't a strong enough guarantee. Keep the UML notation conventions (dashed vs solid lines, open vs filled arrowheads, the keyword brackets) on your exam cheat sheet — they're tedious but tested.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

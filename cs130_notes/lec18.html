@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 18 — Designing Testable Software & Testing Quality Attributes</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 18 · Quality Assurance</div>
+  <a href="#part1">Part I — What Is Testability?</a>
+  <a href="#why-testability" class="sub">Why Testability Beats Testing</a>
+  <a href="#two-pillars" class="sub">Controllability & Observability</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Test Doubles</a>
+  <a href="#doc-problem" class="sub">The Dependent-On Component</a>
+  <a href="#mock" class="sub">Mock Object</a>
+  <a href="#spy" class="sub">Test Spy</a>
+  <a href="#stub" class="sub">Test Stub</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — Testing Quality Attributes</a>
+  <a href="#scenario-measure" class="sub">Scenario + Measure</a>
+  <a href="#reliability" class="sub">Reliability & Chaos</a>
+  <a href="#performance" class="sub">Performance</a>
+  <a href="#security-avail" class="sub">Security & Availability</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — Architectural Tactics</a>
+  <a href="#ping-echo" class="sub">Ping-Echo</a>
+  <a href="#heartbeat" class="sub">Heartbeat</a>
+  <a href="#caching" class="sub">Caching</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Increasing Coverage</a>
+  <a href="#monkey" class="sub">Monkey Testing & Fuzzing</a>
+  <a href="#metamorphic" class="sub">Metamorphic Testing</a>
+  <a href="#tdd" class="sub">TDD</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part6">Part VI — Testing Across Domains</a>
+  <a href="#web" class="sub">Web Apps & Playwright</a>
+  <a href="#robotics" class="sub">Robotics & Mobile</a>
+  <a href="#quiz6" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#synthesis">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">COMSCI 130 · Software Engineering</div>
+  <h1>Designing Testable Software &amp; Testing Quality Attributes</h1>
+  <p class="hero-sub">An interactive guide to Lecture 18 — testability, test doubles, chaos engineering at Netflix, architectural tactics, and how to test reliability, performance, security &amp; availability across real-world domains.</p>
+</header>
+
+<p>Earlier lectures asked: <em>does my code do the right thing?</em> We tested
+functionality — given an input, did we get the expected output? This lecture
+asks two harder questions. First, how do we <strong>design</strong> software so
+that it is even possible to test it well? And second, how do we test the
+<em>non-functional</em> goodness of a system — is it reliable, fast, secure,
+and available — when the answer to "is it correct?" is no longer a simple
+yes-or-no?</p>
+
+<div class="callout insight">
+  <div class="callout-title">Why this lecture exists</div>
+  <p>This is a brand-new lecture, added because of where industry is heading.
+  As AI takes over more of the coding and design work, the professor argues the
+  human developer's job shifts <strong>toward requirements engineering and
+  quality assurance</strong>. If you want a job titled "software engineer," this
+  is the part of the work that stays human — and that this lecture trains you
+  for.</p>
+</div>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>What Is Testability?</h2>
+</div>
+
+<h3 id="why-testability">Why Testability Beats Testing</h3>
+<p>Think of building a car. To unit-test the engine, you don't try to test it
+while it's bolted into the chassis surrounded by everything else. You
+<em>remove the engine</em> and put it on a test bed where you can drive it with
+exactly the inputs you want and watch exactly the outputs you care about. That
+removability — that designed-in ease of isolating and exercising a component —
+is the heart of what we mean by testability.</p>
+
+<p>Here is the key reframing the professor wants you to internalize:
+<strong>testing is nice, but testability is better.</strong> A test, on its own,
+does nothing to your software's quality. If a test never finds a bug, it has had
+zero impact on the code. What testing buys you is <em>confidence</em>. But when
+you design <em>for testability</em>, you almost always end up with a better
+design overall — fewer dependencies, smaller interfaces, more understandable
+components — even setting testing aside entirely.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Testability</div>
+  <p>A <strong>quality attribute</strong> that defines the degree to which the
+  functionality and quality attributes of a system or component can be assessed
+  via automated runtime observability. Informally: <em>how easily can we make
+  the system reveal its faults?</em> and <em>how hard is it to write effective
+  tests?</em></p>
+</div>
+
+<h3 id="two-pillars">The Two Pillars: Controllability &amp; Observability</h3>
+<p>Testability is not one thing — it decomposes into two distinct challenges,
+each with its own separate solutions. A test always has two jobs: first drive
+the system into the situation you want to examine, then look at what it does.
+Those map onto the two pillars.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Controllability</div>
+  <p>How easy it is to provide a program or component with the needed inputs,
+  values, operations, or behavior, and bring it into the desired state. This is
+  the <strong>setup</strong> side of a test — getting the system <em>into the
+  situation</em> you want to assess.</p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Observability</div>
+  <p>How easy it is to observe the behavior of a program in terms of outputs,
+  quality attributes, and effects on the environment or other components. This
+  is the <strong>assertion</strong> side of a test — being able to <em>see</em>
+  what the system did.</p>
+</div>
+
+<p>A neat way to remember it: <strong>controllability is about writing a good
+setup; observability is about writing good assertions.</strong> They are
+genuinely separate. Sometimes the hard part is getting the system into the right
+state (controllability); sometimes the hard part is seeing what it did
+(observability). A pure mathematical function is trivial on both — you pass an
+argument (control) and read the return value (observe). Real-world systems —
+web apps returning HTML, robots interacting with the physical world — are hard
+on both.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="360" height="150" viewBox="0 0 360 150" style="display:block; margin:0 auto;">
+      <rect x="20" y="55" width="90" height="40" rx="8" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="65" y="80" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="600" fill="#2a2520">Test</text>
+      <rect x="150" y="55" width="90" height="40" rx="8" fill="#eff4ff" stroke="#2563eb" stroke-width="2"/>
+      <text x="195" y="73" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="600" fill="#2a2520">System</text>
+      <text x="195" y="87" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="600" fill="#2a2520">Under Test</text>
+      <line x1="110" y1="68" x2="148" y2="68" stroke="#2d8a4e" stroke-width="2" marker-end="url(#arrow)"/>
+      <text x="129" y="48" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#2d8a4e">control</text>
+      <line x1="148" y1="84" x2="112" y2="84" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrow)"/>
+      <text x="129" y="108" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#7c3aed">observe</text>
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#6b6560"/>
+        </marker>
+      </defs>
+      <text x="195" y="135" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">Testability = Controllability + Observability</text>
+    </svg>
+  </div>
+  <div class="figure-caption">A test drives the system in (controllability) and reads its behavior out (observability).</div>
+</div>
+
+<div class="quiz" id="quiz1-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A teammate says "our function-level math library has 100% test coverage, so it's highly testable — let's apply the same approach to our web UI." Why is this reasoning shaky?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Math libraries can't be unit-tested, so the coverage number is meaningless.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Pure functions are trivial on both controllability and observability; a web UI is hard on both — state is hard to set up and output is HTML that's hard to assert on.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Coverage and testability are the same thing, so there's no problem.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Web UIs don't have quality attributes, so they can't be tested at all.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct — B.</strong> A pure function gives you trivial controllability (pass an argument) and trivial observability (read the return value), which is why testing it is easy. A web app is hard on both pillars: bringing the page into a desired state requires simulating clicks and waits, and the output is an HTML page where the value you care about could be anywhere. Testability is domain-specific, so the same approach does not transfer. C is wrong because coverage measures how much code a test exercises, while testability is a design property of the system.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>Test Doubles — Faking Your Dependencies</h2>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Builds On Part I</div>
+  <p>The two pillars from Part I aren't abstract. Test doubles are the concrete
+  tools that give you controllability and observability when your system talks
+  to a component you don't control.</p>
+</div>
+
+<h3 id="doc-problem">The Problem: A Dependent-On Component</h3>
+<p>Recall the Global Distribution System (GDS) — the system that lets almost all
+airlines and booking systems talk to each other. Suppose you're writing your own
+booking system. Your booking system is the <strong>System Under Test (SUT)</strong>,
+but it relies on GDS as a separate component you don't control. A more modern
+example: you're building an app on top of OpenAI's or Anthropic's API. You depend
+on a separate service you can't fully control.</p>
+
+<p>Why does that break testing? Because <strong>real calls cost real money and
+have real effects.</strong> Do you want to pay ten dollars every time you run
+your test suite? Do you want your trading-system tests to place actual buy and
+sell orders on the stock exchange? Obviously not. So we must replace the real
+dependency with a fake.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Vocabulary — Indirect Inputs / Outputs</div>
+  <p><strong>Direct inputs</strong> are what the test hands the SUT directly
+  (like the arguments to a function). When the SUT sends a request <em>to</em>
+  the dependent-on component, those are <strong>indirect outputs</strong> — the
+  test can't see them directly. What the SUT receives back from that component
+  are <strong>indirect inputs</strong>. They're "indirect" because they flow
+  between the SUT and another component, outside the test's direct view (e.g.
+  HTTP requests).</p>
+</div>
+
+<p>This gives us a clean mapping. There are three test doubles, each solving a
+different combination of "which direction?" and "which pillar?"</p>
+
+<table class="compare-table">
+  <tr><th>Test Double</th><th>Pillar</th><th>What it does</th></tr>
+  <tr><td>Mock object</td><td>Observability</td><td>Verifies indirect outputs are <em>well-formed</em> via assertions inside it.</td></tr>
+  <tr><td>Test spy</td><td>Observability</td><td>Records indirect outputs; the test later asks for the history and asserts on it (e.g. ordering).</td></tr>
+  <tr><td>Test stub</td><td>Controllability</td><td>Injects indirect inputs by returning hard-coded values.</td></tr>
+</table>
+
+<h3 id="mock">Mock Object — Asserting Inside the Fake</h3>
+<p>Suppose you want to check that your booking system sends <em>well-formed</em>
+GDS requests, or that your trading system sends well-formed buy/sell orders —
+without firing real ones. The <strong>mock object</strong> replaces the
+dependent-on component with an object that has the <em>same interface</em> but
+no real implementation. Instead, it contains <strong>assertion statements</strong>.
+When the SUT calls it, the mock checks that what it received is well-formed.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>Your test injects a mock object in place of the real GDS / API client.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>The SUT runs and sends its indirect outputs (requests) to the mock.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>Assertions <em>inside</em> the mock fire, checking each request is well-formed.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Practical Note</div>
+  <p>You rarely write mocks by hand. Many testing frameworks support this — you
+  just decide to use a mock object and write the assertions. The framework does
+  the plumbing.</p>
+</div>
+
+<h3 id="spy">Test Spy — Recording, Then Asserting</h3>
+<p>Now change the goal. You no longer just want well-formed requests — you want
+them sent <em>in the right order</em>. Buy then sell, not sell then buy. Can you
+just put ordering assertions inside the mock? Awkwardly, no — ordering is a
+property <em>across</em> calls, not within one call.</p>
+
+<p>The fix is the <strong>test spy</strong>. Instead of asserting on the spot, the
+spy <em>records</em> every request it receives and exposes a way to retrieve the
+full history. The assertions then live in your <em>test</em>, which asks the spy
+"give me the list of everything you received" and checks the sequence.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Mock vs. Spy — Where the Assertions Live</div>
+  <p>The whole distinction is <em>location of the assertions</em>. In a
+  <strong>mock</strong>, assertions live inside the double and fire immediately.
+  In a <strong>spy</strong>, the double just collects data and the assertions
+  live in the test, after the fact. And yes — a spy can <em>also</em> carry
+  well-formedness assertions on top of its recording, so you can stack both
+  patterns on one object.</p>
+</div>
+
+<h3 id="stub">Test Stub — Injecting Indirect Inputs</h3>
+<p>The first two are observability tools. The <strong>test stub</strong> is the
+controllability tool. Here the question flips: how does your SUT behave when the
+dependent-on component sends it certain inputs? What if GDS is <em>offline</em>,
+or returns an <em>error code</em> instead of a real response? How does the LLM
+client handle a weird API response?</p>
+
+<p>A stub replaces the dependent-on component with something that simply
+<strong>returns hard-coded values</strong> — exactly the indirect inputs you want
+to inject. In a normal test you'd supply inputs straight from the test; but you
+can't reach indirect inputs that way, so the stub stands in and feeds them to the
+SUT. A stub might proactively send a request, or it might hard-code a return value
+in response to a request — depending on which kind of indirect input you're
+simulating.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Don't Conflate the Three</div>
+  <p>In industry, people lump all three under "mock," and mocking libraries
+  usually do all three. The academic umbrella term is <strong>test doubles</strong>
+  (with fakes and others beyond these three). For the exam, keep them distinct:
+  <strong>stub = controllability (inject indirect inputs)</strong>;
+  <strong>mock &amp; spy = observability (verify indirect outputs)</strong>.</p>
+</div>
+
+<details>
+<summary>Expand: The fuller controllability &amp; observability checklists</summary>
+<div class="details-body">
+<p><strong>For controllability,</strong> the professor's checklist includes:
+manipulate configuration settings in the test environment (config is part of a
+component's interface, so test it); easily inject test data and insert stubs;
+avoid <em>cyclic dependencies</em> — if the component you depend on also depends
+on you, it becomes nearly impossible to mock or stub them individually; and for
+systems touching the physical world, use a simulator/emulator to control
+temperature, wind, etc.</p>
+<p><strong>For observability,</strong> the checklist asks: can the test access
+all component states it needs? Note the tension — if any component can read that
+state, you've <em>violated information hiding</em>. The fix is to expose such
+state <em>only to tests</em> via the interface, not to other components. Also:
+are test doubles easy to insert, and are logs generated for all critical events
+(so you can infer behavior to assert on)?</p>
+</div>
+</details>
+
+<div class="quiz" id="quiz2-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">You're testing that your booking system handles GDS being offline gracefully. Which test double do you reach for, and why?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>A mock object, because you need to assert the request was well-formed.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>A test spy, because you need to record the order of requests.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>A test stub, because you need to inject indirect inputs (an offline / error response) to drive the SUT into the situation you want.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>None — you must use the real GDS to know if it's really offline.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct — C.</strong> "GDS is offline" is a <em>state you must put
+    the system into</em> — a controllability problem. A test stub returns
+    hard-coded values (here, an error or no response), injecting the indirect
+    input that simulates the outage so you can observe how your SUT reacts. A and
+    B are observability tools for checking what the SUT <em>sent out</em>, not for
+    controlling what it <em>receives</em>. D defeats the purpose: you want a
+    repeatable test, not to wait for a real outage.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>Testing Quality Attributes</h2>
+</div>
+
+<h3 id="scenario-measure">How to Specify a Quality Requirement: Scenario + Measure</h3>
+<p>A <strong>quality attribute</strong> is a degree of "goodness" about a system
+that is <em>not purely functional</em> — reliability, performance, security,
+availability, and so on. The trap is writing vague requirements like "the system
+should be fast" or "the system should be secure." Those are untestable. Every
+quality requirement needs two precise parts:</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Scenario + Measure</div>
+  <p>A quality requirement is specified as a <strong>scenario</strong> (what
+  event arrives / what situation holds) plus a <strong>measure</strong> (the
+  quantified response we demand). Crucially: the <strong>scenario maps to
+  controllability</strong> — get the system into that situation — and the
+  <strong>measure maps to observability</strong> — quantify what it does.</p>
+</div>
+
+<p>This is the unifying idea of the whole lecture: every quality attribute, from
+reliability to security, reduces to "<em>control</em> the system into a scenario,
+then <em>observe</em> a measure."</p>
+
+<h3 id="reliability">Reliability &amp; Chaos Engineering at Netflix</h3>
+<p><strong>Reliability</strong> is about deviations from the normal operating
+scenario for which the system should <em>still work correctly</em>. For Netflix,
+the requirement "watching movies should be reliable" becomes: <em>scenario</em> —
+the user requests to watch Squid Game even though the network is slow (defined
+precisely); <em>measure</em> — the percentage of such deviations under which the
+user still sees the movie instead of an error. Netflix faces constant deviations:
+high latency, surging load, DDoS, or everyone wanting the one new hit show and
+nothing else.</p>
+
+<p>So how does Netflix test reliability when a microservice (say, video
+validation, video encoding, or content analysis) becomes unavailable? They
+<strong>kill it on purpose.</strong></p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Chaos Engineering</div>
+  <p><strong>Chaos engineering</strong> randomly (or pseudo-randomly) kills
+  running services to test that the system stays reliable. Netflix is famous for
+  doing this not only in a test environment but in <strong>production</strong> —
+  their "Chaos Monkey" shuts down live services so developers are forced to build
+  microservices robust enough to survive being killed at any moment.</p>
+</div>
+
+<p>Why run chaos in <em>production</em> rather than just a test environment? Because
+a test environment may not generalize: different servers, far smaller scale. The
+downside of production chaos is real — if a service fails, a customer can't watch
+their show and might cancel. But the trade-off is worth it because the test
+environment can't reproduce production's true conditions. In chaos terms:
+<em>killing a random service is the controllability challenge; checking whether it
+restarts and how other services are impacted is the observability challenge.</em></p>
+
+<div class="callout tip">
+  <div class="callout-title">Generalizing Beyond Netflix</div>
+  <p>For any system, reliability testing = inject deviations with a test stub
+  (kill services, or simulate a component returning error codes), then assert
+  (controllability via the stub; observability via functional assertions plus a
+  heartbeat to confirm recovery, perhaps measuring time-to-recovery). For web
+  apps, the tool <strong>Artillery</strong> does Chaos-Monkey-style killing and
+  floods your app with requests.</p>
+</div>
+
+<h3 id="performance">Performance — Latency vs. Throughput</h3>
+<p>Performance requirements also need scenario + measure: describe what event
+arrives and what the system response should be, measured as average / min / max
+<strong>latency</strong> or <strong>throughput</strong> (or deadlines).</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Distinction — Latency vs. Throughput</div>
+  <p><strong>Latency</strong> is the time to execute one single operation/request.
+  <strong>Throughput</strong> is how many operations complete in a given amount of
+  time. They are different performance properties and you sometimes optimize them
+  separately: a batch system may want high throughput while tolerating high
+  latency per request; an interactive system may demand low latency even if total
+  throughput suffers.</p>
+</div>
+
+<p>Netflix tests performance with the <strong>Latency Monkey</strong> (part of
+their "Simian Army" of tools): they inject latency into components, or slow down
+the connector between components, then check timeouts and retries. Generalized:
+inject load or latency via a stub (a component that waits, then forwards the
+request), stress-test by bombarding the system with requests (Artillery again),
+and measure execution times with test spies that log timings, then look for
+bottlenecks.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Threat to Validity — The Heisenberg Effect</div>
+  <p>Performance testing has a built-in flaw: the act of measuring perturbs what
+  you measure. Injecting latency or logging adds its own overhead on top of the
+  latency you wanted to study, so results may not generalize. The professor calls
+  this a <strong>Heisenbug</strong> situation — observing the behavior can change
+  it (a bug that vanishes when you look). Sometimes the added delay even helps,
+  e.g. crossing a threshold that triggers auto-scaling. These methods are
+  imperfect but the best we have.</p>
+</div>
+
+<h3 id="security-avail">Security &amp; Availability</h3>
+<p><strong>Security</strong> requirements specify the functionality to preserve
+<em>plus a type of attack</em>, then measure how the system responds — is the
+attacker prevented, how long to detect, how long to repel? You can't write "the
+system is secure"; you specify which attack and the response. To test it, you
+<strong>simulate the attack</strong>: a red team of security engineers, an
+automated attack, or — increasingly — an AI agent trying to break the system by
+injecting malicious input or unauthorized requests. Then observe whether
+functionality is preserved and whether the attack was detected / prevented from
+propagating.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Why Security Is the Hardest to Automate</div>
+  <p>The moment you can name a specific attack, it's probably already outdated.
+  You must keep imagining <em>new</em> kinds of attacks — which is exactly why
+  AI agents that generate novel attacks are a promising tool here.</p>
+</div>
+
+<p><strong>Availability</strong> looks similar to reliability but the
+<em>measure</em> differs: percentage of uptime, time-to-repair, or time to detect
+and recover from partial unavailability. The painful problem: how do you test
+"99.999% availability" (roughly ten hours of downtime per year) <em>without
+waiting a whole year?</em> You can't. Instead you <strong>create the rare events
+deliberately</strong> (high load, injected faults), check responsiveness (ping-echo
+again), and <strong>extrapolate</strong> from how often those rare events occur in
+the real world. This is why availability is so hard to prove that breaking into the
+"big leagues" of Azure / Google Cloud is largely about <em>reputation</em> for
+honoring service-level agreements (SLAs).</p>
+
+<div class="callout tip">
+  <div class="callout-title">Availability as a Business Conversation</div>
+  <p>A business customer (say UCLA buying BruinLearn) tolerates some deviation:
+  maybe one day down per quarter is fine, so they demand a mean-time-to-repair of
+  24 hours. You either serve only customers happy with the guarantee you can give,
+  or offer tiers — charge a premium customer 1000× for higher availability, and
+  during partial outages preferentially keep <em>them</em> running while lower
+  tiers absorb the downtime.</p>
+</div>
+
+<div class="quiz" id="quiz3-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A requirement reads: "When the payment service is under a credential-stuffing attack, the system must detect it within 5 seconds and block the attacker." Map its parts to the two pillars.</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>The attack type is the measure; the 5-second detection is the scenario.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>The credential-stuffing attack is the scenario (controllability — simulate it); detect-within-5s-and-block is the measure (observability — verify it).</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Both parts are pure controllability; security has no observability component.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Neither maps to the pillars; security requirements are functional, not quality, requirements.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct — B.</strong> Every quality requirement splits into scenario +
+    measure, which map to controllability + observability. The attack is the
+    situation you must <em>create</em> (simulate the credential-stuffing — that's
+    controllability), and "detect within 5 seconds and block" is the quantified
+    response you must <em>observe</em> (observability). A inverts the two; C ignores
+    that you must measure detection/blocking; D is wrong because security is a
+    classic quality attribute.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>Architectural Tactics</h2>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Builds On the Architecture Lecture</div>
+  <p>Earlier we saw <strong>architectural styles</strong> — the one or two
+  predominant shapes of your architecture, each trading off quality attributes.
+  You pick a style once or twice and you're largely done. But when your boss says
+  "now make it more reliable" or "more available," you reach for
+  <strong>tactics</strong>: small, design-pattern-like additions you drop into an
+  existing system to promote one specific quality attribute. They're all
+  catalogued in the architecture textbooks.</p>
+</div>
+
+<h3 id="ping-echo">Detecting Faults: From Naive Idea to Ping-Echo</h3>
+<p>Problem: to ensure dependability, detect faults before they escalate to
+failures by determining whether a component or node has stopped working — exactly
+the Netflix "is this service down?" question. A first idea (Nathan's in class):
+every component that makes a request notices when it gets no response. That
+works, but it shifts the burden onto <em>every single component</em>, bloating
+each one with detection code.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Ping-Echo Tactic</div>
+  <p>A dedicated <strong>watchdog component</strong> regularly sends "ping"
+  requests to all other components and waits for an "echo." If a component fails
+  to respond within a timeout, it's considered offline and a recovery mechanism
+  spins up a replacement. Detection is centralized in one place instead of
+  scattered everywhere.</p>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>Watchdog sends a ping; healthy component echoes back. All good.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>Watchdog pings again; this component has stopped working — no echo.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>Timeout expires → mark offline → recovery component starts a replacement.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Downsides of Ping-Echo</div>
+  <p>Two problems. First, <em>who watches the watchdog?</em> If the watchdog dies,
+  detection dies. Second, it floods the network: the watchdog sends pings to
+  everyone <em>and</em> every component must spend compute responding — roughly
+  twice the message traffic, hurting performance.</p>
+</div>
+
+<h3 id="heartbeat">Heartbeat — Same Goal, Fewer Messages</h3>
+<p>Can we detect failures without the request/response traffic? Yes — invert it.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Heartbeat Tactic</div>
+  <p>Every component <em>regularly broadcasts</em> an "I'm alive" message on its
+  own. No one sends a request — a listener just watches the heartbeats. If a
+  component's heartbeat doesn't arrive within a timeout, it's considered offline
+  and recovery begins.</p>
+</div>
+
+<table class="compare-table">
+  <tr><th>Aspect</th><th>Ping-Echo</th><th>Heartbeat</th></tr>
+  <tr><td>Both…</td><td>improve availability, inhibit performance</td><td>improve availability, inhibit performance</td></tr>
+  <tr><td>Message count</td><td>Higher — request + echo (≈2× traffic)</td><td>Lower — one-way "I'm alive"</td></tr>
+  <tr><td>Where logic lives</td><td>One component; reuses each component's existing ability to reply to messages</td><td>Distributed — every component needs an internal timer + heartbeat subroutine</td></tr>
+  <tr><td>Turn it on/off</td><td>Easy — just stop sending pings from the one watchdog</td><td>Harder — behavior is baked into every component</td></tr>
+</table>
+
+<p>The trade-off is responsibility vs. performance: ping-echo concentrates the
+logic in one place (easy to toggle) but sends more messages; heartbeat
+distributes the logic into every component (more complexity per component) but
+sends fewer messages.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Real-World Footgun — Heartbleed</div>
+  <p>OpenSSL's heartbeat implementation had a buffer over-read bug, producing
+  <strong>Heartbleed</strong> — one of the most famous security bugs of the early
+  2010s. A reliability tactic, implemented carelessly, became a catastrophic
+  security hole.</p>
+</div>
+
+<h3 id="caching">Caching — Avoiding Expensive Re-Acquisition</h3>
+<p>Problem: a resource is very expensive to compute but requested many times. The
+tactic is <strong>caching</strong> — temporarily store a local copy. A design
+choice: a <em>transparent cache</em> sits invisibly in front of the provider
+(the resource user always talks to the cache, which fetches from the provider
+only on a miss), versus a cache the user queries explicitly first, falling back
+to the provider itself on a miss. Each has slightly different trade-offs.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="380" height="120" viewBox="0 0 380 120" style="display:block; margin:0 auto;">
+      <rect x="10" y="45" width="80" height="38" rx="8" fill="#eff4ff" stroke="#2563eb" stroke-width="2"/>
+      <text x="50" y="69" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="600" fill="#2a2520">User</text>
+      <rect x="150" y="45" width="80" height="38" rx="8" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="190" y="69" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="600" fill="#2a2520">Cache</text>
+      <rect x="290" y="45" width="80" height="38" rx="8" fill="#f3effe" stroke="#7c3aed" stroke-width="2"/>
+      <text x="330" y="63" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" font-weight="600" fill="#2a2520">Provider</text>
+      <text x="330" y="76" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" fill="#6b6560">(expensive)</text>
+      <line x1="90" y1="64" x2="148" y2="64" stroke="#2d8a4e" stroke-width="2" marker-end="url(#arrow2)"/>
+      <text x="119" y="40" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" fill="#2d8a4e">always</text>
+      <line x1="230" y1="64" x2="288" y2="64" stroke="#c53030" stroke-width="2" stroke-dasharray="4 3" marker-end="url(#arrow2)"/>
+      <text x="259" y="40" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" fill="#c53030">on miss</text>
+      <defs>
+        <marker id="arrow2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#6b6560"/>
+        </marker>
+      </defs>
+      <text x="190" y="108" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">Transparent cache: user always hits cache; cache fetches only on a miss</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Caching avoids re-paying the cost of an expensive resource on repeated requests.</div>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Where to Read More</div>
+  <p>The professor's go-to is <em>Software Architecture in Practice</em> (Bass,
+  Clements &amp; Kazman). Also recommended: <em>A System of Patterns</em>
+  (Siemens) and the more practitioner-minded <em>Design It! From Programmer to
+  Software Architect</em>. All three should be free with a UCLA account. The full
+  catalog of tactics lives in these books — this lecture only samples a few.</p>
+</div>
+
+<div class="quiz" id="quiz4-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Your team needs fault detection but is on a bandwidth-constrained network where extra messages hurt. Between ping-echo and heartbeat, which fits better and what's the cost?</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Ping-echo, because it sends fewer messages.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Heartbeat, because one-way "I'm alive" broadcasts mean fewer messages — at the cost of baking a timer/heartbeat subroutine into every component, making it harder to toggle.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Heartbeat, because it concentrates all logic in one watchdog you can turn off.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Ping-echo, because it requires no logic in the individual components.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct — B.</strong> Heartbeat sends fewer messages (one-way "I'm
+    alive" instead of ping + echo), which is what you want on a constrained
+    network. The trade-off is that every component must implement and run an
+    internal timer plus heartbeat subroutine, distributing the complexity and
+    making the behavior hard to switch off. A inverts the message counts. C and D
+    describe ping-echo (centralized, toggleable, reuses existing reply ability),
+    not heartbeat.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>Increasing Test Coverage</h2>
+</div>
+
+<h3>The Balance: Effort vs. Confidence</h3>
+<p>Test coverage is always a balance between testing <em>effort</em> and
+<em>confidence</em>. More tests cost more to write and run. You want to test
+critical functionality first and have system-integration tests, but you also
+want enough confidence — 50% coverage is "basically nothing," nobody writes home
+about it. The smart move is to ask which complex parts deserve more tests and
+whether more confidence comes from <em>more assertions</em> rather than merely
+covering more lines (the "mutation gap" idea from an earlier lecture).</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Vocabulary — Fault, Error, Failure</div>
+  <p>A <strong>fault</strong> is the location/line in the code that is buggy. An
+  <strong>error</strong> is what happens when that line executes and the program
+  enters an incorrect state. A <strong>failure</strong> is an error that
+  propagates all the way to the system boundary (the user sees it, or wrong data
+  is stored). Fault-tolerant mechanisms work by detecting an error and responding
+  before it becomes a failure.</p>
+</div>
+
+<p>Why even write unit tests, if system/integration tests give a better
+effort-to-confidence ratio? Because when an integration test fails, you see the
+<em>failure</em> but it's hard to pinpoint the <em>fault</em>. Unit tests
+localize the bug. Now — how do we get high coverage without hand-writing a
+gazillion input/output cases? Two big ideas: random generation, and asserting
+relationships instead of exact outputs.</p>
+
+<h3 id="monkey">Monkey Testing &amp; Fuzzing</h3>
+<p>Imagine a web app with decent tests. Users can click anything in any order.
+Writing one Playwright script per scenario is hopelessly tedious — you'll run out
+of patience after ten. The fix: stop relying on your mental model of "what the
+user should do" and just generate random inputs.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Monkey Testing</div>
+  <p>Put a "monkey" in front of your UI: randomly trigger any possible system
+  events, sampling from the whole input space, avoiding repetition, trying to
+  break the system. Then check for crashes or for your in-code assertions being
+  violated. This is exactly why dense assertions pay off — with many assertions,
+  random inputs alone give you very high effective coverage.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Monkey Testing vs. Fuzzing</div>
+  <p>Same idea, different level. <strong>Monkey testing</strong> generates random
+  <em>UI events</em>. <strong>Fuzzing</strong> generates random inputs of
+  <em>any</em> kind (not just UI). Both lean on the principle that "the quality of
+  your code is measured by the density of assertions in it" — a rough but cheap
+  proxy for how much you can trust the code.</p>
+</div>
+
+<p>But monkey testing alone isn't enough: it only catches crashes and assertion
+violations. It won't verify the system computes the <em>right number</em>. For
+that you still need real input/output oracles — or the next technique.</p>
+
+<h3 id="metamorphic">Metamorphic Testing — Asserting Relationships</h3>
+<p>Sometimes a <strong>test oracle</strong> (the mapping from input to expected
+output) is very expensive or impossible to write. What's the expected output of
+an image recognizer for a given photo? What are all the digits of pi? You can't
+enumerate those. But you may know <em>relationships</em> that must always hold,
+even without knowing any single exact answer.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Metamorphic Testing</div>
+  <p>Generate random inputs sampling the whole input space (like fuzzing), but
+  instead of checking crashes, assert <strong>metamorphic relationships</strong> —
+  system-level properties that hold for <em>all</em> inputs. Example: even if you
+  don't know <code>sin(3.51)</code>, you know <code>sin(π − x) == sin(x)</code> for
+  every <code>x</code>. Feed in huge, tiny, and zero values and check the relation
+  holds throughout.</p>
+</div>
+
+<p>Metamorphic relationships are everywhere once you look. A few from the
+lecture:</p>
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Round-trip:</strong> USD→EUR then EUR→USD (at one instant) should
+  return the original amount, even though you don't know the exact rate.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Robustness:</strong> add minor noise to an image; object recognition
+  should still recognize it.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Subset:</strong> filtering an online shop by price or store ID should
+  return a subset of the unfiltered list.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Netflix examples:</strong> the same search query should return the
+  same results regardless of user profile (though order may vary, and age
+  restrictions might break it); or a watched movie shouldn't reappear in
+  recommendations (a property you <em>might</em> choose to enforce).</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Why Metamorphic Testing Alone Isn't Enough</div>
+  <p>It can be fooled by systematically wrong implementations. If your
+  <code>sin</code> is always off by one, or your tax is always off by $100, or
+  object recognition <em>never</em> recognizes anything — the metamorphic relation
+  may still hold (you took a "shortcut through the oracle") and the bug slips
+  through. You still need some real input/output tests to anchor correctness.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Watch Your Ranges</div>
+  <p>Relationships often hold only on sub-ranges. "More income → more tax" may
+  fail below a tax-free threshold (say $20k) or for negative income. Specify the
+  ranges and conditions under which your metamorphic relation actually applies.</p>
+</div>
+
+<h3 id="tdd">Test-Driven Development</h3>
+<p>If you follow <strong>TDD</strong> — never writing a line of production code
+without first writing a test for it — you naturally end up near 100% coverage:
+guaranteed 100% statement coverage, usually 100% branch coverage, often 100% path
+coverage. It's a discipline that bakes high coverage in by construction.</p>
+
+<div class="quiz" id="quiz5-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">You apply metamorphic testing to a currency app, checking USD→EUR→USD returns the original amount, and it passes for millions of random inputs. Why might the app still be badly broken?</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Metamorphic testing only works on UI events, not currency math.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>A systematically wrong implementation (e.g. both directions return 0, or are scaled by the same wrong factor) can preserve the round-trip relation while producing wrong absolute values.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Passing millions of inputs guarantees correctness, so it can't be broken.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Metamorphic relations require an exact oracle, which this test lacks.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct — B.</strong> Metamorphic relations check consistency, not
+    absolute correctness. If both conversion functions are wrong in a way that
+    cancels out on the round trip — both return 0, or both apply the same wrong
+    rate — the relation still holds and the bug hides. That's the "shortcut
+    through the oracle" warning. This is exactly why metamorphic testing must be
+    combined with some genuine input/output tests. D is wrong because the whole
+    point of metamorphic testing is to <em>avoid</em> needing an exact oracle.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART VI ═══════════════════════ -->
+<section id="part6" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part VI</div>
+  <h2>Testing Across Domains</h2>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — "It Depends"</div>
+  <p>In software engineering, the correct answer to 90% of questions is
+  <strong>"it depends."</strong> Your testing approach must be tailored to the
+  domain — web apps, mobile, robotics, or a helicopter destined for Mars each pose
+  different controllability and observability challenges.</p>
+</div>
+
+<h3 id="web">Web Apps &amp; Playwright</h3>
+<p>Web apps are hard on <em>both</em> pillars. Controllability: you can never fully
+predict how a user will behave — user interaction is the wild card, and there are
+endless ways to interact. Observability: your output is an HTML page, which is
+hard to assert on. You must simulate clicks, text entry, and page loads, then
+verify output that could be anywhere on the page — and if you over-fit assertions
+to exact pixels, any CSS or UI change breaks your tests.</p>
+
+<p><strong>Playwright</strong> is the state-of-the-art framework that addresses
+exactly these challenges. For controllability you navigate to a URL and query
+inputs by role or ID, fill text, and click links — simulating real user
+interaction. For observability you assert on <em>visibility</em> (text should be
+not just present but actually visible, since JavaScript can hide it) or on a
+locator having certain text, substring, or message count.</p>
+
+<pre><code><span class="cm">// Playwright — controllability: drive the page</span>
+<span class="kw">await</span> page.<span class="fn">goto</span>(<span class="str">'https://example.com/login'</span>);
+<span class="kw">await</span> page.<span class="fn">getByRole</span>(<span class="str">'textbox'</span>, { name: <span class="str">'Email'</span> })
+          .<span class="fn">fill</span>(<span class="str">'user@example.com'</span>);
+<span class="kw">await</span> page.<span class="fn">getByRole</span>(<span class="str">'link'</span>,    { name: <span class="str">'Submit'</span> }).<span class="fn">click</span>();
+
+<span class="cm">// observability: assert on visibility / text</span>
+<span class="kw">await</span> <span class="fn">expect</span>(page.<span class="fn">getByText</span>(<span class="str">'Welcome'</span>)).<span class="fn">toBeVisible</span>();</code></pre>
+
+<div class="callout tip">
+  <div class="callout-title">Practical Advice For Your Project</div>
+  <p>If you're building a web app, use Playwright — and combine it with Artillery
+  for reliability/load testing. There's a Playwright tutorial in the course
+  e-book. Concepts transfer even to companies' internal in-house frameworks, so
+  learning it pays off well beyond this class.</p>
+</div>
+
+<h3 id="robotics">Robotics, Self-Driving Cars &amp; Mobile</h3>
+<p>For <strong>space/robotic systems</strong>, controllability is brutal. To test
+the Mars helicopter (Ingenuity), engineers used a <em>pressure chamber</em> with
+the atmosphere removed and a <em>spring</em> to offset gravity — physically
+recreating Mars. It translated to Mars, though not 100%. The recurring problem is
+the <strong>simulation gap</strong>: simulated sensor/video input doesn't fully
+match the real world, and the input space (any image, any video, any sensor
+reading) is enormous.</p>
+
+<p>One mitigation: record real-world events and <strong>replay</strong> them — in
+the Robot Operating System, "bag files" record events to play back later. That
+lowers testing effort but only covers the events you actually recorded.
+Cautionary tales abound: a Volvo self-driving car assumed animals always touch the
+ground (true for Nordic moose and deer) and then misjudged <em>kangaroos</em> in
+Australia. Holding self-driving cars to the same safety standards as comparable
+systems would require driving every road on Earth eight times before each release
+— infeasible — which is why robotic systems are so hard to test.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Mobile: Monkey Testing &amp; Device Fragmentation</div>
+  <p>Monkey testing is hugely popular on mobile; Android and iOS each ship their
+  own monkey frameworks. iOS is easier because devices are uniform. Android adds a
+  controllability challenge: countless hardware configs (different GPUs, sensors,
+  system setups), so testing means uploading your APK to clouds of <em>real
+  devices</em> across thousands of configurations (e.g. Google's cloud testing) —
+  effective but expensive.</p>
+</div>
+
+<div class="quiz" id="quiz6-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">The Volvo "kangaroo" failure best illustrates which testing difficulty for robotic systems?</div>
+  <div class="quiz-options" data-quiz="q6">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>A flaky test that passes and fails randomly (the Heisenbug effect).</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>An assumption baked into the system that held in the test/training environment (animals touch the ground) but failed in a different real-world deployment — the simulation/environment gap.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>A cyclic dependency between two components.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Insufficient assertion density in the codebase.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q6','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q6">
+    <strong>Correct — B.</strong> The car was built assuming animals always touch
+    the ground — valid for Nordic conditions but false for hopping kangaroos in
+    Australia. The environment it was validated in didn't generalize to the
+    deployment environment, the core simulation/environment gap that makes robotic
+    systems so hard to test. A, C, and D are real concepts from the lecture but
+    don't describe this particular failure.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SYNTHESIS ═══════════════════════ -->
+<section id="synthesis" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>Every idea in this lecture hangs from a single hook introduced in Part I:
+<strong>testability = controllability + observability</strong>. Once you see that,
+the rest of the lecture is the same two-pillar pattern applied at ever-larger
+scope.</p>
+
+<p>In <strong>Part II</strong>, the pillars became concrete tools. A
+<em>test stub</em> gives you controllability by injecting indirect inputs; a
+<em>mock object</em> and a <em>test spy</em> give you observability by verifying
+indirect outputs (well-formedness vs. ordering). In <strong>Part III</strong>,
+the very definition of a quality requirement — <em>scenario + measure</em> — turned
+out to <em>be</em> the two pillars wearing different clothes: the scenario is
+something you control the system into, the measure is something you observe.
+Reliability, performance, security, and availability are all just different
+scenario/measure pairs, and Netflix's Chaos Monkey, Latency Monkey, and Simian
+Army are industrial-strength ways of <em>controlling</em> rare scenarios so the
+system's response can be <em>observed</em>.</p>
+
+<p><strong>Part IV</strong> stepped back from testing to <em>design</em>: tactics
+like ping-echo and heartbeat are how you build the availability that Part III
+demands, and they themselves are validated using Part II's stubs (kill a service,
+watch it recover). <strong>Part V</strong> attacked the cost of testing head-on:
+monkey testing and fuzzing crank up controllability by generating inputs
+randomly; metamorphic testing rescues observability when you can't write an
+oracle, by asserting relationships instead of exact answers. And
+<strong>Part VI</strong> drove home the field's mantra — "it depends" — showing
+that the same two pillars demand wildly different machinery for a web app
+(Playwright), a Mars helicopter (a pressure chamber), and an Android fleet (cloud
+device farms).</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Through-Line</div>
+  <p>Testing gives confidence; <strong>testability gives a better design</strong>.
+  The closing observation seals it: systems that are easy to test are also easy to
+  change — both come from the same discipline of fewer dependencies and smaller
+  interfaces. High testability ⇄ high changeability. Designing for one gives you
+  the other for free.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">What's Next</div>
+  <p>This lecture deliberately left a tool unintroduced — the <strong>six-part
+  quality attribute scenario framework</strong> (source, stimulus, artifact,
+  environment, response, response measure) that the CMU students use to write
+  precise requirements. Expect it to return, sharpening the "scenario + measure"
+  idea into a full template. In the near term, take the advice literally: for your
+  project, wire up Playwright (plus Artillery if you have time) and add dense
+  assertions so monkey testing pays off — both will look great on the experience
+  list you'll one day use to justify your existence to an interviewer.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

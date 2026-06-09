@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 12 — Coverage, Paths &amp; Symbolic Execution</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 12 · Week 6</div>
+  <a href="#part1">Part I — Coverage Criteria</a>
+  <a href="#why-coverage" class="sub">Why Coverage Exists</a>
+  <a href="#three-criteria" class="sub">Statement, Branch, Path</a>
+  <a href="#branch-example" class="sub">Hitting 100% Branch Coverage</a>
+  <a href="#cfg" class="sub">Control-Flow Graphs &amp; for-Loops</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Counting Paths</a>
+  <a href="#path-formula" class="sub">2^k and Loop Unrolling</a>
+  <a href="#nested-loops" class="sub">Nested Loops &amp; Sums</a>
+  <a href="#dead-conditions" class="sub">Conditions That Don't Exist</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — Oracle Strength</a>
+  <a href="#coverage-not-enough" class="sub">Why Coverage Isn't Enough</a>
+  <a href="#mutation" class="sub">Mutation Testing</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — Fixtures &amp; Black-Box</a>
+  <a href="#fixtures" class="sub">Test Fixtures</a>
+  <a href="#blackbox" class="sub">The Bar Comic</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Symbolic Execution</a>
+  <a href="#infeasible" class="sub">Infeasible Paths</a>
+  <a href="#path-conditions" class="sub">Path Conditions &amp; Effects</a>
+  <a href="#symbolic-example" class="sub">A Worked Example</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part6">Part VI — Testing Real Systems</a>
+  <a href="#jpl" class="sub">The Mars Helicopter</a>
+  <a href="#therac" class="sub">Therac-25</a>
+  <a href="#quiz6" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#together">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">COMSCI 130 · Software Engineering</div>
+  <h1>Counting Paths: Coverage, Mutation &amp; Symbolic Execution</h1>
+  <p class="hero-sub">An interactive guide to Week 6 — how we measure whether tests are good, how to count the paths a program can take, and how to find the inputs (and the dead code) automatically.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>Coverage Criteria — Measuring a Test Suite</h2>
+</div>
+
+<h3 id="why-coverage">Why Are We Learning This?</h3>
+<p>Suppose you wrote a function and then wrote some tests for it. A natural, uneasy question follows: <em>are these tests any good?</em> "Good" is vague, so engineers replace it with something measurable. A <strong>coverage criterion</strong> is a yardstick that asks: of all the things in the program that <em>could</em> be exercised, how many did your tests actually exercise? If your tests never run a line of code, that line could be completely broken and your tests would never notice. Coverage turns the fuzzy goal "test thoroughly" into a percentage you can put a number on.</p>
+
+<p>This lecture builds the entire machinery for answering "how many tests do I need, and which inputs should they use?" Coverage is the first rung. By the end we will count paths exactly, then automate the whole thing with symbolic execution.</p>
+
+<h3 id="three-criteria">Three Criteria: Statement, Branch, Path</h3>
+<p>There are three coverage criteria in this course, and they form a hierarchy of strictness. Each counts a different kind of "thing" the tests must hit.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The Three Coverage Criteria</div>
+  <p><strong>Statement coverage</strong> asks that every <em>line</em> (statement) of the program runs at least once. <strong>Branch coverage</strong> asks that every conditional takes <em>both</em> its true and its false outcome at least once. <strong>Path coverage</strong> asks that every <em>complete route</em> through the program from entry to exit is executed at least once.</p>
+</div>
+
+<p>Why does the professor call path coverage the <em>most restrictive</em>? Because a single path threads together one choice at every branch, and there are usually many combinations of choices. Hitting all of them implies you also hit every individual branch, which in turn implies you hit every statement. We say path coverage <strong>subsumes</strong> the other two: achieving it automatically achieves them.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="320" height="120" viewBox="0 0 320 120" style="display:block; margin:0 auto;">
+      <rect x="6" y="42" width="120" height="36" rx="8" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="66" y="65" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#c0510a">Statement</text>
+      <rect x="100" y="30" width="150" height="60" rx="8" fill="none" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="175" y="22" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">Branch ⊇ Statement</text>
+      <rect x="86" y="14" width="220" height="92" rx="10" fill="none" stroke="#2563eb" stroke-width="2"/>
+      <text x="232" y="100" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#2563eb">Path ⊇ Branch</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Path coverage is the strictest: it contains (subsumes) branch coverage, which contains statement coverage.</div>
+</div>
+
+<h3 id="branch-example">Worked Example: Hitting 100% Branch Coverage</h3>
+<p>Consider a function with three <em>independent</em> conditions stacked in it — one checking <code>x &gt; 1</code>, one checking <code>y &gt; 2</code>, one checking <code>z &gt; 3</code>. "Independent" means the outcome of one says nothing about the others. We want a set of inputs that makes every branch go both ways.</p>
+
+<pre><code><span class="kw">if</span> (x &gt; <span class="nb">1</span>) { ... }
+<span class="kw">if</span> (y &gt; <span class="nb">2</span>) { ... }
+<span class="kw">if</span> (z &gt; <span class="nb">3</span>) { ... }</code></pre>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Test case A: x=0, y=0, z=0.</strong> Every condition is false, so this single test covers all three <em>false</em> branches at once — that is 50% branch coverage (three of the six branch outcomes).</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Test case B: x=2, y=3, z=4.</strong> Every condition is true, so this covers all three <em>true</em> branches at once — the remaining 50%. Together the two tests reach <strong>100% branch coverage</strong>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Why this trick works:</strong> because the conditions are independent, "all false" and "all true" are both feasible inputs. The professor warned this <em>"all-low then all-high"</em> strategy is a good first attempt but <strong>does not always work</strong> — if conditions depend on each other, "all true" might be impossible.</p>
+</div>
+
+<p>Notice two classifications the professor drew out of this example. Because we picked these inputs by <em>reading the code</em>, this is <strong>white-box testing</strong> (testing informed by the implementation, as opposed to black-box testing, which only knows the spec). And because we test one function in isolation, this is <strong>unit testing</strong> — not component, integration, or system testing.</p>
+
+<h3 id="cfg">Control-Flow Graphs and the for-Loop Problem</h3>
+<p>To reason about paths, we first draw a <strong>control-flow graph (CFG)</strong>: a diagram where rectangles are straight-line statements, diamonds are conditions, and arrows show how control moves. A loop becomes a cycle in the graph.</p>
+
+<p>A subtlety the professor stressed: a <code>for</code> loop has no dedicated CFG shape. But a <code>for</code> loop is just a <code>while</code> loop with extra pieces bolted on through <strong>syntactic sugar</strong> (convenient surface syntax that expands into something more basic). So we desugar it into three parts: the <em>initialization</em> (<code>i = 0</code>), the <em>condition</em> (<code>i &lt; 2</code>), and the <em>increment</em> (<code>i++</code>) which happens at the bottom of the loop body before jumping back to the condition.</p>
+
+<pre><code><span class="cm">// for (i = 0; i &lt; 2; i++) { if (...) value += 2; }</span>
+i = <span class="nb">0</span>;                  <span class="cm">// init  (drawn first, once)</span>
+<span class="kw">while</span> (i &lt; <span class="nb">2</span>) {          <span class="cm">// condition diamond</span>
+    <span class="kw">if</span> (...) value += <span class="nb">2</span>;  <span class="cm">// loop body</span>
+    i++;                <span class="cm">// increment, then back to condition</span>
+}
+<span class="kw">return</span> value;           <span class="cm">// false branch of condition exits here</span></code></pre>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="240" height="270" viewBox="0 0 240 270" style="display:block; margin:0 auto;">
+      <!-- begin -->
+      <ellipse cx="120" cy="22" rx="40" ry="16" fill="#fff" stroke="#2a2520" stroke-width="2"/>
+      <text x="120" y="27" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">begin</text>
+      <line x1="120" y1="38" x2="120" y2="54" stroke="#d9d0c4" stroke-width="2"/>
+      <!-- i=0 -->
+      <rect x="84" y="54" width="72" height="30" rx="6" fill="#fff" stroke="#2a2520" stroke-width="2"/>
+      <text x="120" y="73" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">i = 0</text>
+      <line x1="120" y1="84" x2="120" y2="100" stroke="#d9d0c4" stroke-width="2"/>
+      <!-- condition diamond -->
+      <polygon points="120,100 168,128 120,156 72,128" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="120" y="132" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c0510a">i &lt; 2 ?</text>
+      <!-- false to return -->
+      <line x1="168" y1="128" x2="210" y2="128" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="189" y="120" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">false</text>
+      <rect x="180" y="113" width="56" height="30" rx="6" fill="#fff" stroke="#2a2520" stroke-width="2"/>
+      <text x="208" y="132" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">return</text>
+      <!-- true down to if -->
+      <line x1="120" y1="156" x2="120" y2="172" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="134" y="168" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">true</text>
+      <polygon points="120,172 160,196 120,220 80,196" fill="#fff" stroke="#2a2520" stroke-width="2"/>
+      <text x="120" y="200" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#2a2520">if ...</text>
+      <!-- i++ -->
+      <line x1="120" y1="220" x2="120" y2="234" stroke="#d9d0c4" stroke-width="2"/>
+      <rect x="92" y="234" width="56" height="26" rx="6" fill="#fff" stroke="#2a2520" stroke-width="2"/>
+      <text x="120" y="251" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">i++</text>
+      <!-- back edge -->
+      <path d="M 48 247 Q 30 128 70 128" fill="none" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="92" y1="247" x2="48" y2="247" stroke="#d9d0c4" stroke-width="2"/>
+    </svg>
+  </div>
+  <div class="figure-caption">CFG for a desugared <code>for</code> loop. The back edge from <code>i++</code> to the condition is the loop. The false branch leaves the loop and returns.</div>
+</div>
+
+<p>For a program like this with a small fixed loop, the professor asked: what is the maximum number of complete paths? For the "complex fun" example used in class, the answer was <strong>4</strong> — and that is exactly the minimum number of tests you would need for 100% path coverage.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Connection — Why This Sets Up Part II</div>
+  <p>Once you can draw a CFG and unroll loops, counting paths becomes mechanical. Part II turns that mechanical procedure into formulas: <code>2^k</code> for branches, and finite sums for nested loops.</p>
+</div>
+
+<div class="quiz" id="quiz1-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Which coverage criterion is the most restrictive (hardest to fully achieve), and why?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Statement coverage, because every line must run.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Branch coverage, because every condition must go both ways.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Path coverage, because it subsumes branch and statement coverage.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>They are all equally restrictive.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct — C.</strong> Path coverage requires exercising every complete route through the program, and each route already touches specific branches and statements. So achieving path coverage automatically achieves the other two; we say it <em>subsumes</em> them. Statement coverage (A) is the weakest — you can run every line without ever taking a false branch.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>Counting Paths — From 2^k to Nested Sums</h2>
+</div>
+
+<h3 id="path-formula">The Core Formula: 2^k and Loop Unrolling</h3>
+<p>Here is the foundational rule. Suppose a loop-free program executes <strong>k</strong> branches, each of which is a genuine true/false choice, and none of the resulting paths is infeasible. Then the number of complete paths is:</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="180" height="70" viewBox="0 0 180 70" style="display:block; margin:0 auto;">
+      <text x="90" y="44" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="30" font-weight="600" fill="#c0510a">2&#8202;<tspan font-size="20" dy="-10">k</tspan></text>
+    </svg>
+  </div>
+  <div class="figure-caption">Number of paths through a loop-free program with <code>k</code> independent true/false branches.</div>
+</div>
+
+<p>The intuition: each branch doubles the number of possible routes, because for every route so far you can append "true" or "false." Two branches give <code>2×2 = 4</code>; three give <code>8</code>; and so on.</p>
+
+<p>What about loops? Loops are the hard part because the number of branch executions depends on how many times the loop runs. The technique is <strong>loop unrolling</strong>: in your head, replace the loop with an equivalent loop-free program where the body is written out once per iteration. If the loop runs <code>n</code> times and the body contains <code>k</code> independent branches each iteration, the unrolled program has <code>n × k</code> branches, so the path count becomes <code>2^(n·k)</code>.</p>
+
+<div class="callout insight">
+  <div class="callout-title">The Mental Move — Unroll the Loop</div>
+  <p>Whenever you need to reason about branch executions inside a loop, "unroll" it: imagine the equivalent program with no loop, where the body is copied out once per iteration. Then the plain <code>2^k</code> rule applies to the copies. The professor returned to this move again and again.</p>
+</div>
+
+<h3 id="nested-loops">Nested Loops and Finite Sums</h3>
+<p>Things get richer with nesting, because an inner loop's bound can depend on the outer loop's counter. Consider an outer loop running <code>n</code> times, and on iteration <code>i</code> an inner loop runs up to <code>3^i</code> times. The total number of inner executions is a sum:</p>
+
+<pre><code>3¹ + 3² + 3³ + ... + 3ⁿ</code></pre>
+
+<p>The professor showed how to collapse this without memorizing the formula. Call the sum <code>S</code>. Multiply by 3 (shifting every term up by one), then subtract the original — almost everything cancels, leaving only the endpoints. Solving gives a <strong>closed-form formula</strong> (one with no "<code>...</code>" you can type straight into a calculator):</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="260" height="70" viewBox="0 0 260 70" style="display:block; margin:0 auto;">
+      <text x="130" y="44" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="20" font-weight="600" fill="#c0510a">(3&#8202;<tspan font-size="14" dy="-8">n+1</tspan><tspan dy="8"> &#8722; 3) / 2</tspan></text>
+    </svg>
+  </div>
+  <div class="figure-caption">Closed form for 3¹ + 3² + ... + 3ⁿ. Equivalently written 3^(n+1)/2 &#8722; 3/2.</div>
+</div>
+
+<p>The same subtract-and-cancel trick recovers the famous sum <code>1 + 2 + ... + n = n(n+1)/2</code> when an inner loop simply counts up to <code>i</code> rather than to <code>3^i</code>. The lecture re-derived it by writing the sum forwards and backwards, adding the two copies (every column sums to <code>n+1</code>, and there are <code>n</code> columns), then dividing by two.</p>
+
+<details>
+<summary>Expand: re-deriving 1 + 2 + ... + n by hand</summary>
+<div class="details-body">
+<p>Write the sum twice, once forwards and once backwards, then add column by column:</p>
+<pre><code>  S =   1   +   2   + ... + (n-1) +   n
+  S =   n   + (n-1) + ... +   2   +   1
+─────────────────────────────────────────
+ 2S = (n+1) + (n+1) + ... + (n+1) + (n+1)</code></pre>
+<p>There are <code>n</code> columns, each equal to <code>n+1</code>, so <code>2S = n(n+1)</code> and therefore <code>S = n(n+1)/2</code>. No memorization needed — just the trick.</p>
+</div>
+</details>
+
+<h3 id="dead-conditions">Conditions That Don't Actually Exist</h3>
+<p>Here is the most surprising idea of the part. Not every <code>if</code> in the source adds paths. Look at a loop whose condition is <code>(2^k mod 2) == 0</code>. Since <code>2^k</code> is always even, <code>2^k mod 2</code> is <em>always</em> 0, so the condition is <em>always true</em>. There is no input that makes it false. When you unroll this loop, that <code>if</code> simply isn't there — it contributes <strong>one</strong> route, not two, and adds nothing to the path count.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Common Mistake — Counting Phantom Branches</div>
+  <p>An <code>if</code> in the source code does <em>not</em> always mean a real branch. If a condition can only ever be true (or only ever false), it adds no paths — it is effectively dead code. Counting it as a real true/false branch over-estimates the path count badly (e.g. <code>2^n</code> instead of <code>2^(something smaller)</code>).</p>
+</div>
+
+<p>An even subtler version: an inner loop compares <code>A[i] &lt; k</code>. Unrolled, the condition appears <code>2^n − 1</code> times — but it only ever compares against the <em>same</em> <code>k</code> using values <code>A[0], A[1], ..., A[n-1]</code>. There are only <code>n</code> <em>distinct</em> conditions, indexed by the outer loop. So even though the condition is <em>written</em> <code>2^n − 1</code> times, the number of distinct paths is only <code>2^n</code>, governed by how many distinct values of <code>A[i]</code> exist. The lesson: count <em>distinct</em> feasible decisions, not textual occurrences.</p>
+
+<div class="quiz" id="quiz2-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A loop's condition is <code>(2^k mod 2) == 0</code>. How many distinct paths does this loop contribute to the program?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>2^n, because it is inside a loop running n times.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Exactly one — the condition is always true, so there is no real branch.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Two — every if has a true and a false branch.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Zero — the loop never runs.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct — B.</strong> <code>2^k</code> is always even, so <code>2^k mod 2</code> is always 0 and the condition is always true. No input can make it false, so the "false" branch is dead code. When unrolled, this <code>if</code> contributes a single route, not a doubling — it adds no paths. Option C is the classic trap of counting a phantom branch.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>Oracle Strength — Why Coverage Isn't Enough</h2>
+</div>
+
+<h3 id="coverage-not-enough">The Hole in Coverage</h3>
+<p>Imagine a company with one rule: every test suite must reach 100% branch (or path, or statement) coverage. The professor asked the class to find the flaw. Several surfaced, but one is fatal and easy to miss.</p>
+
+<p>Coverage only constrains <em>which paths the test executes</em>. It says <strong>nothing</strong> about what the test <em>checks</em>. You could write a test that runs every line and every branch and then asserts… nothing at all. Such a test only catches crashes — unhandled exceptions or hangs. It never notices that the program computed the wrong answer, because it never looks at the answer.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Oracle Strength</div>
+  <p>The <strong>oracle</strong> of a test is the part that decides pass or fail — its assertions. <strong>Oracle strength</strong> measures how strong those assertions are: how many real bugs the test could actually detect. Coverage and oracle strength are <em>independent</em> axes of test quality. You can have high coverage with a weak oracle (no assertions) or strong assertions with poor coverage.</p>
+</div>
+
+<p>Other weaknesses the class raised: chasing 100% path coverage can be infeasible or pure overhead; brittle, unmaintainable tests; and tests that pass on correct-input/correct-output but tell you nothing about <em>where</em> a failure happened. Concurrency makes it worse — a "singleton" with only two branches can still hide enormous behavioral variety. The takeaway: <strong>no single metric captures test adequacy.</strong></p>
+
+<h3 id="mutation">Mutation Testing — Measuring the Oracle</h3>
+<p>So how do you measure oracle strength concretely? The class derived the answer through a series of hints. The purpose of tests is to find bugs — so to measure how well tests find bugs, <strong>deliberately inject bugs and see if the tests catch them.</strong></p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Mutation Testing</div>
+  <p><strong>Mutation testing</strong> automatically creates many slightly broken copies of the program — <strong>mutants</strong> — by mechanically flipping operators (e.g. changing <code>&lt;=</code> to <code>&gt;</code>, <code>+</code> to <code>-</code>). Each mutation is guaranteed to change behavior, so a correct test suite should fail on it. A mutant whose injected bug is caught by some failing test is said to be <strong>killed</strong>. The <strong>mutation score</strong> is the fraction of mutants killed.</p>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>Start from the real implementation. Mechanically mutate one operator at a time — flip <code>&lt;=</code> to <code>&gt;</code>, swap <code>+</code> for <code>-</code>. Each change is known to be a bug because it reverses the intended semantics.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>Run the full test suite against each mutant. If at least one test <em>fails</em>, the bug was detected — the mutant is <strong>killed</strong>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>If a mutant <em>survives</em> (no test fails despite a guaranteed bug), your assertions are too weak. A high mutation score means strong assertions; you have caught the bugs you knew how to inject.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Limitation — Single-Point Mutations</div>
+  <p>Standard mutation operators change exactly <em>one</em> place at a time, on purpose: that way the change is guaranteed to be a bug and two changes can't accidentally cancel out. The cost is that some real bugs only appear when <em>two</em> places change together — these are missed. (Bugs requiring multiple simultaneous mutations relate to <em>higher-order mutants</em>.) Mutation testing can never prove you thought of every bug, only that you caught the injected ones.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Two Axes, One Goal</div>
+  <p>Coverage answers "did the test <em>reach</em> the code?" Mutation answers "would the test <em>notice</em> if the code were wrong?" A research metric called the <strong>mutation gap</strong> combines both to tell you, at any moment, whether to invest more in coverage or in stronger assertions.</p>
+</div>
+
+<div class="quiz" id="quiz3-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A test suite achieves 100% path coverage but contains no assertions. What can it detect?</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Every possible bug, since every path runs.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Only crashes (unhandled exceptions / failures), not wrong outputs.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Only performance regressions.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Nothing at all, ever.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct — B.</strong> Coverage guarantees the paths execute, but without assertions the test never inspects the result, so it only notices failures that stop the program — unhandled exceptions or hangs. It will happily pass a program that computes the wrong answer. This is exactly why oracle strength (measured by mutation testing) is a separate, necessary axis. A is the seductive wrong answer.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>Test Fixtures &amp; Black-Box Thinking</h2>
+</div>
+
+<h3 id="fixtures">Test Fixtures — Independent, Repeatable Tests</h3>
+<p>Many tests need a fresh object to work with — a new database connection, a new account, a new <code>Rational</code> number. If tests share one object, the result of one test can taint the next, and the suite passes or fails depending on the <em>order</em> tests run in. That is a serious smell.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Common Mistake — Flaky Tests</div>
+  <p>A <strong>flaky test</strong> is one whose pass/fail depends on the order it runs in, or on shared mutable state. Tests should each verify program behavior <em>independently</em>; if reordering them changes the outcome, they are not good enough.</p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Test Fixture</div>
+  <p>A <strong>test fixture</strong> is a fresh object built from scratch for every individual test. A <strong>setup</strong> procedure creates it before each test; a <strong>teardown</strong> procedure cleans up afterward (e.g. disconnects the database). Every test gets a brand-new, isolated instance, which keeps tests independent and removes duplicated setup code.</p>
+</div>
+
+<p>Fixtures exist in every framework — JUnit (Java), pytest (Python), Playwright. The syntax differs but the idea is identical: factor the create/destroy boilerplate into setup/teardown so each test starts clean. This pays off most for large suites that all revolve around the same kind of object.</p>
+
+<h3 id="blackbox">Black-Box Testing — The Bar Comic</h3>
+<p>Recall the distinction: <strong>white-box</strong> testing picks inputs by reading the code (Part I); <strong>black-box</strong> testing picks inputs from the <em>specification</em> and from imagining what a real user might do, without looking inside. Black-box testing leans on <strong>equivalence classes</strong> — groups of inputs the system should treat the same, so you test one representative of each.</p>
+
+<p>The professor illustrated this with a famous comic. A QA engineer walks into a bar and tests every variation he can dream up:</p>
+
+<div class="callout insight">
+  <div class="callout-title">The QA Engineer Walks Into a Bar</div>
+  <p>He walks in. Runs in. Crawls in. Dances in. Flies in. Orders 1 beer. 2 beers. 0 beers. 99,999,999 beers. −1 beers. A lizard in a teacup. Every equivalence class — normal, boundary, zero, huge, negative, nonsense — is handled correctly. <strong>Testing complete.</strong> Then a real customer walks in and asks, "Where's the bathroom?" — and the whole bar bursts into flames.</p>
+</div>
+
+<p>The punchline is the lesson. The tester covered every input <em>he could imagine</em>, but a real user did something nobody anticipated. You can only black-box test the cases you think of — which is why understanding <strong>what users actually need</strong> is essential. This is the bridge to <em>requirements engineering</em> and <em>user stories</em>: if you don't understand the user, you can't write the right black-box tests, and no amount of coverage saves you.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Connection — Equivalence Classes Cut the Work</div>
+  <p>You can't test infinite inputs, so group them into equivalence classes (e.g. "negative", "zero", "huge") and test one from each, plus the boundaries between them. This is the black-box counterpart to the white-box path-counting of Parts I–II.</p>
+</div>
+
+<div class="quiz" id="quiz4-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">What is the central lesson of the "QA engineer walks into a bar" comic?</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>You should always test negative and huge numbers.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Black-box testing only covers cases you imagine; understanding real user needs is essential.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>White-box testing is always superior to black-box testing.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Test fixtures prevent all production bugs.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct — B.</strong> The tester exhaustively covered every input <em>he could think of</em>, yet a real customer's ordinary need ("where's the bathroom?") was never anticipated and broke everything. The point is that black-box testing is bounded by your imagination of user behavior, so understanding genuine user needs — the domain of requirements engineering and user stories — is what makes the tests right. A is a detail, not the lesson.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>Symbolic Execution — Finding Inputs and Dead Code</h2>
+</div>
+
+<h3 id="infeasible">Infeasible Paths and Dead Code</h3>
+<p>We've been counting paths as if all of them can actually happen. Some can't. An <strong>infeasible path</strong> is a route through the CFG that no input can ever trigger — the code on it is <strong>dead code</strong>. You can't test dead code, and its presence usually signals a bug.</p>
+
+<p>Some dead code is obvious (the always-true condition from Part II). But consider this:</p>
+
+<pre><code>x = <span class="nb">0</span>;
+<span class="kw">if</span> (x &gt; <span class="nb">1</span>) {   <span class="cm">// can this ever be true?</span>
+    ...        <span class="cm">// INFEASIBLE — x was just set to 0</span>
+}</code></pre>
+
+<p>Looking at the condition <code>x &gt; 1</code> alone, you cannot tell whether the branch is reachable. You have to look at the <em>previous</em> statement: <code>x</code> was just assigned <code>0</code>, so <code>x &gt; 1</code> is impossible. The branch is infeasible. The question is how to detect this <em>automatically</em>, for large programs, without slow and expensive human reasoning. That technique is symbolic execution.</p>
+
+<h3 id="path-conditions">Path Conditions and Effects</h3>
+<p>Symbolic execution runs the program on <strong>symbolic values</strong> — fresh variables standing for "any input" — instead of concrete numbers. As it walks each path it accumulates two things.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Path Condition &amp; Effect</div>
+  <p>The <strong>path condition</strong> of a statement is the conjunction of all the branch conditions that must be true to reach that statement. The <strong>effect</strong> of a statement is the logical fact we know holds afterward — for an assignment <code>x = e</code>, the effect is <code>x&#39; = e</code> (a fresh <code>x&#39;</code> equals the new value). Symbolic execution propagates <em>both</em> branches at every condition, carrying these formulas along each path.</p>
+</div>
+
+<p>An infeasible path is then detected purely logically: gather the path condition together with the effects of earlier statements, and check whether they are <strong>contradictory</strong>. In the example above, the effect <code>x&#39; = 0</code> contradicts the path condition <code>x&#39; &gt; 1</code>. A constraint solver flags the contradiction — no human inspection required.</p>
+
+<h3 id="symbolic-example">A Worked Example</h3>
+<p>Take a tiny program and compute its symbolic result:</p>
+
+<pre><code><span class="kw">if</span> (x &gt; <span class="nb">1</span>)
+    x = x - <span class="nb">2</span>;   <span class="cm">// statement 1</span>
+<span class="kw">else</span>
+    x = <span class="nb">2</span> * x;   <span class="cm">// statement 2</span></code></pre>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Statement 1's path condition</strong> is simply <code>x &gt; 1</code> (the <code>if</code> was taken). Its effect is <code>x&#39; = x - 2</code>. Combined: <code>x &gt; 1 ∧ x&#39; = x - 2</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Statement 2's path condition</strong> is the negation, <code>¬(x &gt; 1)</code>. Its effect is <code>x&#39; = 2x</code>. Combined: <code>¬(x &gt; 1) ∧ x&#39; = 2x</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Combine the branches.</strong> Exactly one runs, and the two path conditions are mutually exclusive, so we join them with OR. The whole program's symbolic result is: <code>(x &gt; 1 ∧ x&#39; = x-2) ∨ (¬(x &gt; 1) ∧ x&#39; = 2x)</code>.</p>
+</div>
+
+<p>The lecture also did a harder example: a function returns early when <code>x &lt; 4</code>, then later branches on whether a parabola <code>x²</code> exceeds a line <code>3x + 1</code>. Because of the early <code>return</code>, every statement past it carries the path condition <code>x ≥ 4</code>. Carrying that forward, one branch demands a condition that <code>x ≥ 4</code> makes mathematically impossible — a logical contradiction — so that branch is <strong>infeasible / dead code</strong>. A human might "see" it; symbolic execution proves it systematically for programs far too large to eyeball.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Automating the Whole Lecture</div>
+  <p>Symbolic execution ties Parts I–II together and automates them. From the path conditions it can (1) <em>generate</em> the concrete inputs needed to cover every path — answering "which inputs reach 100% coverage?" without guessing — and (2) <em>detect</em> infeasible paths by finding contradictions. It's the engine behind the static analyzers and compiler warnings ("this condition is always false," "possible null dereference") you already see.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">In the Real World</div>
+  <p>When your static analyzer warns about an impossible condition or a null-pointer dereference, symbolic execution is running underneath, accumulating path conditions and checking them with a solver. As a developer you can also use it to auto-select the inputs that cover all paths.</p>
+</div>
+
+<div class="quiz" id="quiz5-wrap">
+  <div class="quiz-question">In symbolic execution, how is an infeasible (dead-code) path detected?</div>
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>By running the program on many random concrete inputs and seeing which lines never execute.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>By finding a logical contradiction between the path condition and the effects of earlier statements.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>By measuring branch coverage and flagging any branch below 50%.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>By counting the number of mutants the path kills.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct — B.</strong> Symbolic execution carries a path condition (the conjunction of conditions needed to reach a statement) plus the effects of prior assignments. If these are jointly contradictory — like <code>x&#39; = 0</code> together with <code>x&#39; &gt; 1</code> — no input can satisfy them, so the path is infeasible/dead. A describes random testing, which can <em>miss</em> dead code rather than prove it; the whole point of symbolic execution is to avoid relying on concrete random inputs.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART VI ═══════════════════════ -->
+<section id="part6" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part VI</div>
+  <h2>Testing Real Systems — When Bugs Cost Everything</h2>
+</div>
+
+<h3 id="jpl">Bounded Loops and the Mars Helicopter</h3>
+<p>NASA's Jet Propulsion Laboratory (JPL), in nearby Pasadena, publishes coding rules every developer must follow. Rule #2: <strong>give every loop a fixed upper bound</strong> — no loop may run up to an unknown <code>n</code>.</p>
+
+<p>Why? Everything in Parts I–II explains it. If a loop runs <code>n</code> times and you don't know how large <code>n</code> can get, the number of paths is <code>2^(something·n)</code> with no ceiling — you'd need an unbounded number of tests to cover it. Bounding the loop bounds the path count, which bounds the number of tests, making the program <em>testable</em> at all.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Connection — This Is Why 2^k Matters</div>
+  <p>The abstract formula from Part II has a concrete consequence: an unbounded loop means unbounded paths means infinite tests. Bounding loops is a direct, practical application of path counting to safety-critical engineering.</p>
+</div>
+
+<p>JPL built the <strong>Ingenuity</strong> Mars helicopter — flight on a planet with ~1% of Earth's atmosphere and ~1/3 its gravity. They couldn't fly to Mars and back to fix bugs (a round-trip signal takes 20+ minutes; the craft must be fully autonomous), so they had to test exhaustively on Earth. To simulate the environment they built a <strong>pressure chamber</strong> (evacuating the air and tuning the gas mix) and <strong>hung the helicopter from a spring</strong> that offloaded about two-thirds of its weight to mimic Martian gravity.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Bug That Slipped Through — A Race Condition</div>
+  <p>Despite all that testing, a <strong>concurrency bug</strong> survived: a watchdog component waited on signals from other components, but a <strong>race condition</strong> meant the signals could arrive in a different order than Earth testing ever produced. That ordering blocked humanity's first powered flight on another planet. JPL read the logs, found it, and <em>uploaded a software patch to Mars.</em> Ingenuity then flew — far beyond its design life — and now serves as a weather station. Concurrency / event-ordering bugs are exactly where the hardest defects hide.</p>
+</div>
+
+<h3 id="therac">Therac-25 — When the User Outran the Tests</h3>
+<p>The Therac-25 was a radiation-therapy machine that reused code from an older model in new hardware. Operators (nurses) entered the dose through a UI. The fatal scenario was a real-world echo of the bar comic's "grandma asking for the bathroom": operators became <em>so fast</em> at typing that they entered values quicker than anyone had during testing.</p>
+
+<p>That speed left no time for the machine's physical components to move into position — a race between the software state and the hardware. The result was a misconfiguration that delivered roughly a thousand times the intended radiation dose, killing at least six people. The bug wasn't an exotic input; it was ordinary use performed faster than the testers imagined — the same lesson as the comic, now lethal.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Test the Cases That Matter, Especially Ordering</div>
+  <p>In real, complex systems you cannot cover every path. The discipline is to identify the paths that <em>matter</em> and to scrutinize <strong>concurrency and event ordering</strong>, because that is where the worst bugs live. Either guarantee events are always ordered correctly, or make the system <em>gracefully degrade</em> when they aren't.</p>
+</div>
+
+<div class="quiz" id="quiz6-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Why does JPL's rule "give every loop a fixed upper bound" make testing tractable?</div>
+  <div class="quiz-options" data-quiz="q6">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Fixed bounds make loops run faster at runtime.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>An unbounded loop gives an unbounded path count (≈2^(·n)), requiring infinitely many tests; bounding n bounds the tests.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>It eliminates all race conditions automatically.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It guarantees 100% mutation score.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q6','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q6">
+    <strong>Correct — B.</strong> From Part II, an unrolled loop running <code>n</code> times with branches gives roughly <code>2^(·n)</code> paths. If <code>n</code> is unbounded, the path count — and therefore the number of tests needed for full path coverage — is unbounded too. Fixing the upper bound caps the paths, making exhaustive testing possible. The rule is a direct application of path counting, not a performance trick (A) or a concurrency fix (C).
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SUMMARY ═══════════════════════ -->
+<section id="together" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This lecture answered one practical question from six angles: <em>how do we know our tests are good, and how many do we need?</em></p>
+
+<p>We began with <strong>coverage criteria</strong> (Part I) — statement, branch, and path — and the subsumption hierarchy that makes path coverage the strict gold standard. To count paths we drew <strong>control-flow graphs</strong>, desugared <code>for</code> loops, and arrived at the engine of Part II: <code>2^k</code> branches, <strong>loop unrolling</strong> for loops, and finite sums for nested loops. The crucial refinement was learning that a textual <code>if</code> is not always a real branch — always-true conditions and repeated comparisons against the same value collapse the path count, so we count <em>distinct feasible</em> decisions.</p>
+
+<p>But Part III exposed coverage's blind spot: it measures where tests <em>go</em>, never what they <em>check</em>. <strong>Oracle strength</strong>, measured by <strong>mutation testing</strong> (inject bugs, count the kills), is the orthogonal axis. Part IV grounded testing in practice — <strong>fixtures</strong> for independent, non-flaky tests, and <strong>black-box / equivalence-class</strong> thinking, with the bar comic's warning that you can only test what you imagine. Part V then <strong>automated</strong> Parts I–II: <strong>symbolic execution</strong> uses path conditions and effects to generate covering inputs and to prove infeasible paths via logical contradiction. Finally Part VI showed the stakes — <strong>bounded loops</strong> (so path counts stay finite), and the Mars helicopter and Therac-25, where the surviving bugs were <strong>concurrency and event-ordering</strong> failures triggered by real-world use no one anticipated.</p>
+
+<p>The through-line: <strong>no single metric is enough.</strong> Combine coverage (reach) with oracle strength (detection), automate input selection with symbolic execution, bound your loops so the math stays finite — and never stop asking what a real human will actually do with your system.</p>
+
+<div class="callout tip" style="margin-top: 32px;">
+  <div class="callout-title">What's Next</div>
+  <p>We stopped just before <strong>symbolic execution for test-input generation</strong> — using path conditions to automatically synthesize the concrete inputs that cover every path. The professor will walk through that worked example at the start of Tuesday's lecture, along with more on physically testing systems for environments (like Mars) you can't visit.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

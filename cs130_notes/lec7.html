@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 7 — Creational Design Patterns</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 7 — Creational Patterns</div>
+  <a href="#part1">Part I — The Creation Problem</a>
+  <a href="#why-creation" class="sub">Why Creating Objects Is Hard</a>
+  <a href="#recap" class="sub">Recap: Last Week's Patterns</a>
+  <a href="#cognitive-load" class="sub">Cognitive Load &amp; Change</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Simple Factory</a>
+  <a href="#bad-constructor" class="sub">The Failed First Try</a>
+  <a href="#simple-factory" class="sub">Extracting the Factory</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — Factory Method</a>
+  <a href="#location-problem" class="sub">Varying the Process</a>
+  <a href="#fm-structure" class="sub">The Pattern Structure</a>
+  <a href="#fm-vs-strategy" class="sub">Factory Method vs Strategy</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — Abstract Factory</a>
+  <a href="#ingredients" class="sub">Families of Products</a>
+  <a href="#dip" class="sub">Dependency Inversion</a>
+  <a href="#open-closed" class="sub">Open–Closed &amp; Limits</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Builder</a>
+  <a href="#builder-problem" class="sub">Multi-Part Objects</a>
+  <a href="#builder-structure" class="sub">Director &amp; Builder</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part6">Part VI — Choosing Wisely</a>
+  <a href="#consequences" class="sub">Consequences &amp; Trade-offs</a>
+  <a href="#over-under" class="sub">Over- vs Under-Engineering</a>
+  <a href="#quiz6" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#together">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">COMSCI 130 · Software Engineering</div>
+  <h1>Creational Design Patterns</h1>
+  <p class="hero-sub">An interactive guide to Lecture 7 — how Factory Method, Abstract Factory, and Builder let us create objects without baking the decision into code that shouldn't know about it.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>The Problem of Creating Objects</h2>
+</div>
+
+<h3 id="why-creation">Why Are We Learning This?</h3>
+<p>In a software engineering class, the goal is not to write code that merely
+works <em>today</em>. The professor was emphatic about this: we want code that
+is <strong>easy to change, easy to maintain, and flexible in the future</strong>.
+A program that does the right thing but collapses the moment a requirement
+shifts is a failure by the standards of this course.</p>
+
+<p>It turns out that one of the most common places where code becomes rigid and
+painful to change is in the act of <strong>creating objects</strong>. Creating
+the right kind of object, in the right place, based on some runtime decision,
+sounds trivial — but done naively it scatters knowledge of "which classes exist"
+across your entire codebase. Every pattern in this lecture exists to contain
+that knowledge in one well-chosen place.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Creational Design Pattern</div>
+  <p>A <strong>creational design pattern</strong> is a reusable solution to the
+  recurring problem of <em>how to create objects</em>. Unlike the behavioral
+  patterns from last week (observer, strategy, mediator), creational patterns
+  focus specifically on the moment of instantiation — deciding which concrete
+  class to build, and hiding that decision from the code that uses the result.</p>
+</div>
+
+<h3 id="recap">Recap: The Patterns Behind Us</h3>
+<p>Before introducing anything new, the professor recapped last week's
+<strong>behavioral</strong> patterns. We define each from scratch here so that
+nothing is assumed.</p>
+
+<table class="compare-table">
+  <tr><th>Pattern</th><th>What problem it solves</th></tr>
+  <tr><td><strong>Observer</strong></td><td>A <em>one-to-many</em> relationship: when one object (the <em>subject</em>) updates, many <em>observers</em> need to be notified. The subject holds a list of observers; observers <em>register</em> with the subject and get pushed a notification on change. The intent is to <em>decouple</em> the listeners from the subject.</td></tr>
+  <tr><td><strong>Strategy</strong></td><td>Behavioral variation: several interchangeable algorithms. Instead of many subclasses, you <em>delegate</em> the varying behavior to a <em>strategy interface</em> with multiple implementations. "Favor composition over inheritance."</td></tr>
+  <tr><td><strong>Mediator</strong></td><td>Replaces a tangled web of object-to-object dependencies with a central hub. Collaborations between objects move into a <em>mediator</em> object, leaving the other components reusable and independent.</td></tr>
+</table>
+
+<div class="callout insight">
+  <div class="callout-title">A Pattern Is a Triplet</div>
+  <p>The professor stressed an idea that runs through the whole lecture: a design
+  pattern is not just a <em>solution</em>. It is a triplet of
+  <strong>problem + context + solution</strong>, and crucially it carries an
+  <strong>intent</strong>. You only call something an "observer" if your goal is
+  to decouple listeners from a subject — even if an identical class structure
+  shows up for some unrelated reason, it isn't an observer unless that intent is
+  present.</p>
+</div>
+
+<h3 id="cognitive-load">Cognitive Load: The Hidden Currency</h3>
+<p>Why does scattering creation logic everywhere actually hurt? Because of
+<strong>cognitive load</strong>. When code that changes for one reason is mixed
+into the same method as code that changes for a different reason, anyone wanting
+to make a small change must first understand the <em>whole</em> method. And you
+should never change a method you don't fully understand.</p>
+
+<p>The professor's rule: structure code so that a person needs to understand the
+<strong>minimum amount of logic</strong> to make a given change, removing every
+other distraction. He added a modern twist — what confuses a human also confuses
+a large language model. Code that is hard for a person to load into their head is
+hard for a model to load into its context window. Reducing human cognitive load
+reduces a model's token-and-attention load too.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>Separate code that <strong>changes together</strong> from code that
+  <strong>changes for different reasons</strong>. Almost every design pattern in
+  this lecture is a specific technique for doing exactly that — isolating one
+  "design decision" into one place so the rest of the system never has to know
+  about it.</p>
+</div>
+
+<div class="quiz" id="quiz1">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">According to the professor, what is the primary reason naive object-creation code becomes a maintenance problem?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>It runs slower than factory-based code at runtime.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>It mixes the decision of "which class to create" into many places, so each new type forces edits everywhere and raises cognitive load.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>It uses too much memory because every object is allocated eagerly.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It cannot compile in Java without a factory class.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct — B.</strong> The professor's whole motivation was maintainability and cognitive load, not performance. When creation logic is duplicated across the codebase, adding a new type (a new duck, a new pizza) means hunting down every place that creates objects and editing each one. A is wrong because design patterns generally <em>add</em> indirection and do the exact same work at runtime — the professor explicitly said the behavior is unchanged.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>The Simple Factory</h2>
+</div>
+
+<p>We build up gradually. Before the named patterns, the professor walked through
+two failed attempts and one modest fix. Watch how each step removes one specific
+problem.</p>
+
+<h3 id="bad-constructor">Two Motivating Examples</h3>
+<p>First, <strong>ducks</strong>. Last week's running example had a
+<code>MallardDuck</code>, a <code>DecoyDuck</code>, a <code>RobotDuck</code>, and
+more. Suppose throughout our program we keep writing code like "if the use case
+needs a mallard, make a mallard; if it needs a robot duck, make a robot duck."
+A student nailed the flaw: it's not only long, you have to "check them all
+procedurally," and biologists keep discovering new ducks. Every new duck means
+edits at every creation site.</p>
+
+<p>Second, <strong>pizza</strong> — the example that carries the rest of the
+lecture. An <code>orderPizza</code> method picks a pizza type from a string, then
+runs the same preparation steps on it:</p>
+
+<pre><code><span class="cm">// The naive version: creation and preparation tangled together</span>
+<span class="tp">Pizza</span> <span class="fn">orderPizza</span>(<span class="tp">String</span> type) {
+    <span class="tp">Pizza</span> pizza;
+
+    <span class="cm">// --- this part VARIES when we add pizza types ---</span>
+    <span class="kw">if</span> (type.equals(<span class="str">"cheese"</span>))    pizza = <span class="kw">new</span> <span class="tp">CheesePizza</span>();
+    <span class="kw">else if</span> (type.equals(<span class="str">"greek"</span>)) pizza = <span class="kw">new</span> <span class="tp">GreekPizza</span>();
+    <span class="kw">else if</span> (type.equals(<span class="str">"pepperoni"</span>)) pizza = <span class="kw">new</span> <span class="tp">PepperoniPizza</span>();
+
+    <span class="cm">// --- this part STAYS THE SAME ---</span>
+    pizza.prepare();
+    pizza.bake();
+    pizza.cut();
+    pizza.box();
+    <span class="kw">return</span> pizza;
+}</code></pre>
+
+<div class="callout warning">
+  <div class="callout-title">The Footgun — Mixed Rates of Change</div>
+  <p>The <code>if/else</code> block changes whenever the menu changes. The
+  <code>prepare/bake/cut/box</code> steps do <em>not</em>. Yet they live in the
+  same method, so anyone adding a new pizza must read and understand the
+  preparation logic too — code that has nothing to do with their change.</p>
+</div>
+
+<h4>The tempting wrong fix</h4>
+<p>A student suggested moving the constructors into the <code>Pizza</code> class
+itself. The professor called it "an interesting design" — then asked the class to
+find the flaw. The problem: the <strong>superclass would now know about its own
+subclasses</strong>. That creates a <strong>cyclic dependency</strong>
+(<code>Pizza</code> depends on <code>CheesePizza</code>, which extends
+<code>Pizza</code>), so neither can be compiled or tested in isolation. We also
+want superclasses to stay as general and reusable as possible, usable in contexts
+where those specific subclasses don't even exist.</p>
+
+<h3 id="simple-factory">Extracting a Factory Class</h3>
+<p>The first real insight: don't put the construction logic in the
+<code>Pizza</code> class — put it in a <em>separate</em> class. This is the
+<strong>simple factory</strong> (technically an idiom rather than a "real"
+pattern, the professor noted).</p>
+
+<pre><code><span class="kw">class</span> <span class="tp">SimplePizzaFactory</span> {
+    <span class="tp">Pizza</span> <span class="fn">createPizza</span>(<span class="tp">String</span> type) {
+        <span class="kw">if</span> (type.equals(<span class="str">"cheese"</span>))     <span class="kw">return new</span> <span class="tp">CheesePizza</span>();
+        <span class="kw">else if</span> (type.equals(<span class="str">"pepperoni"</span>)) <span class="kw">return new</span> <span class="tp">PepperoniPizza</span>();
+        <span class="kw">else if</span> (type.equals(<span class="str">"clam"</span>))     <span class="kw">return new</span> <span class="tp">ClamPizza</span>();
+        <span class="kw">else if</span> (type.equals(<span class="str">"veggie"</span>))   <span class="kw">return new</span> <span class="tp">VeggiePizza</span>();
+        <span class="kw">return null</span>;
+    }
+}</code></pre>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>The <code>Pizza</code> class no longer references any subclass, so it can be
+  compiled and tested on its own. No cyclic dependency.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>The decision "which string maps to which pizza" is now hidden inside
+  <code>SimplePizzaFactory</code>. That is the one design decision this class
+  owns.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>Clients call <code>createPizza(...)</code> wherever they need a pizza. They
+  never see the <code>if/else</code>. Adding a new pizza touches exactly one
+  method.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Same Behavior, Different Shape</div>
+  <p>A student asked whether anything actually improved — and the professor said
+  this was a great point. The refactored code runs the <em>exact same</em>
+  <code>if/else</code> at runtime and does literally the same thing. Software
+  <strong>design</strong> is not about changing behavior; it is about
+  relocating code so that the place needing a change is easy to find and
+  understand in isolation. We traded "everything visible in one method" for
+  "behavior hidden behind a layer of indirection."</p>
+</div>
+
+<p>This trade has a real cost, and the professor was honest about it: to
+understand the <em>whole</em> system you now have to look in more places. We made
+global comprehension slightly harder in exchange for making <em>local</em>
+changes much easier. That is why these patterns are not always worth it.</p>
+
+<div class="quiz" id="quiz2">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Why did the professor reject putting the pizza-creation logic directly inside the <code>Pizza</code> superclass?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Java forbids constructors in abstract classes.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>It would make the superclass know about its subclasses, creating a cyclic dependency and preventing independent compilation/testing.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>It would run more slowly than a separate factory.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>The simple factory removes all <code>if/else</code> statements.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct — B.</strong> A superclass that constructs its own subclasses depends on them, while they depend on it — a cycle that breaks isolated compilation and testing, and ruins the superclass's reusability. D is a deliberate trap: the professor explicitly said the simple factory still has the <code>if/else</code> — it just moves it into one dedicated class. Removing the <code>if/else</code> is what later patterns do.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>The Factory Method Pattern</h2>
+</div>
+
+<h3 id="location-problem">When the Process Itself Varies</h3>
+<p>The simple factory handles "which pizza." But now the company expands to
+multiple <strong>locations</strong> — New York and Chicago — and each prepares
+pizza differently. A Chicago pizza might need a longer bake time for its thicker
+crust; the cut step might differ by style. Now <strong>two things vary</strong>:
+the type of pizza <em>and</em> the preparation process.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Wrong Move — Subclass Explosion</div>
+  <p>A naive fix is to make a subclass per combination:
+  <code>ChicagoCheesePizza</code>, <code>NYCheesePizza</code>,
+  <code>ChicagoPepperoniPizza</code>... This multiplies the pizza types by the
+  number of locations and quickly becomes unmanageable. We want to vary
+  <em>location</em> without duplicating every pizza type.</p>
+</div>
+
+<p>The solution a student arrived at: make the pizza <em>store</em> itself
+abstract, with an abstract creation method that each location overrides.</p>
+
+<pre><code><span class="kw">abstract class</span> <span class="tp">PizzaStore</span> {
+    <span class="cm">// The factory method — abstract, decided by the subclass</span>
+    <span class="kw">abstract</span> <span class="tp">Pizza</span> <span class="fn">createPizza</span>(<span class="tp">String</span> type);
+
+    <span class="cm">// Shared, unchanging workflow lives here in the base class</span>
+    <span class="tp">Pizza</span> <span class="fn">orderPizza</span>(<span class="tp">String</span> type) {
+        <span class="tp">Pizza</span> pizza = createPizza(type);  <span class="cm">// deferred to subclass</span>
+        pizza.prepare();
+        pizza.bake();
+        pizza.cut();
+        pizza.box();
+        <span class="kw">return</span> pizza;
+    }
+}
+
+<span class="kw">class</span> <span class="tp">NYPizzaStore</span> <span class="kw">extends</span> <span class="tp">PizzaStore</span> {
+    <span class="tp">Pizza</span> <span class="fn">createPizza</span>(<span class="tp">String</span> type) { <span class="cm">/* NY-style pizzas */</span> }
+}
+<span class="kw">class</span> <span class="tp">ChicagoPizzaStore</span> <span class="kw">extends</span> <span class="tp">PizzaStore</span> {
+    <span class="tp">Pizza</span> <span class="fn">createPizza</span>(<span class="tp">String</span> type) { <span class="cm">/* Chicago-style pizzas */</span> }
+}</code></pre>
+
+<h3 id="fm-structure">The Pattern's Anatomy</h3>
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Factory Method</div>
+  <p>The <strong>Factory Method pattern</strong> defines an interface for
+  creating an object, but lets <em>subclasses decide which class to
+  instantiate</em>. An abstract <strong>creator</strong> declares an abstract
+  <strong>factory method</strong>; each <strong>concrete creator</strong>
+  overrides it to produce a <strong>concrete product</strong>. The pattern
+  "defers instantiation to subclasses."</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="220" viewBox="0 0 420 220" style="display:block; margin:0 auto;">
+      <!-- Creator side -->
+      <rect x="20" y="20" width="150" height="40" rx="6" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="95" y="38" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">PizzaStore</text>
+      <text x="95" y="53" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" font-style="italic" fill="#6b6560">createPizza()</text>
+      <!-- Concrete creators -->
+      <rect x="20" y="140" width="120" height="36" rx="6" fill="#fff" stroke="#d9d0c4" stroke-width="1.5"/>
+      <text x="80" y="162" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">NYPizzaStore</text>
+      <rect x="150" y="140" width="120" height="36" rx="6" fill="#fff" stroke="#d9d0c4" stroke-width="1.5"/>
+      <text x="210" y="162" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#2a2520">ChicagoStore</text>
+      <line x1="80" y1="140" x2="90" y2="60" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="210" y1="140" x2="100" y2="60" stroke="#d9d0c4" stroke-width="2"/>
+      <!-- Product side -->
+      <rect x="280" y="20" width="120" height="40" rx="6" fill="#eff4ff" stroke="#2563eb" stroke-width="1.5"/>
+      <text x="340" y="44" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">Pizza</text>
+      <rect x="280" y="140" width="120" height="36" rx="6" fill="#fff" stroke="#d9d0c4" stroke-width="1.5"/>
+      <text x="340" y="162" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#2a2520">NYCheesePizza</text>
+      <line x1="340" y1="140" x2="340" y2="60" stroke="#d9d0c4" stroke-width="2"/>
+      <!-- creates arrow -->
+      <line x1="170" y1="158" x2="280" y2="158" stroke="#c0510a" stroke-width="1.5" stroke-dasharray="4 3"/>
+      <text x="225" y="150" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" fill="#c0510a">creates</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Two parallel hierarchies. The creator side (usually inheritance) decides which product (usually interface realization) to instantiate. Only the concrete creator knows the concrete product.</div>
+</div>
+
+<h3 id="fm-vs-strategy">Factory Method vs Strategy — The Key Distinction</h3>
+<p>The professor posed his favorite kind of question: structurally, Factory
+Method and Strategy look almost <strong>identical</strong>. Both take an abstract
+class, delegate to an abstract method, and let subclasses implement varying
+behavior. So what's the difference?</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">It's the Intent, Not the Structure</div>
+  <p>Behaviorally they are nearly the same — both are "behavioral variation via
+  subtyping." The difference is that <strong>Factory Method's varying behavior is
+  specifically the creation of objects</strong>. We use the <em>name</em>
+  "factory method" precisely so that when a competent designer sees it, they know
+  not just the solution but the <em>intent</em>: "I'm varying how objects get
+  created." Saying "I used Strategy to create objects" is technically true but
+  miscommunicates intent — patterns are shared vocabulary for design ideas.</p>
+</div>
+
+<p>This is the same logic as Observer: you only call it an Observer if the goal
+is a one-to-many, decoupled relationship. The name carries the
+<em>why</em>, not just the <em>what</em>.</p>
+
+<div class="quiz" id="quiz3">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A teammate writes a class with an abstract method that subclasses override to build different objects, and calls it "a Strategy." Why does the professor consider this a poor description even if it isn't technically wrong?</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Strategy is slower than Factory Method, so the name implies a performance bug.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>The structures are different, so the code won't compile under the Strategy name.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Pattern names communicate intent; since the varying behavior is object creation, "Factory Method" tells readers the real problem being solved, while "Strategy" hides it.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Strategy can never involve creating objects.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct — C.</strong> The professor said the two are behaviorally almost identical, so B and D are false, and A confuses the point entirely. The whole lesson is that a pattern's name is shared vocabulary that conveys the <em>intent</em> behind the design. "Factory Method" signals "this varies object creation"; reusing "Strategy" for it discards that signal.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>The Abstract Factory Pattern</h2>
+</div>
+
+<h3 id="ingredients">When You Create a Whole Family</h3>
+<p>New problem: some franchise locations have "gone rogue" and started using
+inferior ingredients. To enforce quality, the corporation gets into the
+ingredients business — now we don't just build pizzas, we also build their
+ingredients, with regional variations. New York uses one kind of dough, sauce,
+cheese, and veggies; Chicago uses another.</p>
+
+<p>These ingredients are not unrelated products that each deserve their own
+factory. They are a <strong>family</strong> — created and used together in the
+same context. Whenever you make dough you also want the matching sauce and
+cheese. That semantic relatedness is what motivates a single factory with
+<em>many</em> creation methods.</p>
+
+<pre><code><span class="kw">interface</span> <span class="tp">PizzaIngredientFactory</span> {
+    <span class="tp">Dough</span>   <span class="fn">createDough</span>();
+    <span class="tp">Sauce</span>   <span class="fn">createSauce</span>();
+    <span class="tp">Cheese</span>  <span class="fn">createCheese</span>();
+    <span class="tp">Veggies</span>[] <span class="fn">createVeggies</span>();   <span class="cm">// can mix several — real logic, not blind forwarding</span>
+}
+
+<span class="kw">class</span> <span class="tp">NYIngredientFactory</span> <span class="kw">implements</span> <span class="tp">PizzaIngredientFactory</span> {
+    <span class="tp">Dough</span>  <span class="fn">createDough</span>()  { <span class="kw">return new</span> <span class="tp">ThinCrustDough</span>(); }
+    <span class="tp">Sauce</span>  <span class="fn">createSauce</span>()  { <span class="kw">return new</span> <span class="tp">MarinaraSauce</span>(); }
+    <span class="tp">Cheese</span> <span class="fn">createCheese</span>() { <span class="kw">return new</span> <span class="tp">ReggianoCheese</span>(); }
+    <span class="cm">// ... red peppers (shared NY+Chicago), thick crust (NY only), etc.</span>
+}</code></pre>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Abstract Factory</div>
+  <p>An <strong>Abstract Factory</strong> provides an interface for creating a
+  <em>family of related products</em> without specifying their concrete classes.
+  The professor described it precisely: it is a <strong>compound pattern</strong>
+  that bundles <em>multiple factory methods</em> into one class. Whereas a Factory
+  Method makes one kind of product, an Abstract Factory makes a coordinated
+  family — and the single decision "which factory" (NY? Chicago?) selects the
+  whole consistent set at once.</p>
+</div>
+
+<p>The key benefit of co-locating the family: to understand "what makes a New
+York pizza a New York pizza," you look in exactly one place — the
+<code>NYIngredientFactory</code>. And to add a brand-new location like Los
+Angeles, you just write <code>LAIngredientFactory</code> and pick its
+ingredients. As the professor put it, "nobody even knows there are multiple
+locations" — no other code knows LA exists. That is the localization of change
+the pattern buys you.</p>
+
+<h3 id="dip">The Principle Underneath: Dependency Inversion</h3>
+<p>Why does this work so cleanly? Because the pizza store depends only on the
+<em>abstract</em> ingredient interfaces, never on concrete ingredient classes. It
+has no idea what concrete products or concrete factories exist.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Dependency Inversion Principle</div>
+  <p>Robert C. Martin's <strong>Dependency Inversion Principle</strong>: concrete
+  classes should never depend on concrete classes — they should always be coded
+  against <strong>abstract interfaces</strong>. The professor called this one of
+  the most important principles in object-oriented design, because depending on
+  interfaces rather than implementations <em>minimizes the blast radius</em> of
+  any change.</p>
+</div>
+
+<h3 id="open-closed">Open–Closed, and Where the Pattern Breaks Down</h3>
+<p>The professor switched to a second Abstract Factory example —
+<strong>GUI window kits</strong> (a <code>WindowKit</code> with Motif and
+OpenLook variants, each producing windows and scrollbars). He used it to probe
+which changes the pattern makes easy and which it makes hard.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Open–Closed Principle</div>
+  <p>Bertrand Meyer's <strong>Open–Closed Principle</strong>: software should be
+  <em>open for extension but closed for modification</em>. You should be able to
+  add new behavior by writing new classes (subclassing), without ever opening up
+  and editing an existing class.</p>
+</div>
+
+<p>Adding a whole new <em>family</em> (a Mac window kit) is the easy case: you
+just add new concrete classes — <code>MacWindowKit</code>,
+<code>MacWindow</code>, <code>MacScrollBar</code> — and change nothing existing.
+That is the Open–Closed Principle in action.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Hard Change — A New Product Type</div>
+  <p>But adding a new <em>type</em> of product (say a <code>Button</code>) is
+  painful: you must add a <code>createButton()</code> method to the abstract
+  factory interface <em>and</em> to every concrete factory implementing it. One
+  small request now forces edits across all existing classes. The professor's
+  lesson: <strong>each pattern is designed for one direction of growth and resists
+  another.</strong> Use a pattern only when the changes you expect are the ones it
+  makes easy.</p>
+</div>
+
+<p>He also flagged two structural limits the class voted on. Abstract Factory
+assumes all products share a <strong>uniform interface</strong> — if one concrete
+product needs different constructor arguments (a shell connection vs. a server
+connection), you've "broken the interface promise" and the pattern no longer
+fits. And it assumes products are <strong>created independently</strong>; if one
+product is itself a composition of several others, that's a job for a different
+pattern (the Builder, next).</p>
+
+<div class="quiz" id="quiz4">
+  <div class="quiz-question">In the window-kit Abstract Factory, which change is <em>hard</em> and poorly supported by the pattern?</div>
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Adding a whole new look-and-feel family, e.g. a Mac window kit.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Adding a new product <em>type</em> such as a Button, which forces a new method on the abstract factory and every concrete factory.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Letting the client choose between existing kits at runtime.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Reusing an existing scrollbar across two kits.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct — B.</strong> Adding a new <em>family</em> (A) is the easy, additive case the pattern is built for — new classes, no edits. Adding a new <em>product type</em> changes the abstract factory's interface, cascading edits into every concrete factory. This asymmetry is the professor's central warning: pick the pattern whose easy direction matches your anticipated changes.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>The Builder Pattern</h2>
+</div>
+
+<h3 id="builder-problem">When a Product Is Made of Many Parts</h3>
+<p>The last open question from Part IV — "what if a product is a combination of a
+window, a scrollbar, and a button?" — names exactly the problem the
+<strong>Builder</strong> solves. Abstract Factory assumes products are created
+independently. Builder is for objects assembled from <strong>multiple parts in a
+sequence</strong>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Builder</div>
+  <p>The <strong>Builder pattern</strong> separates the <em>construction process</em>
+  of a complex, multi-part object from the way its individual parts are built. A
+  <strong>director</strong> defines the order in which parts are assembled; a
+  <strong>builder</strong> (with one factory-method-like operation per part)
+  knows how to build each concrete part. The client talks to the director through
+  a deliberately simple interface.</p>
+</div>
+
+<h3 id="builder-structure">Director and Builder</h3>
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="170" viewBox="0 0 420 170" style="display:block; margin:0 auto;">
+      <rect x="10" y="65" width="90" height="40" rx="6" fill="#fff" stroke="#d9d0c4" stroke-width="1.5"/>
+      <text x="55" y="89" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">Client</text>
+      <rect x="140" y="65" width="100" height="40" rx="6" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="190" y="83" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">Director</text>
+      <text x="190" y="98" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" font-style="italic" fill="#6b6560">construct()</text>
+      <rect x="290" y="65" width="120" height="40" rx="6" fill="#eff4ff" stroke="#2563eb" stroke-width="1.5"/>
+      <text x="350" y="83" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">Builder</text>
+      <text x="350" y="98" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" font-style="italic" fill="#6b6560">buildPartX()</text>
+      <line x1="100" y1="85" x2="140" y2="85" stroke="#c0510a" stroke-width="1.5"/>
+      <line x1="240" y1="85" x2="290" y2="85" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="120" y="78" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" fill="#6b6560">uses</text>
+      <text x="265" y="78" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" fill="#6b6560">drives</text>
+    </svg>
+  </div>
+  <div class="figure-caption">The client uses a director; the director calls <code>buildPart()</code> on the builder in a fixed order. The director encapsulates the <em>sequence</em>; the builder encapsulates <em>how</em> each part is made.</div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>The client asks the <strong>director</strong> to <code>construct()</code>.
+  It interacts through a simple interface and stays ignorant of part details.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>The director calls <code>buildPart()</code> for each part, in a predetermined
+  <strong>order</strong>. The order lives in the director, isolated from how parts
+  are built.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>The <strong>builder</strong> has one factory-method-style operation per part,
+  each producing a concrete piece of the final product.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Two Decisions, Cleanly Separated</div>
+  <p>Builder's payoff is decoupling <em>two</em> independent decisions: the
+  <strong>order/structure</strong> of assembly (owned by the director) and the
+  <strong>how-to-build-each-part</strong> logic (owned by the builder). If you
+  later need to reorder steps or drop a part, that change is localized in the
+  director. The professor noted builders can also be richer than a fixed
+  sequence — a builder might consume a JSON-style specification and assemble parts
+  according to it.</p>
+</div>
+
+<div class="quiz" id="quiz5">
+  <div class="quiz-question">What distinguishes the Builder pattern from the Factory Method and Abstract Factory?</div>
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Builder is the only one that avoids <code>if/else</code> entirely.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Builder constructs a single object out of multiple parts assembled in a sequence, with a director encapsulating the order of construction.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Builder is the only creational pattern that uses inheritance.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Builder produces a family of related products selected by region.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct — B.</strong> Builder targets multi-part objects with a sequential build process, adding a director to own the assembly order. D describes the Abstract Factory's "family of related products." Factory Method makes a single product in a simple structure; Abstract Factory makes a family; Builder assembles one product from many parts.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART VI ═══════════════════════ -->
+<section id="part6" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part VI</div>
+  <h2>Choosing a Pattern — Consequences &amp; Judgment</h2>
+</div>
+
+<h3 id="consequences">Same Problem, Different Sub-Problems</h3>
+<p>All three patterns answer "how do I create objects?" but each is tuned to a
+different sub-problem and carries different <strong>consequences</strong> (think
+of consequences as the quality attributes you gain or lose by choosing it).</p>
+
+<table class="compare-table">
+  <tr><th>Pattern</th><th>Sub-problem it fits</th><th>Consequence</th></tr>
+  <tr><td><strong>Factory Method</strong></td><td>One product type, simple object structure; an independent creation decision.</td><td>Most simplicity, least extensibility/flexibility.</td></tr>
+  <tr><td><strong>Abstract Factory</strong></td><td>A family of related products created/used together; the decision is co-located (NY vs Chicago).</td><td>Most extensibility and variation points, but most complexity and classes.</td></tr>
+  <tr><td><strong>Builder</strong></td><td>One product assembled from many parts in a sequence.</td><td>Communicates the product's parts; encapsulates assembly order and state.</td></tr>
+</table>
+
+<div class="callout tip">
+  <div class="callout-title">Their Shared Consequences</div>
+  <p>The professor said all three patterns (in ~99% of cases) share the same pair
+  of consequences: they <strong>decouple the use of an object from its creation</strong>
+  (the user code only sees abstract interfaces; the creation code never sees how
+  the object is used), and they make it <strong>easier to add new products</strong>.
+  The cost is also shared: you always get <strong>more complexity</strong> than if
+  you'd used no pattern at all.</p>
+</div>
+
+<p>Because pattern names carry intent, an onboarded engineer who sees "Abstract
+Factory" instantly knows there's a family of related products; seeing "Builder"
+tells them there's a multi-part sequential build. They needn't read the code to
+grasp the design. This is exactly how the professor framed structuring an
+<strong>AI agent skill</strong>: a main file that says <em>when</em> to load each
+pattern's knowledge, with the detailed structure/behavior looked up on demand —
+the same way a human should memorize <em>when</em> to apply something and then
+look up the details.</p>
+
+<h3 id="over-under">The Real Skill: Avoiding Both Extremes</h3>
+<div class="callout big-idea">
+  <div class="callout-title">The Central Trade-off</div>
+  <p>Every pattern is a choice between <strong>simplicity</strong> (fewer classes
+  and locations to understand the whole system) and <strong>changeability</strong>
+  (abstractions that let you extend without modifying, at the price of more
+  locations to comprehend but fewer to touch for a given change). Your job as an
+  engineer is to judge, for <em>this</em> situation, whether flexibility,
+  performance, or comprehensibility matters most.</p>
+</div>
+
+<table class="compare-table">
+  <tr><th>Under-engineering</th><th>Over-engineering</th></tr>
+  <tr><td>Too little thought about design. Inflexible, hard-to-change solutions where change becomes expensive. Common from lack of time, bad management, or lack of skill.</td><td>The "second system effect" — students fresh from a class like this add patterns everywhere. Premature abstractions: interfaces with a single implementation forever, adding files and hiding details with no payoff.</td></tr>
+  <tr><td>Typical of those who haven't studied design.</td><td>Typical right after studying design.</td></tr>
+</table>
+
+<div class="callout warning">
+  <div class="callout-title">The Cost of Over-Engineering</div>
+  <p>Unnecessary flexibility isn't free. Every extra class must be maintained,
+  documented, and tested. Chasing the "perfect" design can waste a week you could
+  have spent shipping — especially fatal for a startup that needs revenue. Don't
+  treat a pattern as a hammer that makes everything look like a nail.</p>
+</div>
+
+<p>The professor's procedure for deciding: do a <strong>change impact
+analysis</strong>. Anticipate which design decisions are likely to change, how
+likely, and how large the blast radius would be — then pick the pattern designed
+to absorb <em>that</em> kind of change. If you never expect new products, the
+"easier to add products" benefit is worthless to you, so the pattern may be pure
+overhead. He noted change impact analysis is the kind of thing that shows up on
+exams.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Abstract Pattern, Concrete Instance</div>
+  <p>A design pattern is an <em>abstract</em> solution to an <em>abstract</em>
+  problem in an <em>abstract</em> context. Applying it means recognizing that your
+  concrete problem and context are <em>instances</em> of the abstract ones, then
+  tailoring a concrete solution. The professor observed that AI tools are good at
+  the tailoring step but weak at the recognition step — they often won't reach for
+  the right pattern (e.g. State for a Monopoly game) unless explicitly told to
+  think in patterns. That recognition is where human judgment still earns its
+  keep.</p>
+</div>
+
+<div class="quiz" id="quiz6">
+  <div class="quiz-question">A startup needs to ship fast and is unlikely ever to add new product types. The professor would most likely advise:</div>
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-options" data-quiz="q6">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Always apply Abstract Factory — more flexibility is always better.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Skip the pattern: its main benefit (easy addition of products) doesn't apply, so it would just add complexity to maintain, document, and test.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Use Builder because it is the simplest creational pattern.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Put all creation logic back in the superclass to save classes.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q6','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q6">
+    <strong>Correct — B.</strong> The professor was explicit that patterns aren't always worth it: if you never expect new products, the flexibility benefit is moot and you're left paying only the cost — extra classes to maintain, document, and test, plus time spent over-designing instead of shipping. A is the over-engineering trap; D reintroduces the cyclic-dependency problem from Part II.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SUMMARY ═══════════════════════ -->
+<section id="together" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This lecture told one continuous story: a pizza company growing in complexity,
+and the creational patterns that let its code grow gracefully alongside it.
+Trace the arc and you can derive every pattern from the pressure that produced
+it.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Naive <code>if/else</code> in <code>orderPizza</code></strong> mixed
+  creation with preparation — code that changes for different reasons living
+  together, maximizing cognitive load.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Simple Factory</strong> pulled the creation decision into one class,
+  killing the cyclic dependency and isolating "which pizza string maps to which
+  class." Same runtime behavior — better structure.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Factory Method</strong> handled a second axis of variation
+  (location) by deferring the <code>createPizza</code> step to subclasses of the
+  store — behavioral variation whose intent is <em>creation</em>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Abstract Factory</strong> bundled multiple factory methods to
+  produce a coordinated <em>family</em> of ingredients, with one decision (NY vs
+  Chicago) selecting the whole consistent set.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <p><strong>Builder</strong> covered the remaining case: a single product made
+  of many parts in a sequence, with a director owning the assembly order.</p>
+</div>
+
+<p>Underneath them all ran the principles: <strong>separate what changes together
+from what changes apart</strong>; depend on abstract interfaces, not concrete
+classes (<strong>Dependency Inversion</strong>); stay open for extension but
+closed for modification (<strong>Open–Closed</strong>). And tying it back to last
+week, the lecture's deepest theme is that a pattern is a <strong>problem +
+context + solution with an intent</strong> — the name is shared vocabulary that
+tells a reader the <em>why</em>, which is why "Factory Method" and "Strategy"
+matter as distinct labels even when their code looks the same.</p>
+
+<p>Most of all: a pattern is a <em>tool with consequences</em>, and the
+engineer's real skill is the judgment to pick the right one — or none at all —
+between the twin failures of under- and over-engineering.</p>
+
+<div class="callout tip" style="margin-top: 32px;">
+  <div class="callout-title">What's Next</div>
+  <p>The professor previewed a reversal for Thursday: instead of deriving a
+  pattern from a problem, he'll show the <strong>code of a pattern first</strong>
+  (likely the <strong>Visitor</strong>) and challenge you to figure out what it
+  does and why it's good — a pattern notoriously hard to read without knowing it.
+  Looking further out, he flagged <strong>composite</strong> and
+  <strong>decorator</strong> as the next family (building complex object
+  structures), and warned that exam questions will lean toward the
+  judgment-style "which pattern, and why?" decisions — exactly the human skill
+  these patterns demand.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

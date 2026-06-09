@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 13 — Software Processes: Waterfall, Agile &amp; Extreme Programming</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 13 — Software Processes</div>
+  <a href="#part1">Part I — Symbolic Execution (Recap)</a>
+  <a href="#why-symbolic" class="sub">Why Generate Tests Automatically</a>
+  <a href="#path-conditions" class="sub">Path Conditions &amp; Effects</a>
+  <a href="#updating-z" class="sub">Updating Variables in Conditions</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — The Waterfall Model</a>
+  <a href="#waterfall-stages" class="sub">The Five Stages</a>
+  <a href="#waterfall-problems" class="sub">What Goes Wrong</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — The Agile Manifesto</a>
+  <a href="#the-meeting" class="sub">A Ski Resort in Utah</a>
+  <a href="#four-values" class="sub">The Four Values</a>
+  <a href="#twelve-principles" class="sub">The Principles People Ignored</a>
+  <a href="#iterations" class="sub">Sprints &amp; Iterations</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — User Stories &amp; INVEST</a>
+  <a href="#invest" class="sub">The Six INVEST Criteria</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Extreme Programming</a>
+  <a href="#small-releases" class="sub">Small Releases</a>
+  <a href="#planning-game" class="sub">The Planning Game</a>
+  <a href="#velocity" class="sub">Velocity</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part6">Part VI — Test-Driven Development</a>
+  <a href="#red-green-refactor" class="sub">Red, Green, Refactor</a>
+  <a href="#tdd-design" class="sub">Why TDD Improves Design</a>
+  <a href="#tdd-fails" class="sub">When TDD Fails</a>
+  <a href="#quiz6" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part7">Part VII — Ownership &amp; Standards</a>
+  <a href="#bus-factor" class="sub">Collective Code Ownership</a>
+  <a href="#coding-standards" class="sub">Coding Standards</a>
+  <a href="#quiz7" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#together">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">COMSCI 130 · Software Engineering</div>
+  <h1>How Software Gets Built: Waterfall, Agile &amp; Extreme Programming</h1>
+  <p class="hero-sub">From automatically generating test inputs to the human process of shipping software — why teams abandoned the waterfall, what the Agile Manifesto really said, and the day-to-day practices that make great engineers.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>Closing Out Symbolic Execution</h2>
+</div>
+
+<p>The lecture opened by finishing a topic from earlier in the course before pivoting to its main theme. We will do the same: a quick, self-contained recap of <strong>symbolic execution</strong>, because the professor explicitly flagged that "you'll probably have some question like this on the final exam." This is the one piece of <em>formal verification</em> the course wants on a software-engineering exam.</p>
+
+<h3 id="why-symbolic">Why Are We Learning This?</h3>
+<p>Imagine you want to test a program <em>thoroughly</em> — specifically, you want <strong>100% path coverage</strong>, meaning every possible route through the program's branches gets exercised by at least one test. Writing those test inputs by hand is exhausting: for each path you'd have to reason backwards through the conditions and find numbers that force execution down exactly that route. Nobody wants to do that. The whole point of symbolic execution is to let a machine do it <em>automatically</em>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Symbolic Execution</div>
+  <p>Instead of running a program on concrete numbers, we run it on <strong>symbols</strong> (like <code>x</code> and <code>y</code>). As we walk each path through the program, we record two things: the <strong>path condition</strong> (the conjunction of all branch conditions that must hold to take this path) and the <strong>effects</strong> (how variables get reassigned along the way). The full result for a path is the path condition combined with those effects.</p>
+</div>
+
+<h3 id="path-conditions">Path Conditions, Effects, and Feasibility</h3>
+<p>A program with branches has multiple paths. For <em>each</em> path we write down its path condition conjoined with the effects of every statement executed before it. We then combine the paths — joined with logical <strong>OR</strong>, because a real run takes <em>either</em> one path <em>or</em> another. Two questions fall out of this:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Is the path feasible?</strong> A path is <em>infeasible</em> if its path condition is a logical contradiction — no input could ever satisfy it. The professor's example: a path requiring <code>x &gt; 3</code> together with a quadratic equation that has no solutions for <code>x &gt; 3</code>. Those two facts cannot hold simultaneously, so that path is infeasible. The opposite branch <em>did</em> have solutions, so it is feasible.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>What concrete input exercises it?</strong> For every feasible path, the combined formula is handed to an <strong>SMT solver</strong> — an automated tool that finds concrete values satisfying a set of logical constraints. The solver hands back actual numbers (e.g. "<code>x = 2</code> exercises statement one; <code>x = 1</code> exercises statement two"). You could solve these by hand with "human intelligence," but the automatic route is the SMT solver.</p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — SMT Solver</div>
+  <p><strong>SMT</strong> stands for <em>Satisfiability Modulo Theories</em>. An SMT solver takes a system of logical constraints (equalities, inequalities, boolean structure) and either produces a concrete assignment that satisfies them all, or proves that none exists. In symbolic execution it is the engine that turns a path condition into a usable test input.</p>
+</div>
+
+<h3 id="updating-z">The Trap: Updating a Variable Used Later in a Condition</h3>
+<p>Here is the subtle point the professor spent the most time on. Consider a program where a variable <code>z</code> is incremented on one branch and decremented on another, and then a <em>later</em> condition tests <code>z</code>:</p>
+
+<pre><code><span class="kw">if</span> (x &lt; y)        <span class="cm">// first decision</span>
+    z = z + <span class="nb">1</span>;
+<span class="kw">else</span>
+    z = z - <span class="nb">1</span>;
+<span class="cm">// the two branches join here</span>
+<span class="kw">if</span> (z &lt; ...)      <span class="cm">// second decision uses z</span>
+    ...</code></pre>
+
+<p>When you write the path condition for the second decision, you <strong>must not</strong> use the original <code>z</code>. On the path that took <code>x &lt; y</code>, the second condition becomes <code>(z + 1) &lt; ...</code>; on the path that took <code>x ≥ y</code>, it becomes <code>(z - 1) &lt; ...</code>. The path condition incorporates the <em>effects of previous statements</em>, so the symbol you constrain is the value of <code>z</code> <em>after</em> the first <code>if</code>, not the initial one.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Common Mistake — Stale Variables</div>
+  <p>If a condition uses a variable that was reassigned earlier on the path, forgetting to substitute the updated value gives you the wrong path condition. Rule of thumb: whenever a condition follows an assignment to a variable it mentions, replace that variable with its post-assignment expression before solving.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Counting Paths Without Drawing Them</div>
+  <p>The class worked an example with two sequential decision points, where both branches of the first decision flowed into the second decision. That gives 2 × 2 = <strong>4 paths</strong>. When two decisions are in sequence on the control-flow graph, you <em>multiply</em> their branch counts to get the number of end-to-end paths.</p>
+</div>
+
+<div class="quiz" id="quiz1">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A program runs <code>z = z - 1</code> on a branch, the branches join, and a later condition tests <code>z &gt; 5</code>. What path condition belongs to the path that took that branch?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div><code>z &gt; 5</code>, using the original <code>z</code></div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div><code>(z - 1) &gt; 5</code>, substituting the updated value of <code>z</code></div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div><code>z &gt; 5 AND z = z - 1</code> with both <code>z</code>'s identical</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>The path is infeasible, so there is no condition</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct: B.</strong> The path condition incorporates the effects of earlier statements, so the <code>z</code> in the later condition is the value <em>after</em> the decrement, giving <code>(z - 1) &gt; 5</code>. Option A is exactly the stale-variable mistake the professor warned about; C confuses an assignment with an equality constraint, and there is nothing about this path that makes it inherently infeasible (D).
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>The Waterfall Model — and Why It Breaks</h2>
+</div>
+
+<p>Now the lecture turns to its real subject: the <strong>process of software development</strong>. The professor framed this with a career argument. As writing code increasingly gets done by AI, the skills that set graduates apart are the <em>non-coding</em> ones — choosing the right development process, making high-level decisions. "Working software is the only software making money," and getting there is about process, not just typing.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Why This Matters</div>
+  <p>This isn't abstract theory. The professor was explicit that these process skills "will set you apart from graduates who have not studied these topics," and that they show up past the interview stage when you actually have to ship.</p>
+</div>
+
+<h3 id="waterfall-stages">The Five Stages of Waterfall</h3>
+<p>Historically, software was built in a strict, plan-driven sequence. Each stage finishes <em>completely</em> before the next begins — like water falling down a series of ledges, never flowing back up.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="380" height="240" viewBox="0 0 380 240" style="display:block; margin:0 auto;">
+      <!-- step blocks -->
+      <rect x="10" y="10" width="150" height="34" rx="6" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="85" y="32" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" fill="#2a2520">Requirements</text>
+      <rect x="80" y="56" width="150" height="34" rx="6" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="155" y="78" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" fill="#2a2520">Design</text>
+      <rect x="150" y="102" width="150" height="34" rx="6" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="225" y="124" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" fill="#2a2520">Implementation</text>
+      <rect x="200" y="148" width="150" height="34" rx="6" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="275" y="170" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" fill="#2a2520">Testing</text>
+      <rect x="220" y="194" width="150" height="34" rx="6" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="295" y="216" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" fill="#2a2520">Deployment</text>
+      <!-- connectors -->
+      <line x1="85" y1="44" x2="120" y2="56" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="155" y1="90" x2="190" y2="102" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="225" y1="136" x2="245" y2="148" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="275" y1="182" x2="285" y2="194" stroke="#d9d0c4" stroke-width="2"/>
+    </svg>
+  </div>
+  <div class="figure-caption">The waterfall model. Each stage fully completes before the next starts — feedback only arrives at the very bottom.</div>
+</div>
+
+<h3 id="waterfall-problems">What Goes Wrong</h3>
+<p>The class brainstormed the failures of this model. They cluster around one root cause: <strong>feedback arrives far too late.</strong></p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Requirements change during development.</strong> The environment shifts (suddenly you have many customers, so now you need scalability), or — crucially — the user "didn't really know what they wanted until they saw it." If requirements change while you are in the testing stage, enormous effort has gone into creating zero value.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Bugs are found late, when they are most expensive.</strong> If you only test after implementing the whole system, the developer who wrote the buggy code may have left the company — or simply forgotten why they wrote it that way. The earlier a bug is found, the cheaper it is to fix.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>You learn hard truths only at deployment.</strong> Only when you deploy do you discover the system is too slow, uses too much memory, or doesn't work on the target platform.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Customer feedback comes only at the end.</strong> You can't make money until you ship — but maybe a "half-baked solution" would have been enough, and you'd have learned that months earlier.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">"If You're Not Embarrassed..."</div>
+  <p>The professor quoted a piece of startup wisdom: <em>"If you're not embarrassed by the first version of your product, you've released too late."</em> The whole problem with waterfall is that it makes an early, embarrassing-but-informative release structurally impossible.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Nuance — Waterfall Isn't Always Slower</div>
+  <p>A tempting conclusion is "waterfall is just slow." The professor pushed back: some alternative processes are actually <em>slower</em> than waterfall in certain situations. The real failing is rigidity and late feedback, not raw speed. Whether an alternative is faster genuinely "depends on the situation."</p>
+</div>
+
+<div class="quiz" id="quiz2">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">According to the lecture, what is the core problem with the waterfall model?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>It produces too much documentation</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Feedback — from customers, testing, and deployment — arrives far too late, so changes are catastrophically expensive</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>It is always slower than every other process</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It cannot be used for any real software</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct: B.</strong> Every problem raised — late bug discovery, late customer feedback, requirements changing mid-build — traces back to feedback arriving only at the bottom of the waterfall. Option C is the trap the professor explicitly debunked: waterfall is not universally slower. And waterfall remains the right choice for some safety-critical or hardware-bound systems, so D is wrong too.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>The Agile Manifesto</h2>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Building On Part II</div>
+  <p>Agile is the historical <em>reaction</em> to waterfall's late-feedback problem. Everything in this part is an attempt to pull feedback as early as possible.</p>
+</div>
+
+<h3 id="the-meeting">A Ski Resort in Utah</h3>
+<p>Around the year 2000, software engineers across the industry were fed up with the waterfall process that essentially every big company practiced. A group of software-engineering "gurus" — all highly experienced people — gathered at a mountain ski resort in Utah to fix it. There was a twist: they discovered they <em>disagreed</em> on almost every proposed solution. So instead of agreeing on a method, they wrote on a whiteboard only the things they <strong>all</strong> agreed on — the least common denominator. The result, never really meant to be grand, became the <strong>Agile Manifesto</strong>.</p>
+
+<h3 id="four-values">The Four Values</h3>
+<p>The manifesto names four value pairs. The phrasing is precise and the structure matters: it says it values the things on the <em>left</em> more than the things on the <em>right</em> — while still affirming that the things on the right have value.</p>
+
+<table class="compare-table">
+  <tr><th>We value this MORE...</th><th>...over this (still valuable!)</th></tr>
+  <tr><td>Individuals and interactions</td><td>Processes and tools</td></tr>
+  <tr><td>Working software</td><td>Comprehensive documentation</td></tr>
+  <tr><td>Customer collaboration</td><td>Contract negotiation</td></tr>
+  <tr><td>Responding to change</td><td>Following a plan</td></tr>
+</table>
+
+<div class="callout warning">
+  <div class="callout-title">The Great Misreading</div>
+  <p>Many people read these four lines <em>literally and absolutely</em>: "the only right way is no processes, no documentation, no contracts, no plan." That is <strong>not</strong> what the authors meant. The manifesto explicitly says "there is value in the items on the right." A process that emphasizes the right side over the left simply isn't agile — but documentation still helps onboarding, a plan still lets you anticipate change, and a contract still gives you a legal basis. The nuance is the whole point.</p>
+</div>
+
+<h3 id="twelve-principles">The Principle Everyone Ignored</h3>
+<p>Behind the four values sit twelve principles that the professor argued are what Agile is <em>actually</em> about. A few stood out:</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Principles</div>
+  <p><strong>Satisfy the customer through early and continuous delivery.</strong> Welcome changing requirements, even late, and harness change for the customer's advantage. Deliver working software frequently — every couple of weeks to a couple of months. Business people and developers work together <em>daily</em>. Working software is the primary measure of progress.</p>
+</div>
+
+<p>Two principles were singled out as the ones people forgot:</p>
+<ul style="margin: 0 0 18px 22px;">
+  <li style="margin-bottom: 10px;"><strong>"Continuous attention to technical excellence and good design enhances agility."</strong> After the manifesto, many companies sprinted in the <em>opposite</em> direction — "we should have no plan, no design at all, the gurus told us to just respond to change." That led straight to the <strong>big ball of mud</strong> the course covered in the information-hiding lecture.</li>
+  <li><strong>"Simplicity — the art of maximizing the amount of work not done — is essential."</strong> This does not mean "do no work." It means find the work that creates <em>no value</em> and eliminate it.</li>
+</ul>
+
+<div class="callout insight">
+  <div class="callout-title">Self-Organizing Teams</div>
+  <p>"The best architectures, requirements, and designs emerge from self-organizing teams." There is no single company-wide process every team must follow — teams pick what fits their needs. Real example: Google leans more on self-organizing teams, while Apple follows more of a company-wide process, partly because Apple is closer to hardware and must co-design across product teams. Proximity to hardware reduces how agile you can be.</p>
+</div>
+
+<h3 id="iterations">Sprints and Iterations</h3>
+<p>How does "respond to change" become a concrete practice? You split work into small chunks so that at the end of each chunk you have a <em>working, deployable increment</em>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Iteration / Sprint</div>
+  <p>An <strong>iteration</strong> (or <strong>sprint</strong>) is a timeboxed period, usually 1–4 weeks, with a specific set of work — the <strong>sprint backlog</strong> — to complete. At the end you review it, check it against requirements, show it to a real customer or a <strong>product owner</strong> (someone who understands what the customer truly needs), and iterate on that feedback. This is the core engine of most agile processes — except lean/Kanban.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Where Agile Doesn't Fit</div>
+  <p>Agile assumes you can deploy increments and that your team is experienced. Both can fail. You can't ship a spacecraft system every two weeks — launches happen maybe once a year. Safety-critical and medical-device systems are hard to build without a plan. And the manifesto's authors had <em>decades</em> of experience and deep implicit knowledge; a junior engineer who skips planning can't learn. Some agile ideas are genuinely harder for juniors.</p>
+</div>
+
+<div class="quiz" id="quiz3">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">"We value working software over comprehensive documentation." What did the Agile Manifesto's authors mean?</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Documentation is worthless and should never be written</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Both have value, but when they conflict, working software matters more</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>You should document everything before writing any code</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Software and documentation are equally important in all cases</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct: B.</strong> The manifesto explicitly states "there is value in the items on the right" — it ranks priorities, it does not abolish the right-hand side. Option A is exactly the literal misreading that produced big-ball-of-mud codebases. C describes waterfall, and D erases the deliberate ranking the authors built into the wording.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>User Stories &amp; the INVEST Criteria</h2>
+</div>
+
+<p>Agile work is organized around <strong>user stories</strong> — small, customer-facing descriptions of a feature. But not every story is well-formed. <strong>INVEST</strong> is a six-letter checklist (covered earlier and on the midterm) for what makes a user story good. Here the professor connected each letter directly to <em>why it helps agile planning</em>.</p>
+
+<table class="compare-table">
+  <tr><th>Letter</th><th>Means</th><th>Why it helps agile planning</th></tr>
+  <tr><td><strong>I</strong>ndependent</td><td>Doesn't depend on other stories</td><td>Lets you schedule and estimate stories <em>individually</em>; a dependent story must wait for the one it needs</td></tr>
+  <tr><td><strong>N</strong>egotiable</td><td>Details can be discussed</td><td>If a story were non-negotiable, why even have a self-organizing team talking about it? Negotiability is what makes the conversation worth having</td></tr>
+  <tr><td><strong>V</strong>aluable</td><td>Delivers value to the customer</td><td>The planning game exists to maximize customer value — estimating a story with no value is wasted effort</td></tr>
+  <tr><td><strong>E</strong>stimable</td><td>Effort can be estimated</td><td>Obvious: if you can't estimate it, you can't fit it into a sprint</td></tr>
+  <tr><td><strong>S</strong>mall</td><td>Fits inside one sprint</td><td>Smaller chunks give more scheduling flexibility — exactly like OS scheduling, small jobs pack a sprint more optimally</td></tr>
+  <tr><td><strong>T</strong>estable</td><td>You can verify it's done</td><td>If you can't test it, you can't know the value was delivered — the burden shifts onto the customer</td></tr>
+</table>
+
+<div class="callout insight">
+  <div class="callout-title">Independence Does Double Duty</div>
+  <p>Independence helps in <em>two</em> ways the class teased out: a dependent story has to be scheduled <em>after</em> its dependency, <strong>and</strong> dependent stories can't be reliably estimated or scheduled on their own. Both scheduling and estimation break when stories are tangled together.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Exam Note</div>
+  <p>The professor said "negotiable" and "testable" are somewhat less central to the planning game specifically, but still valuable across the agile process as a whole. INVEST was designed <em>specifically</em> to support these planning activities — that connection is the point.</p>
+</div>
+
+<div class="quiz" id="quiz4">
+  <div class="quiz-question">Why does the "Small" criterion in INVEST help agile planning?</div>
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Small stories are always more valuable to the customer</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Small stories fit inside a sprint and give more flexibility to pack a sprint optimally — like scheduling with smaller jobs</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Small stories require no testing</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Small stories are automatically independent</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct: B.</strong> The professor drew the analogy to operating-system scheduling: small work units pack a fixed-size sprint more flexibly, where huge chunks would leave it unfillable. Size says nothing about value (A) or independence (D), and small stories still need to be testable (C).
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>Extreme Programming — Small Releases &amp; the Planning Game</h2>
+</div>
+
+<p><strong>Extreme Programming (XP)</strong> was one of the earliest and purest implementations of agile principles. It was proposed by <strong>Kent Beck</strong> — also the creator of JUnit and the originator of test-driven development. The name comes from taking the development practices Beck believed were good and dialing them to their most <em>extreme</em> form. Its goals: maximize the business value added by every development activity, embrace change, and minimize risk. XP shines in <strong>uncertain environments</strong> where you can't anticipate the future.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — "Minimize Risk" in XP</div>
+  <p>When Beck says "minimize risk," he means the risk of <em>uncertainty</em>: not knowing whether things will work, what you actually need, or which approach is right. You attack it by collecting as much feedback as possible and minimizing planning/documentation to just what's needed to deliver value. It does <em>not</em> mean all risk — XP won't protect you from being sued or from your software having bugs.</p>
+</div>
+
+<h3 id="small-releases">Practice 1: Small Releases</h3>
+<p>Release as often as possible, each release an increment that delivers value to the customer — always shipping the highest-business-value features first. Don't wait months or years for a finished product; release working software in short cycles. The professor's own undergrad team picked this practice, and its real benefit is the discipline it forces: it makes you constantly ask "what is the minimum work I can do to add new value?"</p>
+
+<div class="callout tip">
+  <div class="callout-title">For Your Capstone Project</div>
+  <p>Even without a real customer, you can practice small releases — and earn bonus points for getting feedback from a non-developer. Think: what is the smallest release you could ship next week, and who outside your team could react to it? It also keeps you honest about how delayed you are, so you don't cram everything into the final week.</p>
+</div>
+
+<h3 id="planning-game">Practice 2: The Planning Game</h3>
+<p>The planning game aligns <strong>business needs with technical capabilities</strong>. A customer wants a feature but has no idea whether it's a trivial reuse of an existing library or a six-month research project. Only the developers can estimate that — so the team estimates effort and forwards it to the customer. XP implements this through <strong>planning poker</strong>:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>The team gets cards labeled with <strong>Fibonacci numbers</strong> (not arbitrary numbers). They first calibrate: agree on a reference story that is, say, a "5."</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>Everyone <em>silently</em> estimates the effort of a story and places a card face down. Silence prevents anchoring on the first person to speak.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>All reveal at once. The people with the <strong>highest</strong> and <strong>lowest</strong> estimates debate — "I know a library that does exactly this, so it's a 2" versus "you missed a requirement, there's a hard problem here, so it's a 13."</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p>Estimate again with the shared insights, repeating until the team reaches consensus.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">These Are Not Hours</div>
+  <p>The planning game does <em>not</em> produce a number of work-hours. The Fibonacci numbers are <strong>imaginary units</strong> (sometimes called "t-shirt sizes"). Different developers work at different speeds — "we call the most productive ones the 10x developers for a reason" — so estimating in shared abstract units reaches consensus far more easily than "I'd take an hour" versus "I'd take a week." The two real goals: reach a usable estimate, and <em>share experience</em> so everyone knows the edge cases and the shortcuts teammates have spotted.</p>
+</div>
+
+<h3 id="velocity">Velocity</h3>
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Velocity</div>
+  <p>A team's <strong>velocity</strong> is the sum of story points it can fit into one sprint. It answers "how many user stories can we realistically finish in the next increment?" — which is what you then promise the customer. Because the units are imaginary, one team's velocity of 200 versus another's 100 says <em>nothing</em> about who is faster; they just defined a "5" differently. Velocity is never a cross-team performance metric.</p>
+</div>
+
+<div class="quiz" id="quiz5">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Team A has a velocity of 200 and Team B has a velocity of 100. What can you conclude?</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Team A is twice as productive as Team B</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Nothing about relative performance — story points are imaginary units, so the teams likely defined them differently</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Team A works exactly 200 hours per sprint</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Team B has fewer developers</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct: B.</strong> Story points are imaginary, team-relative units, so velocities are not comparable across teams — the professor stressed velocity is not indicative of performance. Options A and C both assume the points map to a universal scale or to hours, which is precisely the misunderstanding the planning game is designed to avoid.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART VI ═══════════════════════ -->
+<section id="part6" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part VI</div>
+  <h2>Test-Driven Development</h2>
+</div>
+
+<p>The professor's favorite XP practice — "in my capstone I was known as test-driven Toby." <strong>Test-Driven Development (TDD)</strong> keeps you focused on the next feature, avoids scope creep, follows a rhythm, and produces high test coverage. And "you can't move fast if you have low test coverage."</p>
+
+<h3 id="red-green-refactor">The Counter-Intuitive Rhythm: Red, Green, Refactor</h3>
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Red.</strong> Write a test <em>first</em> — and watch it fail. The test describes the feature before the feature exists.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Green.</strong> Write the <em>smallest possible</em> change that makes the test pass. No more production code than is sufficient to pass.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Refactor.</strong> Now clean it up into a tidy implementation, with the test as a safety net.</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="300" height="160" viewBox="0 0 300 160" style="display:block; margin:0 auto;">
+      <circle cx="70" cy="50" r="30" fill="#fef0f0" stroke="#c53030" stroke-width="2"/>
+      <text x="70" y="55" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#c53030">RED</text>
+      <circle cx="230" cy="50" r="30" fill="#edf7f0" stroke="#2d8a4e" stroke-width="2"/>
+      <text x="230" y="55" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#2d8a4e">GREEN</text>
+      <circle cx="150" cy="125" r="30" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="150" y="123" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" font-weight="700" fill="#c0510a">REFAC-</text>
+      <text x="150" y="135" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" font-weight="700" fill="#c0510a">TOR</text>
+      <line x1="102" y1="50" x2="198" y2="50" stroke="#d9d0c4" stroke-width="2" marker-end="url(#a)"/>
+      <line x1="222" y1="78" x2="172" y2="104" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="128" y1="104" x2="80" y2="78" stroke="#d9d0c4" stroke-width="2"/>
+      <defs><marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="#d9d0c4"/></marker></defs>
+    </svg>
+  </div>
+  <div class="figure-caption">The TDD cycle: write a failing test, make it pass minimally, then refactor — and repeat.</div>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — TDD Is a Design Tool, Not a Testing Tool</div>
+  <p>Despite "test" being the first word, TDD's main benefit is <strong>not</strong> finding bugs. It is a <em>design approach</em>. By writing the test first, you decide how a function will be <em>used</em> before you decide how it's built. The test is living documentation written before the implementation, and it forces you to design the interface from the caller's point of view.</p>
+</div>
+
+<h3 id="tdd-design">Why TDD Improves Design — Through Information Hiding</h3>
+<p>The deeper reason connects to the course's <strong>information-hiding</strong> principle. Writing the test first means you define a module's <strong>contract</strong> — its interface — <em>before</em> writing any implementation. You start from "what is the easiest way to use this module?" Because you haven't made implementation decisions yet, the interface naturally <em>hides</em> design decisions. You begin from the interface, so the interface comes out clean.</p>
+
+<div class="callout insight">
+  <div class="callout-title">No Debugging, Higher Productivity</div>
+  <p>TDD feels like extra work, but it boosts productivity — especially for junior developers. You never write code without a purpose: every line exists to pass a test. And the feedback loop is ~30 seconds. "A bug doesn't live longer than 30 seconds" — when a test fails, you wrote the offending code seconds ago, so it's still in working memory. There is essentially no debugging.</p>
+</div>
+
+<h3 id="tdd-fails">When TDD Produces <em>Terrible</em> Design</h3>
+<p>The professor posed the advanced question: when does following the TDD rules strictly lead to awful design? Two answers emerged.</p>
+
+<h4>1. The large-scale architecture problem</h4>
+<p>TDD goes test → implement → test → implement, module by module. <em>Inside</em> a module the design is great. But across modules, TDD never makes you think about <strong>which large-scale design decisions are likely to change</strong> — the thing that should define your module hierarchy. You just started with a test.</p>
+
+<div class="callout tip">
+  <div class="callout-title">The Recommendation</div>
+  <p>Use TDD <strong>after</strong> you've designed the high-level architecture and its interfaces. First do the design work — decide how your top-level structure hides important design decisions — then implement each module individually with TDD. Don't TDD your <em>entire</em> application from scratch.</p>
+</div>
+
+<h4>2. The "tower to the moon" problem</h4>
+<p>TDD starts from a very simple solution and adds complexity incrementally. That works only when the real solution is an <em>incremental improvement</em> on simpler ones.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — You Can't Reach the Moon by Building Taller Towers</div>
+  <p>If your problem needs a <em>spaceship</em>, you'll never get there by building taller and taller towers and feeling like you're getting closer. TDD only works for problems whose solution is an incremental improvement on simpler solutions. It fails for: well-known algorithms (just implement the one you learned in CS 180); ACID-compliant or distributed databases (you can't build up A → C → I → D); and systems with non-binary outcomes like image recognition or non-functional properties like response time and availability, where a better solution needn't pass every old test.</p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Robert C. Martin's Three Rules of TDD</div>
+  <p>(1) Don't write production code until you have a <em>failing</em> unit test. (2) Don't write more of a unit test than is sufficient to fail. (3) Don't write more production code than is sufficient to pass the test. The reason to <em>see the test fail first</em>: if you've never watched it fail, you can't trust it isn't a false-positive tautology that always passes.</p>
+</div>
+
+<div class="quiz" id="quiz6">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Which situation is the "tower to the moon" metaphor warning against using TDD for?</div>
+  <div class="quiz-options" data-quiz="q6">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>A CRUD web form where each field is added one at a time</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>An ACID-compliant distributed database, where the real solution is not an incremental improvement on a simpler one</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>A small utility module with a clear interface</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Any project that uses an AI coding assistant</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q6','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q6">
+    <strong>Correct: B.</strong> You can't build an ACID/distributed database by passing A, then C, then I, then D — the correct design must be conceived whole, like a spaceship rather than an ever-taller tower. A and C are exactly the incremental, well-structured problems TDD excels at, and the professor noted TDD actually pairs <em>extremely well</em> with AI (you write the test, the AI makes it pass), so D is wrong.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART VII ═══════════════════════ -->
+<section id="part7" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part VII</div>
+  <h2>Collective Code Ownership &amp; Coding Standards</h2>
+</div>
+
+<h3 id="bus-factor">Collective Code Ownership and the Bus Factor</h3>
+<p>The goal of <strong>collective code ownership</strong> is to raise the team's <strong>bus factor</strong>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Bus Factor</div>
+  <p>The <strong>bus factor</strong> is the number of team members who could suddenly become unavailable — "hit by a bus," get sick, handle a family emergency, or leave — <em>without the project stalling</em>. A low bus factor (e.g. one person owns the critical feature) is a single point of failure. You raise it by making sure everyone feels comfortable changing every module.</p>
+</div>
+
+<p>Under XP, "every person may and should feel comfortable making changes" to any module — no code is owned by a single person. The benefits: fewer bugs (more eyes on the code), no single point of failure, faster feature delivery, fewer bottlenecks. The research (Laurie Williams, ~2010) supports that it prevents knowledge silos and keeps progress going when an owner leaves.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Failure Mode — and Google's Counterpoint</div>
+  <p>The pure version has a flaw: "if everybody is responsible, nobody feels responsible," which yields mixed styles and spaghetti code. Google does something subtly different: every module has <em>one designated owner</em> who must review every pull request. This isn't the opposite of collective ownership — anyone can still make changes — it just ensures one person feels responsible for keeping changes consistent with past design decisions. The research even found <em>higher team cohesion</em> in non-XP teams, though the professor suspects a modern replication might differ.</p>
+</div>
+
+<h3 id="coding-standards">Coding Standards</h3>
+<p>The cure for the spaghetti-code risk is another XP practice: <strong>coding standards</strong>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Coding Standards</div>
+  <p>The goal of coding standards is that <strong>when you look at a piece of code, you cannot tell who wrote it.</strong> If you <em>can</em> identify the author, people are using different styles, which hurts readability. When all code looks the same, patterns are easier to recognize and the code is easier to understand. Standards cover indentation, capitalization, variable naming, and commenting.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">The Standard Itself Doesn't Matter — Consistency Does</div>
+  <p>Open-source projects host endless debates about whether a space goes before or after a bracket. The professor's point: it does not matter <em>what</em> the standard is, only that everybody sticks to it. The moment that matters most is <strong>when you merge into main</strong>.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Automate It — Pre-Commit Hooks &amp; AI</div>
+  <p>Make standards mandatory with git <strong>pre-commit hooks</strong>: before a commit is allowed, run a command that checks tests pass and the code conforms. This stops you from accumulating non-conforming code you "promise to fix later" (you never do). And if your team uses AI, put the standards in a markdown file (e.g. a <code>CLAUDE.md</code>) so the agent conforms — which also stops it from "randomly" restyling your code and producing a huge diff.</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Use AI Effectively</div>
+  <p>The professor closed with Jensen Huang's commencement line: "You're not going to be replaced by AI — you're going to be replaced by somebody who uses AI more effectively than you." Coding standards in your AI config are one concrete way to use AI well and set yourself apart.</p>
+</div>
+
+<div class="quiz" id="quiz7">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">What is the stated goal of a coding standard?</div>
+  <div class="quiz-options" data-quiz="q7">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>To enforce the one objectively correct formatting style</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>That you cannot tell who wrote a piece of code, because uniform style improves readability and pattern recognition</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>To make every developer's personal style visible for credit</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>To reduce the number of unit tests required</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q7','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q7">
+    <strong>Correct: B.</strong> If you can identify the author, styles differ and readability suffers; uniform code lets everyone recognize patterns faster. There is no "one correct" style (A is the very debate the professor called pointless — only consistency matters), and the point is precisely to make authorship <em>invisible</em>, the opposite of C.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SUMMARY ═══════════════════════ -->
+<section id="together" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This lecture spanned from a verification technique to a philosophy of how software gets made — but a single thread runs through it: <strong>get feedback as early and as cheaply as possible.</strong></p>
+
+<p><strong>Symbolic execution</strong> (Part I) automates the search for test inputs so you can reach 100% path coverage without burning human effort — feedback about your code's behavior, cheaply. That same instinct, applied to the <em>whole development process</em>, is what dooms the <strong>waterfall model</strong> (Part II): by deferring testing, customers, and deployment to the very end, waterfall makes every feedback signal arrive when it is most expensive to act on.</p>
+
+<p>The <strong>Agile Manifesto</strong> (Part III) is the industry's correction — pull feedback forward through short, working <strong>iterations</strong> — but only if you read it as a ranking of priorities, not a license to abandon design. <strong>INVEST</strong> (Part IV) makes the unit of agile work, the user story, schedulable and estimable, which feeds directly into <strong>Extreme Programming's</strong> (Part V) small releases and planning game, where the team converts uncertainty into shared estimates and velocity.</p>
+
+<p>Finally, the day-to-day practices tie back to the course's deeper principles. <strong>TDD</strong> (Part VI) is really the <em>information-hiding principle</em> in motion — design the contract before the implementation — but it only works for incrementally-improvable problems and only inside a pre-designed architecture. <strong>Collective code ownership and coding standards</strong> (Part VII) protect the team itself: a high bus factor and invisible-authorship code keep the project alive and legible when people inevitably come and go. The recurring meta-lesson: as AI writes more code, your edge is knowing <em>which</em> process and practice to apply, and <em>why</em>.</p>
+
+<div class="callout tip" style="margin-top: 32px;">
+  <div class="callout-title">What's Next</div>
+  <p>Thursday's lecture continues with <strong>how to professionally conduct a code review</strong> — the mechanism this course put in place to encourage collective code ownership — plus a recap of agile and the start of <strong>lean development</strong> and its idea of eliminating <em>waste</em>. A dedicated full lecture on <strong>Scrum</strong> (the agile process ~70% of agile teams use) arrives in a week or two. And don't forget: a homework on testing principles is due Thursday (late date Friday). Exit-ticket password: <em>Beck</em>.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

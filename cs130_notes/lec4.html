@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 4 — Software Design &amp; Design Docs</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 4 · Software Design</div>
+  <a href="#part1">Part I — Why Design Comes First</a>
+  <a href="#load-bearing" class="sub">Load-Bearing Decisions</a>
+  <a href="#emerging" class="sub">The Emergent-Architecture Trap</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Generate, Then Narrow</a>
+  <a href="#more-options" class="sub">More Options = Better Design</a>
+  <a href="#anchoring" class="sub">The Anchoring Bias</a>
+  <a href="#rational" class="sub">Rational Decision Making</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — A Worked Brainstorm</a>
+  <a href="#datatransfer" class="sub">The Data-Transfer Problem</a>
+  <a href="#clustering" class="sub">Cluster &amp; Combine</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — The Design Doc</a>
+  <a href="#why-docs" class="sub">Why Write It Down?</a>
+  <a href="#four-sections" class="sub">The Four Sections</a>
+  <a href="#api-semantics" class="sub">Documenting an API</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Process Fits Domain</a>
+  <a href="#waterfall" class="sub">Why Not Pure Waterfall?</a>
+  <a href="#doghouse" class="sub">Doghouse vs Skyscraper</a>
+  <a href="#spectrum" class="sub">Facebook → Google → NASA</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#together">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">COMSCI 130 · Software Engineering</div>
+  <h1>Software Design &amp; the Art of the Design Doc</h1>
+  <p class="hero-sub">An interactive guide to Lecture 4 — why early design decisions are load-bearing, how to generate strong design alternatives, what goes in a design doc, and how to match your process to your domain.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>Why Design Comes Before Code</h2>
+</div>
+
+<p>So far this course has built up a pipeline. You learned <strong>user stories</strong> as a way to capture <em>requirements</em> — what the system must do. You learned techniques for <strong>modelling</strong> those requirements and modelling a design. Today's lecture sits at the next stage: the activity that traditionally comes right after requirements engineering, the activity of actually <em>coming up with</em> a design.</p>
+
+<p>Why spend a whole lecture on this? Because design is plausibly the single most durable skill you will carry out of this degree. AI models are getting remarkably good at writing code and even at testing it. The professor's bet is that over the next few years the work that stays squarely human is the work of <em>deciding what to build and how to structure it</em> — and that is exactly what design is. It is worth an entire semester elsewhere; today is the compressed version.</p>
+
+<h3 id="load-bearing">Early Decisions Are Load-Bearing Walls</h3>
+
+<p>There is a comforting myth that software is infinitely malleable. "Just keep coding, we can always fix it later — it's called <em>soft</em>ware for a reason, right?" Sometimes that is true. But many design decisions are not soft at all. They behave like the <strong>load-bearing walls</strong> of a building: once the rest of the structure rests on them, moving them means tearing the whole thing apart.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Architecturally Significant Decision</div>
+  <p>An <strong>architecturally significant design decision</strong> is one whose effect ripples through the whole system, so that changing it later requires a large structural rewrite rather than a small local edit. These are the load-bearing walls. The goal of design is to identify them <em>before</em> you build on top of them.</p>
+</div>
+
+<p>Notice the skill hidden here: it is not enough to make a decision well, you have to first <em>recognise which decisions are the significant ones</em>. Which parts of the system are most likely to need to change? Those are the ones you think hardest about up front. This recognition gets easier with experience — which is precisely why design feels harder for newer engineers, who have not yet seen enough systems to spot the load-bearing walls.</p>
+
+<h3 id="emerging">The Emergent-Architecture Trap</h3>
+
+<p>The opposite of designing up front is hoping the architecture will simply <em>emerge</em> as you code — that you can incrementally accrete structure decision by decision and it will all hang together. This is sometimes called an <strong>emergent architecture</strong>, and the lecture's blunt verdict is that in practice it usually does not work out well. Without deliberate thought, you end up anchored to whatever you happened to type first, and the load-bearing walls get poured by accident.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>Code is cheap to change in the small and expensive to change in the large. The decisions that are expensive to change are the ones you must get right <em>before</em> you start coding. Design is the discipline of finding those decisions and reasoning about them deliberately.</p>
+</div>
+
+<div class="quiz" id="quiz1box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Why does the lecture warn against relying on an "emergent architecture"?</div>
+  <div class="quiz-options" data-quiz="quiz1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Because writing code is always more expensive than writing documents</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Because architecturally significant decisions are costly to reverse, so accreting them by accident leaves you stuck with load-bearing walls you never deliberately chose</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Because agile methods forbid changing the design after the first sprint</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Because emergent architectures cannot pass automated tests</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('quiz1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="quiz1">
+    <strong>Correct — B.</strong> Some decisions are load-bearing: reversing them later means a large structural rewrite. If you let the architecture emerge one keystroke at a time, those significant decisions get made implicitly and never examined, so you inherit walls you never consciously placed. (A overstates the case — code is often cheap to change in the small; the danger is specifically the large, significant decisions.)
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>Generate Many, Then Narrow Down</h2>
+</div>
+
+<p>If the goal is to find good design decisions, the obvious question is <em>how</em>. The lecture's answer rests on a striking empirical finding, so let's start there.</p>
+
+<h3 id="more-options">More Options Produce Better Designs</h3>
+
+<p>Imagine two teams. Team A pours enormous effort into <strong>one</strong> design: every UML diagram detailed, every navigability arrow drawn, every corner polished. Team B sketches <strong>three</strong> different designs at a higher, rougher level of abstraction. Whose final product is better?</p>
+
+<div class="callout insight">
+  <div class="callout-title">The Counterintuitive Answer</div>
+  <p>Team B. Across many disciplines — software, UI design, even "design the most beautiful teapot" — the people who deliberately generate <em>more</em> design alternatives reliably end up with the better final option. The effort Team A spent perfecting one idea would have been better spent exploring several.</p>
+</div>
+
+<p>And it scales further. Three options beat one; but in the research, <strong>around five</strong> options is the sweet spot — five beats three. You cannot always invent five plausible designs, but five is the target to reach for. Much of this comes from empirical software-design researcher <strong>Marian Petre</strong>, who studies high-performing teams and the processes they actually follow. A recurring finding: when you <em>prompt</em> engineers — especially younger engineers — to think of more and more different options, they almost always produce better ones.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Study &amp; Practice Strategy</div>
+  <p>In the real world nobody may be standing over you saying "think of another option." So you have to be your own prompter. Before you start implementing, make a habit of asking yourself: <em>what are five genuinely different ways to do this?</em> Manufacture the prompt yourself.</p>
+</div>
+
+<h3 id="anchoring">The Enemy: Anchoring Bias</h3>
+
+<p>Why do we default to too few options? Because of a cognitive bias called <strong>anchoring</strong>. The metaphor: instead of sailing the whole ocean of possibilities, you drop anchor near the first idea you had and then just circle that one spot. Every "new" idea you generate is really a small variation on your first one.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Anchoring Bias</div>
+  <p><strong>Anchoring</strong> is the tendency to be disproportionately influenced by the initial idea you encountered, so that all subsequent ideas cluster around it. In design, it shows up as only ever considering options that resemble your first option.</p>
+</div>
+
+<p>The countermeasure is deliberate effort to think of ideas with <em>as little in common as possible</em> with your initial ones. Actively study the <strong>weaknesses</strong> of the designs you already have, and let those weaknesses point you toward something genuinely different. Many of those far-flung ideas will be bad — and that is fine, because of the two-phase structure that follows.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="380" height="150" viewBox="0 0 380 150" style="display:block; margin:0 auto;">
+      <!-- generate phase -->
+      <text x="95" y="22" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#c0510a">GENERATE (broaden)</text>
+      <circle cx="40" cy="60" r="9" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <circle cx="75" cy="48" r="9" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <circle cx="62" cy="88" r="9" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <circle cx="105" cy="70" r="9" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <circle cx="130" cy="50" r="9" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <circle cx="118" cy="100" r="9" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <circle cx="155" cy="85" r="9" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <!-- arrow -->
+      <line x1="185" y1="70" x2="235" y2="70" stroke="#d9d0c4" stroke-width="2"/>
+      <polygon points="235,70 227,65 227,75" fill="#d9d0c4"/>
+      <!-- narrow phase -->
+      <text x="305" y="22" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#2d8a4e">EVALUATE (narrow)</text>
+      <circle cx="295" cy="70" r="11" fill="#edf7f0" stroke="#2d8a4e" stroke-width="2.5"/>
+      <text x="295" y="75" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">✓</text>
+      <circle cx="335" cy="55" r="8" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <circle cx="335" cy="88" r="8" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+    </svg>
+  </div>
+  <div class="figure-caption">The two phases: first broaden out into many diverse options without judging quality, then narrow down to the few worth evaluating in depth.</div>
+</div>
+
+<h3 id="rational">Rational Decision Making</h3>
+
+<p>The two phases above — generate broadly, then evaluate — form the backbone of the process the lecture recommends for junior engineers: the <strong>rational design decision-making process</strong>. Here is the whole loop.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Recall the requirements.</strong> What actually matters for this system — both functional requirements (what it must do) and non-functional ones (performance, availability, changeability, modularity)?</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Generate many alternatives.</strong> Brainstorm broadly. Do not judge quality yet — fight anchoring by pushing for diverse, even far-fetched options.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Evaluate each option along the dimensions that matter.</strong> Score every alternative against the requirements from step 1.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Confront the trade-offs.</strong> You will almost never find one option that wins on <em>every</em> dimension. Some are better on performance, others on changeability. This is a multi-dimensional trade-off optimisation.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <p><strong>Pick the right trade-off for your context.</strong> Decide which dimensions matter most <em>here</em>, and choose accordingly. Do this for every major design decision and you reliably reach better decisions.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Why There Is No Cookbook</div>
+  <p>A student asked whether you should run this whole process for every design separately or aggregate them. The honest answer is "it depends" — on your context, and in agile work you may run it once per iteration of each feature, at multiple levels of abstraction (broad first, detailed later). The professor's wry point: if a fixed rulebook existed that told you exactly what to do, anyone could read it and do your job — so the absence of an algorithm is part of what keeps the job human.</p>
+</div>
+
+<div class="quiz" id="quiz2box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">During the <em>generate</em> phase of the rational process, what should you deliberately <strong>not</strong> do?</div>
+  <div class="quiz-options" data-quiz="quiz2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Think of ideas that differ from your first idea</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Carefully judge and filter each idea for quality as you produce it</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Aim for roughly five options</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Recall the requirements that matter</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('quiz2','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="quiz2">
+    <strong>Correct — B.</strong> The generate phase is for broadening: produce as many diverse options as possible <em>without</em> filtering for quality. Evaluation is a separate, later phase. Judging too early collapses you back toward your anchor and kills the out-of-the-box ideas — and one of those might turn out to be the best design. (A and C are exactly what you <em>should</em> do while generating.)
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>A Worked Brainstorm: Moving Data Around the World</h2>
+</div>
+
+<p>Theory is easier to trust once you have watched it run. The lecture worked a live example, and walking through it shows how generate-then-narrow actually feels in practice.</p>
+
+<h3 id="datatransfer">The Problem</h3>
+
+<p>You are a company with offices in Los Angeles, New York, France, and Singapore. You need a software system to <strong>transfer data between these locations</strong>. The class brainstormed as widely as possible, on purpose. The point was not to find the answer immediately — it was to flood the table with options before judging any of them.</p>
+
+<table class="compare-table">
+  <tr><th>Idea</th><th>What it is</th></tr>
+  <tr><td>Carrier pigeon</td><td>Out-of-the-box, but the NYT once noted real situations where a pigeon beats the internet</td></tr>
+  <tr><td>Trucks with hard drives</td><td>The bit-transfer rate of a fully loaded truck can exceed the internet for huge data volumes</td></tr>
+  <tr><td>"Sneakernet" via employees</td><td>Staff travelling between offices carry the data in their luggage — great for high-confidentiality transfers</td></tr>
+  <tr><td>Central data server</td><td>One server everyone connects to; you must buy or rent the server</td></tr>
+  <tr><td>Peer-to-peer (P2P)</td><td>Every device is equal; each keeps a local copy and shares with the others</td></tr>
+  <tr><td>Distributed RAID server</td><td>RAID = a redundancy scheme so a single disk failure loses no data; here spread across locations</td></tr>
+</table>
+
+<p>The deliberately absurd ones — message in a bottle, smoke signals, drawing data in the sky with planes, quantum entanglement on the moon — were not wasted. They are the anti-anchoring move in action: by reaching for the ridiculous you break the gravity of your first idea, and only later do you filter.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — P2P vs Client-Server</div>
+  <p>In a <strong>peer-to-peer</strong> architecture, every participating device is equal — there is no special machine. In a <strong>client-server</strong> architecture, one or more dedicated server devices serve the clients and never act as clients themselves. The distributed RAID idea is server-based (not P2P) because it still requires dedicated server hardware.</p>
+</div>
+
+<h3 id="clustering">Cluster, Then Combine</h3>
+
+<p>Once the post-it notes cover the wall, the next move is to <strong>cluster the ideas by similarity</strong>. Useful clusters are ones that help you see structure and spark new ideas — not lazy buckets like "ridiculous ideas." For the data-transfer problem the natural clusters were:</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="170" viewBox="0 0 420 170" style="display:block; margin:0 auto;">
+      <!-- cluster 1 -->
+      <rect x="10" y="20" width="120" height="130" rx="10" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="70" y="40" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#c0510a">PHYSICAL</text>
+      <text x="70" y="68" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#2a2520">trucks</text>
+      <text x="70" y="90" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#2a2520">pigeons</text>
+      <text x="70" y="112" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#2a2520">sneakernet</text>
+      <!-- cluster 2 -->
+      <rect x="150" y="20" width="120" height="130" rx="10" fill="#eff4ff" stroke="#2563eb" stroke-width="1.5"/>
+      <text x="210" y="40" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#2563eb">PEER-TO-PEER</text>
+      <text x="210" y="78" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#2a2520">decentralized</text>
+      <text x="210" y="98" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#2a2520">file sharing</text>
+      <!-- cluster 3 -->
+      <rect x="290" y="20" width="120" height="130" rx="10" fill="#f3effe" stroke="#7c3aed" stroke-width="1.5"/>
+      <text x="350" y="40" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#7c3aed">CLIENT-SERVER</text>
+      <text x="350" y="74" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#2a2520">central server</text>
+      <text x="350" y="96" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#2a2520">distributed</text>
+      <text x="350" y="114" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#2a2520">RAID server</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Clustering the brainstorm by similarity reveals three families. The structure itself suggests new combinations.</div>
+</div>
+
+<p>The payoff is in the last step: looking <em>across</em> clusters to <strong>combine</strong> ideas into new ones. From the server-based cluster came hybrids the room had not initially listed — for instance a <strong>peer-to-peer system with periodic local data cloning</strong>, where you regularly pull copies from peers so you are not stranded when a peer is offline. Clustering did not just tidy the board; it generated genuinely new candidates.</p>
+
+<div class="callout tip">
+  <div class="callout-title">The Workflow in One Line</div>
+  <p>Generate widely → cluster by similarity → combine across clusters to spawn new options → only then evaluate and choose. The clustering step is what turns a messy pile of ideas into a generator of <em>better</em> ideas.</p>
+</div>
+
+<div class="quiz" id="quiz3box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In the worked example, why was the <em>distributed RAID server</em> placed in the client-server cluster rather than the peer-to-peer cluster?</div>
+  <div class="quiz-options" data-quiz="quiz3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Because RAID can only run on a single physical disk</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Because it still requires dedicated server devices, whereas peer-to-peer means every participating device is equal</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Because RAID is a physical transport method like trucks</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Because distributed systems are always client-server</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('quiz3','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="quiz3">
+    <strong>Correct — B.</strong> Peer-to-peer means all participating devices are equal, with no special machine. The RAID approach still relies on dedicated server hardware that you buy or rent, which is the defining trait of client-server. "Distributed" describes <em>where</em> the servers sit, not <em>whether</em> there are servers — so it is still server-based.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>Capturing the Decision: The Design Doc</h2>
+</div>
+
+<p>You have generated, clustered, combined, and chosen. Now what? You write it down. A <strong>design doc</strong> is the document that captures all the design decisions you made while solving a design problem — and writing one is itself a core deliverable for your team project.</p>
+
+<h3 id="why-docs">Why Write It Down?</h3>
+
+<p>Three reasons, each independently strong:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Bugs are cheapest to catch early.</strong> Recall from the opening lectures: the earlier you find a problem, the cheaper it is to fix. Reasoning on paper surfaces design issues while they are still nearly free to repair.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>It builds team consensus.</strong> If every teammate is picturing a different design, you cannot build a coherent system. The doc is the artifact everyone agrees on.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>It transfers knowledge.</strong> At Google, the fastest way to onboard a new developer is to hand them the relevant design docs — they instantly see the important decisions and why they were made.</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Your Job Is to Solve Problems, Not Type Code</div>
+  <p>From a Google blog post by Malte Ubl: a software engineer's job is not to produce code per se, but to <em>solve problems</em>. Unstructured prose — a design doc — is often a better tool than code for solving a problem early in its life, because it communicates the problem and solution at a higher level. Now that "statistical word calculators" can write code from a design, the part of the job that endures is the higher-level thinking. Train your brain to operate above the code.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">A Career Aside</div>
+  <p>At Google, junior developers often get promoted not just on coding ability but on the quality of the design docs they write. (Famously this has occasionally produced backwards incentives — writing the design doc <em>after</em> shipping, just to earn the promotion. Write yours when it is actually useful instead.) And in the near future, a polished design doc may be exactly what you hand to your AI coding assistant to implement.</p>
+</div>
+
+<h3 id="four-sections">The Four Sections of a Design Doc</h3>
+
+<table class="compare-table">
+  <tr><th>Section</th><th>What goes in it</th></tr>
+  <tr><td>Context &amp; Scope</td><td>Background facts: existing features, domain knowledge, organisational facts (e.g. 20 offices in LA, NY, Singapore, Dubai, Paris, Sydney; average file 100&nbsp;MB; ~100 files/day). For human <em>and</em> AI readers.</td></tr>
+  <tr><td>Goals &amp; Non-Goals</td><td><strong>Goals</strong>: functional + quality requirements (user stories, use cases, quality-attribute scenarios). <strong>Non-goals</strong>: what is explicitly out of scope.</td></tr>
+  <tr><td>The Design</td><td>The option you all agreed on — class diagrams, sequence diagrams, API descriptions, pseudocode. <em>Not</em> actual code; a higher level of abstraction.</td></tr>
+  <tr><td>Alternatives Considered</td><td>The other options and the trade-offs that motivated rejecting them. Placed last because it is least relevant to a reader — but thought of <em>first</em> in the real process.</td></tr>
+</table>
+
+<div class="callout warning">
+  <div class="callout-title">Common Mistake — The Strawman Alternative</div>
+  <p>The "alternatives considered" section is the most-undercooked part. Two failure modes: (1) writing weak non-goals — "we don't want people to hack the system" is still a <em>goal</em>; a real non-goal is something like "the database need not be ACID-compliant." (2) Inventing a <strong>strawman</strong> alternative that is obviously worse in every way just to make your choice look good. The order in the doc (design first, alternatives last) is the reverse of the order you should <em>think</em> in — always generate good alternatives before you decide.</p>
+</div>
+
+<details>
+<summary>Expand: worked goals for the data-transfer system</summary>
+<div class="details-body">
+<p><strong>Functional (user stories):</strong> "As a user, I want to select multiple files at once so I don't upload each individually." "As a user, I want resumable uploads" — note how this single requirement reshapes the design, since you must not lose progress when the connection drops.</p>
+<p><strong>Quality-attribute scenarios</strong> (scenario + measurement, from the requirements lecture):</p>
+<ul style="margin: 0 0 12px 22px;">
+<li><strong>Security:</strong> preserve confidentiality and integrity while resisting common attacks.</li>
+<li><strong>Availability:</strong> upload/download features shall have 99% uptime. (Availability is counted in "nines" — 90%, 99%, 99.9% … and each extra nine typically costs an order of magnitude more.)</li>
+<li><strong>Reliability:</strong> on a disk failure, no data should be lost.</li>
+</ul>
+<p><strong>Non-goals:</strong> the system need not support simultaneous collaborative editing (no Google-Docs scenario); upload/download <em>speed</em> doesn't matter much since transfers run in the background.</p>
+</div>
+</details>
+
+<h3 id="api-semantics">Documenting an API: Semantics, Not Just Syntax</h3>
+
+<p>The design section often specifies the <strong>API</strong> between components — and this matters enormously because different components are usually built by different teams. If they don't agree on the interface in advance, the pieces won't fit together when assembled (the lecture's recurring analogy: the two halves of Tower Bridge had to meet in the middle).</p>
+
+<p>The critical rule: don't just document the <strong>syntax</strong> (the name and parameter list) — document the <strong>semantics</strong> (what the call <em>means</em>, what each argument means, error cases, and side effects).</p>
+
+<pre><code><span class="cm">// SYNTAX alone is not enough:</span>
+createFile(fileName, path)
+
+<span class="cm">// SEMANTICS — what it actually means:</span>
+<span class="cm">//  Creates a new empty file at the given path.</span>
+<span class="cm">//  ERROR: if the file already exists, return FileExistsError.</span>
+<span class="cm">//  SIDE EFFECT: the new file is NOT yet visible to other</span>
+<span class="cm">//    users until upload is marked complete.</span></code></pre>
+
+<p>The lecture also flagged a subtle trap in parameter consistency: in <code>createFile</code> the <code>fileName</code> did <em>not</em> include the path (path was a separate argument), but the later <code>upload</code> call's <code>fileName</code> <em>does</em> include both the extension and the path. Documenting these meanings precisely is what prevents two teams from quietly disagreeing about what a string contains.</p>
+
+<details>
+<summary>Expand: the chosen design and its rejected alternatives</summary>
+<div class="details-body">
+<p><strong>Chosen design:</strong> a central server with RAID level 2 (higher RAID level → more disk space, more failure types survived), with all communication over TCP (chosen to guarantee correct, in-order message delivery). The interaction is captured as a sequence diagram: client creates a file, uploads bytes in multiple messages (to allow resumable uploads), sends "upload complete," the server backs up, then other clients can list and download files.</p>
+<p><strong>Alternatives considered and why rejected:</strong></p>
+<ul style="margin: 0 0 0 22px;">
+<li><strong>Push model</strong> (server notifies all clients of new files): rejected — too much session-management overhead, since every client must announce when it is online.</li>
+<li><strong>Central non-RAID server:</strong> rejected — fails the reliability requirement (no disk-failure tolerance).</li>
+<li><strong>Distributed RAID server:</strong> rejected — overkill; for ~100 files/day at 100&nbsp;MB and only 99% availability, a single server suffices.</li>
+<li><strong>Peer-to-peer:</strong> rejected — with 20 locations, each upload would be sent 20 times to all peers, risking network overload.</li>
+</ul>
+</div>
+</details>
+
+<div class="callout insight">
+  <div class="callout-title">Real-World Anchors</div>
+  <p>Open-source design docs exist: Kubernetes calls them <strong>RFCs</strong> (Requests For Comments). And Amazon is famous for "write it down before you build it" — no PowerPoint in meetings, just narrative "six-pagers," for every decision. Their philosophy: <em>if there's no doc, there's no meeting; if there's no doc, it doesn't get done.</em></p>
+</div>
+
+<div class="quiz" id="quiz4box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Which of the following is a genuine <strong>non-goal</strong> for a design doc (not just a goal in disguise)?</div>
+  <div class="quiz-options" data-quiz="quiz4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>"The system should resist the most common attacks."</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>"The system must have 99% uptime."</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>"The database need not be ACID-compliant."</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>"Users should be able to upload multiple files at once."</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('quiz4','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="quiz4">
+    <strong>Correct — C.</strong> A non-goal states what is explicitly <em>out</em> of scope, which deliberately widens your usable design space. "Need not be ACID-compliant" frees the design from a constraint. A, B, and D all describe things the system <em>should</em> do — they are goals (security, availability, and functional requirements respectively), no matter how they're phrased.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>One Process Does Not Fit All Domains</h2>
+</div>
+
+<p>Everything so far might suggest "always do lots of design up front." But the right <em>amount</em> of design depends on the domain. To see why, start with the process that took it to the extreme.</p>
+
+<h3 id="waterfall">Why Not Pure Waterfall?</h3>
+
+<p>The traditional 1960s approach was the <strong>waterfall</strong> process: do <em>all</em> the requirements engineering for the whole system, then <em>all</em> the design, then <em>all</em> the development, then <em>all</em> the testing, then deployment — strictly sequential. Why is doing the entire system this way usually a bad idea?</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Failure Modes of Big Upfront Everything</div>
+  <p><strong>Requirements change</strong> — and they almost always do, because customers often don't know what they need until they see and use something. <strong>It takes too long</strong> — customers want a partial system early, not a five-year wait. <strong>Bugs found late are expensive</strong> — you want feedback and bug-detection as early as possible. <strong>Estimates slip</strong> — software is hard, so the dates you promised (and the business built around them) blow up.</p>
+</div>
+
+<h3 id="doghouse">Doghouse vs Skyscraper</h3>
+
+<p>The analogy that fixes the intuition: you would not use the same engineering process to build a doghouse in your backyard as to build the Empire State Building. Why not?</p>
+
+<table class="compare-table">
+  <tr><th>Dimension</th><th>Doghouse</th><th>Skyscraper</th></tr>
+  <tr><td>People involved</td><td>1–2</td><td>Hundreds</td></tr>
+  <tr><td>Construction time</td><td>Hours / days</td><td>Years</td></tr>
+  <tr><td>Risk if it fails</td><td>Low — a dog is mildly inconvenienced</td><td>Catastrophic — it could collapse and take part of a city with it</td></tr>
+  <tr><td>Lifespan / maintenance</td><td>Short; just replace it</td><td>Decades; maintained daily</td></tr>
+  <tr><td>Upfront design</td><td>Little, few models</td><td>A great deal, many rigorous models</td></tr>
+</table>
+
+<p>(The skyscraper risk is not hypothetical — the lecture cited a real Manhattan tower whose engineer later realised wind hitting the building's <em>corners</em> hadn't been calculated and could topple it; the building was quietly reinforced after construction, with police on standby for evacuation.) The same logic transfers to software: more people, longer process, higher risk &rArr; more upfront design.</p>
+
+<h3 id="spectrum">The Spectrum: Facebook → Google → NASA</h3>
+
+<p>Real organisations sit at different points on this spectrum, driven by their dominant <em>risk</em>.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Web / social media (e.g. Facebook) — "move fast and break things."</strong> Main risk is usability: if users dislike the UI, they leave. So you need an easily changeable UI and strong scalability (1,000 users today, a billion tomorrow). Upfront design is small-to-medium and focused on the client-server interface, component structure, and data models — often reusing well-understood frameworks. The process is <strong>agile</strong>: iterative, "perpetual development," many releases, quality mostly via testing, little formal analysis or design review. Rapid releases surface UI problems fast.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Google — "risk-driven design."</strong> More design than Facebook. Self-organised autonomous teams craft design docs together (literally in Google Docs, with long comment threads), and a team lead approves the significant decisions. Teams focus design effort where risk is highest, and choose their own amount of design: the Google File System team designs far more than a team shipping a small Android feature.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>NASA — "failure is not an option."</strong> Risks are robustness and testability in environments no one has ever visited (e.g. the Europa Clipper mission to a Jupiter moon — you cannot field-test there). So: enormous upfront design, many models including formal ones, rigorous analysis, a strictly plan-driven process, hierarchical decision-making, and a cascade of formal reviews (system design → preliminary → critical → integration → test-readiness). Their checklists even ask whether the design is "developed to a low enough level for coding" — design taken down to the level of code so the system can be formally verified.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Why NASA Isn't Agile</div>
+  <p>An intern once worried NASA was "doing it wrong" by not being agile. But agile's benefit is rapid, incremental delivery and feedback — and NASA gets none of it. A Mars mission has a two-month launch window every <em>two years</em>, dictated by planetary alignment. You can't ship a new feature weekly to a spacecraft already en route. With no benefit from iteration, a plan-driven process is the rational choice. <em>The process must match the risk profile and the realities of the domain.</em></p>
+</div>
+
+<div class="quiz" id="quiz5box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A team builds web-based social media. According to the lecture, what most shapes how much upfront design they do?</div>
+  <div class="quiz-options" data-quiz="quiz5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>The dominant risk — for them, usability and scalability — which favours a small-to-medium, agile, test-driven approach</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>A universal rule that all modern software requires heavy upfront design</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>The requirement to pass formal verification before any code is written</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>The number of planetary launch windows available per year</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('quiz5','a')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="quiz5">
+    <strong>Correct — A.</strong> The amount and style of design is driven by the dominant risk. For social media the big risks are usability (lose the UI, lose the users) and scalability, neither of which is best addressed by heavy upfront design — rapid iterative releases expose UI problems faster. C and D describe the NASA end of the spectrum, where the risk profile (untestable environments, fixed launch windows) demands the opposite approach.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SUMMARY ═══════════════════════ -->
+<section id="together" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This lecture is a single arc, even though it touched five topics. It begins with a <em>warning</em> and ends with <em>judgement</em>.</p>
+
+<p>The warning (Part I) is that some design decisions are load-bearing — cheap to make, ruinously expensive to reverse — so you cannot let architecture merely emerge. That raises the question Part II answers: <em>how</em> do you make those decisions well? By fighting your own anchoring bias, generating many diverse options (around five), and only then narrowing them through the rational, trade-off-driven process. Part III made that abstract loop concrete by watching a room brainstorm data transfer, cluster the ideas, and combine across clusters to invent options nobody started with.</p>
+
+<p>Part IV is where the thinking becomes an artifact. The <strong>design doc</strong> — context &amp; scope, goals &amp; non-goals, the chosen design, and honest alternatives — is how a single engineer's reasoning becomes a team's shared decision, a new hire's onboarding map, and, increasingly, the brief you hand an AI to implement. Notice the through-line: the "alternatives considered" section is just Part II's generate-then-narrow process, written down in reverse order. The design doc <em>is</em> the rational process, made durable.</p>
+
+<p>Part V supplies the wisdom that keeps all of this from becoming dogma. There is no cookbook. The right amount of design is set by your domain's dominant risk — a sliding scale from Facebook's move-fast agility, through Google's risk-driven design culture, to NASA's plan-driven rigour. The doghouse and the skyscraper need different processes, and so do a meme app and a Mars probe.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Three Things to Remember</div>
+  <p><strong>(1)</strong> Generate many diverse options before you choose — anchoring is the enemy, ~five options is the target. <strong>(2)</strong> Write the decision down as a design doc, with real non-goals and honest alternatives — your job is to solve problems, not just type code. <strong>(3)</strong> Match the <em>amount</em> of design to the domain's risk; one process never fits all.</p>
+</div>
+
+<div class="callout tip" style="margin-top: 32px;">
+  <div class="callout-title">What's Next</div>
+  <p>You now have everything you need to draft your team project's design doc. The professor's strong recommendation: even before it's formally due, bring a draft — your goals, your models, your sketched alternatives — to your weekly Friday TA discussion. Early feedback is the cheapest feedback (the recurring theme of this whole course), so the more you show, the more points you secure before grading. Next we move from <em>how</em> to design toward how to evaluate and structure designs in more depth.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 9 — Refactoring &amp; Code Smells</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 9 — Refactoring</div>
+  <a href="#part1">Part I — What Is Refactoring?</a>
+  <a href="#why-refactor" class="sub">Why We Learn This Now</a>
+  <a href="#definition" class="sub">Semantics-Preserving Change</a>
+  <a href="#entropy" class="sub">The Second Law of Software</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Code Smells</a>
+  <a href="#smell-idea" class="sub">A Vocabulary for Bad Design</a>
+  <a href="#bloaters" class="sub">Bloaters</a>
+  <a href="#change-smells" class="sub">Change Preventers</a>
+  <a href="#coupling-smells" class="sub">Couplers &amp; Dispensables</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — Replace Conditional with Polymorphism</a>
+  <a href="#procedural" class="sub">The Procedural Trap</a>
+  <a href="#bird-example" class="sub">The Bird Example</a>
+  <a href="#two-way" class="sub">Refactorings Go Both Ways</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — Refactoring Safely</a>
+  <a href="#levels" class="sub">Levels of Refactoring</a>
+  <a href="#tests" class="sub">The Safety Net of Tests</a>
+  <a href="#hoare" class="sub">Hoare's Two Ways</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Information Hiding (Recap)</a>
+  <a href="#ih-vs-soc" class="sub">Hiding vs. Separation</a>
+  <a href="#getters" class="sub">The Getter/Setter Myth</a>
+  <a href="#strategy-id" class="sub">Spotting the Strategy Pattern</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#together">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">COMSCI 130 · Software Engineering</div>
+  <h1>Refactoring &amp; Code Smells</h1>
+  <p class="hero-sub">How to transform working code into clean code — juggling your classes on a thin thread, but always above a safety net of comprehensive tests.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>What Is Refactoring?</h2>
+</div>
+
+<h3 id="why-refactor">Why Are We Learning This Now?</h3>
+<p>Over the past several lectures you learned a catalog of <strong>design patterns</strong> — reusable, time-tested solutions like Strategy, State, and Mediator. They produce code that is clean and extensible. But there is a gap nobody talks about: the code you actually write rarely starts out looking like those textbook examples. It starts out as a tangle of loops, conditions, and classes that grew organically as requirements piled up.</p>
+<p>This lecture is the bridge across that gap. <strong>Refactoring is the discipline of getting from the messy design you have to the clean, pattern-based design you want</strong> — safely, in small steps, without breaking anything. We place it right after design patterns on purpose: a design pattern encapsulates an abstraction that is often hard to see <em>while</em> you are writing individual classes. You only realize "oh, I should have used a Strategy here" once you have written enough code to feel the pain. Refactoring is how you act on that realization after the fact.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>You don't have to get the design right the first time. You write a current version for today's requirements, and when new requirements appear, you <strong>refactor</strong> toward a cleaner design (often a design pattern) that makes the anticipated change easy. The earlier you refactor, the more it pays off.</p>
+</div>
+
+<h3 id="definition">Refactoring Is a Semantics-Preserving Program Transformation</h3>
+<p>Let's define the term precisely, because the word is widely misused. To do that we first need one more term: <strong>semantics</strong>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Semantics</div>
+  <p>The <strong>semantics</strong> of a program is the complete set of <em>behaviors</em> it can have — its observable input/output behavior. It is what the program <em>means</em>, as opposed to how it is written.</p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Refactoring</div>
+  <p>A <strong>refactoring</strong> is a change to code that <strong>preserves its behavior while changing its structure</strong>. It makes the internal structure and internal behavior easier to understand and cheaper to modify <em>without changing the observable behavior</em>.</p>
+</div>
+
+<p>That second half — "without changing the observable behavior" — is the part everyone gets wrong. You have surely seen git commit messages that just say "refactoring" because the author made a huge change and was too tired to describe it. <strong>Don't do that.</strong> If a change alters what the program outputs, it is not a refactoring.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Common Mistake — Mislabeling Changes</div>
+  <p>Mixing behavior changes into a "refactoring" destroys its whole value. The discipline only works if you <em>separate</em> structure-only changes from changes that intentionally alter behavior. Keep them in different commits.</p>
+</div>
+
+<p>Why does this separation matter so much in practice? Because of <strong>tests</strong>. If a change is a true refactoring, then every test that passed before must still pass after — the observable behavior is identical. So when a test breaks, you immediately know you accidentally changed behavior. If you instead bundle a real behavioral change in with twelve structural tweaks, a failing test tells you nothing: maybe the failure is expected, maybe it's a bug you just introduced, and you can't tell which.</p>
+
+<div class="callout insight">
+  <div class="callout-title">The Refactoring Metaphor</div>
+  <p>Think of refactoring as juggling your classes and objects on a very thin thread — but doing it <strong>above a safety net of comprehensive tests</strong>. The tests are what let you take the risk. Without them, you are juggling over concrete.</p>
+</div>
+
+<h3 id="entropy">The Second Law of Software Evolution</h3>
+<p>Why does code need refactoring at all? Because code <strong>degenerates</strong> over time if no one actively maintains its clarity. This is sometimes called the <em>second law of software evolution</em>, by analogy with the second law of thermodynamics: just as physical entropy increases unless energy is spent to reduce it, code entropy increases unless effort is spent to reduce it.</p>
+<p>There are real reasons this happens. Different people work on different parts of a system at different times. None of them sees all the code at once, so none of them spots the abstraction that would tie it together. Each adds a little more, and the structure slowly decays. <strong>Refactoring is the process that reduces entropy in our code</strong> — it adds back the clarity that erosion takes away.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">Why This Matters — Code Is Read More Than Written</div>
+  <p>Studies show software engineers spend roughly <strong>58%</strong> of their time on program comprehension — reading and trying to understand code, not writing it. Since code is read far more often than it is written, every bit of clarity you add through refactoring pays off many times over.</p>
+</div>
+
+<div class="quiz" id="quiz1">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A developer renames variables, extracts a helper method, and <em>also</em> fixes a bug that made a tax calculation return the wrong total — all in one commit labeled "refactoring." Why is this a problem?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Renaming variables is never a refactoring, so the label is wrong.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>The bug fix changes observable behavior, so it isn't a refactoring — and bundling it in makes test failures impossible to interpret.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Refactorings must always be done by automated tools, never by hand.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>There is no problem; any structural improvement counts as refactoring.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct — B.</strong> A refactoring is semantics-preserving: it must not change observable behavior. The tax-total fix <em>does</em> change behavior, so it isn't a refactoring. The deeper harm is that mixing it in breaks the safety net — when a test fails, you can no longer tell whether the failure is the expected result of the intended behavioral change or an accident from one of the structural tweaks. A is wrong because renaming a variable is a classic, safe refactoring. C is wrong because refactorings can be done by hand or by tools.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>Code Smells — A Vocabulary for Bad Design</h2>
+</div>
+
+<h3 id="smell-idea">What Is a Code Smell?</h3>
+<p>Before you can fix bad design, you need a way to <em>recognize</em> it. That is the contribution of Martin Fowler's book <em>Refactoring: Improving the Design of Existing Code</em>. Earlier design books (like the Gang of Four) showed only beautiful, finished code — readers admired it but couldn't see themselves in it. Fowler's book did something radical: it put <strong>ugly code on the page</strong>, side by side with its cleaned-up version. The "before" page is where readers finally recognized their own work, and the "after" page showed them the destination.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Code Smell</div>
+  <p>A <strong>code smell</strong> is a surface symptom in code that suggests a deeper design problem — a <em>reason to consider refactoring</em>. (Not literally code that "hasn't showered" — it's code that hasn't been <em>refactored</em> for a while.) A smell is a hint, not a guaranteed bug.</p>
+</div>
+
+<p>This lecture is deliberately about the <strong>vocabulary</strong> — the names of the smells and the refactorings that address them — far more than the mechanical edits themselves. Why? Because the mechanical edits are trivial and your IDE (or an AI coding agent) can perform them automatically. But to <em>direct</em> that tool, you must be able to say "this is a Divergent Change, apply Extract Class." These names are documented everywhere, so the AI agents you'll use on the job already know them. The vocabulary is the leverage.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Connection — Builds on Design Patterns</div>
+  <p>Each smell points toward a refactoring, and many refactorings point toward a design pattern you already studied. Smells are the "why," refactorings are the "how," and patterns are often the "where it lands." Watch for that chain throughout this part.</p>
+</div>
+
+<h3 id="bloaters">Bloaters — Code That Got Too Big</h3>
+<p>The first family of smells is about things that have grown larger than the human mind can comfortably hold.</p>
+
+<table class="compare-table">
+  <tr><th>Smell</th><th>What it looks like</th><th>Typical refactoring</th></tr>
+  <tr><td>Duplicate Code</td><td>The same logic implemented in multiple places</td><td>Extract the abstraction into a single place</td></tr>
+  <tr><td>Long Method</td><td>A method so long it doesn't fit on a screen</td><td>Break into small, meaningfully-named chunks</td></tr>
+  <tr><td>Large Class</td><td>A class doing far too much</td><td>Extract Class</td></tr>
+  <tr><td>Long Parameter List</td><td>A method taking ~20 arguments</td><td>Introduce Parameter Object</td></tr>
+  <tr><td>Data Clumps</td><td>The same group of primitives always travel together</td><td>Introduce Parameter Object / Extract Class</td></tr>
+  <tr><td>Primitive Obsession</td><td>Modeling rich concepts as bare strings/ints</td><td>Replace with a Value Object / class</td></tr>
+  <tr><td>Switch Statements</td><td>Long switch/if-chains on a type code</td><td>Replace Conditional with Polymorphism</td></tr>
+</table>
+
+<h4>Data Clumps → Introduce Parameter Object</h4>
+<p>A <strong>data clump</strong> is a bunch of primitive values that keep hanging around together. If every invoice method takes a <code>startDate</code> and an <code>endDate</code> — amount invoiced, amount received, amount overdue — those two parameters are a clump. Bundle them into a single <code>DateRange</code> object. The code gets easier to read (you now <em>know</em> it's a date range), the object is reusable, and you have a natural home for behavior. For instance, time-zone conversion across a start and end in different zones is awkward as two loose dates but clean as one <code>DateRange</code> that owns the logic.</p>
+
+<h4>Primitive Obsession → Value Object</h4>
+<p>Closely related: <strong>primitive obsession</strong> is modeling a rich concept with a bare primitive. Suppose an <code>Order</code> has a <code>customer</code> attribute typed as <code>string</code>. A customer is more than a string! Worse, nobody can guess what the string holds — is it an ID? A first name? "First Last" or "Last, First"? Replacing it with a <code>Customer</code> <strong>value object</strong> removes the guesswork and gives you a place to add meaningful getters and methods later.</p>
+
+<div class="callout insight">
+  <div class="callout-title">The Object-Oriented Growth Pattern</div>
+  <p>Notice the recurring move: you start by <em>grouping data together</em>, then realize you want to <em>perform operations</em> on that data, so you pull both into a class. Refactoring formalizes this natural drift from loose primitives toward proper objects.</p>
+</div>
+
+<p>Two more bloater-adjacent refactorings worth naming:</p>
+<ul style="margin: 0 0 18px 22px;">
+  <li><strong>Replace Type Code with Class.</strong> If a blood group is stored as an integer (O, A, B, AB = 0,1,2,3), replace it with a <code>BloodGroup</code> class holding four static instances — a kind of "quadruple singleton." In UML, an <em>underlined</em> attribute means <strong>static</strong>: it lives on the class, not on each instance.</li>
+</ul>
+
+<h3 id="change-smells">Change Preventers — Smells That Make Change Hard</h3>
+<p>The next family is about how a smell makes <em>future change</em> painful. The two key opposites are Divergent Change and Shotgun Surgery.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Divergent Change</div>
+  <p>One class is <strong>commonly changed in many different ways for many different reasons</strong>. It violates separation of concerns — a database concern, a bookkeeping concern, and a UI concern all live in one class — so it has the longest, most-blamed history in the system. <strong>Fix: Extract Class</strong>, pulling each concern into its own class that can evolve independently.</p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Shotgun Surgery</div>
+  <p>The opposite: <strong>one change forces you to touch many different classes</strong> — a ripple effect spread across modules and methods. These are the worst smells because you will almost certainly miss one of the five places and ship a bug. (Famously documented as a major source of bugs even in safety-critical robotic systems.)</p>
+</div>
+
+<p>Robert C. Martin's guiding principle captures both: <em>"Put together what changes for the same reasons, and spread apart what changes for different reasons."</em> Divergent Change crams unrelated reasons into one class; Shotgun Surgery scatters one reason across many. Both fight that principle.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="180" viewBox="0 0 420 180" style="display:block; margin:0 auto;">
+      <!-- Divergent Change: one class, many arrows in -->
+      <text x="105" y="20" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#c0510a">DIVERGENT CHANGE</text>
+      <rect x="70" y="80" width="70" height="40" rx="6" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="105" y="104" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">1 class</text>
+      <line x1="40" y1="50" x2="90" y2="78" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="105" y1="45" x2="105" y2="78" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="170" y1="50" x2="120" y2="78" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="40" y="45" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#6b6560">DB</text>
+      <text x="105" y="40" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#6b6560">UI</text>
+      <text x="178" y="45" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#6b6560">books</text>
+      <text x="105" y="150" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">many reasons → one class</text>
+      <!-- Shotgun Surgery: one change, many classes -->
+      <text x="315" y="20" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#c0510a">SHOTGUN SURGERY</text>
+      <circle cx="315" cy="45" r="9" fill="#c0510a"/>
+      <text x="315" y="49" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" font-weight="700" fill="#fff">Δ</text>
+      <rect x="250" y="90" width="42" height="30" rx="5" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <rect x="294" y="90" width="42" height="30" rx="5" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <rect x="338" y="90" width="42" height="30" rx="5" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="315" y1="54" x2="271" y2="88" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="315" y1="54" x2="315" y2="88" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="315" y1="54" x2="359" y2="88" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="315" y="150" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">one change → many classes</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Divergent Change vs. Shotgun Surgery — mirror images. One concentrates unrelated reasons; the other scatters a single reason.</div>
+</div>
+
+<p>A related special case is <strong>Parallel Inheritance Hierarchies</strong>: a flavor of shotgun surgery where adding a subclass to one hierarchy forces you to add a matching subclass to another. You can often Move Method / Move Field to merge them — though sometimes the concerns are inherently cross-cutting and cannot be cleanly separated at all (more on that in Part V).</p>
+
+<h3 id="coupling-smells">Couplers &amp; Dispensables</h3>
+<p>Two final families. <strong>Couplers</strong> are smells where classes know too much about each other:</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Feature Envy</div>
+  <p>A method seems more interested in another class's data/methods than its own — it "envies" that class and keeps calling into it. This creates strong coupling. <strong>Fix: Move Method</strong> to where the data lives, or Extract a new class.</p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Inappropriate Intimacy</div>
+  <p>Two classes spend too much time in each other's <em>private</em> data — too much coupling, design decisions not hidden from each other. Fixes depend on the situation: sometimes Move Method, sometimes merge them, sometimes Extract a third class, sometimes introduce a delegating method (e.g. a <code>getManager()</code> on <code>Person</code> so a client never needs to know <code>Department</code> exists).</p>
+</div>
+
+<p><strong>Dispensables</strong> are things that exist without earning their keep:</p>
+<ul style="margin: 0 0 18px 22px;">
+  <li><strong>Lazy Class.</strong> A class that doesn't do enough to justify the cognitive space it occupies — close to dead code. <strong>Fix: Inline Class</strong> (the opposite of Extract Class): fold its few members into another class. Or <strong>Collapse Hierarchy</strong> — if a <code>Salesman</code> barely differs from an <code>Employee</code>, just merge them.</li>
+  <li><strong>Speculative Generality.</strong> Abstractions built for changes that will never come. We'll give this its own treatment below.</li>
+  <li><strong>Dead Code.</strong> Code that is never executed — pure cognitive overhead. (On Thursday: a story where dead code that "came back to life" cost a firm $440M in 28 minutes.)</li>
+</ul>
+
+<div class="callout warning">
+  <div class="callout-title">Footgun — Speculative Generality (The "Second System Effect")</div>
+  <p>After learning information hiding and "plan for change," students often overshoot: they build wildly flexible designs for changes that won't happen for 100 years. Fred Brooks (author of <em>The Mythical Man-Month</em>) named this the <strong>Second System Effect</strong> — your second system, the "good" one, ends up over-generalized to the point that nobody can follow it. Only build the flexibility you will actually need.</p>
+</div>
+
+<div class="quiz" id="quiz2">
+  <div class="quiz-question">A single bug fix — "the currency symbol must change from $ to €" — requires editing eight different classes scattered across the codebase, and the developer worries they'll forget one. Which code smell is this?</div>
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Divergent Change</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Shotgun Surgery</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Feature Envy</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Speculative Generality</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct — B.</strong> Shotgun Surgery is exactly this: <em>one</em> conceptual change rippling across <em>many</em> classes. It is dangerous precisely because you're likely to miss one of the scattered spots and introduce a bug. A (Divergent Change) is the mirror image — many unrelated changes hitting one class — so it's the wrong direction here. C (Feature Envy) is about a method reaching into another class's data; D (Speculative Generality) is unused over-abstraction. Neither matches "one change, many places."
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>Replace Conditional with Polymorphism</h2>
+</div>
+
+<h3 id="procedural">Why Conditionals Become a Problem</h3>
+<p>This is one of the most important refactorings in object-oriented programming, so it gets its own part. First, the motivation — and it starts with how you were trained.</p>
+<p>In your first algorithms class you learned to think in <strong>loops and conditions</strong>: "this happens, then that happens, and if this condition holds we go here, else we go there." This is a <em>procedural</em> way of thinking, and it's a fine starting point. But it has a hidden cost. When you write an <code>if</code> with its <code>else</code> branch right next to it, you have <strong>coupled</strong> the two behaviors — they sit in the same module, the same place. If they change for different reasons, they shouldn't be neighbors.</p>
+<p>It gets worse when the <em>same</em> condition appears in many places. Every <code>if</code>-branch across the code is really the same concern, replicated; every <code>else</code>-branch likewise. So conditionals tend to breed <strong>code duplication</strong>: the behavior that depends on the condition is copy-pasted everywhere the condition is checked. Adding a new case means hunting down every switch statement and editing each one — classic Shotgun Surgery.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Connection — Which Pattern Solves This?</div>
+  <p>The design pattern for <em>behavior variation</em> is <strong>Strategy</strong>. A close cousin, the <strong>State</strong> pattern, handles the case where conditions everywhere ask "what state am I in?" — replacing those checks with an object that delegates its state-dependent behavior polymorphically.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Polymorphism Beats Conditionals on Extensibility</div>
+  <p>Why prefer polymorphism over conditions in real systems? <strong>Extensibility.</strong> To add a behavior, you just create a new class implementing the interface — no hunting through existing switch statements to add a case. The existing code doesn't change at all.</p>
+</div>
+
+<h3 id="bird-example">Worked Example — The Bird Speed Switch</h3>
+<p>Here is the "before": a single <code>Bird</code> class whose <code>getSpeed</code> switches on a type code.</p>
+
+<pre><code><span class="cm"># BEFORE — one class, switch on a type code</span>
+<span class="kw">class</span> <span class="tp">Bird</span>:
+    <span class="kw">def</span> <span class="fn">get_speed</span>(self):
+        <span class="kw">if</span> self.type <span class="op">==</span> EUROPEAN:
+            <span class="kw">return</span> self.base_speed
+        <span class="kw">elif</span> self.type <span class="op">==</span> AFRICAN:
+            <span class="kw">return</span> self.base_speed <span class="op">-</span> self.load_factor <span class="op">*</span> self.num_coconuts
+        <span class="kw">elif</span> self.type <span class="op">==</span> NORWEGIAN_BLUE:
+            <span class="kw">return</span> <span class="nb">0</span> <span class="kw">if</span> self.nailed <span class="kw">else</span> self.voltage
+        <span class="cm"># ...add a new bird? edit THIS switch — and every other one</span></code></pre>
+
+<p>The "after" replaces the switch with an inheritance hierarchy. The base class declares <code>get_speed</code> as <strong>abstract</strong>; each bird subclass supplies its own version.</p>
+
+<pre><code><span class="cm"># AFTER — abstract base + one subclass per bird</span>
+<span class="kw">from</span> abc <span class="kw">import</span> <span class="tp">ABC</span>, abstractmethod
+
+<span class="kw">class</span> <span class="tp">Bird</span>(<span class="tp">ABC</span>):
+    <span class="op">@</span>abstractmethod
+    <span class="kw">def</span> <span class="fn">get_speed</span>(self): ...
+
+<span class="kw">class</span> <span class="tp">European</span>(<span class="tp">Bird</span>):
+    <span class="kw">def</span> <span class="fn">get_speed</span>(self): <span class="kw">return</span> self.base_speed
+
+<span class="kw">class</span> <span class="tp">African</span>(<span class="tp">Bird</span>):
+    <span class="kw">def</span> <span class="fn">get_speed</span>(self):
+        <span class="kw">return</span> self.base_speed <span class="op">-</span> self.load_factor <span class="op">*</span> self.num_coconuts
+
+<span class="kw">class</span> <span class="tp">NorwegianBlue</span>(<span class="tp">Bird</span>):
+    <span class="kw">def</span> <span class="fn">get_speed</span>(self):
+        <span class="kw">return</span> <span class="nb">0</span> <span class="kw">if</span> self.nailed <span class="kw">else</span> self.voltage</code></pre>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Create the abstract base.</strong> <code>Bird</code> inherits from <code>ABC</code> and declares <code>get_speed</code> with <code>@abstractmethod</code> — there is no implementation, just the promise that every subclass provides one.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Make one subclass per former case.</strong> <code>European</code>, <code>African</code>, and <code>NorwegianBlue</code> each implement <code>get_speed</code> with the logic that used to live in one arm of the switch.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Delete the switch.</strong> Calling <code>bird.get_speed()</code> now dispatches automatically to the right subclass via polymorphism. No condition is evaluated by hand.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Reap extensibility.</strong> Adding a <code>Penguin</code> is one new class — and you never have to revisit any switch statement. If the same type-code switch appeared in several methods, all of that duplication collapses too.</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="320" height="170" viewBox="0 0 320 170" style="display:block; margin:0 auto;">
+      <rect x="110" y="14" width="100" height="34" rx="6" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="160" y="30" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">Bird</text>
+      <text x="160" y="43" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" font-style="italic" fill="#6b6560">get_speed()</text>
+      <!-- inheritance triangle -->
+      <polygon points="160,48 154,58 166,58" fill="#fff" stroke="#c0510a" stroke-width="1.5"/>
+      <line x1="160" y1="58" x2="55" y2="110" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="160" y1="58" x2="160" y2="110" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="160" y1="58" x2="265" y2="110" stroke="#d9d0c4" stroke-width="2"/>
+      <rect x="10" y="112" width="90" height="44" rx="6" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="55" y="130" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">European</text>
+      <text x="55" y="146" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="8" fill="#6b6560">get_speed()</text>
+      <rect x="115" y="112" width="90" height="44" rx="6" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="160" y="130" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">African</text>
+      <text x="160" y="146" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="8" fill="#6b6560">get_speed()</text>
+      <rect x="220" y="112" width="90" height="44" rx="6" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="265" y="128" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#2a2520">Norwegian</text>
+      <text x="265" y="139" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#2a2520">Blue</text>
+      <text x="265" y="151" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="8" fill="#6b6560">get_speed()</text>
+    </svg>
+  </div>
+  <div class="figure-caption">The switch becomes an inheritance hierarchy. Each subclass overrides <code>get_speed()</code>; the runtime picks the right one.</div>
+</div>
+
+<h3 id="two-way">A Crucial Caveat — Refactorings Go Both Ways</h3>
+<p>Here is something that distinguishes refactorings from patterns. A design pattern is usually a <em>good idea</em> in one direction — you generally want to move toward it. <strong>Refactorings, by contrast, go both ways.</strong> Extract Class and Inline Class are opposites; so are Replace Conditional with Polymorphism and its reverse.</p>
+<p>Which direction is right depends entirely on your <strong>anticipated future changes</strong>. Only refactor <code>Bird</code> into a hierarchy if you genuinely expect more bird types to be added. If no new birds are coming, building the hierarchy is wasted effort and added complexity. Likewise, Collapse Hierarchy (merging <code>Salesman</code> into <code>Employee</code>) is right <em>only if</em> you're confident they'll keep evolving together. If you expect them to diverge — to play very different roles later — keep them separate.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Decision Rule</div>
+  <p>For every "both-ways" refactoring, ask: <strong>do these things evolve for the same reason or different reasons?</strong> Same reason → merge them (less cognitive load). Different reasons → keep them apart (independent evolution). The realistic set of anticipated changes is your compass.</p>
+</div>
+
+<div class="quiz" id="quiz3">
+  <div class="quiz-question">Your <code>Shape</code> class has a method with <code>if shape_type == CIRCLE ... elif SQUARE ...</code> repeated in <code>area()</code>, <code>perimeter()</code>, and <code>draw()</code>. The product team plans to add many new shapes. What's the strongest reason to Replace Conditional with Polymorphism here?</div>
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Polymorphic dispatch always runs faster than an if-chain at runtime.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Adding a new shape becomes a single new subclass instead of editing the same switch in three methods, so it's far more extensible.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Conditionals are forbidden in object-oriented languages.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It guarantees the refactoring is safe even without tests.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct — B.</strong> The win is extensibility: with the same type-code switch duplicated across three methods, every new shape is shotgun surgery. Replacing it with a hierarchy means a new shape is one new subclass and the existing methods don't change. And because many new shapes are expected, the refactoring is justified — direction matters. A is wrong: the lecture stresses this isn't about speed (it "doesn't necessarily have to be the fastest code on earth"). C overstates it — conditionals are fine, just not when duplicated and growing. D is false — you still need tests as your safety net.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>Refactoring Safely</h2>
+</div>
+
+<h3 id="levels">Levels of Refactoring</h3>
+<p>Not all refactorings are equal in scope. Fowler's catalog spans a spectrum from tiny local edits to sweeping architectural moves:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Data-level</strong> — renaming a variable, changing a field's type.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Statement-level</strong> — reordering or simplifying statements.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Routine-level</strong> — Extract Method, Inline Method.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Class implementation</strong> — changing internals without touching the public interface.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <p><strong>Class interface</strong> — changing the public API (this one <em>will</em> break unit tests; that breakage is expected).</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">6</div>
+  <p><strong>System-level</strong> — the big architectural moves. The low levels are fully automatable by your IDE; the system level is often still planned and driven by people.</p>
+</div>
+
+<p>The practical takeaway: the lower-level refactorings are mechanical and tool-driven, but you should still <em>think</em> about the end-state you're aiming for. Even when an AI agent performs the steps, you decide the destination.</p>
+
+<h3 id="tests">The Safety Net of Tests</h3>
+<p>Everything in this lecture rests on one foundation: <strong>a comprehensive test suite</strong>. Recall the metaphor — you're juggling above a net. Here's the safe-refactoring checklist:</p>
+
+<ul style="margin: 0 0 18px 22px;">
+  <li><strong>Keep refactorings small</strong> — so small that you fully understand what each one does and can be sure it changes nothing.</li>
+  <li><strong>Make frequent checkpoints</strong> and commit each refactoring separately.</li>
+  <li><strong>Use compiler warnings</strong> as a free second pair of eyes.</li>
+  <li><strong>Re-test after every step.</strong> A true refactoring keeps all previously-passing tests green.</li>
+  <li><strong>Know which level you're at.</strong> A class-<em>interface</em> refactoring is <em>expected</em> to break unit tests; update them at the same time. Every other level should leave the tests untouched.</li>
+  <li><strong>Match effort to risk.</strong> Refactoring the backbone of the world's payment system, or a security agent deployed everywhere, demands far more caution than a hobby script. (See: CrowdStrike shipping on a Friday.)</li>
+</ul>
+
+<div class="callout tip">
+  <div class="callout-title">Study Strategy — The Parking Lot</div>
+  <p>As you read code, keep a "parking lot": a running list of refactorings you want to make. You can hand that list straight to an AI coding agent, which knows the named refactorings and can execute them — <em>provided</em> you have the comprehensive test suite to verify the result.</p>
+</div>
+
+<h3 id="hoare">Hoare's Two Ways to Write Programs</h3>
+<p>The late C. A. R. (Tony) Hoare gave the principle that should guide both your code and your refactorings:</p>
+
+<div class="callout insight">
+  <div class="callout-title">Tony Hoare</div>
+  <p>"There are two ways to write code: write code so simple there are <strong>obviously no bugs</strong>, or write code so complex that there are <strong>no obvious bugs</strong>." Aim for the first — code so clear that a reader instantly sees it can't be wrong.</p>
+</div>
+
+<p>The same standard applies to each refactoring step: make it so small and obvious that you <em>know</em> it introduces no behavioral change. That is exactly why we insist refactoring be semantics-preserving and unmixed with behavioral edits — once the two are tangled, you lose the ability to know any step is safe.</p>
+
+<div class="quiz" id="quiz4">
+  <div class="quiz-question">You perform a <em>class-interface</em> refactoring (you rename a public method and change its signature). Several unit tests now fail. What does the lecture say about this?</div>
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>You introduced a bug — a true refactoring never causes any test to fail.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>This is expected at the class-interface level; you update those tests as part of the same change. Other levels should not break tests.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>You should delete the failing tests since refactoring made them obsolete.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Class-interface refactorings can't be automated, so failures are unavoidable.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct — B.</strong> Class-interface refactorings change the public API that unit tests call against, so those tests <em>will</em> break — and that breakage is expected. You update the tests alongside the refactoring. The nuance the lecture stresses: this is special to the interface level; lower-level refactorings (data, statement, routine, class-implementation) should leave all tests passing, which is how you know they preserved behavior. A is too absolute, C throws away your safety net, and D is false — these refactorings are very automatable.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>Information Hiding, Revisited</h2>
+</div>
+
+<p>The lecture closed by reinforcing earlier principles through true/false questions — exactly the style you'll see on the exam. These distinctions are subtle, so let's make them sharp.</p>
+
+<h3 id="ih-vs-soc">Information Hiding vs. Separation of Concerns</h3>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Information Hiding</div>
+  <p>Design your modules so each one <strong>hides a design decision that is likely to change</strong> from the others. It is primarily a <em>module-decomposition</em> approach — about how you structure modules — not merely about shrinking interfaces.</p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Separation of Concerns</div>
+  <p>Separate the sections of your code that implement <strong>different concerns</strong>. It makes no claim that those concerns must be <em>hidden</em> or that they are <em>likely to change</em> — only that they be separated.</p>
+</div>
+
+<p>How do they relate? <strong>Information hiding is stronger</strong> (it demands hiding, and targets decisions likely to change), while <strong>separation of concerns is more general</strong> (it applies to all concerns). They are tightly correlated but neither strictly implies the other. Example: <em>security</em> is a concern you'd want addressed everywhere, but it's cross-cutting and hard to isolate into one module — and once you decide "the system must be secure," that decision isn't likely to change. So it's a concern worth separating that isn't really a hidden, change-prone design decision.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Exam Footgun — The "Tyranny of the Dominant Decomposition"</div>
+  <p>Pure separation of concerns is almost always <em>impossible</em>: real systems have cross-cutting concerns (like security or logging). A 1972 idea, later named the "tyranny of the dominant decomposition," says you must pick <em>one</em> way to decompose your system, and that choice forces some concerns to remain tangled — unless you use exotic tools like aspect-oriented programming, which almost nobody uses in practice.</p>
+</div>
+
+<h3 id="getters">The Getter/Setter Myth</h3>
+<p>Does information hiding recommend using getters and setters in Java? The intuitive answer is "yes," but the precise answer is <strong>not in general</strong>.</p>
+<p>Making a field private and exposing a public getter <em>and</em> setter hides almost nothing: you've still advertised that the attribute exists and revealed its data type, and you've handed everyone the ability to read and write it. You followed a <em>different</em> principle ("don't make fields public"), but not information hiding. Getters/setters help hide information only in specific cases — e.g. a getter with no setter (reducing the interface), or accessors typed in terms of a more general type that conceals the concrete representation.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Read Exam Quantifiers Literally</div>
+  <p>The professor phrases questions precisely. "Information hiding <strong>always</strong> uses getters/setters" is <em>false</em>; "<strong>sometimes</strong> / in certain cases" can be true. Watch the quantifier — <em>always</em> vs. <em>usually</em> vs. <em>can</em> — and take it literally.</p>
+</div>
+
+<p>One more from the question set: <em>"By following information hiding, you can reduce inter-module dependencies."</em> <strong>True.</strong> Because information hiding is fundamentally about structuring modules to hide change-prone decisions, it reduces the assumptions modules make about each other — and therefore their coupling. The <strong>Mediator</strong> pattern is the showcase example: it hides all the collaborations between objects, collapsing a web of dependencies into one.</p>
+
+<h3 id="strategy-id">Spotting the Strategy Pattern</h3>
+<p>The lecture spent real time on distinguishing the <strong>Strategy</strong> pattern from look-alikes — a perfect exam target. The single most reliable test:</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Strategy Litmus Test — Delegation</div>
+  <p>Strategy <strong>requires delegation</strong> (usually composition/aggregation): a client object <em>holds a reference</em> to a strategy and <em>calls through it</em>, making the algorithm interchangeable at runtime. <strong>No delegation → not Strategy.</strong> If you'd draw only inheritance arrows and no association, it isn't Strategy.</p>
+</div>
+
+<table class="compare-table">
+  <tr><th>Strategy Pattern</th><th>Template Method (the look-alike)</th></tr>
+  <tr><td>Client <em>delegates</em> to a strategy object it holds</td><td>Subclasses <em>inherit</em> and override a hook method</td></tr>
+  <tr><td>Interface carries <em>no</em> behavior</td><td>Abstract base defines the algorithm outline (a "Swiss cheese" with holes)</td></tr>
+  <tr><td>Algorithms swapped at runtime via composition</td><td>Structure fixed by the superclass; subclass fills the holes</td></tr>
+  <tr><td>Strategy body has real complexity</td><td>Subclass may fill in just one line</td></tr>
+</table>
+
+<p>So if you see an <em>abstract class</em> that defines a triple-nested sort loop and leaves a single <code>needsSwap()</code> for subclasses to fill — that's <strong>Template Method</strong>, not Strategy. Tells: (1) no delegation, only inheritance; (2) the base "interface" actually ships a lot of code (you inherit more than you define — the opposite of Strategy); (3) the subclass contribution is trivially small.</p>
+
+<details>
+<summary>Deep dive: what "design" actually means (Plato's chairs)</summary>
+<div class="details-body">
+<p>When a question says "the <em>design</em> keeps control over the algorithm structure," what counts as design? The professor reached for Plato's theory of ideas: every chair you see is an instance of the abstract <em>idea</em> of a chair, which you recognize because you've seen chairs before.</p>
+<p>Likewise, <strong>design is the recognizable structure and behavior that exists above the specific programming language</strong> — patterns and decisions you've seen before. Variable names, specific numbers, and exact syntax are <em>details</em>, not design. But "a triple-stacked loop with a condition inside" (an algorithm outline) or "an abstract class delegated to by a hook" (Template Method) are <em>ideas</em> you recognize — those are design. Design lives at a higher level of abstraction than the language you happen to be using.</p>
+</div>
+</details>
+
+<div class="quiz" id="quiz5">
+  <div class="quiz-question">You see an abstract <code>Sort</code> class that implements the full triple-nested loop and calls an abstract <code>needs_swap()</code>; subclasses override only <code>needs_swap()</code> with a one-line comparison. No class holds a reference to another. Is this the Strategy pattern?</div>
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Yes — overriding <code>needs_swap()</code> varies the behavior, which is what Strategy does.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>No — there's no delegation; it's pure inheritance with the base class defining the algorithm outline. That's Template Method.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Yes — any time subclasses override a method, it's Strategy.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>No — Strategy is impossible in languages that support inheritance.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct — B.</strong> The litmus test is delegation, and there's none here — no object holds and calls a strategy; the only relationship is inheritance. The base class owns the algorithm's structure (the triple loop) and leaves a hole for the subclass to fill, which is the definition of <em>Template Method</em>. Extra tells: the "interface" is really an abstract class shipping lots of code (you inherit more than you define), and the subclass contributes a single line. A and C wrongly equate "overriding a method" with Strategy; behavior variation via inheritance alone is Template Method. D is simply false.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SUMMARY ═══════════════════════ -->
+<section id="together" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This lecture tied the whole course together by answering a question the design-patterns lectures left open: <em>how do you actually get from the code you write to the code you admire?</em> The answer is a three-part vocabulary working in concert.</p>
+
+<p>First, <strong>code smells</strong> give you the language to <em>diagnose</em> bad design — Divergent Change, Shotgun Surgery, Feature Envy, Data Clumps, Primitive Obsession, Speculative Generality, and the rest. Second, each smell points to a named <strong>refactoring</strong> that treats it — Extract Class, Introduce Parameter Object, Replace Conditional with Polymorphism, Inline Class, Collapse Hierarchy. Third, those refactorings frequently land on the <strong>design patterns</strong> you studied earlier: Replace Conditional with Polymorphism reaches for Strategy and State; reducing dependencies reaches for Mediator. Smell → refactoring → pattern is the spine of the whole course.</p>
+
+<p>Underneath it all sits one non-negotiable rule that makes the practice safe: a refactoring is <strong>semantics-preserving</strong>. It changes structure, never observable behavior. That single constraint is what lets your <strong>test suite</strong> act as a safety net — every previously-passing test must stay green, so any failure flags an accidental behavior change immediately. And one judgment call governs every decision: <strong>refactorings go both ways</strong>, so you always ask whether the things in question evolve for the same reason (merge) or different reasons (separate), guided by the realistic set of anticipated changes.</p>
+
+<p>The recurring theme, from data clumps to information hiding to Hoare's "obviously no bugs," is that <strong>human cognitive capacity — not CPU speed or memory — is the limiting factor in modern software</strong>. Every technique here exists to reduce the mental load required to understand and change code. That's the whole point of the juggling-above-a-net metaphor: refactoring lets you keep improving a living system without ever dropping the ball.</p>
+
+<div class="callout tip">
+  <div class="callout-title">What's Next</div>
+  <p>Next lecture: <strong>testing</strong> — the safety net itself. You'll see how to build the comprehensive test suite this whole lecture depends on, plus a real-world disaster where <em>dead code</em> that came back to life cost a company $440 million in 28 minutes. And prepare for the exam style hinted at here: free-text questions where you argue your reasoning, with quantifiers ("always" vs. "usually" vs. "can") to be read <em>literally</em>.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

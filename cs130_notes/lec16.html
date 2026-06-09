@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 16 — Software Architecture, Quality Attributes &amp; Architectural Styles</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 16 · Week 8</div>
+  <a href="#part1">Part I — What Is Software Architecture?</a>
+  <a href="#why-architecture" class="sub">Why We Study It</a>
+  <a href="#two-definitions" class="sub">Two Definitions</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Architectural Drivers</a>
+  <a href="#drivers" class="sub">The Inputs to Design</a>
+  <a href="#req-constraint-qa" class="sub">Requirements vs Constraints vs QAs</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — Quality Attributes</a>
+  <a href="#load-bearing" class="sub">Load-Bearing Walls</a>
+  <a href="#qa-catalog" class="sub">The QA Catalog</a>
+  <a href="#writing-qas" class="sub">Writing Good QA Requirements</a>
+  <a href="#add" class="sub">Attribute-Driven Design</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — Architectural Views</a>
+  <a href="#module-view" class="sub">Module View</a>
+  <a href="#cc-view" class="sub">Component-and-Connector View</a>
+  <a href="#data-behavior" class="sub">Data &amp; Behavioral Views</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Architectural Styles</a>
+  <a href="#styles-intro" class="sub">Constraints Give Power</a>
+  <a href="#pipes-filters" class="sub">Pipes &amp; Filters</a>
+  <a href="#layered" class="sub">Layered</a>
+  <a href="#pub-sub" class="sub">Publish–Subscribe</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#synthesis">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">COMSCI 130 · Software Construction</div>
+  <h1>Software Architecture: Quality Attributes &amp; Architectural Styles</h1>
+  <p class="hero-sub">An interactive guide to Lecture 16 — what architecture really is, the drivers and quality attributes that shape it, the views we use to reason about it, and the classic styles that trade quality for quality.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>What Is Software Architecture?</h2>
+</div>
+
+<h3 id="why-architecture">Why Are We Learning This?</h3>
+<p>Up to now this course has lived mostly at the level of <em>code</em>: classes, objects, design patterns between them. But a real system — a self-driving car, a flight-booking site, a robot — is far too big to hold in your head one class at a time. You need a way to step back and reason about the system as a whole: how its big pieces are structured, how they collaborate, and whether the system will actually be fast enough, reliable enough, and changeable enough once it is built. That zoomed-out picture is the <strong>software architecture</strong>.</p>
+
+<p>The professor framed this as the highest-stakes decision-making in engineering. Architecture decisions are the ones that are brutally expensive to undo later. Get them wrong and, in safety-critical systems, the consequences can be lethal — a point we will see concretely when we reach the Toyota braking bug in Part V. So the question this whole lecture answers is: <em>how do we make these big structural decisions deliberately, instead of by accident?</em></p>
+
+<div class="callout tip">
+  <div class="callout-title">Where This Comes From</div>
+  <p>Software architecture was founded as an academic discipline by <strong>David Garlan and Mary Shaw</strong> at Carnegie Mellon — the professor's own PhD advisor was David Garlan. Many of the framings in this lecture (load-bearing walls, "constraints give you power") come straight from how Garlan teaches it.</p>
+</div>
+
+<h3 id="two-definitions">Two Definitions of Architecture</h3>
+<p>There isn't one universally agreed definition. The lecture contrasted two influential schools.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The CMU (Garlan &amp; Shaw) Definition</div>
+  <p>The software architecture of a computing system is <strong>the set of structures needed to reason about the system, comprising software elements, relations among them, and properties of both.</strong></p>
+</div>
+
+<p>The phrase that does all the work here is <em>"needed to reason about the system."</em> Architecture, in this view, is an <strong>artifact</strong> — something concrete you can study, model, and analyze. It is a snapshot of the system that lets you <em>predict</em> things: how it will behave in a given environment, how maintainable it is, whether it will hit its performance targets. Anything that helps you make those predictions belongs in the architecture; anything that doesn't, doesn't.</p>
+
+<p>Note the deliberate breadth: "elements and relations." This is <em>not</em> just a class diagram. It explicitly includes the <strong>collaboration and behavior</strong> between elements. The professor stressed that thinking of architecture as purely structural (just boxes and lines, a static class diagram) is a common and misguided view.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The USC / UC Irvine Definition</div>
+  <p>The software architecture is <strong>the set of all design decisions that are important</strong> — including the rationale behind them.</p>
+</div>
+
+<p>The contrast is the heart of this section. The CMU definition treats architecture as a <em>snapshot</em>: here is what we ended up with, modeled so we can analyze it. The USC/UC Irvine definition treats it as a <em>history</em>: here are the decisions we made and <em>why</em>. The professor offered a memorable analogy — the decision-based view is more like a <strong>Git log</strong> of the system (an evolving record of choices and rationale) than a single static photograph.</p>
+
+<table class="compare-table">
+  <tr><th>CMU (Garlan &amp; Shaw)</th><th>USC / UC Irvine</th></tr>
+  <tr><td>Architecture is an <em>artifact</em> — structures, elements, relations</td><td>Architecture is the set of important <em>design decisions</em></td></tr>
+  <tr><td>A snapshot you can model &amp; analyze</td><td>A history of choices + rationale</td></tr>
+  <tr><td>Goal: reason about / predict properties</td><td>Goal: capture <em>why</em> we chose what we chose</td></tr>
+  <tr><td>"Photograph" of the system</td><td>"Git log" of the system</td></tr>
+</table>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>We don't capture architecture just to <em>document</em> it. We capture it so we can <strong>reason about the implications of our decisions before we pay for them in code.</strong> Architecture is a prediction tool.</p>
+</div>
+
+<div class="quiz" id="quiz1">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">According to the Garlan &amp; Shaw (CMU) definition, why do we model a software architecture?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>So we have pretty diagrams to show management</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>To reason about properties of the system and predict how it will behave</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Because every system is legally required to have a UML class diagram</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>To record the full source code in a compact form</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct.</strong> The CMU definition explicitly says architecture is "the set of structures needed to <em>reason about the system</em>." The purpose is prediction and analysis of properties (maintainability, performance, etc.), not mere documentation. Option A confuses architecture with decoration, and D confuses it with the code itself — architecture is an abstraction <em>over</em> the code that supports reasoning, not a copy of it.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>Architectural Drivers — The Inputs to Design</h2>
+</div>
+
+<h3 id="drivers">What Drives a Design Decision?</h3>
+<p>Before you can design an architecture you need to know what is pushing on it. Those forces are called <strong>architectural drivers</strong>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Architectural Drivers</div>
+  <p>Also called <strong>architecturally significant requirements</strong>. They are the inputs to the design process — the wants and needs that, <em>if they changed, would change which design you pick.</em> A driver is anything that is both <strong>high importance</strong> and <strong>high difficulty</strong>.</p>
+</div>
+
+<p>That "if it changed, your decision would change" test is the operational definition. Drivers aren't every requirement — they are the small set of high-impact, hard-to-satisfy requirements that genuinely steer the shape of the system. They come in three flavors, and telling them apart is exam-worthy.</p>
+
+<h3 id="req-constraint-qa">Requirements vs. Constraints vs. Quality Attributes</h3>
+
+<h4>1. Functional Requirements</h4>
+<p>These say <em>what the system should do</em>. At architecture time we deliberately keep them very high level — not detailed user stories, but top-level capabilities. The professor's example: <em>"the system shall allow users to book flights."</em> That is the architectural altitude; the full user story about booking a flight comes later, in detailed design.</p>
+
+<h4>2. Constraints</h4>
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Constraint</div>
+  <p>The difference between a requirement and a constraint: a <strong>requirement tells you what to do</strong>; a <strong>constraint has already made a decision for you</strong>. Constraints don't determine what you build — they <em>shrink the design space</em> by removing options.</p>
+</div>
+<p>Constraints can be technical or business in nature. Examples from lecture: "the whole organization uses MySQL, so we must use MySQL"; "the team only knows C++, so the design must be in C++"; "development cost may not exceed $100 million." None of these tell you what to build — each one just removes choices you would otherwise have had.</p>
+
+<h4>3. Quality Attributes</h4>
+<p>These are the <em>extra-functional</em> requirements — Part III is devoted entirely to them. The professor pointedly prefers "extra-functional" over the common term "non-functional," and the reasoning is worth absorbing now because it reframes the whole topic.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Why "Non-Functional" Is the Wrong Word</div>
+  <p>"Non-functional" makes it sound like quality attributes have nothing to do with functionality. They do! A quality attribute is built <strong>on top of</strong> a functional requirement by adding a <em>measure</em> to it. You take "the system shall handle a request" and add "…and reply within 2 seconds." The function is still there; you've layered a quality measure onto it. So they are <em>additions to</em> functionality, not the opposite of it — hence "extra-functional."</p>
+</div>
+
+<table class="compare-table">
+  <tr><th>Type</th><th>What it does</th><th>Example</th></tr>
+  <tr><td>Functional requirement</td><td>Says what to do</td><td>"Shall allow users to book flights"</td></tr>
+  <tr><td>Constraint</td><td>A decision already made for you; shrinks the design space</td><td>"Must use MySQL"; "≤ $100M budget"</td></tr>
+  <tr><td>Quality attribute</td><td>A measure layered onto functionality</td><td>"…shall reply within 2 seconds"</td></tr>
+</table>
+
+<div class="quiz" id="quiz2">
+  <div class="quiz-question">Your company already runs everything on AWS, so the new service must also deploy on AWS. In architectural-driver terms, this is a:</div>
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Functional requirement</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Quality attribute</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Constraint</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>User story</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct — it's a constraint.</strong> It doesn't say what the system should <em>do</em>; it has already made a decision for you (the deployment platform) and thereby removes options from the design space. That is exactly the requirement-vs-constraint distinction: a requirement tells you what to do, a constraint decides something for you. It is not a quality attribute because there's no <em>measure</em> being layered onto a function.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>Quality Attributes — The Load-Bearing Walls</h2>
+</div>
+
+<h3 id="load-bearing">Why Quality Attributes Deserve Special Care</h3>
+<p>Here is the single most important metaphor in the lecture, and it comes from David Garlan. Imagine this lecture hall holds 360 students, and next quarter you need it to hold 500. What can you change? Some walls are flimsy "paper walls" you can tear down and move to expand the room. But other walls — the <strong>load-bearing walls</strong> — hold up the whole building. Move one of those and the entire structure collapses.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p><strong>Quality attributes are the load-bearing walls of software.</strong> If you don't plan for them early, it is incredibly hard to add them later — often you must tear the whole system down and rebuild from scratch. They define the limits of future change, so they deserve disproportionate design attention up front. Detailed features, by contrast, are the furniture: easy to rearrange later.</p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Quality Attribute</div>
+  <p>A measurable characteristic of "goodness." Where a function describes <em>what</em> the system does, a quality attribute describes <strong>how well</strong> it does it. Examples: extensibility, availability, security, performance, robustness, interoperability, testability, modifiability.</p>
+</div>
+
+<h3 id="qa-catalog">The Quality Attribute Catalog</h3>
+<p>The lecture walked through several of the most important quality attributes. For each, note the definition <em>and the measure</em> — because a quality attribute without a measure is nearly useless.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Modifiability</strong> — the ease with which a class of changes can be made. <em>Measure:</em> the cost of change (e.g., development time: "adding a feature of that type takes one week"), or scope ("and we don't have to touch that subsystem").</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Extensibility</strong> — a <em>subtype</em> of modifiability: the degree to which a system minimizes the effort and error-proneness of adding new features. The more modules you must change to add a feature, the less extensible (and the more likely you introduce bugs).</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Testability</strong> — the ease with which software can be made to demonstrate its faults through (typically execution-based) testing. The professor flagged this as <em>frequently neglected</em>, which is why a whole lecture (the following Tuesday) is devoted to it.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Availability</strong> — the ability to mask or repair faults. <em>Measures:</em> percentage uptime, mean time to repair (MTTR), mean time between failures (MTBF). Usually expressed as the <strong>number of nines</strong>: 99%, 99.9%, 99.99%. Each extra nine roughly doubles the cost.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <p><strong>Performance</strong> — the ability to meet timing requirements under load. <em>Measures:</em> average/min/max latency, throughput, jitter, deadline-miss rate. Crucially, you don't demand that <em>everything</em> finish in 10 s — you specify, for a <em>particular</em> type of request, what the response time must be. This is exactly why "extra-functional" beats "non-functional."</p>
+</div>
+
+<h3 id="writing-qas">Writing a Good Quality Attribute Requirement</h3>
+<p>The professor ran a live workshop refining one requirement. Watch the requirement get sharper at each step — this is the skill the homework will test.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><em>"The system should be extensible."</em> &nbsp;❌ Nobody liked this. It is unmeasurable and unfalsifiable — extensible <em>how</em>, for <em>whom</em>, with respect to <em>what change</em>?</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><em>"Adding new sensors should be easy."</em> &nbsp;⚠️ Better — now there's a change scenario — but "easy" is still vague. Easy for whom? Measured how?</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><em>"Adding new depth sensors should not require changing components that process depth images."</em> &nbsp;✅ Now we're specific: a concrete change (new depth sensors) and a concrete measure of "easy" (no changes to the depth-image-processing components).</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><em>"Adding new depth-processing functionality should minimize changes to existing pre-processing components."</em> &nbsp;✅ The class debated this one. The word <strong>"minimize"</strong> is a feature, not a bug: it specifies a <em>direction to optimize</em>.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Why "Minimize / Maximize" Is Legitimate</div>
+  <p>Quality attributes almost always <strong>trade off</strong> against each other — you usually can't get everything right at once. If every requirement is a hard binary threshold, then inside that space of trade-offs you have no way to say which solution you'd <em>prefer</em>. Soft goals ("minimize changes," "maximize throughput") give you a direction to optimize when there's no single hard threshold to hit. Specify a hard threshold when you have one; otherwise a direction plus a priority is perfectly good.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Exam Tip — The Two-Part Recipe</div>
+  <p>CMU's master's course uses a six-part quality-attribute scenario. The professor explicitly does <em>not</em> require all six here. Remember just two parts: <strong>the scenario</strong> (the situation / stimulus) and <strong>the measure</strong> (the response measure). A good QA requirement = a concrete scenario + a concrete measure.</p>
+</div>
+
+<h3 id="add">Attribute-Driven Design (ADD)</h3>
+<p>How do you actually <em>produce</em> an architecture when requirements conflict and many views matter? The Software Engineering Institute at CMU developed <strong>Attribute-Driven Design</strong>, an <em>iterative</em> process. The key mindset shift: you don't try to conjure a perfect architecture from nothing — you <strong>improve an existing one, one quality at a time.</strong></p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Pick an iteration goal:</strong> choose a quality attribute to improve this round (e.g., "improve maintainability a bit").</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Choose a part to refine</strong> and sketch a candidate solution — the design decisions that would improve that quality for that part of the system.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Analyze the side effects:</strong> improving maintainability may have cost you performance, or raised development cost. So re-examine <em>all</em> the quality attributes that matter for that part.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Check &amp; iterate:</strong> did you actually improve the system, or just change it? If needed, loop again with a new goal.</p>
+</div>
+
+<div class="quiz" id="quiz3">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Why did the professor reject "the system should be extensible" as a quality-attribute requirement?</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Extensibility isn't a real quality attribute</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>It has no concrete scenario and no measure, so it can't be evaluated</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>It uses the word "should" instead of "shall"</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Extensibility can only be specified as a hard numeric threshold</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct.</strong> A usable QA requirement needs a <em>scenario</em> (which change, e.g. "adding a new depth sensor") and a <em>measure</em> ("without changing the depth-image components"). "Should be extensible" has neither, so you can't tell whether any design satisfies it. Option D is wrong because the lecture defended soft "minimize/maximize" goals precisely <em>because</em> quality attributes trade off and don't always have a single hard threshold.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>Architectural Views — Different Lenses for Different Questions</h2>
+</div>
+
+<p>Recall the CMU definition: architecture is the set of structures that let us reason about properties. No single diagram captures everything. So we draw multiple <strong>views</strong>, each a different perspective that supports a different kind of analysis. If you only ever draw the code view, you simply <em>cannot</em> reason about whole classes of properties.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Builds On Part III</div>
+  <p>Each view is good at reasoning about <em>certain</em> quality attributes and blind to others. Keep the quality-attribute catalog in mind as we go — the punchline is that the view you draw determines the questions you're allowed to ask.</p>
+</div>
+
+<h3 id="module-view">The Module View — Code Before You Run It</h3>
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Module View</div>
+  <p>A <strong>module style / module view</strong> describes the system as <em>pieces of code</em>. The elements are modules (packages, classes, source files); the relations are things like "imports," "depends on," "uses." This is <strong>what you see in your IDE</strong> — the system <em>before</em> you compile it.</p>
+</div>
+<p>The module view lets you reason about code-level design decisions: maintainability, changeability, and especially <strong>information hiding</strong> — you can literally see the modularization and the interfaces between modules. Class diagrams and entity-relationship diagrams (tables, relations, attributes, an underlined primary key — the <em>data view</em>) live in this family.</p>
+
+<h3 id="cc-view">The Component-and-Connector View — Code While It Runs</h3>
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Component</div>
+  <p>In software architecture a <strong>component</strong> is an <strong>independently deployable runtime unit</strong> — something that can actually <em>execute</em> (a process, an executable). It is <em>not</em> a piece of code. C++ source cannot be executed; a compiled, running executable can. Components run for a prolonged period; they are not functions that instantly return, and they are not packages of code.</p>
+</div>
+<p>The <strong>component-and-connector (C&amp;C) view</strong> is the <em>runtime</em> view: elements are executing components, and connectors are runtime communication channels (exchanging messages). A client component and a server component interact through interfaces.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Distinction Students Always Miss</div>
+  <p>The module view and the C&amp;C view are <strong>not isomorphic</strong>. A client and a server might both be written in JavaScript and both <em>import the same shared code library</em> — so in the module view that library is one module, but when you ship the system it gets compiled into <em>both</em> running components. The mapping from modules to components is not one-to-one. "Library" is an overloaded term: a code library you import (module view) is different from a running library/server component (C&amp;C view).</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="320" height="170" viewBox="0 0 320 170" style="display:block; margin:0 auto;">
+      <!-- nodes -->
+      <circle cx="40" cy="50" r="20" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="40" y="56" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" fill="#2a2520">A1</text>
+      <circle cx="40" cy="120" r="20" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="40" y="126" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" fill="#2a2520">A2</text>
+      <circle cx="160" cy="85" r="20" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="160" y="91" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" fill="#2a2520">B</text>
+      <circle cx="280" cy="85" r="20" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="280" y="91" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" fill="#2a2520">C</text>
+      <!-- arrows -->
+      <line x1="60" y1="56" x2="142" y2="80" stroke="#d9d0c4" stroke-width="2" marker-end="url(#arr)"/>
+      <line x1="60" y1="114" x2="142" y2="90" stroke="#d9d0c4" stroke-width="2" marker-end="url(#arr)"/>
+      <line x1="180" y1="85" x2="258" y2="85" stroke="#d9d0c4" stroke-width="2" marker-end="url(#arr)"/>
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#c0510a"/>
+        </marker>
+      </defs>
+    </svg>
+  </div>
+  <div class="figure-caption">A C&amp;C view shows <em>that</em> B receives from A1 and A2 and sends to C — but <strong>not</strong> whether a message from A1 causes a message to C. The view shows existing channels, not causal flow or ordering.</div>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">What a C&amp;C View Can and Cannot Tell You</div>
+  <p>Think of a graph of students who sometimes talk to each other. You can see <em>which channels exist</em>, but not who initiates a conversation or how information actually propagates through the graph. In the figure above, you cannot tell whether B's messages to C are <em>causally linked</em> to what it received from A1 versus A2. The C&amp;C view captures established communication channels — <strong>static</strong> interactions — not ordering or causality. For that you need the behavioral view.</p>
+</div>
+
+<h3 id="data-behavior">Data and Behavioral Views</h3>
+<p>The <strong>data view</strong> (entity-relationship diagrams) helps you reason about how you structure your database and tables. The <strong>behavioral view</strong> (sequence diagrams, state machines) describes interactions over time, and is what you use to reason about <em>ordering, messaging protocols, complex interactions, bottlenecks,</em> and whether you can meet performance properties. You can even find bugs in component state machines here.</p>
+
+<table class="compare-table">
+  <tr><th>View</th><th>Elements / Relations</th><th>Reason about…</th></tr>
+  <tr><td>Module</td><td>Code pieces / imports, depends-on</td><td>Maintainability, changeability, information hiding</td></tr>
+  <tr><td>Data</td><td>Tables / relations</td><td>Data structure &amp; modeling correctness</td></tr>
+  <tr><td>Component-and-Connector</td><td>Running components / channels</td><td>Inter-component message flow, deployment, composition bugs</td></tr>
+  <tr><td>Behavioral</td><td>Sequences / state machines</td><td>Ordering, bottlenecks, protocols, performance</td></tr>
+</table>
+
+<div class="callout warning">
+  <div class="callout-title">A View Limits Your Claims</div>
+  <p>A module view describes the system <em>before</em> it is compiled, so you <strong>cannot</strong> make claims about availability from it — the top and bottom layers of a module diagram aren't independently "up" or "down." Availability is a runtime property, judged from the C&amp;C or dynamic views. This rule (the view determines which properties you may reason about) returns with force in the layered style.</p>
+</div>
+
+<div class="quiz" id="quiz4">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">You need to decide whether your system meets its 99.9% uptime target. Which view should you reason from?</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>The module view — it's the most detailed</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>The component-and-connector (runtime) view, or another dynamic view</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>The data view, since uptime is about the database</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Any view works equally well</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct.</strong> Availability is a runtime property — it's about running components being up or down — so it must be assessed from a C&amp;C or other dynamic view. The professor was explicit that a <em>module</em> view (the pre-compilation, IDE picture) gives you <strong>no</strong> grounds to claim anything about availability. The view you draw determines the properties you're allowed to reason about.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>Architectural Styles — Design Patterns at the System Scale</h2>
+</div>
+
+<h3 id="styles-intro">Constraints Give You Power</h3>
+<p>You already learned the Gang of Four <strong>design patterns</strong> — reusable solutions to recurring problems <em>between classes and objects</em>. An <strong>architectural style</strong> is the same idea scaled up: a recurring solution at the level of the whole architecture, the dominant <em>shape</em> of a system.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Architectural Style</div>
+  <p>A reusable pattern at architectural scale, defined by a set of <strong>elements</strong>, the <strong>relations</strong> among them, and — crucially — a set of <strong>constraints</strong> on those elements and relations. Unlike GoF patterns (which assume an object-oriented language), architectural styles assume <em>no particular programming paradigm</em>, so they translate to any language used to build multi-component systems.</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Constraints Create Power</div>
+  <p>The constraints are not red tape — they are the source of the style's value. <strong>Because</strong> you constrain a style, you can <em>predict</em> its quality attributes. Without constraints you could predict nothing. Garlan's analogy: putting the men's room always on the left and the women's on the right is a constraint on the building's architect — and precisely <em>because</em> of that constraint you can navigate any floor without looking around. Constraints buy you predictability.</p>
+</div>
+
+<p>Styles split along the same view divide from Part IV: <strong>pipes &amp; filters</strong> and <strong>publish–subscribe</strong> are <em>component-and-connector</em> styles (about running components), while the <strong>layered</strong> style is a <em>module</em> style (about code). Keep track of which world each one lives in.</p>
+
+<!-- ── PIPES & FILTERS ── -->
+<h3 id="pipes-filters">Pipes &amp; Filters (a C&amp;C style)</h3>
+<p>One of the oldest styles. <strong>Filters</strong> are components that read and process data from input streams; <strong>pipes</strong> are connectors that buffer the data and preserve its order, forwarding it to another component's input port. A pipe is <em>not</em> a collection of filters — it is the channel between them. (A Unix pipe is exactly this: it buffers a text stream and forwards it to the next program.)</p>
+
+<pre><code><span class="cm"># The canonical pipes &amp; filters system: a Unix shell pipeline</span>
+cat access.log <span class="op">|</span> grep <span class="str">"ERROR"</span> <span class="op">|</span> sort <span class="op">|</span> uniq <span class="op">-c</span> <span class="op">|</span> sort <span class="op">-rn</span>
+<span class="cm">#  filter      filter        filter  filter      filter
+#         pipe        pipe       pipe       pipe</span></code></pre>
+
+<p>The professor's examples of pipes-and-filters systems: image-processing pipelines (brightness → noise reduction → edge detection → coloring), and <strong>all Unix shell scripts</strong> — they take text streams in and produce text streams out, and the whole point is that you can recombine them freely.</p>
+
+<h4>The Constraints</h4>
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Strict independence:</strong> filters must not share state or memory with other filters; they interact only through pipes.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Agnosticism:</strong> a filter must not know the identity of its upstream or downstream neighbor. An edge-detection filter cannot assume a noise-reduction filter ran before it. This is <em>information hiding applied to wiring</em> — the order in which filters connect is hidden from the filters themselves.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Acyclic pathways:</strong> data flows from a source to a sink; genuine cycles break the style.</p>
+</div>
+
+<h4>Promoted Quality Attributes</h4>
+<p>From those constraints, the predictions follow almost mechanically:</p>
+<ul style="margin: 0 0 18px 22px;">
+  <li><strong>Reusability</strong> (the most interesting one): because filters make no assumptions about where data comes from and all share one interface, they slot into countless contexts. <code>grep</code> is endlessly reusable for exactly this reason. <em>Fewer assumptions = more reuse.</em></li>
+  <li><strong>Extensibility &amp; modifiability:</strong> changing the <em>connections</em> is trivial since everything speaks the same data format. (Note: changing the <em>buffer implementation</em> is not easy — the modifiability is in the wiring, not the pipes' internals.)</li>
+  <li><strong>Testability:</strong> each filter can be tested in isolation. High modularity tends to bring testability along with reusability and modifiability.</li>
+  <li><strong>Throughput:</strong> independent filters can be deployed on separate processors and literally run in parallel (image pipelines across GPU cores; Unix pipes across cores).</li>
+</ul>
+
+<h4>Inhibited Quality Attributes</h4>
+<div class="callout warning">
+  <div class="callout-title">What Pipes &amp; Filters Costs You</div>
+  <p><strong>Interactivity / usability</strong> suffer — it's hard to feed user events into a pipeline or do incremental display updates and complex control. And while throughput is high, <strong>latency</strong> is hurt: because every stage must speak the unified pipe format, data is repeatedly <em>encoded and decoded</em> at each boundary (e.g., translating every image into the pipe's bitmap format), adding translation overhead end to end.</p>
+</div>
+
+<!-- ── LAYERED ── -->
+<h3 id="layered">The Layered Style (a module style)</h3>
+<p>Now we switch worlds — into <em>modules</em>, i.e. code. A <strong>layer</strong> is a module that cohesively groups functionality at one level of abstraction. The relation is "allowed to use." In the <strong>strict</strong> layered style, every piece of software lives in exactly one layer, and a layer may use only modules in <em>the same layer or the layer directly below it</em> — call down by one, never up, and never skipping.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="300" height="210" viewBox="0 0 300 210" style="display:block; margin:0 auto;">
+      <rect x="40" y="10" width="220" height="38" rx="6" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="150" y="34" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" fill="#2a2520">User Interface</text>
+      <rect x="40" y="58" width="220" height="38" rx="6" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="150" y="82" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" fill="#2a2520">I/O &amp; File Management</text>
+      <rect x="40" y="106" width="220" height="38" rx="6" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="150" y="130" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" fill="#2a2520">Memory Management</text>
+      <rect x="40" y="154" width="220" height="38" rx="6" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="150" y="178" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" fill="#2a2520">Hardware Abstraction</text>
+      <line x1="278" y1="29" x2="278" y2="173" stroke="#c0510a" stroke-width="2" marker-end="url(#dn)"/>
+      <text x="293" y="105" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#c0510a" transform="rotate(90 293 105)">uses (down only)</text>
+      <defs>
+        <marker id="dn" markerWidth="8" markerHeight="8" refX="3" refY="6" orient="auto">
+          <path d="M0,0 L6,0 L3,6 Z" fill="#c0510a"/>
+        </marker>
+      </defs>
+    </svg>
+  </div>
+  <div class="figure-caption">A strict layered OS architecture. Each layer may only call the layer directly below. Swap the hardware-abstraction layer and the layers above keep working on new hardware.</div>
+</div>
+
+<p>Familiar examples: the <strong>TCP/IP stack</strong> (link → internet → transport → application) and an operating system (hardware abstraction → memory management → I/O / file management → UI). Each layer owns one responsibility and can be swapped out interchangeably.</p>
+
+<h4>Promoted &amp; Inhibited Qualities</h4>
+<ul style="margin: 0 0 18px 22px;">
+  <li><strong>Reusability &amp; portability:</strong> lower layers make fewer assumptions and can be reused; isolating platform-specific code in the bottom layers means you swap the hardware-abstraction layer for new hardware and everything above still runs.</li>
+  <li><strong>Modifiability:</strong> a layer can be replaced without disturbing the others — the whole reason OSes are built this way.</li>
+  <li><strong>Performance is inhibited:</strong> a request is forced to traverse every intermediate layer, each packing and unpacking data and adding to the stack, even when that work isn't strictly necessary.</li>
+</ul>
+
+<div class="callout tip">
+  <div class="callout-title">The Escape Hatch — Layer Bridging</div>
+  <p><strong>Layer bridging</strong> relaxes the strict rule and permits skipping layers to gain performance — at the cost of some modifiability (more dependencies make the architecture harder to change).</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Subtle but Exam-Critical</div>
+  <p>The layered style is a <strong>module</strong> style, so it describes the system <em>before</em> compilation. That means you <strong>cannot</strong> conclude anything about <em>availability</em> from it — "if the bottom layer breaks, the whole thing is down" is a runtime claim a module view can't make. You'd only get availability if your <em>C&amp;C</em> architecture also happened to be layered. This is the Part IV rule biting again: <em>module views can only support claims about properties visible in a module view.</em></p>
+</div>
+
+<!-- ── PUB-SUB ── -->
+<h3 id="pub-sub">Publish–Subscribe (a C&amp;C style)</h3>
+<p>Back to runtime components. <strong>Publish–subscribe</strong> is the architectural-scale cousin of the <em>Observer</em> design pattern. Some components (<strong>publishers</strong>) produce events; others (<strong>subscribers</strong>) consume them. Instead of wiring publishers directly to subscribers, you introduce a <strong>topic</strong> — a named channel. Publishers send events to a topic; subscribers register on that topic and get notified whenever something is published to it.</p>
+
+<pre><code><span class="cm"># ROS (Robot Operating System) — a publish/subscribe framework</span>
+pub <span class="op">=</span> node.<span class="fn">create_publisher</span>(Image, <span class="str">"depth_camera"</span>)   <span class="cm"># topic = a string!</span>
+sub <span class="op">=</span> node.<span class="fn">create_subscription</span>(Image, <span class="str">"depth_camera"</span>, on_frame)
+<span class="cm"># publisher and subscriber never reference each other directly</span></code></pre>
+
+<h4>The Constraints</h4>
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Publisher ignorance:</strong> publishers must not rely on the presence or identity of any subscriber. If the system <em>needs</em> a subscriber to exist for correctness, it isn't strict pub-sub.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Subscriber ignorance:</strong> subscribers must not rely on which publisher the data came from.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>One-way propagation:</strong> information flows only publisher → subscriber.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Asynchronous:</strong> sends are non-blocking. Pub-sub systems are inherently asynchronous.</p>
+</div>
+
+<h4>Pub-Sub vs. Direct Communication</h4>
+<table class="compare-table">
+  <tr><th>Publish–Subscribe</th><th>Direct Communication</th></tr>
+  <tr><td><strong>Extensibility / scalability:</strong> add publishers &amp; subscribers freely — nobody knows they exist</td><td><strong>Simplicity / understandability:</strong> the communication is explicit and obvious</td></tr>
+  <tr><td>Lower coupling — no N×M pairwise wiring</td><td><strong>Robustness:</strong> sender can detect an unavailable listener and fall back</td></tr>
+  <tr><td>Easier to evolve connections</td><td>Easier to trace data flow</td></tr>
+</table>
+
+<div class="callout warning">
+  <div class="callout-title">Real-World Footgun — The Toyota Braking Bug</div>
+  <p>Robustness is pub-sub's weak spot: if you push the brake and <em>nobody is listening</em> to the brake event, nothing stops the car. Yet many cars use pub-sub over a shared data bus. About a decade ago, a Toyota bug let a <strong>music CD whose audio mimicked the structure of brake events</strong> inject those events onto the bus — effectively remote-braking the car. The professor's blunt warning: choosing the wrong architectural style can <em>literally kill people</em>. Quality-attribute trade-offs are not academic.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Pub-Sub's Other Weak Spots — Testability &amp; Silent Failures</div>
+  <p>Because topics are just <em>strings</em>, a real bug in Apollo Auto (a major open-source self-driving framework, from the professor's PhD work) arose when someone renamed a topic from <code>line_class</code> to <code>line</code> <em>inconsistently</em>: some components published to the new name, others still subscribed to the old one. Such components <strong>silently fail</strong> — they just never receive data and never warn you. Combined with heavy asynchrony and execution paths that only run in emergencies, this makes pub-sub systems notoriously hard to test. Understandability also drops: without a live C&amp;C model you can't easily see who receives what.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">You Inherit the Framework's Trade-offs</div>
+  <p>Frameworks like ROS, MQTT, and Apache Kafka <em>impose</em> the publish–subscribe style on your data. By adopting one you automatically <strong>inherit its quality-attribute trade-offs</strong> — the extensibility <em>and</em> the testability/robustness pain. The lesson: know which style a framework forces on you, and plan for the downsides. Many can be mitigated with the right tooling, modeling, or QA process, but only if you know they're there.</p>
+</div>
+
+<div class="quiz" id="quiz5">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A car's braking system must guarantee that a brake command is acted on, and the sender needs to detect if no one is listening. Which approach fits, and why?</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Strict publish–subscribe — it's the most extensible</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Direct communication — the sender can detect an unavailable listener and fall back (robustness)</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Pipes &amp; filters — brake events are a stream</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It doesn't matter; all styles give the same guarantees</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct.</strong> Strict pub-sub requires <em>publisher ignorance</em> — the publisher must not depend on any subscriber existing — so it cannot guarantee the brake event is handled, exactly the failure mode behind the Toyota bug. Direct communication lets the sender detect an unavailable listener and invoke a fallback, which is what a safety-critical brake demands. This is the robustness-vs-extensibility trade-off in action.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SYNTHESIS ═══════════════════════ -->
+<section id="synthesis" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This lecture is a single argument told in five moves. <strong>Architecture (Part I)</strong> exists so we can <em>reason about and predict</em> a system's properties before we pay for them in code — it's a prediction tool, whether you view it as a snapshot (CMU) or a log of decisions (UC Irvine).</p>
+
+<p>To design one deliberately, you start from its <strong>drivers (Part II)</strong> — the high-impact, hard requirements that would change your design if they changed — carefully separating functional requirements, constraints (decisions already made for you), and quality attributes. Among these, the <strong>quality attributes (Part III)</strong> are the <em>load-bearing walls</em>: plan them late and you rebuild from scratch, so you specify them precisely (scenario + measure) and improve them iteratively via Attribute-Driven Design.</p>
+
+<p>But you can't reason about a quality attribute without the right lens, which is why we draw multiple <strong>views (Part IV)</strong>: the module view (code, pre-compile) for maintainability and information hiding; the component-and-connector view (running components) for message flow and deployment; the behavioral view for ordering and bottlenecks. The iron rule — <em>a view limits the claims you can make</em> — explains why availability is invisible in a module view.</p>
+
+<p>Finally, <strong>architectural styles (Part V)</strong> close the loop: each style is a bundle of elements, relations, and <em>constraints</em>, and it's precisely the constraints that let us <em>predict</em> the quality attributes from Part III. Pipes &amp; filters trades latency and interactivity for reusability and throughput; layered trades performance for portability and modifiability; pub-sub trades robustness and testability for extensibility. There is no free lunch — only trade-offs you choose on purpose.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The One Sentence to Remember</div>
+  <p><strong>Constraints give you power:</strong> by restricting how elements may relate, an architectural style lets you <em>predict</em> the quality attributes you'll get — and every choice you make trades one quality for another.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">What's Next</div>
+  <p>The professor deferred <strong>tactics</strong> (the finer-grained techniques for achieving specific quality attributes) to the following session, and singled out <strong>testability</strong> — the "often neglected" quality attribute from Part III — for its own full lecture on the next Tuesday. Watch for testability to reconnect with the modularity-and-views ideas you just learned: the more cleanly your views separate concerns, the easier the system is to test.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

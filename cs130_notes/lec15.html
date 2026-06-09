@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 15 — Interoperability</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 15 — Interoperability</div>
+  <a href="#part1">Part I — Why Systems Must Talk</a>
+  <a href="#bob-story" class="sub">Bob Books a Flight</a>
+  <a href="#define-interop" class="sub">Defining Interoperability</a>
+  <a href="#why-care" class="sub">Why You Should Care</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Shared Interfaces &amp; REST</a>
+  <a href="#design-principle" class="sub">The Design Principle</a>
+  <a href="#rest" class="sub">REST and Its Rivals</a>
+  <a href="#schemas" class="sub">Schemas as Contracts</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — Semantics &amp; the $193M Bug</a>
+  <a href="#orbiter" class="sub">The Mars Climate Orbiter</a>
+  <a href="#document-meaning" class="sub">Documenting Meaning</a>
+  <a href="#mcp" class="sub">MCP &amp; AI Agents</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — The Interop / Change Tradeoff</a>
+  <a href="#gds-rigid" class="sub">Why GDS Can't Change</a>
+  <a href="#addons" class="sub">Dynamic Add-Ons</a>
+  <a href="#two-qualities" class="sub">Two Quality Attributes</a>
+  <a href="#adapters" class="sub">Adapters &amp; Health Care</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Code Review Practices</a>
+  <a href="#guard-clause" class="sub">Guard Clauses</a>
+  <a href="#abstractions" class="sub">Meaningful Abstractions</a>
+  <a href="#defensive" class="sub">Defensive Programming</a>
+  <a href="#boyscout" class="sub">The Boy Scout Rule</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#together">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">COMSCI 130 · Software Engineering</div>
+  <h1>Interoperability — Making Systems Talk to Each Other</h1>
+  <p class="hero-sub">An interactive guide to Week 8 — from booking a flight across hundreds of airlines, to the $193 million units bug, to the eternal tug-of-war between interoperability and changeability.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>Why Systems Must Talk to Each Other</h2>
+</div>
+
+<p>Every quality attribute you have studied so far in this course — availability, performance, modifiability, memory consumption — can be measured by pointing at a <em>single</em> running system and evaluating it. This lecture introduces the one quality that breaks that rule. It cannot exist in isolation, because it is fundamentally about a <em>relationship</em> between systems. To see why it matters, we start with a story.</p>
+
+<h3 id="bob-story">A Story: Bob Books a Flight</h3>
+<p>Bob wants to go on vacation. He opens a flight portal, types in his destination, and immediately sees hundreds of flights from hundreds of different airlines, side by side, ready to compare. He picks one and books it. Later his flight gets cancelled, so he walks up to a travel agent at the airport. The agent finds an alternative — but on a <em>different airline</em>, because Bob's original airline has nothing available. Bob is automatically rebooked onto that competitor's flight, and off he goes. Bob is happy.</p>
+
+<p>This feels mundane. It is actually a small miracle. For Bob to see every airline's flights in one place, and then be rebooked onto a <em>rival</em> company's plane, every one of those airline systems has to be able to exchange meaningful information with every booking system. They were built by different companies, in different countries, in different decades, in different programming languages. They were never designed together. Yet they cooperate.</p>
+
+<div class="callout concept">
+  <div class="callout-title">The Hidden Machinery — GDS</div>
+  <p>The system that makes this possible is a <strong>Global Distribution System (GDS)</strong> — one of the oldest IT systems still running. There are three major ones: <strong>Amadeus</strong>, <strong>Travelport</strong>, and <strong>Sabre</strong>. A GDS creates an interface where every airline system and every booking system can talk to each other. (Fun fact from lecture: the invention of GDS is closer in time to the Wright Brothers' first flight than to today.)</p>
+</div>
+
+<p>One airline famously does <em>not</em> use GDS: <strong>Southwest</strong>. That is why you cannot see Southwest's prices on Google Flights — Google Flights is itself a GDS consumer. Why Southwest opts out is a clue we will return to in Part IV.</p>
+
+<h3 id="define-interop">Defining Interoperability</h3>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Interoperability</div>
+  <p><strong>Interoperability</strong> is the degree to which two or more systems or components can <em>usefully exchange meaningful information</em> in a particular context. The key words are "meaningful" and "usefully": it is not enough to ship bits and bytes from one place to another — that is a different, lower-level problem. Interoperability requires that the receiving system can correctly <em>interpret</em> the data stream and act on it.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">It Takes (at Least) Two</div>
+  <p>Interoperability is the only quality in this class that does not exist on a single system. You cannot ask "how interoperable is this one program?" the way you ask "how fast is it?" or "how much memory does it use?" It is always evaluated over a <em>pair</em> or a <em>set</em> of systems. Keep this in mind — it is exactly why this quality has unusual tradeoffs.</p>
+</div>
+
+<h3 id="why-care">Why You Should Care</h3>
+<p>The professor called this "probably one of the most useful lectures in this class," and the reason is blunt: <strong>your system is not an island.</strong> In the real world, essentially no useful system is built as a self-contained island, and any company that builds such systems will want to hire you to handle exactly this. Interoperability lets you reuse existing services instead of reinventing them:</p>
+
+<ul style="margin: 0 0 18px 22px;">
+  <li><strong>Email</strong> — you do not implement a mail server; you send your data to an existing email service that delivers the messages.</li>
+  <li><strong>Single sign-on</strong> — let users log in with their Google, Microsoft, or GitHub account instead of building auth from scratch.</li>
+  <li><strong>Payments</strong> — you really do not want to build a payment system yourself.</li>
+  <li><strong>Cloud storage, content delivery, analytics, AI services</strong> — all consumed through someone else's interface.</li>
+  <li><strong>Sharing to social media, importing exported data, supporting web + desktop + mobile clients on one backend.</strong></li>
+</ul>
+
+<div class="callout warning">
+  <div class="callout-title">Interop Is Harder Than Reusing a Library</div>
+  <p>A natural question from lecture: how is this different from just reusing a library? When you call a library you <em>package its source code into your own application</em> — you control the version, and you know exactly when it changes. With interoperability you are calling a <em>different runtime system you do not control</em>. The remote API can change at any moment (think of the OpenAI API changing under you). You get less control and a moving target, which makes interop a genuinely harder problem than library reuse.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">A Bonus: Better Usability</div>
+  <p>Users <em>love</em> being able to export data from another system and import it into yours. Letting data flow in is itself interoperability, and it removes friction. This is especially valuable in medical systems, where portable records are slowly becoming an expectation.</p>
+</div>
+
+<div class="quiz" id="quiz1">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Why can interoperability <em>not</em> be evaluated the way performance or memory consumption can?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Because it is only relevant to airline software, which is too specialized to benchmark.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Because it is a property of a relationship between two or more systems, not of a single system in isolation.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Because it changes too quickly over time to ever be measured.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Because it depends only on raw network bandwidth, which is hardware, not software.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct — B.</strong> Interoperability is the one quality in this class that does not exist on a single system; it always concerns a pair or set of systems exchanging meaningful information. You can ask how fast or how memory-hungry one program is, but "how interoperable is this one program?" is meaningless without naming what it interoperates <em>with</em>. A is wrong because interop is universal, not airline-specific, and D confuses interop (correct interpretation of data) with mere byte transfer.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>Shared Interfaces &amp; the REST Standard</h2>
+</div>
+
+<p>So GDS makes hundreds of incompatible systems cooperate. <em>How?</em> Rather than handing you the answer, the lecture asked the class to invent a design principle from scratch. The class converged on the same idea the real engineers did, and it is worth walking through their reasoning because it is the heart of the whole topic.</p>
+
+<h3 id="design-principle">The Design Principle: A Shared Interface</h3>
+<p>The class's proposals circled around one phrase: an <strong>agreed-upon contract</strong>. A specific interface that all the systems agree to implement and agree not to break. GDS defines, say, an interface for passenger data and flight booking, and then every airline and every booking system implements it. The procedure has three concrete steps:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>List all the data</strong> that needs to be exchanged. (For flights: routes, dates, prices, passenger details, and so on.)</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Define the interface format</strong> — the shared data format every participant will use.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Implement serialization and deserialization</strong> on every end, so each system can turn its internal representation into the shared format and back.</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Abstract, Language-Independent Interfaces</div>
+  <p>The shared interface must be <strong>platform- and language-independent</strong>. It must expose <em>no implementation details</em> — it has to be so abstract that any system can implement it no matter how it works inside. One participant might be written in Python, another in C++, and a third still running COBOL that hasn't been touched in decades. The format has to support all of them.</p>
+</div>
+
+<h3 id="rest">REST and Its Rivals</h3>
+<p>The modern standard for this kind of "meta-interface" is <strong>REST</strong> — Representational State Transfer. It is a stateless web protocol, meaning the server does <em>not</em> keep track of the client's state between requests. REST organizes everything around four HTTP verbs that map onto the four CRUD operations:</p>
+
+<table class="compare-table">
+  <tr><th>HTTP Verb</th><th>CRUD Action</th><th>Meaning</th></tr>
+  <tr><td>POST</td><td>Create</td><td>Create a new resource</td></tr>
+  <tr><td>GET</td><td>Read</td><td>Read an existing resource</td></tr>
+  <tr><td>PUT</td><td>Update</td><td>Update an existing resource</td></tr>
+  <tr><td>DELETE</td><td>Delete</td><td>Delete a resource</td></tr>
+</table>
+
+<div class="callout insight">
+  <div class="callout-title">Before REST, the Web Was the Wild West</div>
+  <p>To your generation REST may feel unremarkable, but before it there was no agreement: everyone invented their own URL patterns and their own meanings for HTTP calls. REST got people to agree on how to structure URLs and what each verb means. That agreement <em>is</em> the interoperability win.</p>
+</div>
+
+<p>A subtle but classic question: GDS exposes a "Get Flights" endpoint that you call with <strong>POST</strong>, not GET. Why?</p>
+
+<div class="callout concept">
+  <div class="callout-title">Why POST to "Get Flights"?</div>
+  <p>Because you are not simply reading a fixed resource — you are <strong>creating a search request</strong>. The query arrives with a large set of parameters (origin, destination, dates...) that the server executes to build a result. Creating something on the server is a POST, even if the thing you ultimately want back is data.</p>
+</div>
+
+<p>REST is the most common choice but not the only one:</p>
+<ul style="margin: 0 0 18px 22px;">
+  <li><strong>RPC (Remote Procedure Calls)</strong> — more powerful; can expose functions beyond plain CRUD, including complex calculations. Good for heavy transactional data, often <em>within</em> an organization between cooperating components.</li>
+  <li><strong>SOAP</strong> — a stateful, XML-based protocol with built-in security and error handling. Widely used in enterprise; big APIs like GDS often offer both a REST and a SOAP interface.</li>
+  <li><strong>GraphQL</strong> — a more modern standard with server-side schema definitions and structural conformance, good for large, complex, integrated data sources. Rising in popularity.</li>
+</ul>
+
+<h3 id="schemas">Schemas: Making the Contract Machine-Checkable</h3>
+<p>Step 2 said "define the interface format." In practice you write that format down as a <strong>schema</strong> — a JSON or YAML file describing the structure of a valid document. A schema turns your interface from a verbal promise into something a computer can automatically verify a request against.</p>
+
+<pre><code><span class="cm">// JSON schema fragment for an airport code field</span>
+{
+  <span class="str">"type"</span>: <span class="str">"string"</span>,
+  <span class="str">"pattern"</span>: <span class="str">"^[A-Z]{3}$"</span>
+}</code></pre>
+
+<p>That regular expression, dragged straight out of CS 35L, reads: <code>^</code> anchors the start of the string, <code>[A-Z]</code> means an uppercase letter A–Z, <code>{3}</code> means exactly three of them, and <code>$</code> anchors the end. So the field must be <em>exactly three uppercase letters and nothing else</em> — perfect for an IATA airport code like <code>LAX</code>. Schemas can also constrain values (a price with <code>minimum: 0</code>, because a negative price makes no sense) and constrain structure (mark <code>departureAirport</code> and <code>price</code> as <code>required</code>).</p>
+
+<div class="callout tip">
+  <div class="callout-title">Best Practice — Publish and Validate Your Schema</div>
+  <p>When you offer an API, <strong>publish your schema</strong> (put it on your site) so other developers can download it and check their requests before sending them. And on <em>your</em> side, actually validate incoming requests against the schema. If you skip the negative-price check and blindly interpret it as a balance change, you may end up handing the customer free money. You should check the price against your database anyway — defense in depth.</p>
+</div>
+
+<div class="quiz" id="quiz2">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In a REST API, why would a "search for flights" operation be implemented with POST rather than GET?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>POST is faster than GET for large responses.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>The call <em>creates</em> a search request from many parameters that the server then executes, and creation maps to POST.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>GET is not allowed to return JSON, only HTML.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>POST keeps the server stateful, which REST requires.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct — B.</strong> Even though you want flight data back, the request carries a large parameter set that the server uses to <em>create and execute</em> a search — and creating a resource is the POST verb in REST/CRUD. D is exactly backwards: REST is <em>stateless</em>; the server keeps no client state. C is false — GET can return JSON.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>Semantics &amp; the $193 Million Bug</h2>
+</div>
+
+<p>The class's design principle — define a shared, language-independent format — sounds complete. It is not. There is a second half that, when forgotten, destroys spacecraft.</p>
+
+<h3 id="orbiter">The Mars Climate Orbiter</h3>
+<p>NASA built a probe to study the climate of Mars. JPL (in Pasadena, around the corner from campus) wrote the flight software; a subcontractor, <strong>Lockheed Martin</strong>, wrote the ground software. The command interface between them <em>was</em> defined with a schema — they followed the class's design principle exactly. And then the spacecraft was lost.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>Lockheed Martin's ground software sent thruster commands in <strong>pound-force</strong> (US customary units), its default.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>NASA's flight software interpreted those same numbers as <strong>Newtons</strong> (SI units), its default — NASA is an international research organization.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>The numbers matched the schema perfectly. But the <em>meaning</em> was off by a factor of about 4.45, so the thrust was wildly wrong.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p>The spacecraft was lost, costing the US taxpayer roughly <strong>$193 million</strong>.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Syntax Without Semantics</div>
+  <p>The interface had <strong>syntactic interoperability</strong> — both sides agreed on the <em>shape</em> of the data (a number in a field). What it lacked was <strong>semantic interoperability</strong> — agreement on what the number <em>means</em>. The bits were exchanged correctly; their meaning was not shared. That gap cost $193 million.</p>
+</div>
+
+<h3 id="document-meaning">Fixing It: Document the Meaning</h3>
+<p>So we extend the design principle. The interface specification must include not just the format, the actions, the parameters, and the output (the syntax), but also the <strong>semantics</strong>: what the data and actions actually <em>mean</em>. As the professor put it: if a field "represents a plant," nobody can tell whether you mean a factory or the leafy thing in your window — unless you say so.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Document Semantics, Not Just Syntax</div>
+  <p>Data exchanged between systems must also be <em>interpreted</em> the same way. Spell out, for every field and every action: <strong>units</strong> (Newtons or pound-force?), whether <strong>price includes tax</strong>, date format (DD/MM or MM/DD?), the <strong>coordinate / reference frame</strong> for robotics, a shared <strong>dictionary</strong> of terms, the <strong>side effects</strong> of each action, <strong>usage restrictions</strong> (who is allowed to call it), and <strong>error handling</strong> (what errors can occur and what each means). Then write <strong>integration tests</strong> and include concrete <strong>examples</strong> of correct and incorrect usage.</p>
+</div>
+
+<p>Here is what richly-documented semantics looks like for a single field of a flight-booking request. Notice how much hides behind an innocent word like "flight number" or "date":</p>
+
+<div class="callout concept">
+  <div class="callout-title">Worked Example — Semantic Specification of a Booking</div>
+  <p><strong>flightNumber</strong> — must be the number of the <em>operating</em> airline, not the selling/code-share airline. (Code-share partners sell the same seat under different numbers; "DL 974" may also appear as another airline's code.)<br>
+  <strong>dateTime</strong> — the departure date and time of the departing flight, in the <em>time zone of the departure airport</em> (not arrival time, not your local booking time zone).<br>
+  <strong>seat</strong> — the seat as labeled on the airplane (e.g. <code>16C</code>).<br>
+  <strong>traveler</strong> — the full name of the traveling person, in ASCII.<br>
+  <strong>Side effects</strong> — the payment method is charged when the seat is marked sold; the booking can still be cancelled within <em>one hour</em>.<br>
+  <strong>Usage restriction</strong> — only authorized booking systems may call this.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Guidelines for Interface Documentation</div>
+  <p>Focus on <em>how elements interact</em> and their <em>externally visible effects</em> — never the implementation details. Exposing internals is dangerous twice over: people will depend on them so you can never change them, and it leaks information (e.g. which database you use) an attacker can exploit. Keep documentation <strong>minimal, use-case oriented, and readable</strong>: documentation only gets read if reading it is faster than making the error and noticing the difference.</p>
+</div>
+
+<h3 id="mcp">Why This Matters More Than Ever: MCP and AI Agents</h3>
+<p>The lecture argues semantic documentation is about to become even more important because of <strong>MCP — the Model Context Protocol</strong>, described as "the REST API of AI agents." With MCP you give an agent a <em>semantic view</em> of the tool calls it can make: here are the calls available, and here is what each one means.</p>
+
+<div class="callout insight">
+  <div class="callout-title">The Audience Changed — From Humans to AI</div>
+  <p>Historically you wrote semantic documentation for <em>humans</em> to read. With MCP you write it for an <em>AI</em> to read. That raises the bar: the spec must be even more comprehensive and unambiguous, because the model knows fewer things and cannot fill gaps the way an experienced engineer can. And the readability advice still applies — if your documentation is too long to fit in the model's context window, it still won't work. Software engineering didn't change; only the reader did.</p>
+</div>
+
+<div class="quiz" id="quiz3">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">The Mars Climate Orbiter's command interface had a valid schema and the numbers matched it. What exactly went wrong?</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>The data was corrupted in transit, so the bytes never arrived correctly.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>They had syntactic interoperability but not semantic interoperability — one side meant pound-force, the other read Newtons.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>The schema used the wrong regular expression for the airport code.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>They used SOAP when they should have used REST.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct — B.</strong> The shape of the data was agreed (syntactic interop), but the <em>meaning</em> — the units — was not (no semantic interop). Lockheed sent pound-force, NASA read Newtons, off by ~4.45×, and the probe was lost for ~$193M. A is wrong: the bits transferred fine. The lesson is that documenting units/meaning is as essential as agreeing on format.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>The Interoperability / Changeability Tradeoff</h2>
+</div>
+
+<p>We now have a recipe for a good interoperable interface. But interoperability has a dark side, and it is the deepest insight of the lecture — the professor noted that even CMU master's students often struggle with it, so if it feels slippery, you are in good company.</p>
+
+<h3 id="gds-rigid">Why GDS Cannot Change</h3>
+<p>Recall requirements change over time (a lesson from the very first lecture). Airlines now have new requirements GDS never anticipated: bookings without assigned seats (Southwest!), priority-boarding add-ons, merging multiple seats into a "sky couch" for premium customers, and above all <em>capturing customer data</em> so they can upsell. American Airlines reportedly lost money on the seats themselves and made money on the loyalty program — but GDS only lets you sell one individual seat and shares no customer data with the airline. So why can't GDS just add these features?</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Once Deployed, an Interface Is Almost Impossible to Change</div>
+  <p>The GDS interface is implemented by <em>hundreds</em> of airline and booking systems across hundreds of countries, many built decades ago by people who no longer work there, in code nobody fully understands (search Reddit for GDS to find developers complaining exactly this). Once an interoperable interface is in production, every change must be coordinated across all of those systems simultaneously. <strong>That is why some airlines like Southwest never joined, and why others are now trying to leave — and why the agent rebooking your flight is still typing into a 30-year-old, unmaintained terminal application.</strong></p>
+</div>
+
+<h3 id="addons">Designing for Change: Dynamic Add-Ons</h3>
+<p>The class then tried to redesign GDS to be more changeable. Several ideas surfaced, building toward the answer:</p>
+
+<table class="compare-table">
+  <tr><th>Idea</th><th>What It Buys You</th><th>The Catch</th></tr>
+  <tr><td>Split into several specialized APIs grouped by type</td><td>Fetch only the info you actually want</td><td>Still a fixed set of endpoints to agree on</td></tr>
+  <tr><td>Add optional fields (e.g. priority boarding)</td><td>Backwards compatible — use it or ignore it</td><td>You still must enumerate one fixed list up front, and it can still change</td></tr>
+  <tr><td>A <strong>generic add-on list</strong> (the winner)</td><td>Airlines can offer <em>anything</em> without changing the interface</td><td>Harder to implement; security and consistency risks</td></tr>
+</table>
+
+<p>The maximally extensible answer is a <strong>dynamically defined add-on</strong>. Instead of anticipating every product an airline might sell, you define one flexible shape and let airlines populate it:</p>
+
+<pre><code><span class="cm">// A dynamically defined add-on</span>
+{
+  <span class="str">"price"</span>:       <span class="cm">// price excluding tax, charged when selected</span>
+  <span class="str">"name"</span>:        <span class="cm">// name shown to the user, UTF-8</span>
+  <span class="str">"description"</span>: <span class="cm">// short text helping the user decide</span>
+  <span class="str">"id"</span>:          <span class="cm">// unique id, starts with flight number, ASCII</span>
+}</code></pre>
+
+<p>Now the airline can sell priority boarding, a VIP pass, or "shake hands with the pilot" — anything that fits <em>price, name, description, id</em> — and the interface never has to change. We no longer anticipate <em>what</em> airlines sell, only that whatever they sell fits this format.</p>
+
+<details>
+<summary>Expand: the assumptions still baked into this design</summary>
+<div class="details-body">
+<p>The flexible add-on is powerful but not free of assumptions. It assumes add-ons are <em>independent</em>: that the total is just the sum of individual prices. It assumes price is a plain number, not, say, a percentage increase that depends on something else. And it still does not capture the airline's real prize — rich customer data. Flexibility always smuggles in <em>some</em> fixed assumptions; the skill is choosing which ones.</p>
+</div>
+</details>
+
+<div class="callout warning">
+  <div class="callout-title">Why Hasn't GDS Done This?</div>
+  <p>Three reasons from lecture. (1) <strong>Implementation burden</strong> — a dynamic list means every UI in hundreds of systems must parse and render arbitrary add-ons; that is the main reason. (2) <strong>Security</strong> — a free-form <code>description</code> rendered as HTML invites cross-site-scripting attacks. (3) <strong>Less interoperability</strong> — add-ons defined differently per airline can mislead users, and GDS could be liable for misinterpretation. (4) <strong>Economics</strong> — GDS providers earn fees regardless, so they have little incentive to do the hard work while airlines remain pressured to stay listed on Google Flights.</p>
+</div>
+
+<h3 id="two-qualities">Two Faces of Interoperability</h3>
+<p>This reveals that interoperability has <em>two</em> distinct quality attributes, pulling in opposite directions:</p>
+
+<table class="compare-table">
+  <tr><th>Runtime Interoperability</th><th>Design-Time Interoperability</th></tr>
+  <tr><td>How much data can be exchanged and interpreted <em>correctly</em> at runtime.</td><td>The tradeoff between <em>effort to implement</em> and <em>variability</em> of the interface.</td></tr>
+  <tr><td>Measured on the running pair of systems.</td><td>Measured by how widely the interface can realistically be adopted.</td></tr>
+</table>
+
+<div class="callout insight">
+  <div class="callout-title">A Tradeoff, Not a Synergy</div>
+  <p>Many quality pairs <em>synergize</em>: faster performance enables higher availability; high modularity enables tighter access control and thus security. Interoperability and changeability are the opposite — they almost always <em>oppose</em> each other. The more interoperable your interface, the more systems must support it, so the harder it is to change. The more changeable (variable) you make it, the harder it is to implement, so fewer systems adopt it — lowering practical interoperability. Your job as a designer is to find the right point on this curve: simple enough that people will implement it, flexible enough to cover current and future needs.</p>
+</div>
+
+<details>
+<summary>Expand: why would anyone open up their interface at all?</summary>
+<div class="details-body">
+<p>If publishing an interface costs effort, what's the incentive? From lecture: (1) <strong>money</strong> — charge for access via API keys (the OpenAI model). (2) <strong>data</strong> — every request tells you what people want, which is enormously valuable. (3) <strong>ecosystem / moat</strong> — NVIDIA's GPUs are roughly comparable to AMD's on raw FLOPS and bandwidth, but NVIDIA gave away <strong>CUDA</strong> for free. That initially raised costs with no direct revenue, but the whole AI stack was built on CUDA, creating a moat: everything now runs faster on NVIDIA, and dependents can eventually be monetized. Openness can be a long game.</p>
+</div>
+</details>
+
+<h3 id="adapters">When You Can't Share One Interface: Adapters</h3>
+<p>Sometimes two systems were designed independently and use different formats — say one speaks XML and the other JSON, and now a merger or a customer demand forces them to interoperate. You don't rewrite either system; you insert an <strong>adapter</strong> that translates between the two interfaces and <em>localizes</em> the change to one place.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="120" viewBox="0 0 420 120" style="display:block; margin:0 auto;">
+      <rect x="10" y="42" width="100" height="40" rx="8" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="60" y="67" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">System A</text>
+      <text x="60" y="100" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">XML</text>
+      <rect x="160" y="42" width="100" height="40" rx="8" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="210" y="67" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#c0510a">Adapter</text>
+      <rect x="310" y="42" width="100" height="40" rx="8" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="360" y="67" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">System B</text>
+      <text x="360" y="100" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">JSON</text>
+      <line x1="110" y1="62" x2="158" y2="62" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="260" y1="62" x2="308" y2="62" stroke="#d9d0c4" stroke-width="2"/>
+      <polygon points="158,62 150,58 150,66" fill="#d9d0c4"/>
+      <polygon points="308,62 300,58 300,66" fill="#d9d0c4"/>
+    </svg>
+  </div>
+  <div class="figure-caption">An adapter sits between two independently-designed systems, translating XML to JSON (and back), confining the incompatibility to one component.</div>
+</div>
+
+<p>Can an adapter handle <em>semantic</em> interoperability too, not just syntax? <strong>Sometimes.</strong> If there is a clean mapping — e.g. between units — translation is easy. But if the two sides have genuinely different <em>side effects</em>, there may be no mapping at all, and the adapter cannot fully bridge them.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Real-World Case — Health Care Records</div>
+  <p>Patients want to move from one hospital to another and bring their electronic medical record. Options: (1) a shared "GDS for medical records" — better usability but hard to get every hospital to <em>agree</em> on one format; (2) peer-to-peer interfaces; (3) <strong>manual transfer</strong> (printouts, or the old CDs) — which is what most systems actually do today, at the cost of higher labor and re-entry. Semantic interop here leans on standardized terminologies like <strong>SNOMED CT</strong> (Systematized Nomenclature of Medicine — Clinical Terms) and semantic data models like <strong>RDF</strong> and the <strong>Web Ontology Language (OWL)</strong>, plus adapters to standardize units and terms.</p>
+</div>
+
+<div class="quiz" id="quiz4">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Why are interoperability and changeability described as opposing, rather than synergizing, quality attributes?</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Because a more interoperable interface is implemented by more systems, so it becomes harder to change without breaking all of them.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Because interoperability requires SOAP and changeability requires REST, and the two protocols are incompatible.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Because changeable interfaces are always faster, and speed reduces interoperability.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Because they are actually the same attribute measured twice.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','a')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct — A.</strong> Wide adoption is what makes an interface interoperable, but it also means any change must be coordinated across every implementer — so high interoperability fights changeability. Symmetrically, a highly variable/changeable interface is harder to implement, so fewer systems adopt it, lowering practical interoperability. This is why GDS is stuck and why agents still use 30-year-old terminals. B and C invent constraints that weren't stated; D is wrong — they are distinct (one runtime, one design-time).
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>Code Review Practices (Carried Over)</h2>
+</div>
+
+<p>The lecture closed by finishing the previous session's code review. These are concrete techniques for making code easier to read and safer — they connect to interoperability through a shared theme: <em>reduce the cognitive effort needed to understand and trust an interface or a function.</em></p>
+
+<h3 id="guard-clause">Guard Clauses: Reduce Nesting by Returning Early</h3>
+<p>A common smell is deeply nested <code>if/else</code> chains. You can't always replace them with a <code>switch</code> (the conditions may span multiple attributes), and a dictionary of closures works but is heavier. The simplest fix is a <strong>guard clause</strong>: handle the exceptional/early cases first and <code>return</code> immediately, so the rest of the function runs at a shallow nesting level.</p>
+
+<pre><code><span class="cm"># Before: deep nesting, lots of elses</span>
+<span class="kw">def</span> <span class="fn">process</span>(person):
+    result = <span class="kw">None</span>
+    <span class="kw">if</span> <span class="kw">not</span> person.is_dead:
+        <span class="kw">if</span> person.has_account:
+            <span class="kw">if</span> person.balance &gt; <span class="nb">0</span>:
+                result = charge(person)
+    <span class="kw">return</span> result
+
+<span class="cm"># After: guard clauses exit early, shallow nesting</span>
+<span class="kw">def</span> <span class="fn">process</span>(person):
+    <span class="kw">if</span> person.is_dead:        <span class="kw">return</span> <span class="kw">None</span>
+    <span class="kw">if</span> <span class="kw">not</span> person.has_account: <span class="kw">return</span> <span class="kw">None</span>
+    <span class="kw">if</span> person.balance &lt;= <span class="nb">0</span>:   <span class="kw">return</span> <span class="kw">None</span>
+    <span class="kw">return</span> charge(person)</code></pre>
+
+<div class="callout insight">
+  <div class="callout-title">Nesting Level Is a Readability Metric</div>
+  <p>Research shows the smaller the nesting level, the easier code is to understand — and nesting level 15+ is "literally the worst," where nobody can follow what's happening. The same guard-clause move applies to error handling: check and log the error cases first, then write the normal path un-nested at the bottom.</p>
+</div>
+
+<h3 id="abstractions">Meaningful Abstractions</h3>
+<p>Given two versions of a function that compute the same thing, the shorter one that names its sub-expressions wins. Capturing parts of the behavior into <strong>meaningful variable names</strong> lets a reader understand the logic <em>without reading the code</em> — it costs far less working memory and cognitive effort than tracing a dense expression.</p>
+
+<h3 id="defensive">Defensive Programming: Pre/Post-Conditions as Assertions</h3>
+<p>Describe each function's <strong>preconditions and postconditions</strong> — that is the visible contract you advertise — and then <em>actually check them</em> with assertions. You advertise the contract and automatically verify it at the same time.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Assertions and the Optimized Build</div>
+  <p>Most languages provide assertions that can be compiled out of production code: Python's <code>python -O</code> (optimized interpreter flag) strips <code>assert</code> statements; GCC has <code>-DNDEBUG</code>. Why strip them? They add <strong>runtime overhead</strong>. The strategy: in performance-critical contexts (a satellite, a medical device) keep assertions during development to catch bugs, but at the <strong>system boundary keep the user-input checks</strong> while optimizing away the internal "are my components wired correctly" assertions. The goal is to find your bugs <em>before</em> you ship, then trust the internals and only validate user input in production.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Don't Crash on Bad User Input</div>
+  <p>For user input, do <em>not</em> use a bare <code>assert</code> that crashes the app. Show a clear error or throw a handled exception and apply <strong>safe/graceful degradation</strong> — tell the user their input was incorrect rather than killing the program.</p>
+</div>
+
+<h3 id="boyscout">The Boy/Girl Scout Rule</h3>
+<p>"Always leave the campground cleaner than you found it." Applied to code: when you touch a module, leave it a little better — add a useful assertion, reduce the cognitive load. But only if you <em>truly understand the module first</em>.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Refactor on a Safety Net — and Don't Be Sheldon</div>
+  <p>The worst developer is the one over-confident in their refactoring who breaks the module. Before judging code "bad," find the <em>reason</em> it was written that way — there may be a real one (the Sheldon-Cooper-reviewing-a-paper trap). And before you refactor at all, you need <strong>comprehensive tests</strong>: you can only safely "juggle the modules" if you have a safety net of tests underneath.</p>
+</div>
+
+<div class="quiz" id="quiz5">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A function has deeply nested <code>if/else</code> blocks ending in a single <code>return</code>. What is the recommended first technique to improve readability?</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Replace every branch with a switch statement.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Use guard clauses — return early on the exceptional cases to reduce nesting level.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Remove all assertions so the optimized build runs faster.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Inline every variable to make the function shorter.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct — B.</strong> Guard clauses exit early in the abnormal cases, collapsing the deep nesting so the normal path runs at a shallow level — and research ties lower nesting to easier comprehension. A often doesn't apply because the conditions span multiple attributes, not one switchable value. D is backwards: <em>meaningful named</em> abstractions help readability, whereas inlining everything hurts it.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SUMMARY ═══════════════════════ -->
+<section id="together" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This lecture told one continuous story. <strong>Part I</strong> established that no system is an island — the moment your software must cooperate with another system you can't fully control, you need <em>interoperability</em>: the useful, meaningful exchange of information across a pair or set of systems. Bob's seamless flight rebooking, powered by GDS, was the existence proof.</p>
+
+<p><strong>Part II</strong> reverse-engineered <em>how</em> that cooperation is achieved: define a shared, language- and platform-independent interface; list the data, fix the format, and serialize on both ends. REST (and its rivals SOAP, RPC, GraphQL) standardizes the verbs; schemas with regexes and constraints turn the contract into something a machine can verify and publish.</p>
+
+<p><strong>Part III</strong> delivered the painful correction: a perfectly valid <em>syntactic</em> contract is not enough. The Mars Climate Orbiter matched its schema and still cost $193 million, because pound-force met Newtons. Interoperability needs <em>semantic</em> documentation — units, side effects, restrictions, errors, examples — and that need is intensifying as MCP makes AI agents the new readers of our specs.</p>
+
+<p><strong>Part IV</strong> exposed the catch: the very thing that makes an interface interoperable — wide adoption — is what makes it nearly impossible to change. GDS is frozen because hundreds of systems depend on it, which is why Southwest opted out and others are fleeing. Designing for change (dynamic add-ons) trades implementation effort and security for flexibility. Interoperability and changeability are genuinely <em>opposed</em>, and good design is choosing the right point between them; adapters and shared ontologies (SNOMED CT, RDF, OWL) help bridge the gaps you can't avoid.</p>
+
+<p><strong>Part V</strong> brought it home to the code itself: guard clauses, meaningful abstractions, contract assertions, and the Boy Scout rule all serve the same master as good interface design — <em>minimizing the cognitive effort and risk for whoever has to read and trust your work next</em>, whether that reader is a teammate, a partner company's system, or an AI agent.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The One Thing to Remember</div>
+  <p>Exchanging bytes is easy; exchanging <strong>meaning</strong> is hard. Always document the <em>semantics</em> of your interface — not just its syntax — or you risk the $193 million mistake. (The exit-ticket password says it all: <em>semantics</em>.)</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">What's Next</div>
+  <p>You'll apply this directly on the project: you'll be asked to document parts of your API — including the <em>semantic</em> view, not just the format — because that is where the real failures hide. Watch for interoperability resurfacing when the course revisits architecture and the upcoming Scrum lecture, and keep the interoperability-vs-changeability tradeoff in mind whenever you weigh quality attributes against each other.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

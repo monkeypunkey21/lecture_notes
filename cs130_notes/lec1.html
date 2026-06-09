@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 1 — Interactive Textbook</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 1 — Intro &amp; Requirements</div>
+  <a href="#part1">Part I — Why Software Engineering</a>
+  <a href="#complexity" class="sub">The Complexity Problem</a>
+  <a href="#bridge" class="sub">Learning From Other Engineers</a>
+  <a href="#consider-first" class="sub">Requirements Before Code</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — AI as an Amplifier</a>
+  <a href="#amplifier" class="sub">Amplifier, Not Equalizer</a>
+  <a href="#skill-formation" class="sub">The Skill-Formation Trap</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — How to Actually Learn</a>
+  <a href="#desirable" class="sub">Desirable Difficulties</a>
+  <a href="#retrieval" class="sub">Retrieval &amp; Spacing</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — Requirements vs. Design</a>
+  <a href="#what-vs-how" class="sub">The What vs. The How</a>
+  <a href="#waterfall" class="sub">Phases &amp; the Waterfall</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — User Stories</a>
+  <a href="#three-part" class="sub">The Three-Part Framework</a>
+  <a href="#acceptance" class="sub">Acceptance Criteria</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part6">Part VI — The INVEST Principle</a>
+  <a href="#invest-letters" class="sub">Six Letters</a>
+  <a href="#violations" class="sub">Spotting Violations</a>
+  <a href="#quiz6" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#together">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">COMSCI 130 · Software Engineering</div>
+  <h1>Engineering Software the Right Way</h1>
+  <p class="hero-sub">An interactive guide to Lecture 1 — why software engineering exists, how AI changes the game, how to learn for keeps, and the first real skill of the course: turning user needs into requirements and user stories.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>Why Software Engineering Exists</h2>
+</div>
+
+<p>You already know how to program. Previous courses taught you to build complex
+systems just by typing words — to make seemingly enormous changes with a few
+quick edits. In that sense you are a kind of wizard. But this course is not
+about casting more spells. It is about a harder question: <em>how do you keep
+the magic from blowing up the castle?</em></p>
+
+<h3 id="complexity">The Complexity Problem</h3>
+
+<p>To feel the problem, consider a number the professor opened with. The source
+code of the Windows operating system is roughly <strong>50 million lines of
+code</strong>. Printed on normal paper, that stack would stand about twice the
+height of Royce Hall. Reading it for eight hours a day at a typical developer's
+pace would take <strong>more than ten years</strong> — just to <em>read</em> it,
+not to understand it.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>No single person at Microsoft has ever read all of Windows. Yet thousands of
+  engineers still make changes that mostly work. Software engineering is the set
+  of disciplines and principles that let people build and modify systems far too
+  large for any one mind to hold. That ability — not raw coding speed — is what
+  this course trains.</p>
+</div>
+
+<p>This reframes the whole job. The hard part of large-scale software is not
+writing a clever line of code; it is coordinating change across a system nobody
+fully comprehends, without breaking the parts you never looked at. That is why
+"it compiles and runs on my machine" is never the finish line.</p>
+
+<h3 id="bridge">Learning From Other Engineers</h3>
+
+<p>Other engineering disciplines have faced this for centuries, so we can borrow
+their playbook. Take London's Tower Bridge. Before anyone laid a stone, the
+builders went through a disciplined sequence — and the same sequence maps almost
+exactly onto building software.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Identify the requirements.</strong> What must this bridge actually
+  do? It <em>shall</em> connect the roads on both banks. It <em>shall</em> open to
+  let tall ships pass. If you don't understand what you need, you can't build the
+  right thing.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Capture quality attributes.</strong> Beyond raw function, there are
+  non-functional requirements — what software architects call <em>quality
+  attributes</em>. Durability: survive heavy use and weather for 100+ years.
+  Performance: open in 15 minutes, not 2 hours. These constrain <em>how good</em>
+  the result must be, not just what it does.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Design and analyze.</strong> Architects draw many blueprints and
+  different views, then experts in statics analyze whether it is strong, durable,
+  and fast enough — all <em>before</em> construction.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Construct so the pieces connect.</strong> Two halves built
+  separately must meet in the middle. Making independently-built components agree
+  on a shared <em>interface</em> is hard — and is exactly the same problem in
+  software when a team builds parts in parallel.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">How Software Often Gets Built Instead</div>
+  <p>In practice, developers grab the most reusable pieces, glue them together,
+  drive a few cars over the bridge to see if it breaks, and when it breaks, patch
+  around the broken part with a quick fix and pray. That is the anti-pattern this
+  course exists to replace. The professor's running joke: build software like the
+  collapsed early pyramids, and in 5,000 years people will still see your mistake
+  and ask, "didn't they take 130?"</p>
+</div>
+
+<h3 id="consider-first">Requirements Before Code</h3>
+
+<p>The single most important lesson of the lecture is that you must
+<strong>consider requirements before implementation</strong>. The cautionary tale
+is the Berlin Brandenburg Airport: built decades late partly because it reused
+designs drawn up before the A380 even existed — and the new aircraft was too
+large for a normal airport layout. Some escalators didn't reach the ground; on
+the eve of opening they realized they had no roof and no compliant fire
+protection because the laws had changed. They had effectively skipped the
+requirements stage.</p>
+
+<div class="callout insight">
+  <div class="callout-title">What Engineers Are Bad At</div>
+  <p>Engineers are usually excellent at <em>building the system right</em>. They
+  are often poor at figuring out <em>what is actually needed</em>. Two design
+  principles fall out of the airport disaster: <strong>design for change</strong>
+  (the world and the customer's needs will shift, so plan for it) and
+  <strong>think about what is truly needed before you build</strong>. Skipping
+  requirements is how you discover, five years and millions of dollars later, that
+  you built the wrong thing.</p>
+</div>
+
+<div class="quiz" id="quiz1-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">According to the lecture, what is the central skill that software engineering teaches, given that no one can read all of a giant system?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Memorizing as much of the codebase as humanly possible</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Using principles and processes to safely build and change systems too large for any one person to fully understand</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Writing code as fast as possible so you finish before bugs appear</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Avoiding large systems entirely and only writing small programs</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct: B.</strong> The Windows example shows that nobody has ever read all 50 million lines, yet engineers still make changes that mostly work — because they rely on engineering principles, not on total comprehension. The whole discipline exists to manage complexity beyond any single mind. A is impossible (ten years just to read), and C ("code fast") is precisely the quick-fix-and-pray anti-pattern the course replaces.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>AI as an Amplifier</h2>
+</div>
+
+<p>It is reasonable to ask, in this last quarter before many of you graduate:
+with AI agents reportedly building C compilers for $20,000, do these
+software-engineering skills even matter anymore? The lecture's answer is a careful
+yes — and the reasoning is worth internalizing because it shapes how you should
+spend your time.</p>
+
+<h3 id="amplifier">Amplifier, Not Equalizer</h3>
+
+<p>The popular story is that "now everybody can code." Large-scale studies —
+notably from Google — tell a different story. The developers with the
+<strong>strongest software-engineering foundations receive the largest
+productivity boost from AI</strong>. Teams that already followed a well-established
+engineering process got a far bigger lift than teams that did not.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Amplifier vs. Equalizer</div>
+  <p>An <strong>equalizer</strong> would lift everyone to the same level,
+  erasing the gap between novice and expert. An <strong>amplifier</strong>
+  magnifies whatever is already there. The research finding is that AI is an
+  amplifier: it multiplies the existing strengths of high-performing individuals
+  and teams rather than flattening differences. Strong foundations get
+  <em>more</em> valuable, not less.</p>
+</div>
+
+<p>The reason is intuitive once stated. An experienced engineer brings knowledge,
+anticipates edge cases, decomposes a problem, and judges trade-offs — and AI then
+executes faster on top of that judgment. An empty brain cannot do analysis, and
+an empty brain cannot do generation. You still need knowledge <em>in your head</em>
+to direct the tool.</p>
+
+<h3 id="skill-formation">The Skill-Formation Trap</h3>
+
+<p>There is a real danger, though, and it is specifically a danger to your
+learning. The research the professor surveyed is sobering:</p>
+
+<table class="compare-table">
+  <tr><th>What AI boosts</th><th>What AI can quietly harm</th></tr>
+  <tr><td>Short-term <em>performance</em> and <em>productivity</em> on the task</td><td>Long-term <em>learning</em> and skill formation</td></tr>
+  <tr><td>How much output you produce in a session</td><td>How much you actually understand afterward</td></tr>
+  <tr><td>Perceived effectiveness ("this feels amazing")</td><td>Measured later performance on non-AI exams</td></tr>
+</table>
+
+<div class="callout warning">
+  <div class="callout-title">The Numbers</div>
+  <p>In a study of nearly 1,000 math students, <strong>unrestricted AI use during
+  study time decreased later performance on non-AI exams by about 17%</strong> —
+  roughly four letter grades — and impaired critical thinking. An Anthropic study
+  found developers who leaned on AI to solve tasks <strong>completely skipped the
+  skill-formation stage</strong>: they got the work done but never built the
+  skill.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">The Mitigation</div>
+  <p>These negative effects can be reduced with instructor-provided pedagogical
+  restrictions. That is why the course supplies AI tutors with guardrails built in
+  (a user-story tutor, a teamwork tutor, a low-hallucination notebook-style
+  assistant). The course policy: you <em>may</em> use any AI tool, but you must
+  disclose the exact prompt, the result, and how you critically engaged with it —
+  and work that AI did for you earns no credit, because the course grades
+  <em>your</em> learning, not the tool's output.</p>
+</div>
+
+<p>The healthy mental model the professor offers: do not be "that guy" who brags
+about an AI that finishes his workout faster. Use AI to <strong>do more, not to
+do the same work in less time</strong> — the same way professional developers
+ship more features in the same hours rather than the same features in fewer.</p>
+
+<div class="quiz" id="quiz2-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">The lecture calls AI an "amplifier, not an equalizer." What does that claim mean?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>AI makes everyone equally skilled, so foundations no longer matter</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>AI magnifies existing strengths, so those with stronger engineering foundations get the bigger boost</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>AI only helps with audio and signal processing tasks</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>AI replaces software engineers entirely</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct: B.</strong> Google's data showed the largest productivity gains went to teams and individuals who already had strong engineering foundations and processes — AI multiplies what is already there. A states the opposite (the "equalizer" myth the lecture explicitly rejects), and D contradicts the professor's view that engineering work persists until true AGI. This is precisely why the lecture argues you should maximize your skills now so AI can amplify them later.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>How to Actually Learn</h2>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Why This Section Is Here</div>
+  <p>This builds directly on Part II. If your goal is to maximize the skills AI
+  will amplify, then <em>how</em> you study is no longer a soft topic — it is the
+  lever that determines your future value. Much of this research comes from UCLA's
+  own Bjork Learning and Forgetting Lab.</p>
+</div>
+
+<h3 id="desirable">Desirable Difficulties</h3>
+
+<p>The counterintuitive core idea: <strong>the harder you make the learning on
+yourself, the more effective it usually is</strong>. Students tend to believe
+that if something felt easy to learn, they learned a lot. The opposite is closer
+to the truth. Strategies that make your brain sweat outperform comfortable ones.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Desirable Difficulty</div>
+  <p>A <strong>desirable difficulty</strong> is a study technique that is
+  cognitively more demanding in the moment — and <em>because</em> it is more
+  demanding, it produces stronger, more durable learning. The discomfort is the
+  point, not a bug.</p>
+</div>
+
+<h4>Interleaving</h4>
+<p>Instead of studying one topic in a long block, then another in a long block,
+<strong>interleave</strong> them: a while on topic A, a while on topic B, switch
+back. The forced context-switching feels worse — students rate themselves as
+learning less — yet they learn more. It is a textbook desirable difficulty.</p>
+
+<h4>Generation</h4>
+<p><strong>Generation</strong> means trying to produce the answer before looking
+it up — e.g. guessing what a command does before checking the docs. In a world
+where every answer is a few keystrokes away, the productive move is to struggle in
+your own head first; that struggle is what makes the eventual answer stick.</p>
+
+<h4>Decomposition</h4>
+<p>Just as software engineering decomposes a big problem into smaller subproblems,
+learning decomposes a tough skill into smaller <strong>component skills</strong>
+you can practice individually. You rarely master the whole hard skill at once.</p>
+
+<h3 id="retrieval">Retrieval and Spacing</h3>
+
+<p>Here the professor uses a vivid computer-science metaphor. You have learned
+that a <em>read</em> operation has no side effects. That may hold for digital
+systems — but it is false for your brain.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Read Operation Has a Side Effect</div>
+  <p>Every time you <em>retrieve</em> a piece of knowledge from memory, your brain
+  marks it as useful and pushes it deeper into long-term storage. So the read
+  operation on your brain literally strengthens the memory. The practical
+  consequence: <strong>quiz yourself instead of rereading your notes</strong>.
+  Rereading is re-consuming; it is far weaker than trying to recall. Always run the
+  read operation on your <em>brain</em> before the read operation on your
+  <em>notes</em>.</p>
+</div>
+
+<p><strong>Retrieval practice</strong> is this act of pulling knowledge out from
+memory. <strong>Spaced practice</strong> is spreading study sessions out over
+time instead of cramming. Cramming the night before a midterm is the single least
+effective strategy for any kind of long-term memory. Counterintuitively, the more
+you have partly <em>forgotten</em> before a session, the more powerful the
+retrieval is when you force yourself to recall it. So split studying into small
+weekly chunks across all your courses.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Concrete Habits the Course Bakes In</div>
+  <p>The exit ticket at the end of every lecture (summarize what you learned,
+  answer an application question, list what confused you) is retrieval practice —
+  and you are told <em>not</em> to look at your notes while doing it, because that
+  would skip the read-from-brain step. The study gym, quizzes, and flashcards exist
+  so you can space and retrieve all quarter long. Ten minutes of summarizing from
+  memory beats re-watching the whole lecture recording tomorrow.</p>
+</div>
+
+<div class="quiz" id="quiz3-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">You have an hour to study. Based on the lecture's evidence, which approach builds the most durable knowledge?</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Reread and highlight your lecture notes three times in a row</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Quiz yourself from memory, interleave a few topics, and spread sessions across the week</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Block out one topic for the full hour the night before the exam</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Watch the lecture recording again at 2x speed</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct: B.</strong> Retrieval (quizzing from memory), interleaving, and spacing are all desirable difficulties — harder in the moment, but they produce stronger long-term memory. A and D are re-consuming, which the lecture says is far weaker than recall; C is cramming a single block, named as the least effective strategy for long-term memory. The "harder feels worse but works better" pattern is the through-line.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>Requirements vs. Design</h2>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Where We Are Now</div>
+  <p>Part I established that you must consider requirements before implementation.
+  This part makes that precise: it defines what a requirement actually is, how it
+  differs from a design decision, and where both fit in the engineering process.
+  This is the first hard technical distinction of the course — and the lecture
+  flagged that some students find it instantly intuitive while others need time.</p>
+</div>
+
+<h3 id="what-vs-how">The What vs. The How</h3>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Requirement vs. Design</div>
+  <p>A <strong>requirement</strong> describes <em>what</em> the system must do to
+  deliver value to a user — and deliberately leaves <em>how</em> open. A
+  <strong>design decision</strong> chooses <em>how</em> to implement that
+  requirement. Requirements are about the <strong>what</strong>; design is about
+  the <strong>how</strong>.</p>
+</div>
+
+<p>Two worked examples from the lecture make the line concrete:</p>
+
+<table class="compare-table">
+  <tr><th>Requirement (the What)</th><th>Design Decision (the How)</th></tr>
+  <tr><td>The system must calculate and display the shortest route between the user's location and the destination.</td><td>Use Dijkstra's algorithm; represent the map as a weighted graph.</td></tr>
+  <tr><td>The system must ensure only registered, verified users can access the financial dashboard.</td><td>Implement it with OAuth 2.0 or JSON Web Tokens.</td></tr>
+</table>
+
+<p>Notice the requirement names the user value without committing to any
+mechanism. Why insist on keeping the "how" out?</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Prevent premature constraints.</strong> If you bake "use HTTPS" or
+  "use JWTs" into a requirement, you shrink the design space and may shut out a
+  better solution before anyone evaluates it.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Preserve flexibility and agility.</strong> Design decisions are
+  <em>supposed</em> to change frequently. Keeping requirements separate means you
+  always know what the user truly needs versus what was just one implementation
+  choice — so you can swap the how without losing the what.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Put decisions in the right hands.</strong> Stating requirements as
+  pure needs lets the right people make the design choices, and lets you derive
+  tests: a good requirement tells you directly how to check that you built the
+  right system.</p>
+</div>
+
+<h3 id="waterfall">Phases and the Waterfall</h3>
+
+<p>Software engineering mirrors civil engineering's activities. There are four
+core phases:</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="560" height="120" viewBox="0 0 560 120" style="display:block; margin:0 auto; max-width:100%;">
+      <rect x="6" y="40" width="118" height="40" rx="8" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="65" y="65" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" fill="#2a2520">Requirements</text>
+      <rect x="150" y="40" width="92" height="40" rx="8" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="196" y="65" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" fill="#2a2520">Design</text>
+      <rect x="268" y="40" width="118" height="40" rx="8" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="327" y="65" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" fill="#2a2520">Development</text>
+      <rect x="412" y="40" width="92" height="40" rx="8" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="458" y="65" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" fill="#2a2520">Testing</text>
+      <line x1="124" y1="60" x2="150" y2="60" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="242" y1="60" x2="268" y2="60" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="386" y1="60" x2="412" y2="60" stroke="#d9d0c4" stroke-width="2"/>
+      <polygon points="148,56 148,64 154,60" fill="#d9d0c4"/>
+      <polygon points="266,56 266,64 272,60" fill="#d9d0c4"/>
+      <polygon points="410,56 410,64 416,60" fill="#d9d0c4"/>
+      <text x="280" y="22" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#6b6560">…then deliver to the customer</text>
+    </svg>
+  </div>
+  <div class="figure-caption">The core engineering activities: requirements → design → development → testing → delivery.</div>
+</div>
+
+<p>The early-days approach was the <strong>waterfall model</strong>: gather
+<em>all</em> requirements, then do <em>all</em> design, then <em>all</em>
+development, then <em>all</em> testing, then deploy — strictly in sequence for the
+whole system. The flaw: five years later the customer sees the result and says it
+is not what they meant. Misunderstandings surface far too late.</p>
+
+<div class="callout insight">
+  <div class="callout-title">We Keep the Phases, Drop the Strict Sequence</div>
+  <p>Modern software is built in increments, not one giant waterfall. But you still
+  pass through every activity for each increment. The takeaway: <strong>never skip
+  the requirements stage, never skip design, and never deploy without
+  testing</strong>. When CrowdStrike skipped adequate testing, a faulty update took
+  much of the world economy offline for a day. The phases are non-negotiable; only
+  their rigid ordering is relaxed.</p>
+</div>
+
+<div class="quiz" id="quiz4-wrap">
+  <div class="quiz-question">Which of the following is a requirement, not a design decision?</div>
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>"Represent the map as a weighted graph and run Dijkstra's algorithm."</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>"Authenticate users with OAuth 2.0 and JSON Web Tokens."</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>"The system must ensure only registered, verified users can access the financial dashboard."</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>"Store sessions in a Redis cache for fast lookup."</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct: C.</strong> It states <em>what</em> the system must achieve (only verified users reach the dashboard) without naming any mechanism, leaving the how open. A, B, and D all commit to specific implementation choices — algorithms, protocols, and infrastructure — which makes them design decisions. Baking those into a requirement would prematurely constrain the design space, the exact trap the lecture warns against.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>User Stories</h2>
+</div>
+
+<p>So requirements should capture pure user value. But how do you write one down
+in practice? In real-world agile projects, the most common format is the
+<strong>user story</strong> — an informal, lightweight description of a need from
+a user's point of view.</p>
+
+<h3 id="three-part">The Three-Part Framework</h3>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The User Story Template</div>
+  <p>Every user story follows the same three-part shape:</p>
+  <p style="margin-top:10px;"><strong>As a</strong> &lt;user group&gt;, <strong>I
+  want to</strong> &lt;perform an action&gt;, <strong>so that</strong> &lt;I
+  achieve a goal&gt;.</p>
+</div>
+
+<p>Each part does a specific job:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>"As a &lt;user group&gt;"</strong> identifies <em>who</em> receives
+  the value. Most systems have several user groups — a learning platform like
+  Bruin Learn serves students, professors, readers, and administrators, each with
+  different needs. Never just write "as a user"; name the role.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>"I want to &lt;action&gt;"</strong> is where the actual requirement
+  lives. This is the core of the story.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>"so that &lt;goal&gt;"</strong> is context, not the requirement
+  itself. It tells engineers <em>why</em> this delivers value, so they can make
+  choices that maximize that value for the customer.</p>
+</div>
+
+<pre><span class="label">User Story</span><code><span class="cm"># Example: the airport gangway need</span>
+<span class="kw">As an</span> airline,
+<span class="kw">I want to</span> connect gangways from the airport to my A380 planes,
+<span class="kw">so that</span> I can offer long-distance flights with many passengers.</code></pre>
+
+<div class="callout insight">
+  <div class="callout-title">A User Story Is a Placeholder for a Conversation</div>
+  <p>The textbook definition: a user story is "a placeholder for a conversation."
+  It is intentionally kept somewhat vague and abstract so that you then talk to the
+  real customer, product manager, or product owner to fill in the details. The
+  story starts the dialogue; it does not end it.</p>
+</div>
+
+<h3 id="acceptance">Acceptance Criteria</h3>
+
+<p>Vague is fine for starting a conversation, but eventually you need a precise way
+to decide whether a proposed solution actually satisfies the need. That precision
+comes from <strong>acceptance criteria</strong>, written in a
+<strong>given–when–then</strong> format.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Given / When / Then</div>
+  <p>Each acceptance criterion has three parts: <strong>Given</strong> a
+  precondition, <strong>When</strong> an action occurs, <strong>Then</strong> a
+  post-condition must hold. A user story's full criteria are a <em>list</em> of
+  these triplets, logically combined with AND — a solution must satisfy all of
+  them.</p>
+</div>
+
+<p>Take the story: <em>"As a student, I want to update my homework submission
+before the deadline, so that I can change it if I find a mistake."</em> Watch how
+one criterion alone is not enough.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Given</strong> the student submitted the assignment and the current
+  time is before the deadline, <strong>when</strong> the student navigates to the
+  submission page, <strong>then</strong> there should be an Update button.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>Is that enough? No — it only says a button <em>exists</em>, not what it does.
+  So add: <strong>Given</strong> the current time is before the deadline,
+  <strong>when</strong> the student clicks Update and selects a new file,
+  <strong>then</strong> the submission record should show the new file.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>You can keep going — e.g. <strong>given</strong> the time is after the
+  deadline, <strong>then</strong> the button should not appear (a need from the
+  instructor, not the student). But not forever: you stay within the space of
+  requirements, never drifting into design. Add enough criteria that the most
+  important behaviors a developer might miss are pinned down and testable.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Existence Is Not Value</div>
+  <p>A criterion that only guarantees a button <em>exists</em> does not capture the
+  real need — the button has to actually <em>do</em> the thing. The lecture returns
+  to this repeatedly: criteria must define the valuable behavior, because tests are
+  derived from them. If the criteria accept a useless solution, your tests will
+  pass on a system that doesn't help anyone.</p>
+</div>
+
+<div class="quiz" id="quiz5-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In the user story "As a student, I want to update my submission before the deadline, so that I can fix mistakes," which clause is the actual requirement?</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>"As a student" — the user group is the requirement</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>"I want to update my submission before the deadline" — the action clause</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>"so that I can fix mistakes" — the goal clause</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>None — user stories never contain a requirement</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct: B.</strong> The lecture is explicit that the main requirement lives in the "I want to &lt;action&gt;" portion. The "as a" clause identifies <em>who</em> receives value, and the "so that" clause is context explaining <em>why</em> it is valuable — important for understanding, but not the requirement itself. The precise, testable scope is then nailed down separately by the acceptance criteria.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART VI ═══════════════════════ -->
+<section id="part6" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part VI</div>
+  <h2>The INVEST Principle</h2>
+</div>
+
+<p>How do you know whether a user story is any <em>good</em>? Software engineering
+loves acronyms, and the one for quality user stories is <strong>INVEST</strong>.
+Each letter is a property a well-formed story should have.</p>
+
+<h3 id="invest-letters">Six Letters</h3>
+
+<table class="compare-table">
+  <tr><th>Letter</th><th>Property</th><th>What it means</th></tr>
+  <tr><td><strong>I</strong></td><td>Independent</td><td>Stories can be defined, scheduled, and implemented in any order. Overlap makes estimation and scheduling hard — and dependence can only be judged <em>relative to a specific other story</em> in the backlog.</td></tr>
+  <tr><td><strong>N</strong></td><td>Negotiable</td><td>It stays in the space of requirements (the what), not design decisions (the how). Details are open for conversation.</td></tr>
+  <tr><td><strong>V</strong></td><td>Valuable</td><td>It delivers value to a real <em>user group</em> — not to the developer. "As a developer, I want clean code" is not a user story.</td></tr>
+  <tr><td><strong>E</strong></td><td>Estimable</td><td>You can estimate how long it takes, which requires a clear, well-defined scope. Ambiguous scope makes estimation impossible.</td></tr>
+  <tr><td><strong>S</strong></td><td>Small</td><td>A small chunk of work, ideally fitting one iteration. Make it as small as possible while still valuable — note the built-in tension with V.</td></tr>
+  <tr><td><strong>T</strong></td><td>Testable</td><td>You can objectively decide yes/no whether every acceptance criterion is met. "High accuracy" or "looks modern" is not objectively testable.</td></tr>
+</table>
+
+<div class="callout insight">
+  <div class="callout-title">Small and Valuable Pull Against Each Other</div>
+  <p>Adding more to a story makes it more valuable but also larger. So the goal is
+  to split stories into the <em>smallest pieces that are still valuable</em>. And
+  "small" is context-dependent: a story counts as small not because it objectively
+  takes little time, but because you cannot split it into a smaller story that is
+  still valuable on its own.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Why User Stories Are Worth the Effort</div>
+  <p>Done well, user stories are <em>user-centric</em> (they force you to think
+  about real needs), <em>flexible and agile</em> (edit, reorder, or delete them
+  freely), and they give you <em>traceability</em>: a pull request can say "this
+  implements user story X," so later you can trace exactly which code satisfies
+  which need and why it was built that way.</p>
+</div>
+
+<h3 id="violations">Spotting Violations</h3>
+
+<p>The exam-style skill is recognizing <em>which</em> INVEST letter a bad story
+breaks. Here are the lecture's worked examples — these came from real 35L midterm
+questions.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>"As a student, I want direct integration with Piazza, Gradescope,
+  Google Drive, and Zoom…"</strong> &nbsp;Violates <strong>Independent /
+  Small</strong>. Four platforms are bundled into one story; integrating Piazza
+  alone is already valuable, so it can and should be split into smaller stories
+  that each still deliver value.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>"As a student, I want the website to support HTTPS so my data is
+  safe."</strong> &nbsp;Violates <strong>Negotiable</strong>. HTTPS is a design
+  decision, not a requirement. The real requirement is "I want my data not readable
+  by anyone but authorized users" — leaving the protocol open.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>"As a student, I want to take CS 130 in spring… then there should be
+  an Enroll button."</strong> &nbsp;Violates <strong>Valuable</strong>. An Enroll
+  button on its own delivers no real value — it doesn't actually help the student
+  enroll. (Note: the button criterion <em>is</em> testable, so testability is not
+  the issue here.) The story needs more criteria capturing the genuine need.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>"As a TA, I want scanned characters recognized automatically at high
+  accuracy…"</strong> &nbsp;Violates <strong>Testable</strong> (and therefore
+  <strong>Estimable</strong>). "High accuracy" is hopelessly ambiguous — 50%? 90%?
+  100%? — and it does not even specify which character sets. Because success is
+  undefined, you cannot test it, and the effort could range from importing a
+  library to a decade of PhD research, so you cannot estimate it either.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Two Exam Traps the Professor Flagged</div>
+  <p><strong>Independent is relative.</strong> You can only call a story
+  non-independent by naming the <em>specific other story</em> it depends on, within
+  a given backlog. If no such story exists in the set, you cannot claim a
+  dependence. <strong>We judge by the acceptance criteria.</strong> The "I want"
+  body sets context, but the actual scope is defined by the acceptance criteria — a
+  story can name a great goal yet still fail Valuable if its criteria accept a
+  solution that doesn't meet the real need.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Estimable and Testable Often Travel Together</div>
+  <p>When success criteria are vague, the story is usually not testable
+  <em>and</em> not estimable — different interpretations ("high accuracy" =&nbsp;50%
+  vs. 100%) imply wildly different amounts of work. They don't <em>always</em>
+  coincide, though: "I want a modern-looking page" is hard to test but often still
+  estimable, because any reasonable interpretation of "modern" takes roughly the
+  same effort to build.</p>
+</div>
+
+<div class="quiz" id="quiz6-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">"As a TA, I want scanned handwriting recognized automatically at high accuracy." Which INVEST property is most directly violated?</div>
+  <div class="quiz-options" data-quiz="q6">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Small — recognizing handwriting is too big to fit one iteration</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Negotiable — it secretly fixes a design decision</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Testable — "high accuracy" is ambiguous, so you cannot objectively judge success (which also makes it not estimable)</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Independent — it depends on another story in the backlog</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q6','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q6">
+    <strong>Correct: C.</strong> "High accuracy" has no objective threshold (50%? 95%? 100%?) and no specified character sets, so you cannot say yes/no whether a solution meets it — that is a Testable failure, and because the effort depends entirely on the undefined threshold, it is also not Estimable. The professor explicitly rejected "not Small" as the answer: it could be a single un-splittable library import, and "small" is context-dependent, defined by whether a smaller still-valuable story exists.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SUMMARY ═══════════════════════ -->
+<section id="together" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This first lecture is really one argument told from several angles. It opens
+with a problem of <strong>scale</strong>: real systems are too large for anyone to
+fully understand, so we need engineering principles rather than heroics (Part I).
+It then asks whether AI makes those principles obsolete and answers no — AI is an
+<strong>amplifier</strong> of existing skill, which raises the stakes on building
+strong foundations now (Part II). That motivates a detour into <strong>how to
+learn</strong>, because if skill is the lever, then desirable difficulties,
+retrieval, and spacing are how you grow it (Part III).</p>
+
+<p>The back half delivers the lecture's first concrete engineering technique. The
+airport disaster and the bridge both point to the same rule: <strong>get the
+requirements right before you build</strong>. Part IV sharpens that into the
+precise distinction between <em>what</em> (requirements) and <em>how</em> (design),
+and places both inside the four engineering phases. Part V gives you the practical
+tool for writing a requirement down — the three-part <strong>user story</strong>
+plus given–when–then <strong>acceptance criteria</strong>. Part VI gives you the
+quality bar for those stories, <strong>INVEST</strong>, and the diagnostic skill of
+naming exactly which letter a weak story breaks.</p>
+
+<p>Notice how the threads connect. "Requirements before code" (Part I) is what
+makes user stories matter (Part V). The requirement-vs-design line (Part IV) is
+literally the N in INVEST (Part VI). And the learning strategies (Part III) are how
+you will master all of it: quiz yourself on these definitions from memory rather
+than rereading them, and space that practice across the quarter.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The One-Sentence Takeaway</div>
+  <p>Software engineering is the disciplined practice of figuring out
+  <em>what</em> is truly needed before deciding <em>how</em> to build it — and a
+  good user story, validated against INVEST, is the first tool you have for writing
+  that "what" down precisely enough to test.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">What's Next</div>
+  <p>The lecture ran out of time before finishing the INVEST examples, so Thursday
+  picks up right here — more user-story practice and, in Friday's discussion,
+  forming your project team (5–6 students from the same section; the real deadline
+  for a team and a project is before next Friday). Bring the requirements-vs-design
+  distinction with you: every design doc, test, and trade-off this quarter starts
+  from a clearly stated requirement. And remember the meta-skill — close this page
+  and try to summarize all six parts from memory before you reopen it.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

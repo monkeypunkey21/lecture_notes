@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 8 — Design Patterns: Singleton, Adapter, Facade & Command</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 8 — Design Patterns</div>
+  <a href="#part1">Part I — The Singleton</a>
+  <a href="#why-singleton" class="sub">Why One Instance?</a>
+  <a href="#building-singleton" class="sub">Building It in Java</a>
+  <a href="#singleton-race" class="sub">The Race Condition</a>
+  <a href="#singleton-fixes" class="sub">Four Ways to Fix It</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — The Adapter</a>
+  <a href="#why-adapter" class="sub">Two Plugs, One Wall</a>
+  <a href="#adapter-roles" class="sub">Roles &amp; Structure</a>
+  <a href="#syntax-semantics" class="sub">Syntax vs. Semantics</a>
+  <a href="#class-adapter" class="sub">Object vs. Class Adapter</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — The Facade</a>
+  <a href="#why-facade" class="sub">Hiding a Mess</a>
+  <a href="#facade-vs-adapter" class="sub">Facade vs. Adapter</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — The Command</a>
+  <a href="#why-command" class="sub">Decoupling Action</a>
+  <a href="#command-roles" class="sub">Roles &amp; Code</a>
+  <a href="#command-vs-mediator" class="sub">Command vs. Mediator</a>
+  <a href="#command-undo" class="sub">Undo &amp; Histories</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#synthesis">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">COMSCI 130 · Software Engineering</div>
+  <h1>Four Design Patterns: Singleton, Adapter, Facade &amp; Command</h1>
+  <p class="hero-sub">An interactive guide to Week 4's lecture — when you want exactly one of something, how to connect mismatched interfaces, how to hide complexity, and how to package an action as an object.</p>
+</header>
+
+<section class="reveal">
+<p>This lecture is about <strong>design patterns</strong>: reusable, named solutions to recurring problems in object-oriented software design. A design pattern is not code you copy-paste. It is a description of <em>abstract roles</em> — a small cast of collaborating classes — that you then map onto the concrete classes of your own system. The exam tests whether you can name those roles and explain the problem each pattern solves.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — What a Design Pattern Is</div>
+  <p>A <strong>design pattern</strong> captures hard-won design experience as a reusable template of <em>abstract roles</em> (e.g. "the adapter," "the receiver") plus the problem they solve and the trade-offs they carry. When you apply a pattern, you map each abstract role onto a real class in your system. Learning a pattern means memorising its roles and the problem it addresses — not memorising one specific implementation.</p>
+</div>
+
+<p>A theme runs through the whole lecture: every one of these patterns <strong>superimposes new roles onto already-existing domain classes</strong>. Your <code>Earth</code> class already models a planet; the Singleton pattern just adds a <code>getInstance</code> method and a private static field. The patterns are extra responsibilities layered onto code that already has its own purpose — they are not standalone classes invented from nothing.</p>
+</section>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>The Singleton — Exactly One Instance</h2>
+</div>
+
+<h3 id="why-singleton">Why Would You Want Only One Instance?</h3>
+<p>Some objects only make sense if there is exactly one of them in the entire program. A <strong>thread pool</strong> manages a fixed set of worker threads — having two competing pools defeats the purpose. A <strong>cache</strong> is supposed to be the one shared place where results live. <strong>Logging objects</strong>, <strong>dialog boxes</strong>, and configuration registries are similar: a second copy is at best wasteful and at worst a correctness bug.</p>
+
+<p>The professor's favourite example came from his father, who was writing a planetary simulation and accidentally created <em>two</em> <code>Earth</code> objects. Code that set an attribute on one Earth never saw it reflected on the other, and the simulation silently went wrong. There should only ever be a single Earth. That is exactly when the Singleton earns its place: when a second instance can quietly corrupt everything.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The Singleton Pattern</div>
+  <p>The <strong>Singleton</strong> pattern ensures a class has <strong>only one instance</strong> and provides a global point of access to it. Per the original <em>Design Patterns</em> book, it solves <em>two</em> things: (1) guarantee a single instance, and (2) give global access to it. The professor's strong advice: only reach for the Singleton because of part (1). Part (2) is a trap.</p>
+</div>
+
+<h4>Why not just use a global variable?</h4>
+<p>The obvious alternative is a global variable holding the one object. The professor pushed the class on why that is a bad idea, and several real problems came out:</p>
+<ul style="margin: 0 0 18px 24px;">
+  <li><strong>No access control.</strong> A global is reachable from everywhere. If an attacker compromises one component, they reach the shared object too — and any code anywhere can modify it.</li>
+  <li><strong>Too many dependencies.</strong> When everything depends on the global, any change to it ripples through the entire codebase. You cannot hide or constrain who knows about the instance.</li>
+  <li><strong>No control over when it is created.</strong> A global is typically initialised at program start. You may want to delay creation until it is first needed.</li>
+</ul>
+<p>A pure <strong>static class</strong> (a class with only static methods) is no better. It loudly advertises "there is exactly one of these" to the whole program, so callers build assumptions on that fact. If you later decide you need two instances, you must rewrite every <code>Class.method()</code> call into <code>object.method()</code>. The Singleton <em>hides</em> the one-instance decision behind a method, keeping that decision changeable later.</p>
+
+<h3 id="building-singleton">Building a Singleton in Java, Step by Step</h3>
+<p>To create an object in Java you write <code>new MyClass()</code> — and you can call it as many times as you like, getting a fresh object each time. To enforce a single instance we have to take that power away from callers.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Make the constructor private.</strong> Now no code outside the class can call <code>new MyClass()</code>. We have blocked uncontrolled creation.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Hold the one instance in a private static field.</strong> The class itself keeps a reference to the single object it allows.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Expose a public static <code>getInstance()</code>.</strong> Since the constructor is private, this method is the only way to obtain the object. It checks whether the instance exists yet; if not, it creates it, then returns it.</p>
+</div>
+
+<pre><code><span class="kw">public class</span> <span class="tp">Singleton</span> {
+  <span class="kw">private static</span> <span class="tp">Singleton</span> instance;   <span class="cm">// the one and only</span>
+
+  <span class="kw">private</span> <span class="fn">Singleton</span>() { }                 <span class="cm">// nobody can call new from outside</span>
+
+  <span class="kw">public static</span> <span class="tp">Singleton</span> <span class="fn">getInstance</span>() {
+    <span class="kw">if</span> (instance <span class="op">==</span> <span class="kw">null</span>) {        <span class="cm">// lazy: create only on first call</span>
+      instance <span class="op">=</span> <span class="kw">new</span> <span class="tp">Singleton</span>();
+    }
+    <span class="kw">return</span> instance;
+  }
+}</code></pre>
+
+<p>This is the <strong>classical lazy Singleton</strong>. "Lazy" because the object is created on the <em>first</em> <code>getInstance()</code> call rather than up front. Callers write <code>Singleton.getInstance()</code> to obtain the shared object.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Singleton's Bad Reputation</div>
+  <p>The Singleton is the <em>only</em> pattern whose original authors later wrote a paper saying they regretted including it. By blessing it, they encouraged programmers to chase the "global access" half of the pattern — sprinkling <code>getInstance()</code> calls everywhere. The result is a global variable in disguise, with all the coupling problems a real global has. Use the Singleton <em>only</em> when single-instance is the genuine design goal.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Study Strategy — Use getInstance() Once</div>
+  <p>The professor's personal rule: call <code>getInstance()</code> in essentially <em>one</em> place, where you obtain the object, then <strong>pass that object around</strong> like any normal object to the components that need it. This hides the fact that it is a singleton at all. If <code>getInstance()</code> appears in many places across your code, you are doing the Singleton wrong and have re-created a global variable.</p>
+</div>
+
+<h3 id="singleton-race">The Hidden Bug: A Race Condition</h3>
+<p>Now switch on "max thinking mode," as the professor put it. The lazy Singleton above looks airtight, but it can create <em>more than one</em> instance when multiple threads call <code>getInstance()</code> at the same time. A <strong>thread</strong> is an independent stream of execution; a program can run several at once, and they can interleave their statements in unpredictable ways.</p>
+
+<p>Trace two threads both calling <code>getInstance()</code> on a fresh program where <code>instance</code> is still <code>null</code>:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Thread A</strong> reaches <code>if (instance == null)</code>. It is the first call, so the field is <code>null</code> — the condition is true, and A is about to enter the <code>then</code> branch.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>Before A actually assigns the field, <strong>Thread B</strong> reaches the same <code>if (instance == null)</code>. The field is <em>still</em> <code>null</code> — so B's condition is also true, and B will enter the <code>then</code> branch too.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>Both threads now run <code>new Singleton()</code>. A stores its object in <code>instance</code>; B's object goes to whoever called B and gets passed around. <strong>Two instances now exist</strong> — the exact failure the Singleton was supposed to prevent.</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="180" viewBox="0 0 420 180" style="display:block; margin:0 auto;">
+      <text x="105" y="20" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#c0510a">Thread A</text>
+      <text x="315" y="20" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#2563eb">Thread B</text>
+      <line x1="210" y1="10" x2="210" y2="170" stroke="#d9d0c4" stroke-width="1" stroke-dasharray="4 4"/>
+      <!-- A step 1 -->
+      <rect x="20" y="34" width="170" height="30" rx="6" fill="#fef3eb" stroke="#c0510a"/>
+      <text x="105" y="53" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">if (instance == null) ✓</text>
+      <!-- B step 1 -->
+      <rect x="230" y="74" width="170" height="30" rx="6" fill="#eff4ff" stroke="#2563eb"/>
+      <text x="315" y="93" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">if (instance == null) ✓</text>
+      <!-- A step 2 -->
+      <rect x="20" y="114" width="170" height="30" rx="6" fill="#fef0f0" stroke="#c53030"/>
+      <text x="105" y="133" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">new Singleton()  →  obj1</text>
+      <!-- B step 2 -->
+      <rect x="230" y="114" width="170" height="30" rx="6" fill="#fef0f0" stroke="#c53030"/>
+      <text x="315" y="133" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">new Singleton()  →  obj2</text>
+      <text x="210" y="166" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#c53030">Two instances created!</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Because B reads <code>instance</code> before A writes it, both checks see <code>null</code> and both construct an object.</div>
+</div>
+
+<h3 id="singleton-fixes">Four Ways to Fix It — A Tour of Trade-offs</h3>
+<p>The fix evolves through four implementations, each trading one quality attribute for another. This progression is the heart of the Singleton section.</p>
+
+<h4>1. Synchronized method (thread-safe but slow)</h4>
+<p>Mark <code>getInstance()</code> with Java's <code>synchronized</code> keyword. This enforces a <strong>lock</strong>: only one thread can be inside the method at a time. The race disappears — the first thread creates the instance, later threads see the now-non-<code>null</code> field and just return it.</p>
+<pre><code><span class="kw">public static</span> <span class="kw">synchronized</span> <span class="tp">Singleton</span> <span class="fn">getInstance</span>() { <span class="cm">/* ... */</span> }</code></pre>
+<div class="callout warning">
+  <div class="callout-title">The Cost — Locking on Every Call</div>
+  <p>Correctness is restored, but now <em>every</em> call to <code>getInstance()</code> must acquire the lock and wait — even long after the object exists and we are only reading it. If many parts of the code call <code>getInstance()</code> frequently, this lock contention drains performance. We only ever needed to synchronise the <em>first</em> creation.</p>
+</div>
+
+<h4>2. Eager instantiation (fast but always allocates)</h4>
+<p>Create the object when the class is <em>loaded</em>, before any <code>getInstance()</code> call. Code that runs at class-load time has no race condition, so no locking is needed.</p>
+<pre><code><span class="kw">private static</span> <span class="tp">Singleton</span> instance <span class="op">=</span> <span class="kw">new</span> <span class="tp">Singleton</span>();  <span class="cm">// eager</span></code></pre>
+<p>The trade-off flips: we gain speed but the object is <em>always</em> created, even if it is never used. That wastes memory in cases where the singleton might not be needed at all.</p>
+
+<h4>3. Double-checked locking with <code>volatile</code> (the clean version)</h4>
+<p>The professor called this the cleanest Java Singleton. The idea: synchronise <em>only</em> on the first creation. Check whether the instance is <code>null</code>; only if it is do you enter a synchronized block, and inside that block you <strong>check again</strong> (double-checked) in case another thread created it while you were waiting.</p>
+<pre><code><span class="kw">private static</span> <span class="kw">volatile</span> <span class="tp">Singleton</span> instance;
+
+<span class="kw">public static</span> <span class="tp">Singleton</span> <span class="fn">getInstance</span>() {
+  <span class="kw">if</span> (instance <span class="op">==</span> <span class="kw">null</span>) {              <span class="cm">// 1st check: skip lock once created</span>
+    <span class="kw">synchronized</span> (<span class="tp">Singleton</span>.<span class="kw">class</span>) {
+      <span class="kw">if</span> (instance <span class="op">==</span> <span class="kw">null</span>) {          <span class="cm">// 2nd check: another thread may have won</span>
+        instance <span class="op">=</span> <span class="kw">new</span> <span class="tp">Singleton</span>();
+      }
+    }
+  }
+  <span class="kw">return</span> instance;
+}</code></pre>
+<p>The <code>volatile</code> keyword is the linchpin. It is a field modifier that makes reads and writes of <code>instance</code> behave correctly across threads, so one thread always sees the value another thread wrote. After the object is created, all subsequent reads skip the lock entirely — synchronisation happens <em>only</em> on the first write. The cost here is simply more, trickier code to maintain; functionally it solves the thread-safety problem.</p>
+
+<details>
+<summary>Aside: why not just mark the field <code>final</code>?</summary>
+<div class="details-body">
+<p><code>final</code> in Java (and C++) allows exactly one assignment to a variable, which sounds perfect for a singleton. But <code>final</code> is a <em>statically</em> checked property: the compiler must be 100% certain there is exactly one assignment. For a member field assigned inside <code>getInstance()</code> based on a runtime condition, the compiler cannot prove this, so it will not let you make the lazily-initialised field <code>final</code>. <code>volatile</code> is the right tool because it is about cross-thread visibility, not single-assignment.</p>
+</div>
+</details>
+
+<div class="callout insight">
+  <div class="callout-title">One Pattern, Many Implementations — "Context Tailoring"</div>
+  <p>Even a pattern as simple as the Singleton has several implementations, each with different trade-offs in performance, memory, and code complexity. There is no one-size-fits-all version. You pick the implementation that satisfies <em>your</em> system's quality-attribute requirements — the professor calls this <strong>context tailoring</strong>. A pattern is a starting point, not a finished answer.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Scope of the Guarantee</div>
+  <p>Making the Singleton thread-safe only guarantees safe <em>creation</em> of the single object — the most important safety property. It says nothing about concurrent calls to the object's <em>other</em> methods. If multiple threads mutate the shared instance's attributes, you must make those operations thread-safe separately, case by case.</p>
+</div>
+
+<div class="quiz" id="quiz1">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In the lazy Singleton, why can two threads both end up creating an instance?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Because the constructor is private, Java automatically duplicates it for each thread.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Both threads can evaluate <code>instance == null</code> as true before either has assigned the field, so both enter the creation branch.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>The <code>static</code> keyword gives each thread its own copy of the field.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Eager instantiation runs twice when two threads load the class.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct — it's a read-then-write race.</strong> Thread A reads <code>instance == null</code> (true) but is interrupted before assigning the field; Thread B then reads the same still-<code>null</code> field, also sees true, and both construct an object. The private constructor (A) and <code>static</code> field (C) do the opposite of duplicating — the field is shared, which is precisely why the read-before-write window is dangerous. Eager instantiation (D) actually <em>avoids</em> the race by creating the object at load time.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>The Adapter — Making Mismatched Interfaces Fit</h2>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Where We Are</div>
+  <p>The Singleton controlled <em>how many</em> of an object exist. The next three patterns are about <em>connecting</em> objects whose interfaces don't line up — starting with the Adapter, which translates one interface into another.</p>
+</div>
+
+<h3 id="why-adapter">Two Plugs, One Wall</h3>
+<p>An <strong>interface</strong> is the set of method names (and their meanings) that one component exposes for others to call. When two components have <em>different</em> interfaces, they cannot talk directly. The everyday analogy: you fly to the UK with a laptop charger whose plug doesn't fit the British wall outlet. You don't rewire your laptop and you don't rewire the building — you slip an <strong>AC power adapter</strong> between them that translates one plug shape into the other.</p>
+
+<p>Software hits this constantly. You have your own system with an interface that makes sense for you, and you must connect to an <strong>external vendor</strong> (or a legacy subsystem) whose interface is different. Rewriting your whole system is wasteful, and the vendor can't rewrite theirs because their other customers depend on it. The two interfaces are <em>separate by design</em> and you can't unify them. So you insert an adapter that translates between them.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The Adapter Pattern</div>
+  <p>The <strong>Adapter</strong> converts the interface of one class into another interface that the client expects. It lets classes work together that otherwise couldn't because their interfaces are incompatible. The adapter is the <em>only</em> component that knows the mapping between the two interfaces.</p>
+</div>
+
+<h3 id="adapter-roles">The Roles and Structure</h3>
+<p>The classic (object) adapter uses <strong>delegation</strong>. The roles are:</p>
+<ul style="margin: 0 0 18px 24px;">
+  <li><strong>Target</strong> — the ideal interface the client wants to use.</li>
+  <li><strong>Adaptee</strong> — the existing class with the "wrong" interface.</li>
+  <li><strong>Adapter</strong> — a class that <em>implements the Target interface</em> but internally <em>owns an Adaptee</em> and forwards each call to it, translating along the way.</li>
+  <li><strong>Client</strong> — uses the adapter purely as a Target, with no idea an adapter exists (information hiding).</li>
+</ul>
+
+<p>The professor's example: you have a <code>Duck</code> interface that can <code>quack()</code> and <code>fly()</code>, with a <code>MallardDuck</code> implementing it. Separately you have a <code>Turkey</code> interface that can <code>gobble()</code> and <code>fly()</code> — similar idea, different interface. To use a turkey where a duck is expected, build a <code>TurkeyAdapter</code> that <em>implements <code>Duck</code></em> but <em>holds a <code>Turkey</code></em>:</p>
+
+<pre><code><span class="kw">public class</span> <span class="tp">TurkeyAdapter</span> <span class="kw">implements</span> <span class="tp">Duck</span> {
+  <span class="kw">private</span> <span class="tp">Turkey</span> turkey;                  <span class="cm">// owns the adaptee</span>
+
+  <span class="kw">public</span> <span class="fn">TurkeyAdapter</span>(<span class="tp">Turkey</span> t) { turkey <span class="op">=</span> t; }
+
+  <span class="kw">public void</span> <span class="fn">quack</span>() {
+    turkey.<span class="fn">gobble</span>();                     <span class="cm">// syntax: quack → gobble</span>
+  }
+  <span class="kw">public void</span> <span class="fn">fly</span>() {
+    <span class="kw">for</span> (<span class="kw">int</span> i <span class="op">=</span> <span class="nb">0</span>; i <span class="op">&lt;</span> <span class="nb">5</span>; i<span class="op">++</span>)   <span class="cm">// semantics: a turkey flies a shorter hop</span>
+      turkey.<span class="fn">fly</span>();
+  }
+}</code></pre>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="150" viewBox="0 0 420 150" style="display:block; margin:0 auto;">
+      <rect x="10" y="55" width="90" height="40" rx="8" fill="#fef3eb" stroke="#c0510a"/>
+      <text x="55" y="80" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" fill="#2a2520">Client</text>
+      <text x="160" y="50" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">sees a Duck</text>
+      <line x1="100" y1="75" x2="210" y2="75" stroke="#d9d0c4" stroke-width="2" marker-end="url(#ar)"/>
+      <rect x="210" y="55" width="100" height="40" rx="8" fill="#eff4ff" stroke="#2563eb"/>
+      <text x="260" y="74" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#2a2520">TurkeyAdapter</text>
+      <text x="260" y="89" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">implements Duck</text>
+      <text x="365" y="50" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">owns / delegates</text>
+      <line x1="310" y1="75" x2="380" y2="75" stroke="#d9d0c4" stroke-width="2" marker-end="url(#ar)"/>
+      <rect x="350" y="55" width="60" height="40" rx="8" fill="#f3effe" stroke="#7c3aed"/>
+      <text x="380" y="80" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#2a2520">Turkey</text>
+      <text x="380" y="120" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">(adaptee)</text>
+      <defs>
+        <marker id="ar" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="#d9d0c4"/>
+        </marker>
+      </defs>
+    </svg>
+  </div>
+  <div class="figure-caption">The client calls the adapter as a <code>Duck</code>; the adapter quietly forwards to a <code>Turkey</code>.</div>
+</div>
+
+<h3 id="syntax-semantics">Two Kinds of Adaptation: Syntax vs. Semantics</h3>
+<p>The duck/turkey example reveals that adaptation happens at two levels:</p>
+
+<table class="compare-table">
+  <tr><th>Adapting Syntax</th><th>Adapting Semantics</th></tr>
+  <tr><td>Different <em>names</em> for the same operation.</td><td>Same name, but different <em>meaning</em>.</td></tr>
+  <tr><td><code>quack()</code> → call <code>gobble()</code>. A direct one-to-one rename.</td><td><code>fly()</code> exists on both, but a turkey's hop is shorter — so the adapter calls <code>turkey.fly()</code> five times to match a duck's range.</td></tr>
+</table>
+
+<div class="callout insight">
+  <div class="callout-title">Same Name ≠ Same Meaning</div>
+  <p>When two interfaces share a method name, do not assume they mean the same thing. <code>fly</code> on a <code>Turkey</code> is not <code>fly</code> on a <code>Duck</code>. A good adapter must handle <em>both</em> kinds of mismatch — translate the names (syntax) <em>and</em> translate the behaviour (semantics) so the result genuinely satisfies what the client expects.</p>
+</div>
+
+<p>A real adapter can also do non-1-to-1 translation: one target method might fan out to several adaptee calls, or combine multiple adaptee calls into one. The duck/turkey case happens to be one-to-one per method, but more complex mappings are common.</p>
+
+<h3 id="class-adapter">Object Adapter vs. Class Adapter</h3>
+<p>What we built above is the <strong>object adapter</strong>: it uses <em>delegation</em> (the adapter <em>owns</em> an adaptee). There is a second flavour, the <strong>class adapter</strong>, available in languages like C++ that support <strong>multiple inheritance</strong>: the adapter <em>inherits from both</em> the Target and the Adaptee.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Class Adapter Is the Riskier Choice</div>
+  <p>Multiple inheritance brings confusion and the dreaded <strong>diamond problem</strong> — when a class inherits from two classes that share a common superclass, that superclass effectively appears twice, and a method call becomes ambiguous about which copy it refers to. The class adapter usually <em>avoids</em> the diamond (its two parents typically have very different, unrelated interfaces, which is the whole reason you're adapting), but it's still a use of multiple inheritance, so prefer the object adapter when you can.</p>
+</div>
+
+<div class="quiz" id="quiz2">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In the object adapter, what is the relationship between the Adapter and the two interfaces?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>The Adapter inherits from both the Target and the Adaptee.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>The Adapter implements the Target interface and owns (delegates to) an Adaptee.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>The Adapter rewrites the Adaptee so both interfaces become identical.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>The Client inherits from the Adapter to gain the Adaptee's methods.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct.</strong> The object adapter uses delegation: it presents the Target interface to the client while internally holding an Adaptee and forwarding calls to it, translating syntax and semantics. Option A describes the <em>class</em> adapter (multiple inheritance), the riskier C++ variant. The whole point of the pattern (C) is to <em>avoid</em> rewriting the adaptee — both interfaces are kept separate by design.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>The Facade — One Simple Door to a Complex Subsystem</h2>
+</div>
+
+<h3 id="why-facade">Hiding a Mess Behind a Simple Interface</h3>
+<p>Imagine a home theater built from many classes: a projector, a DVD player, an amplifier, a popcorn popper, lights, a screen. To do the high-level thing a user actually wants — <em>watch a movie</em> — you must orchestrate a long, ordered sequence: turn on the popper, start popping, dim the lights, lower the screen, turn on the projector, set its input to DVD, switch it to widescreen, power up the amplifier, set its input, set surround sound… and when the movie ends, run it all again <em>in reverse</em>.</p>
+
+<p>No outside caller should have to know that sequence, or its exact order, or how it changes when you upgrade the equipment. And <em>listening to streamed audio</em> would be a second, equally tangled sequence over the same parts. The complexity needs to be hidden.</p>
+
+<p>The fix is to introduce a new class — a <strong>Facade</strong> — that becomes the single point of entry. It exposes high-level operations (<code>watchMovie()</code>, <code>endMovie()</code>, <code>listenToCD()</code>, <code>listenToRadio()</code>) and internally knows exactly how to translate each one into the right sequence of low-level calls. From the outside you only ever talk to the facade.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="200" viewBox="0 0 420 200" style="display:block; margin:0 auto;">
+      <rect x="160" y="10" width="100" height="36" rx="8" fill="#fef3eb" stroke="#c0510a"/>
+      <text x="210" y="33" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" fill="#2a2520">Client</text>
+      <line x1="210" y1="46" x2="210" y2="74" stroke="#d9d0c4" stroke-width="2" marker-end="url(#ar2)"/>
+      <rect x="135" y="74" width="150" height="40" rx="8" fill="#eff4ff" stroke="#2563eb"/>
+      <text x="210" y="92" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" fill="#2a2520">HomeTheaterFacade</text>
+      <text x="210" y="107" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">watchMovie() · endMovie()</text>
+      <!-- subsystem -->
+      <line x1="170" y1="114" x2="60" y2="155" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="200" y1="114" x2="160" y2="155" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="220" y1="114" x2="260" y2="155" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="250" y1="114" x2="360" y2="155" stroke="#d9d0c4" stroke-width="2"/>
+      <rect x="20" y="155" width="80" height="32" rx="6" fill="#f5f0e8" stroke="#d9d0c4"/>
+      <text x="60" y="175" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#2a2520">Projector</text>
+      <rect x="120" y="155" width="80" height="32" rx="6" fill="#f5f0e8" stroke="#d9d0c4"/>
+      <text x="160" y="175" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#2a2520">DVDPlayer</text>
+      <rect x="220" y="155" width="80" height="32" rx="6" fill="#f5f0e8" stroke="#d9d0c4"/>
+      <text x="260" y="175" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#2a2520">Amplifier</text>
+      <rect x="320" y="155" width="80" height="32" rx="6" fill="#f5f0e8" stroke="#d9d0c4"/>
+      <text x="360" y="175" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#2a2520">Lights</text>
+      <defs>
+        <marker id="ar2" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="#d9d0c4"/>
+        </marker>
+      </defs>
+    </svg>
+  </div>
+  <div class="figure-caption">The client talks only to the facade; the facade fans each high-level call out to the subsystem. The client never learns the subsystem classes exist.</div>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The Facade Pattern</div>
+  <p>The <strong>Facade</strong> provides a <em>unified, higher-level interface</em> to a set of smaller, more concrete interfaces in a subsystem, making that subsystem easier to use. It is a direct application of the <strong>information-hiding principle</strong>: it both <em>simplifies</em> the interface and <em>decouples</em> the client from the subsystem, hiding the existence of the sub-components entirely.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Only Group Things That Belong Together</div>
+  <p>A facade should unify a <em>related</em> family of subsystems. If you wrap a pile of unrelated interfaces behind one facade, you've grouped together things that change for different reasons — which creates a maintainability problem rather than solving one.</p>
+</div>
+
+<h3 id="facade-vs-adapter">Facade vs. Adapter — A Frequently Asked Question</h3>
+<p>Both wrap multiple classes and both sit "between" a client and other code, which is why students confuse them. The distinction is about <em>intent</em> and <em>context</em>:</p>
+
+<table class="compare-table">
+  <tr><th>Adapter</th><th>Facade</th></tr>
+  <tr><td>Intent: <strong>convert</strong> one interface into another.</td><td>Intent: <strong>simplify</strong> a complex interface.</td></tr>
+  <tr><td>Two interfaces of <em>similar complexity</em>, both genuinely valuable and both still needed.</td><td>One useful high-level interface plus a much more complex low-level one whose complexity you just want to hide.</td></tr>
+  <tr><td>You introduce it to integrate with a system you <em>don't control</em> (a vendor, a legacy subsystem).</td><td>You design it yourself, at design time, for your <em>own</em> system.</td></tr>
+</table>
+
+<div class="callout insight">
+  <div class="callout-title">It's About the Problem, Not the Label</div>
+  <p>Design patterns exist to help you <em>find</em> a solution. If you simplify three classes into one without ever calling it "a facade," you've still solved the problem — whether you name it a facade is largely academic. Naming it <em>does</em> communicate intent ("use this, not the inner classes"), which matters for big subsystems. And beware over-abstraction: <em>"every problem in CS can be solved by adding a layer of indirection — except the problem of too many layers of indirection."</em> A facade that hides too many configuration options can make the system <em>less</em> useful; deciding what to expose is a <strong>requirements-engineering</strong> question, settled before you design the interface.</p>
+</div>
+
+<div class="quiz" id="quiz3">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Your team built two subsystems independently, and now a third-party vendor's API must plug into yours. Both interfaces are valuable and must stay. Which pattern fits, and why?</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Facade — it hides the vendor's complexity behind a simpler interface.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Adapter — two valuable interfaces of similar complexity must interoperate without unifying them.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Singleton — you only want one connection to the vendor.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Either works identically; the choice is purely cosmetic.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct — this is the Adapter's home turf.</strong> Two separately-developed, similarly-complex interfaces that both need to survive and must interoperate with code you don't control is exactly the adapter scenario. A facade (A) is for <em>simplifying</em> one complex subsystem you designed yourself, not for bridging two peers. The intent differs — convert (adapter) vs. simplify (facade) — so the choice is not cosmetic (D).
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>The Command — Packaging an Action as an Object</h2>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Where We Are</div>
+  <p>The Adapter and Facade are <em>static</em> patterns — they reduce dependencies in your code's structure. The Command is the lecture's first <strong>behavioral</strong> pattern: its job is runtime flexibility, letting you decide <em>at runtime</em> which action runs.</p>
+</div>
+
+<h3 id="why-command">Decoupling the Action from the Actor</h3>
+<p>Picture a universal remote control for a smart home. It has <strong>programmable buttons</strong>, and the home is full of wildly different devices: a stereo, a TV, ceiling lights, outdoor lights, even a sprinkler. The trouble is that they all have <em>different interfaces</em>: the sprinkler has <code>openValve()</code>/<code>closeValve()</code>, the TV has <code>on()</code>/<code>off()</code>. They don't map to each other.</p>
+
+<p>We want the remote to activate and deactivate any device, and we want to add new devices later <em>without recompiling or modifying the remote</em>. So the remote must <strong>not depend</strong> on the concrete device classes at all.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Don't Reach for a Big Switch Statement</div>
+  <p>The tempting hack — a giant <code>switch</code> over "which device is programmed here" — is exactly what to avoid. Switch statements are "the enemy of changeability": they violate the <strong>single-choice principle</strong>, because adding a new device forces you to edit every switch that enumerates the cases. Avoid switch statements whenever you can.</p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The Command Pattern</div>
+  <p>The <strong>Command</strong> pattern wraps a request as an object. It defines a common interface — typically just <code>execute()</code> — so that wildly different actions on wildly different receiver objects can all be invoked uniformly. This decouples the object that <em>triggers</em> an action from the object that <em>performs</em> it.</p>
+</div>
+
+<h3 id="command-roles">The Roles and the Code</h3>
+<ul style="margin: 0 0 18px 24px;">
+  <li><strong>Command</strong> — an interface with <code>execute()</code> (and often <code>undo()</code>). Many concrete command classes implement it.</li>
+  <li><strong>Receiver</strong> — the device that actually does the work (the <code>Light</code>, the <code>Stereo</code>). Each command holds a receiver and translates <code>execute()</code> into the right call on it.</li>
+  <li><strong>Invoker</strong> — holds a command in a "slot" and blindly calls <code>execute()</code>, knowing nothing about receivers or concrete classes.</li>
+  <li><strong>Client</strong> — creates the receivers, creates the concrete commands (wiring each to its receiver), and loads them into the invoker.</li>
+</ul>
+
+<pre><code><span class="cm">// The Command interface — every action looks the same to the invoker</span>
+<span class="kw">public interface</span> <span class="tp">Command</span> { <span class="kw">void</span> <span class="fn">execute</span>(); }
+
+<span class="cm">// A concrete command: holds its receiver (the light)</span>
+<span class="kw">public class</span> <span class="tp">LightOnCommand</span> <span class="kw">implements</span> <span class="tp">Command</span> {
+  <span class="kw">private</span> <span class="tp">Light</span> light;
+  <span class="kw">public</span> <span class="fn">LightOnCommand</span>(<span class="tp">Light</span> light) { <span class="kw">this</span>.light <span class="op">=</span> light; }
+  <span class="kw">public void</span> <span class="fn">execute</span>() { light.<span class="fn">on</span>(); }   <span class="cm">// translate execute → light.on()</span>
+}
+
+<span class="cm">// The invoker: a remote slot that just calls execute()</span>
+<span class="kw">public class</span> <span class="tp">SimpleRemoteControl</span> {
+  <span class="kw">private</span> <span class="tp">Command</span> slot;
+  <span class="kw">public void</span> <span class="fn">setCommand</span>(<span class="tp">Command</span> c) { slot <span class="op">=</span> c; }
+  <span class="kw">public void</span> <span class="fn">buttonPressed</span>() { slot.<span class="fn">execute</span>(); }
+}</code></pre>
+
+<p>And the client wires it together — creating the receiver, the command, and loading the invoker:</p>
+
+<pre><code><span class="tp">SimpleRemoteControl</span> remote <span class="op">=</span> <span class="kw">new</span> <span class="tp">SimpleRemoteControl</span>();
+<span class="tp">Light</span> light <span class="op">=</span> <span class="kw">new</span> <span class="tp">Light</span>();
+remote.<span class="fn">setCommand</span>(<span class="kw">new</span> <span class="tp">LightOnCommand</span>(light));  <span class="cm">// configure the slot</span>
+remote.<span class="fn">buttonPressed</span>();                          <span class="cm">// later: just fire it</span></code></pre>
+
+<div class="callout insight">
+  <div class="callout-title">Command Is "Strategy, Turned Up"</div>
+  <p>This looks a lot like the <strong>Strategy</strong> pattern: you plug in an object that decides what happens, then call <code>execute()</code> when you want. Think of Command as a richer Strategy — it carries more variation and a <em>receiver</em> object it ultimately translates the call to. Its essence is <strong>separating the creation of an action from its execution</strong>: you define the command in one place in the code and fire it from another, completely different place.</p>
+</div>
+
+<h3 id="command-vs-mediator">Command vs. Mediator</h3>
+<p>Both involve many objects with different interfaces, so their class diagrams look similar. The key difference is <em>flexibility over time</em>:</p>
+
+<table class="compare-table">
+  <tr><th>Mediator</th><th>Command</th></tr>
+  <tr><td>A central hub that knows the order and combinations of interactions between many "colleague" objects.</td><td>No central object that knows all the combinations; each command is self-contained.</td></tr>
+  <tr><td>Essentially <em>static</em>: the interaction logic is fixed at coding time. To change behaviour you edit the mediator and recompile.</td><td><em>Dynamic</em>: you can pick which command a button maps to <strong>at runtime</strong>, giving genuine runtime configurability.</td></tr>
+</table>
+
+<div class="callout warning">
+  <div class="callout-title">Don't Confuse Command with Facade Either</div>
+  <p>A student asked whether Command resembles the Facade. It does not. The <strong>Facade is a static pattern</strong> whose purpose is reducing dependencies in your code's structure. The <strong>Command is a behavioral pattern</strong> whose purpose is runtime flexibility — letting the user customise what happens when a button (or a framework's before/after hook) fires. In dynamically-typed languages, a command is often just a <em>closure</em> (an anonymous callback) rather than a concrete class.</p>
+</div>
+
+<h3 id="command-undo">Undo and Command Histories</h3>
+<p>Because each action is now a self-contained object, Command makes <strong>undo</strong> natural. Add an <code>undo()</code> method to the interface so every command knows how to reverse itself. But supporting a <em>history</em> of undos needs one more thing: a data structure to remember the order in which commands ran.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>Every time you <code>execute()</code> a command, <strong>push</strong> it onto a history <strong>stack</strong>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>When the user presses Undo, <strong>pop</strong> the top command off the stack and call <code>undo()</code> on it.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>Because a stack is last-in-first-out, undos reverse the actions in exactly the opposite order they were performed — the behaviour users expect.</p>
+</div>
+
+<p>A more elaborate cousin, the <strong>Memento</strong> pattern, is purpose-built for undo, but the Command stack handles the common case. Commands are also frequently stored in <strong>lists</strong>: a client loads a sequence of commands (perhaps from a configuration file) and the system runs them in order — a flexible way to script behaviour.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Worked Question — How Does the Remote Tell Two Lights Apart?</div>
+  <p>If both the kitchen light and the living-room light are instances of the same <code>Light</code> class, how does a button know which one to control? Answer: not by class, but by <strong>which object instance</strong> you stored in the command. Somewhere in the code you create the kitchen <code>Light</code> and the living-room <code>Light</code> separately; when you build the command, you must store the <em>right instance</em>. In a real app you'd keep a directory of lights with display names and let the user pick the specific instance.</p>
+</div>
+
+<div class="quiz" id="quiz4">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">What is the core distinction between the Command and Mediator patterns?</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Command guarantees a single instance; Mediator allows many.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Command offers runtime flexibility (you pick which command fires at runtime); Mediator is essentially static, with interaction logic fixed at coding time.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Command converts interfaces; Mediator simplifies them.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>They are identical; the names are interchangeable.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct.</strong> The Command pattern lets you decide at runtime which command an invoker (e.g. a button) executes, and even build sequences or undo histories of commands — real runtime flexibility. The Mediator centralises fixed interaction logic that you change by editing and recompiling. Option A confuses them with the Singleton; option C describes Adapter vs. Facade, not these two.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SYNTHESIS ═══════════════════════ -->
+<section id="synthesis" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>Four patterns, four distinct problems — but they share a single deeper principle: <strong>information hiding</strong>. Each one decides what the rest of the system is allowed to know, and hides the rest behind a controlled interface.</p>
+
+<ul style="margin: 0 0 18px 24px;">
+  <li><strong>Singleton</strong> hides the decision "there is exactly one of these" behind <code>getInstance()</code>, so that decision stays changeable and access stays controlled.</li>
+  <li><strong>Adapter</strong> hides the fact that an incompatible class is being used at all — the client thinks it's talking to the Target interface, never the Adaptee.</li>
+  <li><strong>Facade</strong> hides an entire complex subsystem behind a few high-level operations — the client never learns the sub-components exist.</li>
+  <li><strong>Command</strong> hides <em>which</em> action will run and on which receiver, so the invoker can fire actions it knows nothing about, configurable at runtime.</li>
+</ul>
+
+<p>A second unifying thread is the <strong>static vs. behavioral</strong> split. Singleton, Adapter, and Facade are <em>structural/static</em> patterns: they shape dependencies in your code's structure. Command is the lecture's first <em>behavioral</em> pattern: it shapes what happens at runtime. That contrast — reduce dependencies vs. add runtime flexibility — is exactly why Command should never be confused with Facade even though their examples can look alike.</p>
+
+<p>The most important meta-lesson is <strong>context tailoring</strong>, demonstrated most vividly by the Singleton's four implementations. A pattern is never a finished answer you paste in. It is a named starting point with known roles and known trade-offs; you choose the variant — synchronized, eager, double-checked-volatile — that meets your system's specific quality-attribute requirements. And remember the recurring caution: patterns superimpose roles onto your <em>existing</em> domain classes (your <code>Earth</code>, your <code>Light</code>), and even good patterns like the Singleton are dangerous when overused.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>A design pattern is a reusable solution expressed as <strong>abstract roles plus the problem it solves plus its trade-offs</strong>. Mastery means naming the roles, recognising the problem in the wild, and tailoring the implementation to your context — not memorising a single canned version.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">What's Next</div>
+  <p>Get the short next homework done early — solutions drop right at the deadline so you can self-check before the midterm, and there are no extensions. The pattern catalog keeps growing: the lecture already gestured at the <strong>Strategy</strong> pattern (Command's simpler relative), the <strong>Mediator</strong> (its static counterpart), and the <strong>Memento</strong> (purpose-built undo). Keep building the mental map of <em>which problem</em> each pattern solves — that mapping, not the code, is what the exam rewards.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

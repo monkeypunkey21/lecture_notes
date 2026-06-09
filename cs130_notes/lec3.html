@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 3 — Class &amp; Sequence Diagrams</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 3 — UML Modeling</div>
+  <a href="#part1">Part I — Why Model? Interface vs. Implementation</a>
+  <a href="#why-model" class="sub">Why We Model</a>
+  <a href="#interface-impl" class="sub">Interface vs. Implementation</a>
+  <a href="#subclass-subtype" class="sub">Subclassing vs. Subtyping</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Anatomy of a Class Box</a>
+  <a href="#three-compartments" class="sub">The Three Compartments</a>
+  <a href="#visibility" class="sub">Visibility Markers</a>
+  <a href="#multiplicity-box" class="sub">Multiplicity &amp; Constraints</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — The Six Relationships</a>
+  <a href="#dependency" class="sub">Dependency</a>
+  <a href="#association" class="sub">Association</a>
+  <a href="#aggregation" class="sub">Aggregation</a>
+  <a href="#composition" class="sub">Composition</a>
+  <a href="#gen-real" class="sub">Generalization &amp; Realization</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — Navigability &amp; Reading Code</a>
+  <a href="#navigability" class="sub">Navigability Arrows</a>
+  <a href="#beacons" class="sub">Beacons in Code</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Sequence Diagrams</a>
+  <a href="#lifelines" class="sub">Lifelines &amp; Activations</a>
+  <a href="#messages" class="sub">Messages: Sync vs. Async</a>
+  <a href="#fragments" class="sub">Fragments: loop, alt, opt</a>
+  <a href="#special-messages" class="sub">Found, Lost, Create</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#synthesis">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">COMSCI 130 · Software Engineering</div>
+  <h1>Modeling with UML: Class &amp; Sequence Diagrams</h1>
+  <p class="hero-sub">An interactive guide to Week 2 — how to capture the structure and the behavior of a software system in pictures, and how to read those pictures back into code.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>Why Model? Interface vs. Implementation</h2>
+</div>
+
+<h3 id="why-model">Why Are We Learning This?</h3>
+<p>Source code is precise, but it is also enormous and overwhelming. A real system can be hundreds of thousands of lines long. If a new teammate asks "how does this system fit together?", handing them the source code is almost useless — they would spend hours reading before they understood even one collaboration between two classes.</p>
+<p><strong>Modeling</strong> is the discipline of drawing a system at a higher level of abstraction than the code. A good diagram throws away the noise and keeps only what matters, so a reader can grasp in a minute what would take half an hour to dig out of the source. This lecture covers the two most useful diagrams from <strong>UML</strong> (the Unified Modeling Language): the <em>class diagram</em>, which shows the static structure of a system, and the <em>sequence diagram</em>, which shows how objects interact over time.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>A diagram is an <strong>abstraction</strong> of the code, not a transcript of it. Its whole value comes from what it leaves out. Your goal is never to "model everything" — it is to model the <em>important</em> aspects so a human can reason about the system.</p>
+</div>
+
+<h3 id="interface-impl">Interface vs. Implementation</h3>
+<p>Before any notation, the lecture draws one foundational distinction. Every class has two faces:</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Interface vs. Implementation</div>
+  <p>The <strong>interface</strong> is the means by which a class is accessed by other classes — its function names, argument types, and return types. It is the <em>API</em>: what you want other developers to know. The <strong>implementation</strong> is how the class actually fulfils the contract those signatures promise. It is what you want to <em>hide</em>, so other developers cannot build on details that might change.</p>
+</div>
+
+<p>This split is the reason class diagrams are useful. A class diagram deliberately shows you <em>only the interface</em> of each class. It tells developers what they should care about without exposing what they should not. (Later in the course this becomes the <em>information hiding principle</em>.)</p>
+
+<div class="callout tip">
+  <div class="callout-title">Why This Matters Later</div>
+  <p>Because the interface is meant to stay fixed while the implementation changes underneath, a class diagram is supposed to capture <em>concepts</em> that persist, not implementation details that churn. Keep this in mind when we get to relationships — some of them describe code, others describe intent.</p>
+</div>
+
+<h3 id="subclass-subtype">Subclassing vs. Subtyping</h3>
+<p>A second distinction that trips people up: subclassing and subtyping look similar but mean different things.</p>
+
+<table class="compare-table">
+  <tr><th>Subclassing</th><th>Subtyping</th></tr>
+  <tr><td>Inherits <em>behavior</em> (actual implementation) from another class.</td><td>Inherits only the <em>interface</em> — the shape — with no behavior.</td></tr>
+  <tr><td>Java: <code>class A extends B</code></td><td>Java: <code>class A implements B</code></td></tr>
+  <tr><td>C++: <code>class A : public B</code></td><td>C++: a class with only abstract (pure virtual) methods.</td></tr>
+</table>
+
+<p>Java is praised here precisely because it separates the two with dedicated keywords: <code>extends</code> for inheriting behavior, <code>implements</code> for conforming to an interface. In a language like Python, with no static typing, there is no separate <code>interface</code> keyword; in C++ you simulate an interface by writing a class whose methods are all abstract. Java is the language used for most of this course, so its vocabulary maps directly onto the UML notation we are about to learn.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Design Guidance</div>
+  <p>For flexible design you should <em>prefer subtyping over subclassing</em> — favour implementing interfaces over inheriting behaviour. Inheriting behaviour couples you tightly to a parent's implementation; conforming to an interface leaves you free to change how you fulfil it.</p>
+</div>
+
+<div class="quiz" id="quiz1box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In Java, <code>class FuelTank implements Refuelable</code> establishes which relationship?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Subclassing — <code>FuelTank</code> inherits <code>Refuelable</code>'s behavior.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Subtyping — <code>FuelTank</code> conforms to an interface without inheriting behavior.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Composition — <code>FuelTank</code> is made up of <code>Refuelable</code> parts.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Nothing — <code>implements</code> has no meaning in UML.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct: B.</strong> The <code>implements</code> keyword conforms a class to an interface — it inherits the <em>shape</em> (method signatures) but no behavior. That is subtyping. <code>extends</code> (A) would be subclassing, which inherits actual behavior. And UML absolutely represents <code>implements</code> — it is drawn as interface realization (a dashed line with a hollow triangle).
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>Anatomy of a Class Box</h2>
+</div>
+
+<p>Now the notation. In a class diagram, a class is drawn as a rectangle. Any rectangle in a class diagram is, by default, a class. But the rectangle is divided into compartments, and the dividers carry meaning.</p>
+
+<h3 id="three-compartments">The Three Compartments</h3>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="240" height="170" viewBox="0 0 240 170" style="display:block; margin:0 auto;">
+      <rect x="40" y="15" width="160" height="140" fill="#fff" stroke="#2a2520" stroke-width="2"/>
+      <line x1="40" y1="50" x2="200" y2="50" stroke="#2a2520" stroke-width="1.5"/>
+      <line x1="40" y1="100" x2="200" y2="100" stroke="#2a2520" stroke-width="1.5"/>
+      <text x="120" y="38" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" font-weight="600" fill="#c0510a">Rectangle</text>
+      <text x="52" y="70" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">- width: int</text>
+      <text x="52" y="88" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">- height: int</text>
+      <text x="52" y="122" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">+ area(): int</text>
+      <text x="52" y="140" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">+ scale(f: int)</text>
+    </svg>
+  </div>
+  <div class="figure-caption">The three compartments: <strong>name</strong> (top), <strong>attributes</strong> (middle), <strong>methods</strong> (bottom). The order is fixed.</div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Top — the name.</strong> Always present. By convention you name classes with <em>nouns</em> (write <code>Transaction</code>, not <code>Transact</code>) because a class represents a thing, not an action.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Middle — attributes.</strong> The member variables of the class. Optional.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Bottom — methods.</strong> The functions defined on the class. Optional. A method is written as <code>name(params): returnType</code>; you may omit <code>void</code> but it can be clearer to keep it.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Don't Swap the Compartments</div>
+  <p>The attribute compartment always sits <em>above</em> the method compartment. The lower compartments are optional, but you may never reorder them. Attributes on top, methods on the bottom — every time.</p>
+</div>
+
+<h3 id="visibility">Visibility Markers</h3>
+<p>Each attribute and method carries a visibility marker — a single symbol that says who is allowed to access it. These come straight from Java's access modifiers.</p>
+
+<table class="compare-table">
+  <tr><th>Symbol</th><th>Visibility</th><th>Who can access</th></tr>
+  <tr><td><code>+</code></td><td>public</td><td>Any class.</td></tr>
+  <tr><td><code>-</code></td><td>private</td><td>Only the same class.</td></tr>
+  <tr><td><code>#</code></td><td>protected</td><td>The same class <em>and its subclasses</em>.</td></tr>
+  <tr><td><code>~</code></td><td>package</td><td>Anything inside the same Java package (Java's default visibility).</td></tr>
+</table>
+
+<div class="callout tip">
+  <div class="callout-title">The Default-Visibility Gotcha</div>
+  <p>In Java, if you write <code>void m()</code> with <em>no</em> modifier, it is <strong>package-private</strong>, which maps to the tilde <code>~</code> in UML — not public. Don't be confused by missing keywords in Java source: absence of a keyword is itself a visibility level.</p>
+</div>
+
+<h3 id="multiplicity-box">Multiplicity, Constraints &amp; Generics</h3>
+<p>A few more annotations live on the box:</p>
+<ul style="margin: 0 0 18px 22px;">
+  <li><strong>Multiplicity</strong> — a number in the top-right corner says how many instances of the class can exist (e.g. <code>1</code> for a singleton).</li>
+  <li><strong>Constraints</strong> — written in curly braces, e.g. <code>{width &gt; 0}</code>. These can express <em>preconditions</em> (assumed true before a method runs), <em>postconditions</em> (guaranteed after), and <em>invariants</em> (always true).</li>
+  <li><strong>Parameter direction</strong> — <code>out</code> before a parameter marks it as a return-by-reference value, as in classic C-style out-parameters.</li>
+  <li><strong>Templates / generics</strong> — a dashed rectangle in the corner names a type parameter (e.g. <code>ElementType</code>) that gets bound to a concrete type, modelling <code>FruitList extends ArrayList&lt;Fruit&gt;</code>.</li>
+</ul>
+
+<div class="callout insight">
+  <div class="callout-title">Why Pre/Postconditions Are Worth the Effort</div>
+  <p>The professor flagged this as increasingly important in the age of AI agents: when you describe an operation in, say, an MCP server's documentation, an agent cannot know your preconditions unless you state them. Carefully documenting what an operation assumes and guarantees is becoming a core design skill, not a formality.</p>
+</div>
+
+<div class="quiz" id="quiz2box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A Java method is declared as <code>boolean validate(byte[] data)</code> with no access modifier. How is its visibility shown in UML?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div><code>+</code> public — no modifier means open to all.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div><code>-</code> private — no modifier means hidden.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div><code>~</code> package — Java's default visibility is package-private.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div><code>#</code> protected — no modifier means subclasses only.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct: C.</strong> In Java, omitting the access modifier gives <em>package</em> visibility — accessible only within the same package — which UML draws with the tilde <code>~</code>. It is a common mistake to assume "no keyword" means public (A); it does not.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>The Six Relationships</h2>
+</div>
+
+<p>Boxes are only half the story. The real expressive power of class diagrams is in the <em>lines between</em> boxes. There are six relationship types, and they form a layered hierarchy of increasing strength. Some correspond directly to programming-language constructs; others add <em>semantic intent</em> the code alone can't express.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The Strength Hierarchy</div>
+  <p>The relationships nest: <strong>composition</strong> is a stronger kind of <strong>aggregation</strong>, which is a stronger kind of <strong>association</strong>. Each inherits the properties of the one below it. "Pure association" or "pure aggregation" means <em>just</em> that level and nothing stronger.</p>
+</div>
+
+<h3 id="dependency">1. Dependency — "A uses B"</h3>
+<p>A <strong>dependency</strong> is the weakest relationship: class A <em>uses</em> class B, but only temporarily. B might appear as a method argument, a local variable, or a thrown exception — it is on the stack for the duration of a call, not stored as a field. A cannot compile or run without B, but A does not <em>hold onto</em> B.</p>
+<p><strong>Notation:</strong> a dashed line (with an open arrowhead) from A to B.</p>
+
+<pre><span class="label">Java</span><code><span class="kw">class</span> <span class="tp">Train</span> {
+  <span class="kw">void</span> <span class="fn">addStop</span>(<span class="tp">ButtonPressedEvent</span> e) { <span class="cm">// only used here</span>
+    ...
+  }
+}</code></pre>
+<p>Here <code>Train</code> depends on <code>ButtonPressedEvent</code>: it appears only as an argument, so the two interact temporarily — yet <code>Train</code> won't compile without the class being present.</p>
+
+<h3 id="association">2. Association — "A has a long-term reference to B"</h3>
+<p>An <strong>association</strong> is stronger: it is a <em>structural, long-term</em> relationship. Usually A stores a reference to B as an instance member, so B exists across A's whole lifecycle. A station that always knows its button has an association with that button.</p>
+
+<div class="callout insight">
+  <div class="callout-title">The Subtle Case: Unnavigable Association</div>
+  <p>The <em>precise</em> definition of association is "a long-term structural relationship" — it does <strong>not</strong> require either side to hold a reference. An account and its clear-text password are in a long-term relationship even though, for security, neither stores a pointer to the other. So a reference is a strong <em>hint</em> of association, but its absence does not rule association out.</p>
+</div>
+
+<h3 id="aggregation">3. Aggregation — "A is the whole, B is a part" (loosely)</h3>
+<p>An <strong>aggregation</strong> adds a <em>whole–part hierarchy</em> on top of association. One object is the whole, the other is a part — but the part can still exist independently. A classroom <em>has</em> chairs: the chairs are part of the classroom, yet a chair still exists if you remove it from the room. Other examples: a department and its professors, a roster and its students.</p>
+<p><strong>Notation:</strong> a solid line with a <em>hollow diamond</em> on the whole end.</p>
+
+<h3 id="composition">4. Composition — "B cannot exist without A"</h3>
+<p><strong>Composition</strong> is the strongest whole–part relationship: the part's lifetime is bound to the whole. When the whole is destroyed, the parts are destroyed with it. A house is made of rooms — destroy the house and the rooms go too. A person has a head; the head doesn't meaningfully exist apart from the person.</p>
+<p><strong>Notation:</strong> a solid line with a <em>filled diamond</em> on the whole end.</p>
+
+<table class="compare-table">
+  <tr><th>Aggregation (hollow diamond)</th><th>Composition (filled diamond)</th></tr>
+  <tr><td>Whole–part, but parts survive on their own.</td><td>Whole–part, and parts die with the whole.</td></tr>
+  <tr><td>Classroom &amp; chairs; department &amp; professors.</td><td>House &amp; rooms; folder &amp; files; motherboard &amp; its private inner class.</td></tr>
+  <tr><td>No destructor coupling.</td><td>In C++, destroying the whole calls the parts' destructors.</td></tr>
+</table>
+
+<div class="callout tip">
+  <div class="callout-title">The Filesystem Example</div>
+  <p>Files in a folder are a clean composition: you can move a file between folders, but if you <em>delete</em> the folder, the files inside are gone. Movability does not break composition — what matters is the lifetime coupling on destruction.</p>
+</div>
+
+<h3 id="gen-real">5. Generalization &amp; 6. Realization</h3>
+<p>The last two are the inheritance relationships — and they pair exactly with the subclassing/subtyping split from Part I.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="320" height="150" viewBox="0 0 320 150" style="display:block; margin:0 auto;">
+      <!-- generalization -->
+      <rect x="20" y="15" width="90" height="30" fill="#fff" stroke="#2a2520" stroke-width="2"/>
+      <text x="65" y="35" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">Animal</text>
+      <rect x="20" y="105" width="90" height="30" fill="#fff" stroke="#2a2520" stroke-width="2"/>
+      <text x="65" y="125" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">Dog</text>
+      <line x1="65" y1="105" x2="65" y2="55" stroke="#2a2520" stroke-width="2"/>
+      <polygon points="65,45 58,58 72,58" fill="#fff" stroke="#2a2520" stroke-width="2"/>
+      <text x="65" y="80" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">extends</text>
+      <!-- realization -->
+      <rect x="200" y="15" width="100" height="30" fill="#fff" stroke="#2a2520" stroke-width="2"/>
+      <text x="250" y="35" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c0510a">«interface»</text>
+      <rect x="200" y="105" width="100" height="30" fill="#fff" stroke="#2a2520" stroke-width="2"/>
+      <text x="250" y="125" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">FuelTank</text>
+      <line x1="250" y1="105" x2="250" y2="55" stroke="#2a2520" stroke-width="2" stroke-dasharray="5,4"/>
+      <polygon points="250,45 243,58 257,58" fill="#fff" stroke="#2a2520" stroke-width="2"/>
+      <text x="250" y="80" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">implements</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Left: <strong>generalization</strong> — solid line, hollow triangle (class extends class). Right: <strong>realization</strong> — <em>dashed</em> line, hollow triangle (class implements interface). The arrow always points to the parent.</div>
+</div>
+
+<p><strong>Generalization</strong> is inheritance of behaviour — Java's <code>extends</code>. The arrow (a hollow triangle) points from the subclass to the superclass, drawn with a <em>solid</em> line. <strong>Realization</strong> is implementing an interface — Java's <code>implements</code>. Same hollow triangle, but a <em>dashed</em> line, and it inherits only the structural interface, no behaviour.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Solid vs. Dashed: A Strict Rule</div>
+  <p>Between a class and an interface you must use realization (dashed). Between two classes you must use generalization (solid). One exception: an interface inheriting from another interface uses a <em>solid</em> line, since that is true inheritance. Picking the wrong line style is a common exam mistake.</p>
+</div>
+
+<div class="quiz" id="quiz3box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A <code>Motherboard</code> class defines a <code>private class IdBus { ... }</code> as an inner class no other class can see. What relationship connects them?</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Dependency — the two only interact temporarily.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Association — <code>Motherboard</code> holds a long-term reference.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Aggregation — a whole–part relationship where the part survives alone.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Composition — <code>IdBus</code> cannot exist outside <code>Motherboard</code>.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','d')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct: D.</strong> A private inner class is a guaranteed <em>beacon</em> for composition: no other class even knows <code>IdBus</code> exists, so it literally cannot exist outside <code>Motherboard</code>. That lifetime coupling is the defining property of composition. Aggregation (C) would be wrong because the part here cannot survive independently.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>Navigability &amp; Reading Relationships off Code</h2>
+</div>
+
+<h3 id="navigability">Navigability: Which Way Can You Travel?</h3>
+<p>An association line can carry an <strong>arrow</strong> to show <em>navigability</em> — which object holds a reference to which. If a <code>Shape</code> stores a reference to a <code>Color</code>, the arrow points from <code>Shape</code> to <code>Color</code>: you can navigate from a shape to its colour.</p>
+
+<table class="compare-table">
+  <tr><th>Marking</th><th>Meaning</th></tr>
+  <tr><td>Arrow toward B</td><td>The source stores a reference to B; you can navigate A → B.</td></tr>
+  <tr><td>Cross (×) on an end</td><td>An explicit claim: this side does <em>not</em> store a reference.</td></tr>
+  <tr><td>No arrow, no cross</td><td>No claim made — the diagram is silent about whether a reference exists.</td></tr>
+</table>
+
+<p>Examples the lecture used: an <em>employee and boss</em> reference each other (double-navigable). A <em>vote and politician</em> — your vote stores the politician's name, but whether the politician keeps a list of voters is unknown, so we leave it unmarked. An <em>account and clear-text password</em> should be <em>doubly non-navigable</em> (a cross on each end) — they are in a long-term relationship, but for security neither stores a reference to the other.</p>
+
+<h3 id="beacons">Beacons: Reading Diagrams off Source Code</h3>
+<p>A recurring exam-style exercise: given a snippet of Java, draw the diagram. The professor's advice is to read the <em>syntax</em> first, then layer in obvious semantics. Certain code shapes act as <strong>beacons</strong> that strongly suggest a particular relationship.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>A stored field / reference</strong> → an <em>association</em> (navigable at least one way). The reference lives across the object's lifetime.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>An argument, local, or thrown exception</strong> → a <em>dependency</em>. Something on the stack is inherently temporary. A method that <code>throws InvalidChecksumException</code> creates a dependency, not an association — the exception is never stored.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>A private inner class</strong> → guaranteed <em>composition</em>. Nobody else can reference it, so its lifetime is bound to the enclosing class.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>A field holding a collection of some type</strong> (e.g. <code>List&lt;Employee&gt;</code>) → often <em>aggregation</em>, because the whole point of the container is to group the parts into a semantic whole. But this one needs your judgement, not just the syntax.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Syntax vs. Semantics — The Hard Part</div>
+  <p>Aggregation is "more about semantics than code." Two divisions each holding a <code>List&lt;Employee&gt;</code> look identical to a list-of-anything, but you label it aggregation because you <em>understand</em> a division is meant to group employees. Note also: the standard library (<code>List</code>, etc.) is usually <em>not</em> modelled — the diagram is an abstraction, so we say "a division has a list of employees" without exposing that it is implemented with <code>ArrayList</code>.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">A Stack-vs-Heap Heuristic</div>
+  <p>If an object lives only on the <em>stack</em> (a local for one call), lean toward <em>dependency</em> — it's inherently temporary. If it lives on the <em>heap</em> and is held long-term, it's more likely a real association. This heuristic distinguishes dependency from association, not association from aggregation (both of those typically sit on the heap).</p>
+</div>
+
+<div class="quiz" id="quiz4box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A <code>ChecksumValidator</code> has a method <code>validate()</code> that <code>throws InvalidChecksumException</code>. What is the relationship to the exception class?</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Association — the validator is permanently linked to the exception.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Dependency — the exception is only thrown, never stored.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Composition — the exception cannot exist without the validator.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Generalization — the validator extends the exception.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct: B.</strong> The exception is thrown and caught but never stored as a field, so the interaction is temporary — a dependency. The validator nonetheless won't compile without the exception class being referenced. It is not an association (A) because nothing keeps a long-term reference.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>Sequence Diagrams — Behavior Over Time</h2>
+</div>
+
+<h3>Why Are We Learning This?</h3>
+<p>Class diagrams show <em>static structure</em> — relationships that hold for all instances, things you can often read straight off the code. Sequence diagrams show something the source code hides: <em>the order in which objects send messages to each other over time</em>. To reconstruct that flow from source you might read thousands of lines for half an hour; a sequence diagram conveys it in about a minute. That's why the professor would ask an AI assistant to draw a sequence diagram <em>before</em> a class diagram.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>Class diagrams model relationships between <strong>classes</strong>. Sequence diagrams model interactions between <strong>objects</strong> (instances). This is the distinction students confuse most. The same class can appear as two separate instances in one sequence diagram — two distributors, two passengers — because we are tracing concrete interactions, not the general structure.</p>
+</div>
+
+<h3 id="lifelines">Lifelines &amp; Activation Bars</h3>
+<p>Each participating object gets a column. At the top is a box naming it; a dashed <strong>lifeline</strong> drops down representing the passage of time (top = past, bottom = future). Because these are <em>objects</em>, we write a colon: <code>:Station</code> is an unnamed instance of <code>Station</code>; <code>start:Station</code> is a named one. The colon is what signals "instance, not class."</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="340" height="230" viewBox="0 0 340 230" style="display:block; margin:0 auto;">
+      <!-- heads -->
+      <rect x="20" y="10" width="90" height="26" fill="#fff" stroke="#2a2520" stroke-width="1.5"/>
+      <text x="65" y="28" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">:Passenger</text>
+      <rect x="225" y="10" width="90" height="26" fill="#fff" stroke="#2a2520" stroke-width="1.5"/>
+      <text x="270" y="28" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">:Station</text>
+      <!-- lifelines -->
+      <line x1="65" y1="36" x2="65" y2="215" stroke="#d9d0c4" stroke-width="1.5" stroke-dasharray="4,4"/>
+      <line x1="270" y1="36" x2="270" y2="215" stroke="#d9d0c4" stroke-width="1.5" stroke-dasharray="4,4"/>
+      <!-- activation bars -->
+      <rect x="60" y="60" width="10" height="120" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <rect x="265" y="80" width="10" height="70" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <!-- sync message -->
+      <line x1="70" y1="80" x2="265" y2="80" stroke="#2a2520" stroke-width="1.5"/>
+      <polygon points="265,80 255,76 255,84" fill="#2a2520"/>
+      <text x="165" y="74" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#2a2520">pushButton()</text>
+      <!-- return -->
+      <line x1="265" y1="150" x2="70" y2="150" stroke="#2a2520" stroke-width="1.2" stroke-dasharray="5,3"/>
+      <polygon points="70,150 80,146 80,154" fill="#2a2520"/>
+      <text x="165" y="145" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">return</text>
+    </svg>
+  </div>
+  <div class="figure-caption">A passenger calls <code>pushButton()</code> on a station (solid arrow = synchronous). The orange <strong>activation bar</strong> shows the station is busy; the dashed arrow is the return.</div>
+</div>
+
+<p>The fat bar on a lifeline is the <strong>execution specification</strong> (or activation bar): the period the object is "doing something" — a method of it is on the stack, or it is waiting for a response. Real people are usually drawn permanently active (they're always alive and busy). Activation bars can <em>nest</em> when an object calls a method on itself (a self-message).</p>
+
+<h3 id="messages">Messages: Synchronous vs. Asynchronous</h3>
+<p>An arrow from one lifeline to another is a message — one object calling a method on another. The arrowhead style matters:</p>
+
+<table class="compare-table">
+  <tr><th>Arrow</th><th>Kind</th><th>Meaning</th></tr>
+  <tr><td>Solid line, <em>filled</em> arrowhead</td><td>Synchronous</td><td>Caller waits for the response (a normal method call).</td></tr>
+  <tr><td>Solid line, <em>open</em> arrowhead</td><td>Asynchronous</td><td>Caller does <em>not</em> wait — fire-and-forget, e.g. a message to a microservice with a callback.</td></tr>
+  <tr><td>Dashed line, open arrowhead</td><td>Reply / return</td><td>The response to a prior synchronous call.</td></tr>
+</table>
+
+<p>The dashed return arrow can be labelled with the returned value(s). Because UML isn't tied to one language's semantics, a return can even carry multiple values — <code>total, description := enterItem()</code> — which Python could express in one line but Java cannot.</p>
+
+<h3 id="fragments">Combined Fragments: loop, alt, opt &amp; more</h3>
+<p>A sequence diagram shows <em>example</em> executions, not all of them — the goal is to highlight the important flows (a normal path, a buggy path). But <strong>combined fragments</strong> let one diagram capture several behaviours at once. They are drawn as rectangles with a cut corner spanning the lifelines they affect, tagged with a keyword.</p>
+
+<table class="compare-table">
+  <tr><th>Keyword</th><th>Behaviour</th></tr>
+  <tr><td><code>loop</code></td><td>Repeat the enclosed messages for each item / while a condition holds.</td></tr>
+  <tr><td><code>alt</code></td><td>Alternatives — like if/else if/else, multiple guarded sections.</td></tr>
+  <tr><td><code>opt</code></td><td>Optional — an <code>if</code> with no <code>else</code>; runs only if its guard is true.</td></tr>
+  <tr><td><code>par</code></td><td>Parallel — sections that execute concurrently.</td></tr>
+  <tr><td><code>critical</code></td><td>A critical region, for concurrency / threading concerns.</td></tr>
+</table>
+
+<p>The top three — <code>loop</code>, <code>alt</code>, <code>opt</code> — are by far the most common in practice. Worked example from lecture: an order <code>loop</code>s over each item; inside, an <code>alt</code> dispatches items worth more than $10,000 to a careful (reliable, pricier) distributor and cheaper items to a regular distributor; afterward an <code>opt</code> sends a confirmation only "if needed."</p>
+
+<details>
+<summary>Expand: the loop + alt example as pseudocode</summary>
+<div class="details-body">
+<pre><span class="label">pseudocode</span><code><span class="kw">for</span> item <span class="kw">in</span> order.items:        <span class="cm">// loop fragment</span>
+    <span class="kw">if</span> item.value &gt; <span class="nb">10000</span>:       <span class="cm">// alt fragment</span>
+        carefulDistributor.<span class="fn">dispatch</span>(item)
+    <span class="kw">else</span>:
+        regularDistributor.<span class="fn">dispatch</span>(item)
+
+<span class="kw">if</span> needsConfirmation:           <span class="cm">// opt fragment</span>
+    order.<span class="fn">sendConfirmation</span>()</code></pre>
+</div>
+</details>
+
+<h3 id="special-messages">Found, Lost &amp; Create Messages</h3>
+<p>Three special messages handle the edges of a flow:</p>
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Found message</strong> — drawn from a filled dot into a lifeline. It starts a flow when we don't want to (or can't) model <em>who</em> sent the first message. Useful for "something calls <code>dispatch()</code> on the order" without modelling the client.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Lost message</strong> — the mirror image: a message sent to a recipient we choose not to model.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Create message</strong> — a dashed arrow labelled <code>create</code> that ends at the <em>top</em> of a new lifeline, marking the moment an object comes into existence. Destruction is shown by a large × on the lifeline.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Don't Force a 1-to-1 Mapping With Code</div>
+  <p>Sequence diagrams and code don't always line up exactly. UML has no native <code>for-each</code> loop, so a loop over a list is drawn with an explicit index <code>a[i]</code> even when the real Java/Python code iterates with no visible index. The diagram captures the <em>behaviour</em>, not the literal syntax.</p>
+</div>
+
+<div class="quiz" id="quiz5box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In a sequence diagram you see a solid line with a <em>filled</em> arrowhead from <code>:Sale</code> to <code>:Payment</code>. What does this tell you?</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>An asynchronous message — <code>Sale</code> does not wait for a reply.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>A synchronous message — <code>Sale</code> calls a method on <code>Payment</code> and waits.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>A return value being sent back from <code>Payment</code> to <code>Sale</code>.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>A generalization — <code>Sale</code> inherits from <code>Payment</code>.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct: B.</strong> A solid line with a filled arrowhead is a synchronous message — a normal blocking method call where the caller waits. An <em>open</em> arrowhead (A) would be asynchronous; a <em>dashed</em> line (C) would be the return. Generalization (D) belongs to class diagrams, not sequence diagrams.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SYNTHESIS ═══════════════════════ -->
+<section id="synthesis" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>Everything in this lecture flows from one idea introduced at the very start: <strong>a model is an abstraction that keeps what matters and discards the rest.</strong> The interface-vs-implementation distinction from Part I is the engine that drives all of it — class diagrams exist to expose interfaces while hiding implementations.</p>
+
+<p>From there the two diagram types divide the labour. The <strong>class diagram</strong> answers "what is the system <em>made of</em>?" — its boxes (Part II) carry the interface of each class, and its lines (Part III) carry the six relationships, layered from the temporary <em>dependency</em> up through <em>association</em>, <em>aggregation</em>, and <em>composition</em>, plus the two inheritance flavours, <em>generalization</em> and <em>realization</em>, that mirror the subclassing/subtyping split. Part IV taught you to read these straight off code by spotting beacons: a stored field means association, an inner class means composition, a thrown exception means dependency — while reminding you that aggregation often needs human judgement about intent.</p>
+
+<p>The <strong>sequence diagram</strong> (Part V) answers a question the class diagram can't: "what <em>happens</em>, and in what order?" It trades static structure for a time-ordered trace of messages between <em>objects</em> — the same class can appear twice — using activation bars, synchronous vs. asynchronous arrows, and loop/alt/opt fragments to compress a thousand lines of control flow into a glance.</p>
+
+<div class="callout insight">
+  <div class="callout-title">When to Reach for Which</div>
+  <p>Reach for a <em>class diagram</em> to reverse-engineer or plan the shape of a codebase — modern AI assistants reliably generate Mermaid or PlantUML class diagrams from source. Reach for a <em>sequence diagram</em> first when you need to understand a collaboration, because that behaviour is the part hardest to recover from reading code.</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">UML Is Semi-Formal — Use It Wisely</div>
+  <p>UML is a <em>semi-formal</em>, visual, widely-understood language: precise enough to communicate intent, but not a formal logic you can mechanically verify (languages like Alloy do that). It is a hodgepodge — just because a notation exists doesn't mean you should use it — and it scales badly: a diagram of "everything" becomes unreadable. Model the <em>important</em> aspect, not the whole system.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">What's Next</div>
+  <p>Next lecture turns to <strong>design documents</strong>, where these diagrams become tools for thinking about the different <em>views</em> of a system before you build it — exactly the reason we learn modeling at all. The professor's book recommendation, <em>Documenting Software Architectures</em> (available through the UCLA Digital Library), expands on these multiple views. Component diagrams and entity-relationship diagrams, skipped here for time, may resurface in the software-architecture lecture at the end of the course.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

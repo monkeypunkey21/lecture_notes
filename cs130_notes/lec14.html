@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 12 — Agile Practices, Lean, Code Review &amp; Code Comprehension</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 12</div>
+  <a href="#part1">Part I — Pair Programming</a>
+  <a href="#why-pair" class="sub">Why It Isn't Half Speed</a>
+  <a href="#pair-roles" class="sub">Driver &amp; Navigator</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Continuous Integration</a>
+  <a href="#why-ci" class="sub">The Big-Bang Problem</a>
+  <a href="#ci-practice" class="sub">It's a Practice, Not a Tool</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — Lean &amp; the Seven Wastes</a>
+  <a href="#toyota" class="sub">From Toyota to Software</a>
+  <a href="#seven-wastes" class="sub">The Seven Wastes</a>
+  <a href="#kanban" class="sub">Kanban &amp; Cycle Time</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — Agile Design &amp; Risk</a>
+  <a href="#design-myth" class="sub">The "No Design" Myth</a>
+  <a href="#risk-driven" class="sub">Risk-Driven Design</a>
+  <a href="#tech-debt" class="sub">Technical Debt</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Code Review</a>
+  <a href="#review-reality" class="sub">Expectation vs Reality</a>
+  <a href="#review-guidelines" class="sub">What Works</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part6">Part VI — Code Comprehension</a>
+  <a href="#bottom-up" class="sub">Bottom-Up Reading</a>
+  <a href="#top-down" class="sub">Top-Down &amp; Beacons</a>
+  <a href="#clean-code" class="sub">Clean Code</a>
+  <a href="#quiz6" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#together">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">COMSCI 130 · Software Engineering</div>
+  <h1>Working in Pairs, Teams &amp; Codebases</h1>
+  <p class="hero-sub">An interactive guide to Lecture 12 — pair programming, continuous integration, lean software development, risk-driven design, technical debt, modern code review, and the skill of reading code.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>Pair Programming — Two Heads, One Keyboard</h2>
+</div>
+
+<p>Most of this lecture is about a single uncomfortable truth: <strong>software is built by people, not by machines</strong>, and people have memory limits, blind spots, and very different skills. Every practice we study today exists to work <em>with</em> those human limits rather than against them. We start with the smallest unit of teamwork — two developers sitting at one machine.</p>
+
+<h3 id="why-pair">Why Are We Learning This? The "It Must Be Half Speed" Trap</h3>
+<p>Here is the intuition almost everyone has the first time they hear about pair programming: if you put two developers on one keyboard, you've paid for two people but you only get one person's worth of typing. So the team's output should be <em>half</em> of what those two people produce working separately. That intuition is wrong, and understanding <em>why</em> it is wrong is the whole point of the practice.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Pair Programming</div>
+  <p><strong>Pair programming</strong> is an Extreme Programming (XP) practice in which two developers work together at one machine, so that <em>no line of code is ever seen by only one pair of eyes</em>. Empirically, two junior developers pairing produce roughly the <em>same</em> total output as two working alone — sometimes more — even though only one is typing.</p>
+</div>
+
+<h3 id="pair-roles">The Two Roles: Driver and Navigator</h3>
+<p>The work is split into two named roles, and keeping them distinct is what makes the practice effective.</p>
+
+<table class="compare-table">
+  <tr><th>Driver</th><th>Navigator</th></tr>
+  <tr><td>Hands on the keyboard. Actually types the code.</td><td>Describes the high-level approach: "now we go into this module and implement this interface."</td></tr>
+  <tr><td>Focused on the line being written right now.</td><td>Watches the bigger picture and scans for bugs.</td></tr>
+</table>
+
+<p>To get the most out of pairing, you <strong>swap roles regularly</strong> so each person practices both. Why does this combination beat two solo developers? The professor gave several concrete reasons.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Bugs are easier to spot in code you didn't type.</strong> When you write code yourself, your brain "knows" what it meant to say and glosses over the actual mistake. The navigator, reading fresh, catches the fault the driver's eyes slide past — and catches it <em>immediately</em>, before it sinks into the codebase.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Junior developers have more bugs to begin with.</strong> Because faults are detected the moment they appear instead of hours later in debugging, the pair spends far less time hunting down problems — which is exactly where juniors lose the most time.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Design decisions get discussed in the moment.</strong> Two people with different experience debate an approach <em>before</em> committing to it. That avoids the much larger cost of making a wrong design choice and having to unwind it later.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Knowledge transfers and team spirit improves.</strong> Both people now understand that code. Rotating who pairs with whom spreads understanding across the team and shrinks the "bus factor" (the number of people whose disappearance would sink the project).</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Connection — This Reappears with AI</div>
+  <p>The professor frames AI-assisted coding as pair programming with the AI as the driver and you as the navigator. But there's a catch: <em>it is hard to be a good navigator if you have never been a driver</em>. You can only guide and review code well if you have enough hands-on coding experience to recognize when something is wrong. Hold onto this — it is the bridge to Part VI on code comprehension.</p>
+</div>
+
+<div class="quiz" id="quiz1-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Two junior developers pair-program instead of working alone. What does research and practice predict about their combined output?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Roughly half, because only one person types at a time.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>About the same as working alone (sometimes higher), because they catch bugs early and make fewer wrong design decisions.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Exactly double, since two minds are always faster than one.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It only helps senior developers, never juniors.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct — B.</strong> The "half speed" prediction (A) ignores that bugs are found in another person's code far faster than in your own, and that wrong design decisions are headed off before they're committed. Those savings roughly cancel the cost of one idle keyboard, so total productivity holds — and for juniors, who produce more bugs, it can even rise. D is wrong: the lecture stressed pairing helps junior developers <em>especially</em>.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>Continuous Integration — Merge Early, Merge Often</h2>
+</div>
+
+<h3 id="why-ci">Why Are We Learning This? Avoiding the "Big Bang"</h3>
+<p>Imagine each teammate works alone on their own branch for the whole quarter, then everyone tries to merge into <code>main</code> in the final week. The result is what the professor calls a <strong>big bang</strong>: a tangle of merge conflicts where features that were never tested together suddenly collide, and you end up rewriting large amounts of code under deadline pressure. Continuous integration exists to make this disaster impossible.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Continuous Integration (CI)</div>
+  <p><strong>Continuous integration</strong> is the software-development <em>practice</em> of regularly merging feature branches into the main branch — ideally as soon as each small piece of work is done. The principle: <em>a bug written yesterday is easier to find than a bug written a month ago</em>, so the shorter your feature branches live, the less likely a painful big-bang merge becomes.</p>
+</div>
+
+<h3 id="ci-practice">The Common Misconception: CI Is Not Just a Tool</h3>
+<p>Many students think "continuous integration" <em>means</em> GitHub Actions, Travis, or Jenkins — the automated pipelines that run your tests. Those tools <em>support</em> CI, but they are not what it is.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Common Mistake — Confusing CI With the Pipeline</div>
+  <p>CI is fundamentally a <strong>practice</strong>: frequently merging code so features get integrated and tested together as early as possible. The automated pipeline is a helper, not the definition. You can run GitHub Actions all day and still violate CI if every branch lives for a month before merging.</p>
+</div>
+
+<h4>The Supporting Practices</h4>
+<p>Several things make frequent merging painless:</p>
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Short-lived feature branches.</strong> A branch older than one week that hasn't merged into <code>main</code> is a warning sign. The professor's rule of thumb: if you follow good user-story design, you won't have these.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Version and configuration management.</strong> Track everything so merges are reproducible.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Keep build + test time under ten minutes.</strong> If running your tests takes half an hour, merging becomes a chore people avoid. Fast feedback keeps the merge habit alive.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Connection — INVEST Makes CI Automatic</div>
+  <p>This builds directly on user-story design. If your stories follow <strong>INVEST</strong> (Independent, Negotiable, Valuable, Estimable, <em>Small</em>, Testable), each one is tiny and merges into <code>main</code> the moment it's done. Small, testable, independent stories <em>are</em> short-lived branches — so good story-writing gives you continuous integration for free.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">The Google Scale Problem</div>
+  <p>Google's codebase is so large that running all tests can take ~5 hours, far over the ten-minute ideal. With thousands of commits landing in that window, when a test fails you can't tell which of a thousand merges broke it. Google built clever heuristics to bisect the culprit — a reminder that the ten-minute rule is an ideal small teams can actually hit, while giants have to engineer around it.</p>
+</div>
+
+<div class="quiz" id="quiz2-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A team has a green GitHub Actions pipeline, but every member keeps their own branch for the whole quarter and merges in the final week. Are they doing continuous integration?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Yes — having a CI pipeline configured is what continuous integration means.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>No — CI is the practice of frequently merging into main; long-lived branches set up a big-bang merge regardless of tooling.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Yes, as long as the build takes under ten minutes.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>No, because they should be using Jenkins instead of GitHub Actions.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct — B.</strong> The pipeline (A, C) is only a support tool. The defining act of CI is merging features into <code>main</code> frequently so they're tested together early; quarter-long branches guarantee the big-bang merge CI is meant to prevent. D is wrong because the choice of tool (Jenkins vs Actions) is irrelevant to whether the practice is being followed.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>Lean Software Development — Eliminating Waste</h2>
+</div>
+
+<h3 id="toyota">Why Are We Learning This? From a Toyota Factory to Your Repo</h3>
+<p>Lean software development isn't a software idea originally — it comes from Toyota's car-manufacturing process, sometimes called <strong>Kaizen</strong>. Where most carmakers optimized to keep their expensive machines fully loaded, Toyota optimized to <strong>reduce waste</strong>: parts arrive exactly when needed ("just in time") instead of piling up in heaps. The software-engineering community copied these ideas into a development methodology.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Waste</div>
+  <p><strong>Waste</strong> is any time or effort spent on something that does <em>not</em> deliver value to the customer. Lean's central goal is to eliminate the <strong>seven wastes</strong> of software development. Crucially, waste isn't just your own lost time: every line of code written must be <em>read</em> by someone later, so unnecessary code wastes everyone's attention too.</p>
+</div>
+
+<h3 id="seven-wastes">The Seven Wastes</h3>
+<p>Walk through these as a checklist you can apply to your own project right now.</p>
+
+<table class="compare-table">
+  <tr><th>Waste</th><th>What it is &amp; why it hurts</th></tr>
+  <tr><td><strong>1. Extra features</strong></td><td>Code nobody needs. You waste your time writing it <em>and</em> everyone's time reading and being confused by it.</td></tr>
+  <tr><td><strong>2. Partially done work</strong></td><td>Long-lived, unmerged feature branches. Time invested with no value delivered, and it confuses anyone waiting on it. (Note how this is the same problem CI attacks.)</td></tr>
+  <tr><td><strong>3. Relearning</strong></td><td>Forcing people to re-acquire knowledge. Assign tasks to whoever is uniquely qualified so they don't have to relearn.</td></tr>
+  <tr><td><strong>4. Handoffs</strong></td><td>Each person who must touch a task adds relearning and task-switching. Shorten the chain — ideally a direct line from customer to developer.</td></tr>
+  <tr><td><strong>5. Task switching</strong></td><td>Switching tasks costs ~15–20 minutes each time to reload everything into working memory. Interruptions are mental-effort waste, and mental effort is your most valuable resource.</td></tr>
+  <tr><td><strong>6. Delays</strong></td><td>Waiting for approvals, management sign-off, or a slow test environment. No developer or user story should sit waiting.</td></tr>
+  <tr><td><strong>7. Defects</strong></td><td>The worst waste. The longer a defect lives, the more damage, lost money, and context-switching it causes — it compounds every other waste.</td></tr>
+</table>
+
+<div class="callout insight">
+  <div class="callout-title">"Stop the Line" and Why Defects Are Worst</div>
+  <p>At Toyota, detecting a defect triggered a <strong>stop-the-line</strong> response: halt production and let the whole organization fix it before making any further progress, because once one defect exists you don't know what else might be wrong. Software teams echo this — when a bug is found, fix it fast before anything worse happens. This is why defects sit at the top of the waste hierarchy.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">The Same Principles Apply to AI Agents</div>
+  <p>The professor noted that "assign work to whoever is uniquely qualified" reappears in multi-agent AI systems: give a task to the agent that has the knowledge it needs. Understanding these human-process principles academically helps you recognize them in AI-based development too.</p>
+</div>
+
+<h3 id="kanban">Cycle Time and the Kanban Board</h3>
+<p>How does Lean actually reduce waste? By minimizing <strong>cycle time</strong>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Cycle Time</div>
+  <p><strong>Cycle time</strong> is the time between the end user notifying you of a problem (or requesting a feature) and that feature being deployed. Lean's whole aim is to shrink it — so Lean <em>avoids</em> long planning meetings. There are no two-hour planning-poker sessions; you just take the highest-value item next.</p>
+</div>
+
+<p>Lean uses a <strong>Kanban board</strong> to track work as it flows through columns. The figure shows the four columns and the order in which a Lean team prioritizes moving items.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="560" height="170" viewBox="0 0 560 170" style="display:block; margin:0 auto; max-width:100%;">
+      <!-- columns -->
+      <rect x="10"  y="40" width="120" height="110" rx="8" fill="#f5f0e8" stroke="#d9d0c4"/>
+      <rect x="150" y="40" width="120" height="110" rx="8" fill="#f5f0e8" stroke="#d9d0c4"/>
+      <rect x="290" y="40" width="120" height="110" rx="8" fill="#f5f0e8" stroke="#d9d0c4"/>
+      <rect x="430" y="40" width="120" height="110" rx="8" fill="#fef3eb" stroke="#c0510a"/>
+      <text x="70"  y="28" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#2a2520">To Do</text>
+      <text x="210" y="28" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#2a2520">In Progress</text>
+      <text x="350" y="28" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#2a2520">Review</text>
+      <text x="490" y="28" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#c0510a">Done</text>
+      <!-- cards -->
+      <rect x="22"  y="54" width="96" height="20" rx="4" fill="#fff" stroke="#d9d0c4"/>
+      <rect x="22"  y="80" width="96" height="20" rx="4" fill="#fff" stroke="#d9d0c4"/>
+      <rect x="162" y="54" width="96" height="20" rx="4" fill="#fff" stroke="#d9d0c4"/>
+      <rect x="302" y="54" width="96" height="20" rx="4" fill="#fff" stroke="#d9d0c4"/>
+      <rect x="442" y="54" width="96" height="20" rx="4" fill="#fff" stroke="#c0510a"/>
+      <!-- priority arrows: review->done highest -->
+      <text x="280" y="125" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#c0510a">→</text>
+      <text x="420" y="125" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#c0510a">→</text>
+      <text x="140" y="125" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#6b6560">→</text>
+      <text x="280" y="148" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">priority of pulling work: rightmost columns first</text>
+    </svg>
+  </div>
+  <div class="figure-caption">A Kanban board. The team prioritizes pulling from the <em>right</em>: move Review→Done first (almost finished), then In-Progress→Review, and only then pull a new high-priority item from To-Do.</div>
+</div>
+
+<p>The flow rule: once an item leaves To-Do, get it to Done as fast as possible. So you first finish what's nearly done. A developer who pushes their feature to Review next reviews someone else's work; only if there's nothing to review do they start a new story — always the highest-priority one they are qualified to do. This produces the most customer value globally.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Lean vs XP — Opposite Philosophies on Planning</div>
+  <p>This is the surprising contrast. In <strong>XP</strong>, you tell the customer <em>when</em> a feature will arrive. In <strong>Lean</strong>, you don't promise dates at all — you ask the customer to be patient and simply always deliver the highest-value item next. Lean trades predictability for raw throughput of value.</p>
+</div>
+
+<details>
+<summary>Expand: The five values of Lean</summary>
+<div class="details-body">
+<p>Lean is less a fixed set of steps and more a set of values:</p>
+<p><strong>1. Identify value</strong> — understand what the customer actually needs.<br>
+<strong>2. Map the value stream</strong> — find and eliminate waste.<br>
+<strong>3. Establish smooth flow</strong> — minimize interruptions between columns.<br>
+<strong>4. Establish pull</strong> — pull the highest-priority items to Done first.<br>
+<strong>5. Seek perfection / build quality in</strong> — use TDD, code reviews, high standards, because shipping low quality creates more waste, defects, and delays. (Toyota was historically famous for exactly this quality reputation.)</p>
+<p>And <strong>empower teams</strong>: assign each task to the person uniquely qualified, because developers have different skills and cognitive limits — they are not interchangeable machines.</p>
+</div>
+</details>
+
+<div class="quiz" id="quiz3-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">On a Lean Kanban board, a developer just finished coding a feature and moved it to Review. There are items in every column. What should they prioritize doing next?</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Immediately pull a brand-new high-priority story from To-Do and start coding.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Help move work that is closest to Done — e.g. review another item sitting in Review — before starting anything new.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Schedule a two-hour planning meeting to decide what to do next.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Wait idle until a manager approves the next task.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct — B.</strong> Lean prioritizes the rightmost columns: get items that are almost finished across the finish line first (Review→Done), because partially done work is itself a waste. Starting fresh work (A) leaves near-complete items stranded. C contradicts Lean's avoidance of long planning meetings, and D is the "delays / waiting for approval" waste.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>Agile Design &amp; Managing Risk</h2>
+</div>
+
+<h3 id="design-myth">Why Are We Learning This? The Great Misreading of Agile</h3>
+<p>The Agile Manifesto says "working software is the primary measure of progress" and "working software over comprehensive documentation." A huge number of people read that and concluded: <em>design is waste; skip the UML, the design docs, the tests, and just ship features.</em> That is a misreading, and clearing it up is the heart of this part.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Common Mistake — "Agile Means No Design"</div>
+  <p>The Manifesto also says: <em>"continuous attention to technical excellence and good design enhances agility."</em> Agile never says testing or design docs are useless. It says they must be used <strong>deliberately</strong> — only when they enhance your ability to deliver high-quality software faster. Drawing 20 UML diagrams per feature just to "feel useful" is <em>not</em> agile; using design to avoid bugs and align the team <em>is</em>.</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Deliberate, Not Ceremonial</div>
+  <p>The best architectures, requirements, and designs <strong>emerge from self-organizing teams</strong>. Rather than a manager mandating "always write a design doc," you trust expert teams to choose the tools, languages, and processes best suited to <em>their</em> software. Agile works brilliantly with people who deeply understand their craft — and badly when imposed top-down. Quality attributes (performance, security, availability) matter exactly to the degree they deliver observable value to the customer, and no more.</p>
+</div>
+
+<p>What goes wrong when teams genuinely skip design? You get a <strong>big ball of mud</strong> — software so tangled it's painfully hard to change. Without planning for change, you never build the abstractions and design patterns that make change cheap, and you can't bolt them on later. You also get a <em>small bus factor</em>, because everyone just heads-down implements features and stops having design conversations.</p>
+
+<h3 id="risk-driven">Risk-Driven Design: The Middle Path</h3>
+<p>So how much upfront design <em>should</em> you do? Not "all of it" (big upfront design), not "none of it" (tiny upfront design). The answer the professor endorses comes from George Fairbanks' book <em>Just Enough Software Architecture</em>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Risk-Driven Design</div>
+  <p><strong>Risk-driven design</strong>: identify the most critical aspects of your software — the things that, if you get them wrong, the product fails — and focus your design effort there. The <em>amount</em> of risk determines the <em>amount</em> of upfront design. A casual mobile game carries little risk; a medical device, space shuttle, or financial trading app carries a lot and demands much more upfront design.</p>
+</div>
+
+<p>Risks are usually decisions that are <strong>hard and expensive to change later</strong>: the programming language, target platforms (iOS/Android), component architecture and connectors, interfaces, and quality attributes. The professor worked through several domains live — here is the pattern of "what's the highest risk?":</p>
+
+<table class="compare-table">
+  <tr><th>Domain</th><th>Highest-risk things to get right early</th></tr>
+  <tr><td>Online shop</td><td>Data consistency, security &amp; privacy (credit cards!), and changeability — competitors ship features fast.</td></tr>
+  <tr><td>Games</td><td>Target platforms (console vs mobile vs Apple Silicon — some games never planned for M1/M2/M3), latency &amp; frame rate, and <em>usability</em> (the highest one, often overlooked).</td></tr>
+  <tr><td>Medical devices</td><td>Correctness (bugs can literally kill), reliability &amp; robustness (work in hot/cold, intermittent power), testability.</td></tr>
+</table>
+
+<h4 id="risk-storming">Risk Storming</h4>
+<p>To find these risks as a team, use <strong>risk storming</strong> (from Simon Brown — riskstorming.com): draw an architecture diagram, then everyone <em>silently</em> writes risks on sticky notes and attaches them where relevant, color-coded red/yellow/green for high/medium/low priority. Then you reveal and discuss. Silence first prevents anchoring; the team's different experts (security, database) surface different risks. Do it early — and it's genuinely fun.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Why AI Struggles Here</div>
+  <p>Risk-driven design needs real-world understanding, and that's where current AI is weak. The professor's example: ask an AI "the car wash is two minutes away, should I drive or walk?" and it says "walk, it's close" — missing that the entire <em>point</em> is to bring your car. AI doesn't grasp what makes software succeed in the real world. Identifying what truly matters is <em>your</em> advantage.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Connection — Responding to Change Requires Planning for It</div>
+  <p>"Responding to change over following a plan" doesn't mean abandoning planning — <em>you can only respond to change if you have planned for change.</em> The design patterns, information hiding, low coupling, and high cohesion you learned earlier are exactly the tools that let architecture absorb change. As Robert C. Martin put it: <em>"A good architect maximizes the number of decisions not made"</em> — and those flexible architectures never emerge by accident; you must invest effort to build them.</p>
+</div>
+
+<h3 id="tech-debt">Technical Debt</h3>
+<p>If you <em>only</em> ever pull items off the feature backlog — always shipping the next user story — your architecture slowly rots. The professor's image: a customer asks "why does adding one more window take so long?" because the system has become a teetering mess.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Technical Debt</div>
+  <p><strong>Technical debt</strong> is the result of short-term-oriented decisions that make <em>future</em> changes more costly or impractical — code smells, missing documentation, skipped refactors, architectural shortcuts taken to ship a feature on time. Like financial debt, it accrues "interest": the longer it sits, the more it slows you down.</p>
+</div>
+
+<p>The recommended remedy is a <strong>technical-debt backlog</strong> alongside your feature backlog. When you're forced to cut a corner to hit a release, you log a technical-debt item: "I committed this debt; I'll pay it back." Two people own the two backlogs: someone who deeply understands user needs owns the <em>feature</em> backlog; a <strong>software architect</strong> skilled in design and quality owns the <em>technical-debt</em> backlog.</p>
+
+<table class="compare-table">
+  <tr><th>Strategy A — A little each sprint (preferred)</th><th>Strategy B — A dedicated debt sprint</th></tr>
+  <tr><td>Every iteration mixes a few debt items with feature work.</td><td>Pause feature work for one whole sprint to pay down debt.</td></tr>
+  <tr><td>Customer always sees a steady stream of features.</td><td>Customer wonders "did you do anything this sprint?"</td></tr>
+  <tr><td>Default recommendation.</td><td>Only when debt has grown faster than you can absorb; best timed right after a release.</td></tr>
+</table>
+
+<div class="quiz" id="quiz4-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">According to the lecture, what does risk-driven design say about how much upfront design to do?</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Always do extensive big upfront design — plan everything before coding.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Never do upfront design — agile means just ship features.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Let the amount of risk decide: focus design effort on the few high-risk, hard-to-change things, and do more upfront design when risk is high.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Always do exactly two design docs per feature regardless of the project.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct — C.</strong> Risk-driven design is the middle path between big upfront design (A) and tiny/no upfront design (B): you identify the highest-risk, hardest-to-change elements and concentrate design there, scaling the total amount of design to the project's risk. D is the exact ceremonial, one-size-fits-all mandate that agile explicitly rejects.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>Code Review — Expectation vs Reality</h2>
+</div>
+
+<h3 id="review-reality">Why Are We Learning This? Code Review Doesn't Do What You Think</h3>
+<p>Historically, code review meant <strong>Fagan inspections</strong>: a group gathered and read source code aloud line by line in a long meeting until everyone understood every line. Extremely effective at finding bugs — and extremely slow and wasteful. Modern practice instead assigns 1–2 reviewers to look over a new feature. But here is the twist that the research reveals.</p>
+
+<p>Microsoft Research (Christian Bird and colleagues) asked developers what code review is <em>for</em>. The top expected answer was <strong>finding bugs</strong>. Then they measured what review comments actually do.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="520" height="200" viewBox="0 0 520 200" style="display:block; margin:0 auto; max-width:100%;">
+      <!-- expectation -->
+      <text x="20" y="24" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#2a2520">Expectation</text>
+      <text x="20" y="46" font-family="DM Sans, sans-serif" font-size="12" fill="#6b6560">"Code review finds bugs"</text>
+      <rect x="20" y="56" width="260" height="22" rx="4" fill="#c0510a"/>
+      <text x="150" y="71" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#fff">bug-finding (expected high)</text>
+      <!-- reality -->
+      <text x="20" y="118" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#2a2520">Reality (share of comments)</text>
+      <rect x="20" y="130" width="200" height="18" rx="3" fill="#2d8a4e"/>
+      <text x="228" y="144" font-family="DM Sans, sans-serif" font-size="11" fill="#2a2520">~30% code improvement &amp; understanding</text>
+      <rect x="20" y="154" width="100" height="18" rx="3" fill="#c53030"/>
+      <text x="128" y="168" font-family="DM Sans, sans-serif" font-size="11" fill="#2a2520">~15% defects (bugs)</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Developers <em>expect</em> review to find bugs, but only ~15% of real comments are about defects; the largest share (~30%) is code improvement, readability, and maintainability.</div>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Review Is About Readability, Not Bugs</div>
+  <p>Only about <strong>15%</strong> of real code-review comments concern defects. The biggest categories are <strong>code improvement, understanding, and long-term maintainability</strong>: naming, missing comments, style, organization, alternative solutions. And it gets sharper — when the authors rated the comments they received, only about <strong>33%</strong> were judged useful at all. Code review's real value is knowledge sharing and readability, not bug-catching. Embracing that is what makes review effective.</p>
+</div>
+
+<p>Why does this matter? Because the goal of source code is not only to be understood by a machine but by <em>humans</em>, who must change it. As Robert C. Martin says: <em>"Any fool can write code that a machine can understand. Good programmers write code that humans can understand."</em> At Google, code review explicitly is <em>not</em> for finding bugs (they have tests and verification for that) — it's to ensure developers write code other developers can understand.</p>
+
+<h3 id="review-guidelines">What Actually Makes Reviews Work</h3>
+<p>Research-backed guidelines the professor highlighted (a later 2015 Microsoft study found the review tool is open ~5–6 hours/day but developers spend only ~30 minutes/day actually reviewing):</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Use 1–2 reviewers.</strong> Google found one is the sweet spot; Microsoft found two. Either way, not 4–5 — large groups (like Fagan inspections) become deeply inefficient.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Cap a review at ~one hour.</strong> Review quality degrades significantly after about an hour of continuous reviewing.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Keep pull requests to ~200–400 lines.</strong> This is the key counterintuitive finding (next callout).</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Footgun — The Giant Pull Request</div>
+  <p>You'd think a bigger PR gets more review time. The <em>opposite</em> is true. Past ~400 lines (and certainly past ~1000), reviewers stop reading and just skim — "looks good to me" — often leaving one nitpick comment as evidence they "reviewed" it. A giant PR therefore gets <em>less</em> real scrutiny. Submit the smallest coherent feature that provides value; stack small PRs instead of bundling unrelated changes.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Connection — Small PRs Are CI and Lean Again</div>
+  <p>Small, focused pull requests review faster (~20–30 min), so they don't sit waiting — that's Lean's "eliminate delays" and CI's "short-lived branches" showing up again. Notice how INVEST → small stories → short branches → small PRs → fast reviews is one connected chain running through the whole lecture.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Ramp-Up and Google's Readability Test</div>
+  <p>New reviewers learn fast but generally need 6–12 months to become productive contributors. At Google you must pass a <strong>code readability test</strong> for a language before you're allowed to review code in it, and each piece of code has a designated <em>owner</em> overseeing its reviews — institutional ways to keep review quality high.</p>
+</div>
+
+<div class="quiz" id="quiz5-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Empirical studies of real-world code review found which of the following?</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Most comments (~50–60%) point out bugs, confirming that review's main value is defect-finding.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Only ~15% of comments are about defects; the majority concern readability/maintainability, and bigger pull requests get <em>less</em> real review attention.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>The more reviewers you assign, the better — five reviewers is ideal.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Review quality improves the longer you keep reviewing in one sitting.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct — B.</strong> Despite the expectation that review finds bugs, only ~15% of comments concern defects; most are about code improvement and maintainability. A inverts the real number. C is wrong — 1–2 reviewers is the sweet spot, not five. D is wrong — quality degrades after about an hour, and oversized PRs get skimmed rather than read.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART VI ═══════════════════════ -->
+<section id="part6" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part VI</div>
+  <h2>Code Comprehension — The Skill of Reading Code</h2>
+</div>
+
+<h3 id="why-read">Why Are We Learning This? The Skill That's About to Matter Most</h3>
+<p>The professor's prediction: over the next five years developers will spend an <em>increasing</em> share of time reading code and a shrinking share writing it, because AI agents write much of the code. (He notes friends at Meta say they've barely written code in months.) Since you'll be reviewing AI output that can run to tens of thousands of lines, <strong>fast, effective code comprehension is your highest-value near-term skill</strong> — and it's barely taught. There are two ways to read code.</p>
+
+<h3 id="bottom-up">Bottom-Up Reading</h3>
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Bottom-Up Comprehension</div>
+  <p><strong>Bottom-up reading</strong> starts from the concrete and builds abstractions by reading line by line, top to bottom: understand line 1, then line 2, then line 3… You assemble meaning from the details upward. It's the approach novices naturally favor. (When you lack mental "schemas" for the domain, you fall back to <strong>chunking</strong> — grouping a few lines into a meaningful unit, then combining chunks into higher-level meaning.)</p>
+</div>
+<p>The cost: you must read <em>every</em> line and hold a lot in working memory, even lines irrelevant to your actual question. It's slow.</p>
+
+<h3 id="top-down">Top-Down Reading and Beacons</h3>
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Top-Down Comprehension</div>
+  <p><strong>Top-down reading</strong> starts from a <em>hypothesis</em>, not from line 1: "I think this code does X." You then hunt for evidence — called <strong>beacons</strong>, key lines or patterns that confirm or refute the hypothesis. You start abstract (a UML-like, big-picture view) and drill down only to the details that answer your question. Research finds it's <em>vastly superior</em> in ~99% of cases where people can do it.</p>
+</div>
+
+<p>Here is the hypothesis-driven loop a top-down reader runs — and you can practice it on any code today:</p>
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Start with a question, not an answer.</strong> Ask "why am I reading this code?" — e.g. "is this function buggy?" or "where is the database connection?" Form a hypothesis: "the system must have a DB connection module."</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Decide what evidence would answer it.</strong> What beacon would confirm the hypothesis? For a DB module: SQL endpoints, <code>dbConnect()</code> methods, identifier names like <code>PaymentCalculator</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Scan for those beacons</strong> instead of reading every line — e.g. search the codebase for "payment" or "overtime." Top-down readers don't read everything; they navigate to the relevant parts.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Confirm, then form the next hypothesis</strong> — repeat until you know enough to make the change, review the code, or implement the feature.</p>
+</div>
+
+<h4 id="beacons">What Counts as a Beacon?</h4>
+<p>Beacons are signposts that reveal what code does and why. The class brainstormed these — note how many are things you've already studied:</p>
+<table class="compare-table">
+  <tr><th>Beacon</th><th>Why it helps</th></tr>
+  <tr><td>Meaningful identifier names</td><td>A class named <code>OvertimeCalculator</code> announces its purpose. Misleading names are <em>worse</em> than none — so name carefully, for the reader's sake.</td></tr>
+  <tr><td>Design patterns</td><td>"Singleton" or "Factory" instantly tells you the structure and collaborations. Studying patterns builds the schemas top-down reading relies on.</td></tr>
+  <tr><td>Tests</td><td>An executable, unambiguous spec that's <em>always up to date</em> because it runs regularly — the best ground truth of what the code should do. You can even write a test to probe your hypothesis.</td></tr>
+  <tr><td>Comments &amp; documentation</td><td>READMEs, design docs convey high-level intent — <em>but</em> may be outdated, so trust with care.</td></tr>
+  <tr><td>Assertions (pre/post-conditions)</td><td>A precondition + postcondition assertion tells you exactly what a function expects and provides, and is checked at runtime so it stays true. Put them in <em>production</em> code, not just tests.</td></tr>
+  <tr><td>Code structure</td><td>Nested for-loops hint at the algorithm; structural patterns suggest intent (lower-level signal).</td></tr>
+  <tr><td>Diagrams (incl. AI-generated)</td><td>UML/architecture views give the high-level map. AI is now good at drafting roughly-UML diagrams that save hours of orientation.</td></tr>
+</table>
+
+<div class="callout tip">
+  <div class="callout-title">How to Become a Top-Down Reader</div>
+  <p>You move from bottom-up to top-down by building <strong>domain knowledge</strong>. You can only form a good hypothesis if you understand what the software is about and know the domain's vocabulary and design patterns — which is exactly why undergraduates default to bottom-up. So before reading code, first understand the <em>requirements</em>: the user stories, functional and quality requirements, architecture docs, and a system-level sequence diagram. That foundation lets you generate good hypotheses.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Opportunistic Processing — Toggle Between the Two</div>
+  <p>Experts toggle: when reviewing AI-written code you can't read all 10,000+ lines, so use <strong>top-down</strong> to find the most critical, highest-risk code, then switch to careful <strong>bottom-up</strong> reading for just that piece. (Note the callback: "highest-risk code" is risk-driven design from Part IV applied to reading.) This is how practitioners actually review AI code today.</p>
+</div>
+
+<h3 id="clean-code">Clean Code — Writing for the Reader</h3>
+<p>Code review's job is partly to decide what code is <em>clean</em>. There's no single definition; the professor collected several, all pointing the same direction — clean code is code a <em>human</em> can understand and confidently change.</p>
+<table class="compare-table">
+  <tr><th>Source</th><th>Definition of clean code</th></tr>
+  <tr><td>Dave Thomas</td><td>Can be read and enhanced by a developer <em>other than</em> its original author. (You know you understand it when you feel comfortable changing it.)</td></tr>
+  <tr><td>Michael Feathers</td><td>Always looks like it was written by someone who <em>cares</em> — about the person who will read it.</td></tr>
+  <tr><td>Ward Cunningham</td><td>Each routine turns out to be pretty much what you <em>expect</em> — i.e. your top-down hypotheses come true.</td></tr>
+  <tr><td>Grady Booch</td><td>Simple and direct; reads like well-written prose; never obscures intent.</td></tr>
+  <tr><td>The professor</td><td>Convinces the reader the code is likely free of bugs and gives contributors confidence that changes won't break anything unexpected.</td></tr>
+</table>
+
+<p>Two phrasings worth keeping: there are two ways to write code — one that <em>obviously has no bugs</em>, and one that has <em>no obvious bugs</em>; the first is much harder and the goal. And violated assumptions should be caught early — which is exactly what assertions do.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Code Is Read Far More Than It's Written</div>
+  <p>Research found code is read <strong>10–14 times</strong> more often than it's written, and developers spend about <strong>48%</strong> of their time just understanding code. So every minute spent making code easier to read pays back many times over. Beware the <strong>broken-window effect</strong>: once one piece of unclean code lands, developers write more unclean code around it ("if that passed review, why should I bother?"). This is why you avoid even small technical debt — it multiplies.</p>
+</div>
+
+<div class="quiz" id="quiz6-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">You're handed a 5,000-line codebase and asked one specific question: "where does it connect to the database?" What does the lecture say is the superior strategy?</div>
+  <div class="quiz-options" data-quiz="q6">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Read every line from top to bottom (bottom-up) until you eventually reach the database code.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Form a hypothesis ("there's a DB connection module") and scan for beacons — SQL endpoints, <code>dbConnect</code> methods, telling identifier names — drilling down only where relevant.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Assign five reviewers to read it aloud together in a meeting.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Rewrite the whole module so you understand it.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q6','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q6">
+    <strong>Correct — B.</strong> That's top-down, hypothesis-driven reading: start from a question, predict what beacons would answer it, and navigate to just those parts — research found it superior in ~99% of cases. A is bottom-up: correct but slow, forcing you to hold irrelevant lines in working memory. C revives the inefficient Fagan inspection, and D is wildly more work than the question requires.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SUMMARY ═══════════════════════ -->
+<section id="together" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>Every topic today rests on one foundation: <strong>software is built by humans with real cognitive limits</strong>, and good process works <em>with</em> those limits. That single idea ties the lecture into a graph rather than a list.</p>
+
+<p><strong>Pair programming</strong> exploits a quirk of human attention — we find bugs in others' code faster than our own — to make two people roughly as productive as two solo developers, while spreading knowledge and shrinking the bus factor. <strong>Continuous integration</strong> exploits another quirk — a fresh bug is easier to find than an old one — so we merge small, short-lived branches constantly to avoid the big-bang merge.</p>
+
+<p><strong>Lean</strong> generalizes this into a war on waste, with defects as the worst waste and cycle time as the metric, all visualized on a Kanban board where work flows rightward to Done. <strong>Agile design</strong> corrects the dangerous misreading that "agile means no design": instead, <strong>risk-driven design</strong> spends design effort precisely where the cost of getting it wrong is highest, and a <strong>technical-debt backlog</strong> keeps short-term shortcuts from compounding into a big ball of mud.</p>
+
+<p>Then the lecture turns from writing to <em>reading</em>. <strong>Code review</strong>, despite everyone expecting it to find bugs, mostly transfers knowledge and improves readability — and only works when PRs stay small (200–400 lines) and reviewers stay few (1–2) and fresh (under an hour). Finally, <strong>code comprehension</strong> names the skill underneath all of it: top-down, hypothesis-and-beacon reading beats line-by-line bottom-up reading, and <strong>clean code</strong> is simply code written so other humans can form true hypotheses about it.</p>
+
+<p>Watch how one chain threads through the entire lecture: <strong>INVEST stories → small short-lived branches → continuous integration → small focused pull requests → fast effective reviews</strong>. The same value — finish small things fast, never let work pile up unseen — drives pairing, CI, Lean, reviews, and clean code alike.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Through-Line</div>
+  <p>Design patterns, information hiding, low coupling, and high cohesion — everything from earlier in the course — are the tools that let you <em>plan for change</em> and write code that broadcasts its intent through beacons. "A good architect maximizes the number of decisions not made," and good code maximizes the number of questions a reader never has to ask.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">What's Next</div>
+  <p>The professor flagged two upcoming threads. A later <strong>Scrum lecture</strong> will cover large organizations that need top-down planning — where these lightweight agile/lean ideas hit their limits — and a final-week lecture on <strong>generative AI development</strong> will return to nearly all of today's ideas: AI as the driver while you navigate and review, top-down reading to find the risky code in AI's tens of thousands of lines, and why deeply understanding design still makes <em>you</em> valuable. Practice the top-down reading habit on any code you touch this week — it's the one skill you can start building today.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>
