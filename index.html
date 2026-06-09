@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>COMSCI 130 — Interactive Lecture Notes</title>
+<title>Interactive Lecture Notes</title>
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -21,137 +21,73 @@
     background: var(--bg);
     color: var(--text);
     line-height: 1.6;
-    padding: 4rem 1.5rem;
+    padding: 5rem 1.5rem;
+    min-height: 100vh;
   }
-  .wrap { max-width: 980px; margin: 0 auto; }
+  .wrap { max-width: 880px; margin: 0 auto; }
   .eyebrow {
     font-size: 0.78rem; font-weight: 600; letter-spacing: 0.12em;
     text-transform: uppercase; color: var(--accent); margin-bottom: 0.75rem;
   }
   h1 {
     font-family: 'Source Serif 4', Georgia, serif;
-    font-size: clamp(2rem, 5vw, 3rem); font-weight: 700;
-    line-height: 1.1; margin-bottom: 0.75rem;
+    font-size: clamp(2.2rem, 5.5vw, 3.4rem); font-weight: 700;
+    line-height: 1.08; margin-bottom: 0.85rem;
   }
-  .sub { color: var(--muted); font-size: 1.1rem; max-width: 60ch; margin-bottom: 3rem; }
-  .week { margin-bottom: 2.5rem; }
-  .week-label {
-    font-size: 0.82rem; font-weight: 700; letter-spacing: 0.1em;
-    text-transform: uppercase; color: var(--muted);
-    border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 1rem;
-  }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
-  .card {
-    display: block; text-decoration: none; color: inherit;
+  .sub { color: var(--muted); font-size: 1.15rem; max-width: 56ch; margin-bottom: 3.5rem; }
+  .courses { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; }
+  .course {
+    display: flex; flex-direction: column;
+    text-decoration: none; color: inherit;
     background: var(--surface); border: 1px solid var(--border);
-    border-radius: 12px; padding: 1.25rem 1.4rem;
+    border-radius: 16px; padding: 2rem 2rem 1.75rem;
     transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
   }
-  .card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(42,37,32,0.08);
+  .course:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(42,37,32,0.10);
     border-color: var(--accent);
   }
-  .card .num {
-    display: inline-block; font-size: 0.72rem; font-weight: 700;
-    letter-spacing: 0.08em; text-transform: uppercase;
+  .course .code {
+    display: inline-block; align-self: flex-start;
+    font-size: 0.74rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
     color: var(--accent); background: var(--accent-soft);
-    padding: 0.15rem 0.55rem; border-radius: 999px; margin-bottom: 0.6rem;
+    padding: 0.2rem 0.6rem; border-radius: 999px; margin-bottom: 1rem;
   }
-  .card h3 {
+  .course h2 {
     font-family: 'Source Serif 4', Georgia, serif;
-    font-size: 1.18rem; font-weight: 600; line-height: 1.25;
+    font-size: 1.6rem; font-weight: 700; line-height: 1.15; margin-bottom: 0.5rem;
   }
-  .card.exam { opacity: 0.72; }
-  .card.exam .num { color: var(--muted); background: #ece6dd; }
+  .course p { color: var(--muted); font-size: 0.98rem; margin-bottom: 1.5rem; }
+  .course .meta {
+    margin-top: auto; display: flex; align-items: center; justify-content: space-between;
+    font-size: 0.88rem; font-weight: 600; color: var(--muted);
+  }
+  .course .go { color: var(--accent); }
   footer { margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.9rem; }
-  footer a { color: var(--accent); }
+  footer code { color: var(--accent); }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <p class="eyebrow">COMSCI 130 · Software Engineering · Spring 2026</p>
+  <p class="eyebrow">UCLA Computer Science · Spring 2026</p>
   <h1>Interactive Lecture Notes</h1>
-  <p class="sub">Self-contained, interactive study pages generated from lecture transcripts — one per session. Click any lecture to start learning.</p>
+  <p class="sub">Self-contained, interactive study pages generated from lecture transcripts — one per session. Pick a course to begin.</p>
 
-  <div class="week">
-    <div class="week-label">Week 1</div>
-    <div class="grid">
-      <a class="card" href="cs130_notes/lec1.html"><span class="num">Lecture 1</span><h3>Engineering Software the Right Way</h3></a>
-      <a class="card" href="cs130_notes/lec2.html"><span class="num">Lecture 2</span><h3>Modeling &amp; UML</h3></a>
-    </div>
-  </div>
+  <div class="courses">
+    <a class="course" href="cs130">
+      <span class="code">COMSCI 130</span>
+      <h2>Software Engineering</h2>
+      <p>Modeling &amp; UML, design patterns, refactoring, testing, agile processes, and software architecture.</p>
+      <div class="meta"><span>20 lectures</span><span class="go">Open →</span></div>
+    </a>
 
-  <div class="week">
-    <div class="week-label">Week 2</div>
-    <div class="grid">
-      <a class="card" href="cs130_notes/lec3.html"><span class="num">Lecture 3</span><h3>Class &amp; Sequence Diagrams</h3></a>
-      <a class="card" href="cs130_notes/lec4.html"><span class="num">Lecture 4</span><h3>Software Design &amp; Design Docs</h3></a>
-    </div>
-  </div>
-
-  <div class="week">
-    <div class="week-label">Week 3</div>
-    <div class="grid">
-      <a class="card" href="cs130_notes/lec5.html"><span class="num">Lecture 5</span><h3>Information Hiding &amp; Modular Design</h3></a>
-      <a class="card" href="cs130_notes/lec6.html"><span class="num">Lecture 6</span><h3>Design Patterns: Strategy, Observer &amp; Mediator</h3></a>
-    </div>
-  </div>
-
-  <div class="week">
-    <div class="week-label">Week 4</div>
-    <div class="grid">
-      <a class="card" href="cs130_notes/lec7.html"><span class="num">Lecture 7</span><h3>Creational Design Patterns</h3></a>
-      <a class="card" href="cs130_notes/lec8.html"><span class="num">Lecture 8</span><h3>Singleton, Adapter, Facade &amp; Command</h3></a>
-    </div>
-  </div>
-
-  <div class="week">
-    <div class="week-label">Week 5</div>
-    <div class="grid">
-      <a class="card" href="cs130_notes/lec9.html"><span class="num">Lecture 9</span><h3>Refactoring &amp; Code Smells</h3></a>
-      <a class="card" href="cs130_notes/lec10.html"><span class="num">Lecture 10</span><h3>Software Testing</h3></a>
-    </div>
-  </div>
-
-  <div class="week">
-    <div class="week-label">Week 6</div>
-    <div class="grid">
-      <a class="card exam" href="cs130_notes/lec11.html"><span class="num">Lecture 11</span><h3>Exam Session — transcript incomplete</h3></a>
-      <a class="card" href="cs130_notes/lec12.html"><span class="num">Lecture 12</span><h3>Coverage, Paths &amp; Symbolic Execution</h3></a>
-    </div>
-  </div>
-
-  <div class="week">
-    <div class="week-label">Week 7</div>
-    <div class="grid">
-      <a class="card" href="cs130_notes/lec13.html"><span class="num">Lecture 13</span><h3>Software Processes: Waterfall, Agile &amp; XP</h3></a>
-      <a class="card" href="cs130_notes/lec14.html"><span class="num">Lecture 14</span><h3>Agile Practices, Lean &amp; Code Review</h3></a>
-    </div>
-  </div>
-
-  <div class="week">
-    <div class="week-label">Week 8</div>
-    <div class="grid">
-      <a class="card" href="cs130_notes/lec15.html"><span class="num">Lecture 15</span><h3>Interoperability</h3></a>
-      <a class="card" href="cs130_notes/lec16.html"><span class="num">Lecture 16</span><h3>Software Architecture &amp; Quality Attributes</h3></a>
-    </div>
-  </div>
-
-  <div class="week">
-    <div class="week-label">Week 9</div>
-    <div class="grid">
-      <a class="card" href="cs130_notes/lec17.html"><span class="num">Lecture 17</span><h3>Scrum &amp; Scaling Agile</h3></a>
-      <a class="card" href="cs130_notes/lec18.html"><span class="num">Lecture 18</span><h3>Designing Testable Software</h3></a>
-    </div>
-  </div>
-
-  <div class="week">
-    <div class="week-label">Week 10</div>
-    <div class="grid">
-      <a class="card" href="cs130_notes/lec19.html"><span class="num">Lecture 19</span><h3>AI Coding Agents &amp; Software Engineering</h3></a>
-      <a class="card" href="cs130_notes/lec20.html"><span class="num">Lecture 20</span><h3>Designing Monopoly: End-to-End Case Study</h3></a>
-    </div>
+    <a class="course" href="cs134">
+      <span class="code">COMSCI 134</span>
+      <h2>Distributed Systems</h2>
+      <p>Logical time, replication, consensus &amp; Paxos, weak consistency, sharding, and planet-scale storage systems.</p>
+      <div class="meta"><span>18 lectures</span><span class="go">Open →</span></div>
+    </a>
   </div>
 
   <footer>
