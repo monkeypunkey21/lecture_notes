@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CS134 Lecture 1 — Interactive Textbook</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">CS134 · Lecture 1</div>
+  <a href="#part1">Part I — What Is a Distributed System?</a>
+  <a href="#define-ds" class="sub">A Working Definition</a>
+  <a href="#everywhere" class="sub">They Are Everywhere</a>
+  <a href="#google-goals" class="sub">The Goals of a Big Service</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Why They Are Hard</a>
+  <a href="#partial-failure" class="sub">Partial Failure</a>
+  <a href="#ambiguity" class="sub">Failures Are Ambiguous</a>
+  <a href="#concurrency" class="sub">Concurrency &amp; Shared State</a>
+  <a href="#other-challenges" class="sub">Scale, Testing, Security</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — The Goal of the Class</a>
+  <a href="#the-abstraction" class="sub">One Machine Out of Many</a>
+  <a href="#the-tradeoff" class="sub">Abstraction vs. Performance</a>
+  <a href="#vs-os" class="sub">Contrast With Operating Systems</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — The Fireworks Problem</a>
+  <a href="#two-towns" class="sub">Two Towns &amp; a Foggy Lake</a>
+  <a href="#acks-forever" class="sub">The Endless Acknowledgement</a>
+  <a href="#consensus" class="sub">The Consensus Problem</a>
+  <a href="#roadmap" class="sub">What We'll Cover</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Course Logistics</a>
+  <a href="#structure" class="sub">Two Halves of the Class</a>
+  <a href="#assignments" class="sub">Assignments &amp; Grading</a>
+  <a href="#ai-policy" class="sub">The AI Policy</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#synthesis">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">CS134 · Distributed Systems</div>
+  <h1>Many Machines, One Illusion</h1>
+  <p class="hero-sub">An interactive guide to Lecture 1 — what a distributed system is, why we can't escape them, why they're so hard to get right, and the single big goal this course is built around.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>What Is a Distributed System?</h2>
+</div>
+
+<p>This is the very first lecture of the course, so we start at zero. Before we can talk about <em>why</em> distributed systems are interesting or hard, we need a precise picture of <em>what</em> one even is. The word "distributed" gets thrown around loosely in everyday tech talk, so let's pin it down.</p>
+
+<h3 id="define-ds">A Working Definition</h3>
+<p>When you use Google, Amazon, or TikTok, it feels like you are talking to one program on one computer. You type a query, you get a result. But behind that single, smooth experience is not one computer — it is a vast collection of separate machines, sitting in different buildings, sometimes on different continents, all passing messages to one another to produce your answer. That collection is the distributed system.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Distributed System</div>
+  <p>A <strong>distributed system</strong> is a collection of computers (or software elements) that <strong>cooperate over a network</strong> to provide some service to users. The defining features are (1) <em>multiple independent machines</em> and (2) they coordinate <em>by sending messages</em>, because they do not share memory the way threads on one computer do.</p>
+</div>
+
+<p>Two words in that definition are doing the heavy lifting. <strong>Cooperate</strong> means the machines are not just sitting side by side — they actively work together on the same task. <strong>Network</strong> means the only way they can talk is by sending messages across wires and fiber, which (as we will see) can be slow, can be dropped, and gives no shared clock or shared memory. Almost everything difficult about this course flows from that second word.</p>
+
+<h3 id="everywhere">Reason #1 to Study Them: They Are Everywhere</h3>
+<p>So why devote a whole course to this? The first answer is simply that distributed systems run the modern world. Nearly every large software company — Google, Amazon, Netflix, Cloudflare — serves thousands or millions of clients across the globe using distributed systems. You cannot serve a planet's worth of users from a single machine in a garage.</p>
+
+<p>The professor showed two telling images. The first was Google in 1997: a couple of computers in a garage. The second was Google <em>today</em>: hundreds of data centers spread across the world, each holding hundreds of thousands of machines, with users and data centers all interacting with one another. The same is true for Amazon, and for "edge" companies like Cloudflare that push servers even closer to users instead of concentrating them in big central data centers.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Distributed in Infrastructure <em>and</em> Software</div>
+  <p>Distribution shows up at two levels. <strong>Infrastructure</strong> is distributed: physical machines spread across the globe. But <strong>software</strong> is distributed too. Amazon's internal service-dependency graph is so dense its own engineers nicknamed it the "death star" — thousands of tiny <em>microservices</em>, each doing one job, all calling one another. Netflix and others have the same. A modern app is a web of small services talking over the network, not one big program.</p>
+</div>
+
+<h3 id="google-goals">What Are We Actually Trying to Achieve?</h3>
+<p>The lecture's first in-class discussion asked: imagine you are a Google engineer building search. What are your goals when serving results to users? The class brainstormed, and the answers cluster into a short list that, conveniently, is exactly the list of things distributed systems are <em>for</em>:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Resilience to failures</strong> — also called reliability, uptime, or availability. The service should keep working even when individual parts break.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Low latency</strong> — responses should be fast. And not just fast for one query: latency matters <em>amortized</em> across many queries and many users, since a real user fires off a whole sequence of requests.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Support for large load</strong> — this is a second, distinct kind of speed. One axis is "how fast does <em>a</em> request respond?" The other is "how <em>many</em> requests can I handle at once?" Handling more requests on the same hardware means lower cost <em>and</em> the ability to absorb real traffic.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Accuracy / relevance</strong> — easy access to the most relevant results. (A real systems goal, even if it overlaps with the search-quality side of things.)</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Why This Matters Later</div>
+  <p>Keep this list — resilience, low latency, large load, accuracy — in your head. The entire rest of the course is about <em>how</em> distributed systems achieve these goals, and Part II is about <em>why</em> achieving them is so painfully hard. These four words are the "what"; everything else is the "how."</p>
+</div>
+
+<p>Notice <em>why</em> these goals push you toward distribution specifically. You want to handle <strong>geographic separation</strong> (customers worldwide, but still fast). You want to <strong>build reliable systems out of unreliable components</strong> (more on this below). You want to <strong>aggregate machines for capacity</strong> — and crucially, the old strategy of "just buy a bigger computer" (scaling <em>up</em>) is long gone. The modern strategy is to scale <strong>horizontally</strong>: buy a bunch of small, cheap machines and wire them together. And you want to <strong>customize services for specific tasks</strong> — the microservices pattern.</p>
+
+<div class="quiz" id="quiz-box-1">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A company finds its single server can't keep up with traffic. The professor said the <em>modern</em> way to handle this is to "scale horizontally." What does that mean?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Replace the server with one much bigger, faster machine</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Add many small, cheap machines and connect them together</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Rewrite the software in a faster programming language</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Move the server physically closer to the users</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct — B.</strong> Scaling <em>horizontally</em> means adding more small, cheap machines and coordinating them, rather than buying one ever-bigger machine (which would be scaling <em>up</em>, answer A — the strategy the professor said is "long gone"). This horizontal approach is cheaper and is precisely why distributed systems exist: you must now coordinate many machines, which is the whole subject of the course. Answer D describes edge/CDN placement, a related but different idea.</div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>Why They Are Hard to Reason About</h2>
+</div>
+
+<p>If distributed systems just meant "more computers," they would not deserve a course. The second — and arguably more important — reason to study them is that they are genuinely <strong>hard to reason about and hard to develop</strong>. Several deep challenges make them unlike ordinary single-machine programming. We'll take the three core ones in turn, then survey the rest.</p>
+
+<h3 id="partial-failure">Challenge 1: Partial Failure</h3>
+<p>On one computer, failure is usually all-or-nothing: the program crashes, or it doesn't. In a distributed system, <em>parts</em> fail while the rest keeps running. This is <strong>partial failure</strong>, and it is the defining headache of the field.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Partial Failure</div>
+  <p><strong>Partial failure</strong> is when some components of a distributed system fail while others keep working. There is a famous line, attributed to Leslie Lamport, that captures it: <em>"A distributed system is one where you can't get your work done because a machine you've never heard of is broken."</em></p>
+</div>
+
+<p>Here is why this is unavoidable, not just unlucky. Suppose a single server fails only once a month — very reliable. Now suppose you run <em>hundreds of thousands</em> of servers (Facebook's Prineville data center alone has on the order of hundreds of thousands of servers, half a million disks, thousands of network switches). When you aggregate that many "reliable" components, something is failing every <em>day</em>, every <em>hour</em>, maybe every <em>minute</em>. Rare events become constant events at scale.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>You must <strong>design assuming failures will happen</strong> — not as an edge case, but as the normal state of the world. The job is to build a system that <em>tolerates</em> failures gracefully and still presents users the <em>illusion</em> that everything is working, with "many nines" of reliability (down only seconds per year), all on top of hardware that is constantly breaking somewhere.</p>
+</div>
+
+<h3 id="ambiguity">Challenge 2: Failures Are Ambiguous</h3>
+<p>It gets worse. Not only do parts fail — when something goes wrong, you often <em>cannot even tell what went wrong</em>. The class was asked: you send a request (say, to load your next reel on TikTok) and nothing comes back. Is it the server that failed? The network? Or are both just slow? Students proposed clever ideas — heartbeat signals, trying a different server, distinct status codes for different failure layers. These help <em>sometimes</em>, but the professor revealed it as a trick question.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Fundamental Limit — You Cannot Always Tell</div>
+  <p>If you send a request and <strong>get a response</strong>, great — you learned something. But if you send a request and <strong>no response comes back</strong>, in the general case you <em>cannot</em> distinguish among: the server crashed, the network dropped your message, the network dropped the <em>reply</em>, or everything is just slow. You have no access to the other side of the world, so you can make <strong>no assumptions about delays</strong>. This ambiguity is fundamental to distribution, not a bug you can engineer away.</p>
+</div>
+
+<h3 id="concurrency">Challenge 3: Concurrency Over Shared State</h3>
+<p>A tempting "easy fix" came up: why not just partition users across machines — give each ZIP code or county its own server — and run them independently? Two problems sink this. The first is <strong>load</strong>: splits are hard to balance, load is <em>dynamic</em> (people send more requests after work, etc.), and you can't perfectly assign users to machines. But the deeper problem is <strong>shared state</strong>.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Why You Can't Just Split Everyone Up</div>
+  <p>If each county were truly independent, you'd only ever see the Instagram posts of people <em>in your own county</em>. The whole point of these applications is that users <strong>share state</strong> — they see and affect each other's data. So the machines must constantly communicate and <strong>synchronize</strong> across the split. You cannot simply partition the problem away; the state is inherently shared.</p>
+</div>
+
+<p>Sharing state across machines means you are running many users, many requests, and many operations <strong>concurrently</strong> against the same distributed state. If you've taken an operating systems course, you've met concurrency tools — locks, mutexes, semaphores. The natural question: why not just use those here?</p>
+
+<div class="callout warning">
+  <div class="callout-title">Why Locks &amp; Mutexes Don't Just Carry Over</div>
+  <p>Locks, mutexes, and semaphores are designed for <strong>one machine</strong> managing multiple threads in a single process. Here you have <strong>multiple machines</strong>. You'd need locks that span servers — and that's dangerous: the network or machines may be unreliable, so if one server holds a cross-server lock and then slows down or fails, it can freeze the system <em>everywhere across the globe</em>. We need ways to synchronize <em>without</em> holding locks that make everything unavailable when one cable somewhere is slow.</p>
+</div>
+
+<h3 id="other-challenges">The Remaining Challenges: Scale, Testing, Security</h3>
+<p>Beyond those three core challenges, the lecture flagged several more that make distributed systems hard:</p>
+
+<table class="compare-table">
+  <tr><th>Challenge</th><th>Why It's Painful</th></tr>
+  <tr><td>Design &amp; evaluation at scale</td><td>You may have to completely redesign your software for different magnitudes of load. It's very hard to predict how a system behaves at huge scale before you're there.</td></tr>
+  <tr><td>Testing &amp; correctness</td><td>With many concurrent/distributed threads, the number of possible <em>execution orderings</em> grows <strong>exponentially</strong>. To truly verify correctness you'd have to check all the interleavings — infeasible by brute force.</td></tr>
+  <tr><td>Security</td><td>Networks plus services with different <em>trust levels</em> create their own class of problems.</td></tr>
+</table>
+
+<p>That exponential blowup in testing deserves a picture. Imagine just two threads, A and B, each taking a couple of small steps. The system's behavior can depend on the <em>order</em> in which those steps interleave — and there are many possible orders even for two threads. Scale to hundreds or thousands of threads and the number of orderings explodes.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="320" height="180" viewBox="0 0 320 180" style="display:block; margin:0 auto;">
+      <!-- start -->
+      <circle cx="40" cy="90" r="6" fill="#c0510a"/>
+      <text x="40" y="115" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#6b6560">start</text>
+      <!-- branches -->
+      <line x1="46" y1="86" x2="120" y2="40" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="46" y1="94" x2="120" y2="140" stroke="#d9d0c4" stroke-width="2"/>
+      <circle cx="126" cy="36" r="6" fill="#2a2520"/>
+      <text x="126" y="24" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">A first</text>
+      <circle cx="126" cy="144" r="6" fill="#2a2520"/>
+      <text x="126" y="166" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">B first</text>
+      <!-- second level -->
+      <line x1="132" y1="34" x2="220" y2="20" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="132" y1="40" x2="220" y2="64" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="132" y1="142" x2="220" y2="116" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="132" y1="148" x2="220" y2="160" stroke="#d9d0c4" stroke-width="2"/>
+      <circle cx="226" cy="18" r="5" fill="#c0510a"/>
+      <circle cx="226" cy="66" r="5" fill="#c0510a"/>
+      <circle cx="226" cy="114" r="5" fill="#c0510a"/>
+      <circle cx="226" cy="162" r="5" fill="#c0510a"/>
+      <text x="285" y="22" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#6b6560">outcome 1</text>
+      <text x="285" y="70" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#6b6560">outcome 2</text>
+      <text x="285" y="118" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#6b6560">outcome 3</text>
+      <text x="285" y="166" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#6b6560">outcome 4</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Even two threads of two steps each fan out into many interleavings. Each leaf is a distinct execution the system might take — and to <em>prove</em> correctness you'd have to check all of them. With thousands of threads, this tree is astronomically large.</div>
+</div>
+
+<p>None of this is new. Distributed systems have been recognized as important for over 40 years, and many Turing Award winners worked on them — directly (Leslie Lamport, Barbara Liskov, Butler Lampson) or on the formal-methods and correctness side (Clarke, Emerson, Sifakis, Pnueli).</p>
+
+<div class="quiz" id="quiz-box-2">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">You send a request to a remote server and no response ever comes back. According to the lecture, what can you reliably conclude about the cause?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>The server has definitely crashed</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>The network definitely dropped your request</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>In the general case you cannot tell — it could be the server, the network, or just slowness</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Nothing failed; a slow response is never a real failure</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct — C.</strong> This was the lecture's "trick question." When no response comes back, you genuinely cannot distinguish a crashed server, a dropped request, a dropped reply, or everything just being slow — you have no access to the other side and can make no assumptions about delays. A and B each assert one specific cause you can't actually verify, and D is wrong because the request really may have failed; you just can't tell which way.</div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>The Goal of the Class</h2>
+</div>
+
+<p>We've now seen the carrot (distributed systems are everywhere and achieve goals no single machine can) and the stick (they fail partially, ambiguously, and concurrently). So what is this course actually trying to teach you to <em>do</em> about all of that? It comes down to one unifying goal.</p>
+
+<h3 id="the-abstraction">Building One Machine Out of Many</h3>
+<div class="callout big-idea">
+  <div class="callout-title">The Central Goal of This Course</div>
+  <p>Build an <strong>abstraction that unifies several machines</strong> so that, <em>from the user's perspective</em>, they act as a single, coherent, unified thing. This abstraction should (1) enable concurrent use of shared state and resources, and (2) <strong>hide all the failures</strong> happening underneath. The point is to <em>automate the heavy lifting</em> so that application developers don't each have to re-solve partial failure, ambiguity, and concurrency from scratch.</p>
+</div>
+
+<p>This reframes everything. Distributed-systems engineering is the discipline of building better <strong>abstractions</strong> — for developers or end users — so that a messy pile of unreliable, geographically scattered machines can be used as a clean building block inside some larger system. You don't want every team that needs a distributed service to rediscover consensus and failure handling on their own. You want to package that hard work once, behind a tidy interface.</p>
+
+<h3 id="the-tradeoff">The Catch: Abstraction vs. Performance</h3>
+<p>If we could provide a perfect abstraction for free, the course would be short. We can't. There is a fundamental tension we'll fight all term.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Core Trade-off</div>
+  <p>The <strong>stronger the abstraction</strong> you provide, the <strong>worse the performance</strong> you tend to get. If you want an abstraction that looks totally sequential, with no faults, where everything runs perfectly, then <em>something</em> becomes slow. Much of the course is learning to <em>navigate</em> this trade-off — and to understand its <strong>fundamental limits</strong>, which show up as "impossibility results" (theorems saying certain perfect guarantees simply cannot be achieved).</p>
+</div>
+
+<h3 id="vs-os">Contrast With Operating Systems</h3>
+<p>A clean way to lock in what makes distributed systems distinctive is to compare them with operating systems, which solve a similar-sounding but <em>opposite</em> problem. Both fields are about illusions — but they create mirror-image illusions.</p>
+
+<table class="compare-table">
+  <tr><th>Operating Systems</th><th>Distributed Systems</th></tr>
+  <tr><td>Give <em>every application</em> the illusion that it runs on <strong>its own machine</strong>…</td><td>Give <em>one application</em> the illusion that it runs on <strong>a single machine</strong>…</td></tr>
+  <tr><td>…even though they all <strong>share one machine</strong>.</td><td>…even though it runs across <strong>many machines</strong>.</td></tr>
+  <tr><td>One physical machine → many virtual ones.</td><td>Many physical machines → one virtual one.</td></tr>
+</table>
+
+<div class="callout insight">
+  <div class="callout-title">Two Illusions, Pointing Opposite Ways</div>
+  <p>An OS takes <em>one</em> machine and makes it look like <em>many</em> (each process thinks it owns the computer). A distributed system takes <em>many</em> machines and makes them look like <em>one</em> (the app thinks it runs on a single, reliable computer). Holding these two side by side is the cleanest way to remember what distributed systems are <em>for</em>.</p>
+</div>
+
+<p>From this goal, the lecture stated the concrete <strong>class outcomes</strong>. As a <em>developer</em> of distributed systems, you should be able to reason about the uncertainty inside them. As a <em>user</em> of distributed systems, you should be able to identify the guarantees and properties a system offers — when it will work well, when it will break, and what that means for whatever higher-level goal you're using it for.</p>
+
+<div class="quiz" id="quiz-box-3">
+  <div class="quiz-question">According to the lecture's contrast, an operating system creates which illusion?</div>
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Many machines look like one machine to a single application</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>One machine looks like its own private machine to each application, though they share it</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Failures are completely eliminated rather than hidden</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Stronger abstractions always come for free with no performance cost</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct — B.</strong> An OS gives <em>every</em> application the illusion of running on its own machine even though they share one physical machine (one → many). Answer A is the <em>distributed systems</em> illusion (many → one), which is the exact mirror image. C is wrong because distributed systems <em>hide</em> failures rather than eliminate them, and D contradicts the core trade-off: stronger abstractions cost performance.</div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>The Fireworks Problem &amp; Consensus</h2>
+</div>
+
+<p>Abstract challenges land harder when you feel them in a concrete puzzle. The lecture used a deliberately old-fashioned story to make one of the deepest results in the field tangible — and to give you a first taste of an <em>impossibility result</em> before the course formalizes it later.</p>
+
+<h3 id="two-towns">Two Towns Across a Foggy Lake</h3>
+<p>Picture two towns on opposite shores of a lake. They want to launch a joint fireworks show <strong>at exactly the same time</strong> — if one starts and the other doesn't, it's a flop. So they must <em>agree on an exact time</em>. The complication: this is before phones, so they can only communicate by sending <strong>boat messengers</strong> across the lake. And the messengers are unreliable — fog, incompetence, whatever — so a boat <strong>might get lost and never arrive</strong>. The goal: find a protocol that lets both towns agree on the exact firing time.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Map the Story to the System</div>
+  <p>The two towns are two <strong>computers</strong>. The lake with fog is an <strong>unreliable network</strong> that can drop messages. The boat messengers are <strong>network packets</strong> that may never arrive. "Agree on the exact time" is "agree on a shared value." Hold this mapping in mind — the puzzle <em>is</em> the systems problem in costume.</p>
+</div>
+
+<h3 id="acks-forever">The Endless Acknowledgement</h3>
+<p>The class worked toward the natural idea of <strong>acknowledgements</strong> (acks). Let's trace it and watch it fail.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>Town&nbsp;1 sends Town&nbsp;2: "Fireworks on April&nbsp;10th, 10:42&nbsp;PM." Is that enough? No — if the boat is lost, T1 can't know T2 heard it. T1 needs an <strong>acknowledgement</strong> before it can safely fire.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>So Town&nbsp;2 sends back an ack: "Got it — April&nbsp;10th, 10:42." Now is it safe? <strong>Still no.</strong> T2 has no idea whether <em>that ack</em> arrived. If it was lost, T1 is still waiting and might never fire — while T2 sits there assuming the show is on.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>So T1 must ack the ack: "Confirmed, I got your confirmation." But now <em>that</em> message might be lost, and T1 can't be sure T2 received it… so T1 is unsure again.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p>You can see the trap. Every ack needs an ack. No matter how many you send, the <em>last</em> sender is never sure their message arrived. The chain never terminates.</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Aha Moment</div>
+  <p>No finite number of acknowledgements can ever make both sides <strong>certain</strong> they agree, when messages can be lost. There is always one more message whose delivery is unconfirmed. This isn't a failure of cleverness — it's a structural impossibility baked into "unreliable channel + need for mutual certainty."</p>
+</div>
+
+<h3 id="consensus">The Real Name: The Consensus Problem</h3>
+<p>The systems version drops the fireworks: imagine two database replicas on opposite sides of the world that must agree on a single value — say, the value in one row of a table. The network between them is unreliable and can drop messages. Can they <em>always</em> agree on a common value?</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Consensus</div>
+  <p>The <strong>consensus problem</strong> is getting multiple machines to agree on a shared value. The lecture's headline result: when the network connecting them is unreliable (messages can be dropped), <strong>perfect consensus is impossible</strong> — you cannot achieve it with <em>all</em> the guarantees you'd want. Something must be sacrificed. This is one of the foundational impossibility results of the field, and the course will formalize it later.</p>
+</div>
+
+<h3 id="roadmap">Where the Course Goes From Here</h3>
+<p>Consensus is just the opening example. The course will cover a connected set of topics, all variations on "coordinate unreliable machines over an unreliable network":</p>
+
+<table class="compare-table">
+  <tr><th>Topic</th><th>The Question It Answers</th></tr>
+  <tr><td>Clock synchronization &amp; logical clocks</td><td>How do machines agree on <em>time</em> and ordering when there's no shared clock?</td></tr>
+  <tr><td>Failure recovery</td><td>How does the system get back to a good state after parts fail?</td></tr>
+  <tr><td>Consistency</td><td>How do we make shared state <em>look</em> consistent from an outside observer's view?</td></tr>
+  <tr><td>Consensus</td><td>How (and how well) can machines agree on a value? (the fireworks problem)</td></tr>
+  <tr><td>Distributed transactions</td><td>How do we provide locking-style guarantees over distributed state?</td></tr>
+  <tr><td>Real systems</td><td>How do production systems balance all these theoretical trade-offs in practice?</td></tr>
+</table>
+
+<div class="quiz" id="quiz-box-4">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In the fireworks puzzle, why does adding "just one more acknowledgement" never fully solve the problem?</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Boats are too slow, so acks arrive after the show starts</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Whoever sent the most recent message can never be certain it arrived, so someone is always unsure</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>The two towns can't agree on which clock to use</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Acknowledgements are not allowed in distributed systems</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct — B.</strong> Each ack itself might be lost, so its sender can't confirm it arrived — and acking <em>that</em> ack just moves the uncertainty to the new last message. There's always one final unconfirmed message, so mutual certainty is never reached. This is exactly the consensus impossibility under an unreliable channel. A and C describe different (clock/latency) issues, and D is simply false.</div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>Course Logistics</h2>
+</div>
+
+<p>The rest of the lecture was practical — but several pieces are worth pinning down because they shape how you should approach the term. The course is <strong>CS134 Distributed Systems</strong>, taught in Spring 2026 by Professor Kristen Dinos (who goes by Kai), with TAs Kaelin and Sebastian and LAs Alec and Peter. Discussion sections are on Fridays.</p>
+
+<h3 id="structure">Two Halves: Foundations and Real Systems</h3>
+<p>The class is split roughly in two, and the professor was emphatic that you need <em>both</em>:</p>
+
+<div class="callout insight">
+  <div class="callout-title">Theory <em>and</em> Practice — Not Either/Or</div>
+  <p>One half is <strong>beautiful foundations</strong>: clean, elegant theory with crisp labels, letting you draw big conclusions about what <em>can</em> and <em>cannot</em> work (the impossibility results). The other half is <strong>real-world systems</strong>: messier, but functional and able to actually do the job. With only one half you get nowhere in this field — the theory tells you the limits, the systems show you how to live within them.</p>
+</div>
+
+<h3 id="assignments">Assignments, Grading &amp; the Exam</h3>
+<p>There are <strong>four programming assignments</strong>, all written in <strong>Go</strong> (syntactically close to a cleaner C++; easy to pick up if you know a lower-level language). The first is an introductory <strong>MapReduce</strong> assignment and is done <em>individually</em>. Assignments 2–4 build on each other, may be done in groups of two, and are <em>much</em> harder.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Heed the Difficulty Warning</div>
+  <p>The professor stressed this directly: assignment 2 is <strong>at least 2× (for them, 3×)</strong> the effort of assignment 1, and 2–4 stack on each other. <strong>Start early.</strong> The assignments ship with <em>test cases you must deeply understand to debug</em> — you cannot brute-force them. Late penalties are exponential by day: 1%, then 2%, 4%, 8%… (max 99% credit). Deadlines are 10&nbsp;PM, and a "late day" is a 24-hour window.</p>
+</div>
+
+<p>Grade breakdown: <strong>labs ≈ 57%</strong> (weighted more as they get harder), <strong>final exam 40%</strong>, and <strong>discussion attendance 3%</strong> (1% for each of the first three discussions). The final exam is <strong>June&nbsp;12th</strong> with no makeups except dire circumstances. The professor strongly urged attending <strong>discussion sections</strong> — even more than lecture — because that's where you get hands-on help with the hard assignments.</p>
+
+<h3 id="ai-policy">The AI Policy (Read This Carefully)</h3>
+<p>The course takes a notably open but strict stance on AI, and the details matter for your grade.</p>
+
+<div class="callout concept">
+  <div class="callout-title">The Rule — Use AI Freely, But Disclose It</div>
+  <p>You may use AI <strong>as much as you want</strong>. The only requirement: submit an <code>AI_usage.txt</code> per assignment precisely describing what you did. Using AI <strong>will not affect your grade</strong> — even "I had an LLM write the whole thing" earns full credit <em>if disclosed</em>. But if you're found to have used AI <strong>without disclosing it</strong>, you are <strong>heavily penalized</strong>. Also: AI output is held to academic-integrity standards — if five people submit identical AI-generated code, that counts as copying. If you don't use AI, just write that you didn't.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">The Professor's Honest Advice</div>
+  <p>Beyond the rules, a personal nudge: <em>"The less you write, the less you understand."</em> If you let an LLM write the whole assignment, you won't learn anything. Use it for syntax or scaffolding, but engage with the genuinely hard parts yourself — that's the entire point of being in the class.</p>
+</div>
+
+<p>Logistics housekeeping: announcements go on Bruin Learn; <strong>all communication should go through Piazza</strong> (public or private posts), since email is easy to lose. Lectures are recorded, but recordings are explicitly <em>not</em> a replacement — last year, students who skipped lecture did worse.</p>
+
+<div class="quiz" id="quiz-box-5">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Under the course's AI policy, which scenario gets a student into real trouble?</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Using an LLM heavily and writing an honest AI_usage.txt describing it</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Not using AI at all and writing "I didn't use AI"</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Using AI but not disclosing it in an AI_usage.txt</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Using AI only for syntax help and saying so</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct — C.</strong> AI use itself is allowed and does <em>not</em> affect your grade — but <em>undisclosed</em> AI use is heavily penalized. A, B, and D are all fine precisely because they're honestly disclosed (or there's nothing to disclose). The policy is openness with full transparency; the punishable act is the failure to declare, not the use.</div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SYNTHESIS ═══════════════════════ -->
+<section id="synthesis" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This first lecture is really one continuous argument, and the parts lock together into a single line of reasoning. <strong>Part I</strong> set the stage: a distributed system is many machines cooperating over a network, and we can't avoid them because the goals of any planet-scale service — resilience, low latency, large load, accuracy — are exactly the goals that force you to spread work across cheap machines.</p>
+
+<p>But that move has a price, which is <strong>Part II</strong>. The instant you have many machines on an unreliable network, you inherit <em>partial failure</em> (parts break constantly at scale), <em>failure ambiguity</em> (you often can't even tell what broke), and <em>concurrency over shared state</em> (you can't just partition the problem away, and single-machine locks don't transfer). Those three challenges are the "stick" that makes the field hard — and the reason it's worth a whole course.</p>
+
+<p><strong>Part III</strong> gave the response to that difficulty: the course's one big goal is to build an <em>abstraction</em> that turns many unreliable machines into one coherent, reliable-looking machine — the mirror image of what an operating system does. But you can't get this for free; the deeper the illusion, the more performance you pay, and some perfect guarantees are flatly impossible. <strong>Part IV</strong> made that last claim concrete: the fireworks-across-a-foggy-lake puzzle is the <em>consensus problem</em> in disguise, and the never-ending chain of acknowledgements is your first encounter with an impossibility result — you cannot achieve perfect agreement over an unreliable channel. Finally, <strong>Part V</strong> grounded all of it in how the class will actually run: theory plus real systems, four hard Go assignments, and a refreshingly honest "use AI but disclose it" policy.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The One Sentence to Remember</div>
+  <p>Distributed systems exist to make many unreliable machines behave like one reliable machine — and the whole discipline is the art of doing that as well as possible while respecting the hard limits (like consensus impossibility) on how good "as well as possible" can be.</p>
+</div>
+
+<div class="callout tip" style="margin-top: 32px;">
+  <div class="callout-title">What's Next</div>
+  <p>From here the course leaves the motivation behind and dives into the machinery. Expect to start formalizing the ideas this lecture only sketched: how machines agree on <strong>time and ordering</strong> (clock synchronization and logical clocks), and then <strong>consensus</strong>, <strong>consistency</strong>, <strong>failure recovery</strong>, and <strong>distributed transactions</strong>, before circling back to how <strong>real production systems</strong> balance these trade-offs. The fireworks/consensus impossibility you met today will keep reappearing — it's the boundary against which all of those topics are designed. Practically: start <strong>Assignment 1 (MapReduce)</strong> early, go to Discussion 1 (it includes a tutorial for getting started), and find a partner for assignments 2–4.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

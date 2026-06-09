@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 17 — Delos &amp; the Virtual Log</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 17 · Delos</div>
+  <a href="#part1">Part I — The Migration Problem</a>
+  <a href="#why-migrate" class="sub">Why Swap a Consensus Protocol?</a>
+  <a href="#migration-pain" class="sub">Why Migration Is So Painful</a>
+  <a href="#delos-goals" class="sub">The Goals of Delos</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — The Virtual Log</a>
+  <a href="#virtual-log-idea" class="sub">Loglets &amp; the Virtual Log</a>
+  <a href="#vlog-api" class="sub">The Log-Space API</a>
+  <a href="#seal-reconfigure" class="sub">Seal &amp; Reconfigure</a>
+  <a href="#switching" class="sub">Switching Loglets Safely</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — Building a Database</a>
+  <a href="#logdb" class="sub">LogDB &amp; State-Machine Replication</a>
+  <a href="#rw-flow" class="sub">Read-Write Transactions</a>
+  <a href="#ro-flow" class="sub">Read-Only Transactions</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — The MetaStore</a>
+  <a href="#control-data" class="sub">Control vs. Data Plane</a>
+  <a href="#metastore" class="sub">The MetaStore</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — The Native Loglet</a>
+  <a href="#no-consensus" class="sub">Why No Consensus Per Loglet</a>
+  <a href="#native-setup" class="sub">Log Servers &amp; the Sequencer</a>
+  <a href="#commit-positions" class="sub">Local vs. Global Commit</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part6">Part VI — Operations &amp; Faults</a>
+  <a href="#op-seal" class="sub">Seal &amp; Append</a>
+  <a href="#zombie" class="sub">Zombie Writes &amp; Suffix Copying</a>
+  <a href="#op-checktail" class="sub">CheckTail</a>
+  <a href="#fault-budget" class="sub">The Fault Budget</a>
+  <a href="#quiz6" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#synthesis">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">CS134 · Distributed Systems</div>
+  <h1>Delos &amp; the Virtual Log</h1>
+  <p class="hero-sub">How Facebook built a production database that can swap out its consensus protocol on the fly — by virtualizing the log the way an OS virtualizes memory.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>The Migration Problem</h2>
+</div>
+
+<p>Before we meet Delos, we need to understand the pain it was invented to cure. The whole system is an answer to one stubborn engineering question, so let's start there.</p>
+
+<h3 id="why-migrate">Why Would Anyone Swap a Consensus Protocol?</h3>
+
+<p>A <strong>consensus protocol</strong> is the machinery a distributed system uses to get a set of machines to agree on a single ordered sequence of decisions — for example, "the order in which writes happened" — even when some machines crash or messages get delayed. You have already met several in this course: <strong>Paxos</strong>, <strong>ZooKeeper's ZAB</strong>, and <strong>Raft</strong>. There are many more (Corfu, and others), and the field is still very active research.</p>
+
+<p>Why does anyone care about <em>improving</em> a protocol that already works? Because of scale. At a hyperscaler — Google, Meta, Amazon — a one-to-three-percent reduction in the CPU time or network traffic a protocol consumes translates directly into buying, powering, and maintaining measurably fewer machines. At billions of operations per day, single-digit percentage wins are worth real money. So companies genuinely want to experiment with new consensus protocols.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Consensus Protocol</div>
+  <p>A protocol that lets a group of machines agree on a totally-ordered log of decisions despite crashes and message delays. Paxos tolerates a minority of failures; primary-backup tolerates one. The cost of a protocol — its messages and CPU per decision — is exactly what hyperscalers want to shave down.</p>
+</div>
+
+<h3 id="migration-pain">Why Is Migrating a Protocol So Painful?</h3>
+
+<p>Designing a better protocol on paper is the easy part. The hard part is <em>deploying</em> it into a system that is already running and serving live traffic. Walk through what it actually takes:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Implement it.</strong> Writing a correct consensus implementation is a heavy, error-prone effort — far harder than the clean pseudocode in the paper.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Test it — including in production.</strong> A proof of correctness is not enough. As Dijkstra warned, you can prove a program correct and still have an incorrect <em>implementation</em>. You eventually have to run the new protocol against real traffic.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Stop or restart the system to cut over.</strong> Most cutovers require a manual pause — but you cannot just turn off Instagram for a few hours while you migrate consensus.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Consolidate state across the boundary.</strong> The data written under the old protocol and the data written under the new one must remain one coherent history, and you must keep serving reads of both.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <p><strong>Be ready to roll back.</strong> If the new protocol reveals a bug in production, you need a clean way to retreat to the old one.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">The Core Obstacle</div>
+  <p>Every one of these steps is hard, and together they make experimenting with a new protocol so risky that real systems rarely do it. A proof of correctness does not save you: "do not trust software I have proven correct but not tested." The result is that good protocol ideas never make it into production.</p>
+</div>
+
+<h3 id="delos-goals">The Goals of Delos</h3>
+
+<p>Delos (named, like Spanner before it, after a Greek island) is the system in this lecture. It comes from a 2020 OSDI paper by engineers who were then at Facebook. Its stated goals were strikingly pragmatic:</p>
+
+<ul style="margin: 0 0 18px 24px;">
+  <li>Build a new fault-tolerant database that can reach <strong>production in 6–9 months</strong>.</li>
+  <li>Then allow <strong>incremental performance improvements</strong> over time, without disruptive rewrites.</li>
+  <li>Fill roughly the same role as <strong>Chubby or ZooKeeper</strong> — a highly reliable store for coordination and metadata.</li>
+</ul>
+
+<p>To get there, Delos needed one capability above all: <strong>easy, seamless migration across consensus protocols.</strong> That single capability is what unlocks experimentation, optimization, and the ability to ship fast first and improve later. The rest of this lecture is the story of the one abstraction that makes it possible.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>Delos's bet: if you can make swapping the consensus protocol as routine and invisible as any other operation, then all the risk drains out of experimentation. Ship a simple version now, improve the engine underneath later — without ever stopping the system.</p>
+</div>
+
+<div class="quiz" id="quiz1-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Why is migrating an existing system to a new consensus protocol considered so risky, even when the new protocol has been proven correct on paper?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>New protocols are always slower than old ones, so migration never pays off.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>A correctness proof says nothing about the real implementation, and cutover typically demands a manual pause, state consolidation, and a rollback plan for a live service.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Consensus protocols cannot be implemented in software at all.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Proven-correct protocols never have bugs, so the only risk is the cost of new hardware.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct.</strong> The proof covers the abstract protocol, not the code that implements it — "do not trust software I have proven correct but not tested." On top of that, a live cutover needs a pause, a way to merge pre- and post-migration state, and a rollback escape hatch. Option D is exactly the false sense of security the Dijkstra quote warns against.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>The Virtual Log Abstraction</h2>
+</div>
+
+<p>If swapping the protocol is the goal, the question becomes: how do you build a database that doesn't even <em>notice</em> when the protocol underneath it changes? Delos's answer is its foundational abstraction — the <strong>virtual log</strong> — and it is best understood by analogy to something you already know from operating systems.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Builds On — Logs as the Spine of Replication</div>
+  <p>Throughout this course, replicated systems have been built on a shared, ordered <strong>log</strong>: every node applies the same operations in the same order and ends up in the same state. Delos keeps that idea intact — applications still see one ordered log — but virtualizes what sits underneath it.</p>
+</div>
+
+<h3 id="virtual-log-idea">Loglets and the Virtual Log</h3>
+
+<p>Recall virtual memory: a program sees one flat, continuous address space, while underneath, the OS maps different ranges to different physical pages — some in RAM, some swapped to disk — and the program neither knows nor cares. Delos does the same trick for the <strong>log</strong>.</p>
+
+<p>The application sees a single, continuous, ever-growing log. Underneath, that log is stitched together from a sequence of <strong>loglets</strong>. A loglet is a chunk of the log with its own concrete implementation. One stretch might be backed by ZooKeeper, the next by Delos's own native protocol, an older stretch by cheap cold storage. The virtual log layer can transparently switch from one loglet implementation to the next, as many times as it likes.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Virtual Log &amp; Loglet</div>
+  <p>A <strong>loglet</strong> is a contiguous segment of the log with a single concrete implementation (ZooKeeper, native, backup-to-cold-storage, …). The <strong>virtual log</strong> stitches loglets into one seamless log. The application just appends and reads; it never sees the seams or the implementation changes underneath.</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="440" height="200" viewBox="0 0 440 200" style="display:block; margin:0 auto;">
+      <text x="220" y="22" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#c0510a">APPLICATION'S VIEW: ONE CONTINUOUS LOG</text>
+      <rect x="20" y="38" width="400" height="34" rx="6" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="220" y="60" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">0 ─────────────────────────────────────► ∞</text>
+      <line x1="120" y1="78" x2="120" y2="110" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="250" y1="78" x2="250" y2="110" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="20" y1="94" x2="420" y2="94" stroke="#d9d0c4" stroke-width="1" stroke-dasharray="4 4"/>
+      <text x="220" y="128" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#6b6560">UNDER THE HOOD: A CHAIN OF LOGLETS</text>
+      <rect x="20" y="140" width="100" height="40" rx="6" fill="#fff" stroke="#2a2520" stroke-width="1.5"/>
+      <text x="70" y="158" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">0–50</text>
+      <text x="70" y="172" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">backup</text>
+      <rect x="130" y="140" width="120" height="40" rx="6" fill="#fff" stroke="#2a2520" stroke-width="1.5"/>
+      <text x="190" y="158" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">50–150</text>
+      <text x="190" y="172" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">zookeeper</text>
+      <rect x="260" y="140" width="160" height="40" rx="6" fill="#fff" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="340" y="158" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">150–∞</text>
+      <text x="340" y="172" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#c0510a">native (active)</text>
+    </svg>
+  </div>
+  <div class="figure-caption">The application sees one log from <code>0</code> to <code>∞</code>; underneath, ranges map to different loglet implementations. The newest range is the active loglet that takes appends.</div>
+</div>
+
+<h3 id="vlog-api">The Log-Space API</h3>
+
+<p>Think of the virtual log as a position space from <code>0</code> to <code>∞</code>, where each range of positions is mapped to a loglet. On top of that mapping sits a small, ordinary-looking log API:</p>
+
+<pre><code><span class="fn">append</span>(record)        <span class="cm"># add a record at the end of the log</span>
+<span class="fn">checkTail</span>()           <span class="cm"># return (final position, sealed?) — where does the log end?</span>
+<span class="fn">readNext</span>(from, to)     <span class="cm"># read a range of positions</span></code></pre>
+
+<p>The routing is mechanical: <code>append</code> and <code>checkTail</code> always go to the <strong>latest</strong> (active) loglet, since that is where new records land and the tail lives. <code>readNext</code> dispatches to whichever loglets cover the requested range — a read of positions 40–160 in the figure above touches all three loglets.</p>
+
+<p>So far this looks exactly like a plain log. A student in lecture asked precisely this: how is it any different from just splitting a normal log into pieces? The answer is the two extra operations that come next — and the fact that each loglet can run a <em>cheaper</em> protocol than the whole log appears to offer.</p>
+
+<h3 id="seal-reconfigure">The Two Special Operations: Seal &amp; Reconfigure</h3>
+
+<p>On top of the ordinary log API, the virtual log adds the two operations that make migration possible:</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Seal &amp; Reconfigure</div>
+  <p><strong>seal</strong> finalizes a loglet: a sealed loglet rejects all future appends and becomes read-only. Before you can add a new loglet, every earlier (non-last) loglet must be sealed. <strong>reconfigure</strong> installs a new loglet — it proposes a new mapping from log ranges to loglets. Reconfigure is a strongly consistent operation that can succeed at most once for a given configuration.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Builds On — Sealing in Azure Storage</div>
+  <p>You saw <code>seal</code> before in the Azure Storage lecture: an extent is sealed before a new one is started, so its length is frozen and unambiguous. Delos reuses exactly that idea. Sealing a loglet is what lets the system pin down "this segment is finished and immutable" before moving on.</p>
+</div>
+
+<h3 id="switching">Switching Loglets Safely</h3>
+
+<p>Now we can answer the central question: what does a client do to switch loglets — say, from the ZooKeeper loglet to the native one? Naively it is just "seal, then reconfigure," but two subtle gaps make it a four-step dance.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Seal</strong> the current loglet to terminate it. It now rejects new appends and is read-only.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>CheckTail</strong> to find where the loglet actually stopped. This is not redundant: a loglet can hold more than you last thought it did, so you must ask where it truly ended. CheckTail returns both the final position <em>and</em> the sealed bit.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Reconfigure</strong>, proposing the new loglet and the new range-to-loglet mapping. But if two clients reconfigure concurrently, only one wins — and you don't yet know which.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>CheckTail again</strong> to learn which new loglet actually took effect, before you resume appending. Both <code>seal</code> and <code>reconfigure</code> are operations where "I attempted it" does not tell you "it finished, and here is the result" — so you must re-check.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Why "Attempt" ≠ "Knowledge"</div>
+  <p>The recurring theme in both gaps is the same: <code>seal</code> and <code>reconfigure</code> can be racing against other clients, so issuing the operation does not tell you its outcome or final position. The cure each time is a <code>checkTail</code> — go find out the ground truth before you act on it. This "do, then re-read the truth" pattern returns again and again at the loglet level.</p>
+</div>
+
+<p>In the common case, none of this happens: clients just <code>append</code>, <code>checkTail</code>, and <code>readNext</code> like any log. Only when a failure is detected or a reconfiguration is desired do they pay for the <code>checkTail → reconfigure → checkTail</code> detour and then carry on. The result is a clean log abstraction with strong guarantees that can still be re-engineered underneath at runtime.</p>
+
+<div class="quiz" id="quiz2-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">When a client switches loglets, why must it call <code>checkTail</code> <em>after</em> <code>reconfigure</code> (not just after <code>seal</code>)?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>To copy data from the old loglet into the new one.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Reconfigure can race with other clients' reconfigurations, so the client must re-read which new loglet actually won before it resumes appending.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>CheckTail is the only way to seal a loglet.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Reconfigure deletes the tail, so it must be rebuilt by reading.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct.</strong> Two clients might concurrently reconfigure to different loglets (native vs. backup); only one configuration takes effect. Issuing your own <code>reconfigure</code> does not tell you whether yours or someone else's won, so you must <code>checkTail</code> to discover the real new loglet before appending. The same "attempt ≠ knowledge" reasoning is why a <code>checkTail</code> follows <code>seal</code> too.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>Building a Database on the Virtual Log</h2>
+</div>
+
+<p>We now have a log we can append to, read, and re-engineer underneath. But a log is not a database. This part answers the first of Delos's two big construction questions: <strong>how do you build a real, strictly-serializable database on top of the virtual log?</strong> (Part IV and V answer the second: how do you build the virtual log itself.)</p>
+
+<div class="callout tip">
+  <div class="callout-title">Why This Matters — An Interview-Shaped Question</div>
+  <p>"You're given a log and an in-memory database library — design a strictly-serializable database" is exactly the kind of architecture question asked in distributed-systems interviews. In practice you rarely build from scratch; you compose known components to hit your requirements. Treat this part as a worked example of that skill.</p>
+</div>
+
+<h3 id="logdb">LogDB and State-Machine Replication</h3>
+
+<p>The components are: a set of replica nodes, an in-memory database library called <strong>LogDB</strong> running on each replica, and the fault-tolerant virtual log underneath. Each replica keeps the <em>entire</em> database state in memory.</p>
+
+<p>The replicas stay consistent through <strong>state-machine replication</strong>: every replica applies the same operations, taken from the shared log, in the same order, so they all reach the same state. The virtual log <em>is</em> the single source of truth for that order. The goal is to support two kinds of transactions: strictly-serializable read-write transactions, and strictly-serializable read-only transactions — and, crucially, they get <em>separate</em> flows, because read-only is simpler and shouldn't pay the read-write cost.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — State-Machine Replication</div>
+  <p>Treat the database as a deterministic state machine. If every replica starts from the same state and applies the same ordered log of commands, every replica ends in the same state. Consistency reduces to <em>agreeing on the log order</em> — which the virtual log already provides.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Why a Log AND an In-Memory Database?</div>
+  <p>A natural question: if the log already records every operation, why keep a separate live database? Because answering "what are the values of these 100 keys?" by replaying millions of log operations would be hopeless. The <strong>live in-memory view</strong> exists so reads are fast; the <strong>log</strong> exists to record full history and to bring a fresh replica up to date (replay the log, or copy a peer's state then tail the log). Old log entries can even be pushed to a cheap backup loglet in cold storage while the live view stays hot.</p>
+</div>
+
+<h3 id="rw-flow">Read-Write Transactions</h3>
+
+<p>Here is the flow for a read-write transaction. Notice that the replica writes the <em>whole transaction</em> into the log first, and only then executes anything.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Append the entire transaction</strong> to the virtual log — without running it yet. You are simply recording your intent at some position in the global order.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>CheckTail</strong> to synchronize: find out where your transaction actually landed and everything that precedes it.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Catch up by replaying.</strong> Execute, in order, every transaction from where this replica left off up to your transaction. You must do this — otherwise your in-memory state doesn't reflect the real system state, and you can't correctly run your own transaction.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Execute your transaction and return.</strong> Once you reach your transaction in the log and run it against now-current state, you return the result to the user.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Why You Can't Just "Append and Done"</div>
+  <p>Suppose the last time you checked, the log ended at position <em>P</em>. You append your transaction — but you don't know whether three other transactions slipped in between <em>P</em> and yours. So you cannot execute against your stale snapshot. You must append, then re-read everything from <em>P</em> up to your own position, and apply it all in order. This is the "attempt, then re-read the truth" pattern again, now at the database layer.</p>
+</div>
+
+<details>
+<summary>Why not just take a lock and run transactions one at a time?</summary>
+<div class="details-body">
+<p>A student proposed: why not grab a lock, run the transaction, then release? The problem is what a lock <em>costs</em> in a distributed setting. A lock requires extra communication among replicas to agree on who holds it, and while one replica holds it, everyone else is blocked — their requests stall.</p>
+<p>The log-based design avoids this entirely. <strong>Every replica can append its request to the log at full speed</strong>, concurrently, with nothing blocking it. The only "extra work" a replica does is replay the entries before its transaction — but that work isn't waste: it is exactly how the replica catches its in-memory state up to the rest of the system. So the apparent cost of replaying is doing double duty as necessary synchronization.</p>
+</div>
+</details>
+
+<h3 id="ro-flow">Read-Only Transactions</h3>
+
+<p>Read-only transactions get a lighter, separate flow. The trick is to pick a <strong>linearization point</strong> — a single position in the log that the read is logically "as of."</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>CheckTail to pick a linearization point.</strong> The instant the read arrives, check the tail. This guarantees the read will observe everything that committed before it.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Synchronize</strong> the in-memory state up to that exact point — the same catch-up as in the read-write flow.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Run the read-only transaction</strong> against that synchronized snapshot and return.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Why CheckTail Prevents Stale Reads</div>
+  <p>Imagine someone writes a value and their write completes. If a later reader skipped <code>checkTail</code> and answered from a stale snapshot, it could return the old value — violating strict serializability. By checking the tail first, the reader refuses to answer until it has seen everything that already committed. CheckTail is the mechanism that turns "fast local read" into "linearizable read."</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Optimization — Batch Reads Behind One Linearization Point</div>
+  <p>If several read-only transactions pile up at one replica, you don't need a separate <code>checkTail</code> for each. Pick a <em>single</em> linearization point, synchronize once, and answer them all together. It's still correct — they all observe the same committed prefix — and it saves a round-trip per read.</p>
+</div>
+
+<div class="quiz" id="quiz3-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In the read-write flow, why must a replica replay all log entries between its last-known position and its own appended transaction before executing?</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>To delete transactions written by other replicas that conflict with its own.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Because other transactions may have committed in between, so the replica's in-memory state is stale; replaying both catches it up and is required to execute its own transaction correctly.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Because the log is encrypted and replaying decrypts it.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Because appending automatically rolls back all prior transactions.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct.</strong> Appending only places the transaction in the global order; it doesn't tell the replica what happened just before it. Other transactions may have slipped in, so the in-memory snapshot is stale. Replaying the gap serves two purposes at once: it updates the replica's state and ensures the transaction executes against a correct, current view. There is no deletion or rollback — the log is append-only and totally ordered.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>The VirtualLog Layer: MetaStore &amp; Reconfigure</h2>
+</div>
+
+<p>We've built a database <em>on top of</em> the virtual log. Now we descend below it. Building the virtual log breaks into two sub-questions: how is the virtual log layer itself implemented, and how is an individual loglet implemented? This part answers the first; Parts V–VI answer the second.</p>
+
+<h3 id="control-data">Splitting the Control Plane from the Data Plane</h3>
+
+<p>The key architectural move is a clean split:</p>
+
+<table class="compare-table">
+  <tr><th>Control Plane — the VirtualLog</th><th>Data Plane — the Loglet</th></tr>
+  <tr><td>Owns <code>reconfigure</code> — the fundamental control operation.</td><td>Owns <code>append</code>, <code>checkTail</code>, <code>readNext</code> — the data operations.</td></tr>
+  <tr><td>Decides the loglet mapping (which range → which loglet).</td><td>Also owns <code>seal</code> (a control op, but it lives in the loglet).</td></tr>
+  <tr><td>Rare, must be bulletproof.</td><td>Frequent, must be fast.</td></tr>
+</table>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>Push <em>all</em> the expensive coordination into a tiny control plane that runs rarely, and make the high-traffic data plane as light as possible. This is the move that lets each loglet skip full consensus — the hard agreement work happens once, at reconfiguration time, not on every append.</p>
+</div>
+
+<h3 id="metastore">The MetaStore</h3>
+
+<p>The VirtualLog stores exactly one thing: the current configuration — the mapping from log ranges to loglets — and it must implement <code>reconfigure</code> on it. So let's reason about the requirements before naming the mechanism.</p>
+
+<h4>Does it need to be fast?</h4>
+<p>No — not very. Reconfiguration is rare; it is <em>not</em> on the critical path of appends. (In practice, over months, Delos saw maybe hundreds to a few thousand reconfigurations, against billions of transactions per <em>day</em>.) It should be reasonably quick, but raw speed is not the priority.</p>
+
+<h4>Does it need to be fault-tolerant and highly available?</h4>
+<p>Yes — and this is the crucial requirement. Reconfiguration is exactly what you do <em>when things go wrong</em>: a loglet has failed and you need to switch away from it. If reconfiguration depended on a single server being up (like primary-backup), a catastrophe could leave you unable to reconfigure at all. So it must be <strong>highly available</strong> — able to make progress even when many replicas are down.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The MetaStore</div>
+  <p>The MetaStore is a highly-available store holding a single pair: <code>(currentChain, version)</code>. <strong>currentChain</strong> is the range-to-loglet mapping; <strong>version</strong> is just a counter (1, 2, 3, …). It supports two operations: <code>get()</code> returns the chain and version, and <code>conditionalWrite(newChain, V)</code> writes the new chain only if the current version is still <code>V</code>.</p>
+</div>
+
+<p>That <code>conditionalWrite</code> is the whole trick for handling concurrent reconfigurations. Two clients both read version <em>V</em> and both try to install a new chain. The first to succeed bumps the version to <em>V+1</em>. The second's write — still conditioned on <em>V</em> — now fails, because the version no longer matches. So <strong>exactly one writer wins</strong>; the loser must re-<code>get</code> and try again.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="190" viewBox="0 0 420 190" style="display:block; margin:0 auto;">
+      <text x="210" y="20" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#6b6560">MetaStore: (chain, version = V)</text>
+      <rect x="150" y="30" width="120" height="34" rx="6" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="210" y="52" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">chain, V</text>
+      <text x="80" y="100" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#2563eb">Client A</text>
+      <text x="80" y="116" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#2a2520">write(·, V)</text>
+      <text x="340" y="100" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#7c3aed">Client B</text>
+      <text x="340" y="116" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#2a2520">write(·, V)</text>
+      <line x1="110" y1="92" x2="175" y2="66" stroke="#2563eb" stroke-width="2"/>
+      <line x1="310" y1="92" x2="245" y2="66" stroke="#7c3aed" stroke-width="2" stroke-dasharray="4 4"/>
+      <text x="210" y="150" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#2d8a4e">A wins → version becomes V+1</text>
+      <text x="210" y="172" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#c53030">B's write(·, V) now fails — must re-get</text>
+    </svg>
+  </div>
+  <div class="figure-caption">The conditional write makes reconfiguration a single-winner race: whoever bumps the version first invalidates every other write conditioned on the old version.</div>
+</div>
+
+<details>
+<summary>How is the MetaStore actually implemented?</summary>
+<div class="details-body">
+<p>The very first implementation was a single file in <strong>ZooKeeper</strong> — quick to stand up and good enough to get Delos running. Later they replaced it with an internal, "very naive" Paxos implementation. It is deliberately slow, and they genuinely do not care that it's slow: the only requirements are that it is <em>correct</em> and that it stores this one <code>(chain, version)</code> pair reliably and highly-availably. This is the control plane embodying its own principle — correctness and availability over speed.</p>
+</div>
+</details>
+
+<div class="quiz" id="quiz4-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Why does the MetaStore store a <code>version</code> number and use a conditional write instead of a plain write?</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>To let appends be faster by skipping the MetaStore entirely.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>To ensure that among concurrent reconfigurations conditioned on the same version, exactly one succeeds — the first write bumps the version, so all others conditioned on the old version fail.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>To compress the chain so it takes less storage.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Because ZooKeeper requires version numbers on every file.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct.</strong> The version turns reconfiguration into a single-winner race. Two clients each read version <em>V</em> and try to write; the winner advances the version to <em>V+1</em>, so any other write still conditioned on <em>V</em> is rejected. Without it, two concurrent reconfigurations could both "succeed" and leave the system with an inconsistent configuration.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>The Native Loglet</h2>
+</div>
+
+<p>The control plane is settled. Now for the data plane: an actual loglet. Delos's first loglet just wrapped ZooKeeper (easy, got them to production in 8 months). Later they built the <strong>native loglet</strong> and got a <strong>10× latency improvement</strong>. There is also a backup loglet on HDFS for pushing old data to cold storage. The rest of the lecture is about how the native loglet works — and why it can be so much faster.</p>
+
+<h3 id="no-consensus">Why a Loglet Doesn't Need Consensus</h3>
+
+<p>Here is the payoff of the control/data split. A normal log implementation runs full consensus (Paxos: leader election, the works) on every append. <strong>The native loglet does not need consensus or leader election at all.</strong> Why is that okay?</p>
+
+<p>Because all the heavy coordination has been offloaded to the MetaStore and VirtualLog. The one thing the loglet truly must guarantee is: <strong>after a seal succeeds, new appends are rejected.</strong> That's enough — because the moment anything goes wrong with a loglet, we don't repair it in place; we <code>seal</code> it and <code>reconfigure</code> to a fresh loglet (possibly on entirely new servers). The expensive "what's the new configuration?" decision is made highly-available by the MetaStore, not by the loglet.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Builds On — Azure Storage's Layering</div>
+  <p>This mirrors Azure Storage exactly: there, the stream layer used Paxos to map extents to servers (the rare, must-be-reliable control decision), while each extent ran cheap <strong>primary-backup</strong> replication for its actual data. Delos does the same: heavyweight agreement only at reconfiguration; lightweight replication inside each loglet.</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>By making "switch to a new loglet" the universal recovery action, each loglet is freed from running consensus. It only has to honor one promise — sealing stops appends — and can otherwise use a faster, lighter protocol. That is the source of the native loglet's 10× win.</p>
+</div>
+
+<h3 id="native-setup">Log Servers and the Sequencer</h3>
+
+<p>The native loglet is a set of nodes acting as <strong>log servers</strong>, plus one designated node that also runs a <strong>sequencer</strong> component. The sequencer plays the role of a primary: all appends funnel through it.</p>
+
+<p>Each log server keeps:</p>
+<ul style="margin: 0 0 18px 24px;">
+  <li>a <strong>local on-disk log</strong> (and the native loglet has <em>no gaps within a server's accepted prefix conceptually</em> — every slot of the loglet ultimately holds an entry);</li>
+  <li>a single <strong>sealed bit</strong> — once set, the server rejects all appends to its local log;</li>
+  <li>a <strong>local tail</strong> — the first unwritten position in <em>this server's</em> local log.</li>
+</ul>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The Sequencer</div>
+  <p>One log server hosts the sequencer. Every append goes to it; it assigns the append a position in the loglet and forwards it to all log servers. Because a single component assigns positions, no two entries ever disagree at the same position — there is never a conflict to resolve. The cost: the sequencer is a single point through which appends must pass.</p>
+</div>
+
+<h3 id="commit-positions">Local Commit vs. Global Commit</h3>
+
+<p>To reason about correctness we need two precise notions of "committed," plus a "best-effort" notion of how much each server knows.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Three Definitions</div>
+  <p><strong>Locally committed:</strong> a command is locally committed on a log server once it has been written and <code>fsync</code>'d to that server's local log.<br>
+  <strong>Globally committed:</strong> a command is globally committed when (a) it is locally committed on a <em>majority</em> of log servers, <em>and</em> (b) all previous commands are also globally committed.<br>
+  <strong>Known tail:</strong> each server's best guess of the global tail. It always <em>trails</em> the true global tail (keeping it exact would need constant communication). It plays the "learner" role — what this server currently knows about how far the system has progressed.</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="170" viewBox="0 0 420 170" style="display:block; margin:0 auto;">
+      <text x="210" y="18" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#6b6560">positions →</text>
+      <!-- server rows -->
+      <text x="40" y="48" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">S1</text>
+      <text x="40" y="84" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">S2</text>
+      <text x="40" y="120" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">S3</text>
+      <!-- filled cells -->
+      <g fill="#fef3eb" stroke="#c0510a" stroke-width="1.2">
+        <rect x="50" y="36" width="30" height="20"/><rect x="82" y="36" width="30" height="20"/><rect x="114" y="36" width="30" height="20"/><rect x="146" y="36" width="30" height="20"/>
+        <rect x="50" y="72" width="30" height="20"/><rect x="82" y="72" width="30" height="20"/><rect x="114" y="72" width="30" height="20"/>
+        <rect x="50" y="108" width="30" height="20"/><rect x="82" y="108" width="30" height="20"/><rect x="114" y="108" width="30" height="20"/><rect x="146" y="108" width="30" height="20"/><rect x="178" y="108" width="30" height="20"/>
+      </g>
+      <!-- majority line -->
+      <line x1="146" y1="28" x2="146" y2="138" stroke="#2d8a4e" stroke-width="2" stroke-dasharray="3 3"/>
+      <text x="146" y="156" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#2d8a4e">global tail (majority)</text>
+      <!-- S3 extra zombie -->
+      <line x1="208" y1="100" x2="208" y2="138" stroke="#c53030" stroke-width="2" stroke-dasharray="3 3"/>
+      <text x="270" y="118" text-anchor="start" font-family="DM Sans, sans-serif" font-size="10" fill="#c53030">S3's local tail runs ahead —</text>
+      <text x="270" y="132" text-anchor="start" font-family="DM Sans, sans-serif" font-size="10" fill="#c53030">a possible "zombie" suffix</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Local tails differ per server. The global tail is bounded by the majority. Entries a server holds <em>beyond</em> the global tail (here on S3) are exactly the ambiguous "zombie" writes we'll worry about in Part VI.</div>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Why the Two-Part Global-Commit Rule Lets You Skip Gaps</div>
+  <p>A log server may commit position <em>n</em> if either (a) it already holds <em>n−1</em> locally, <em>or</em> (b) <em>n−1</em> is globally committed (its known tail is past <em>n−1</em>). That second clause is powerful: a slightly-behind server can accept new entries <em>even with a gap in its own local log</em>, because it knows the whole system already committed everything up to that point. There are no gaps at the loglet (global) level — only, possibly, in a slow server's local copy.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Why Allow Local Gaps at All?</div>
+  <p>To avoid forcing slow servers to catch up. Filling every local gap would mean waiting on potentially many operations. By letting a lagging server keep gaps — as long as a majority holds each entry — the protocol never stalls on the slowest node and uses resources far more efficiently. No data is lost: every entry lives on a majority, so it survives any minority failure.</p>
+</div>
+
+<div class="quiz" id="quiz5-wrap">
+  <div class="quiz-question">Why is it safe for a slow log server to have gaps in its local log (i.e., be missing some earlier entries) while still accepting newer ones?</div>
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Because the missing entries were never important and can be discarded.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Because every globally committed entry is held by a majority, so any missing entry still survives on enough other servers; the gap exists only in one server's local copy, never at the loglet level.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Because the sequencer re-sends every missing entry before each append.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Because gaps make reads faster.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct.</strong> A command is globally committed only once a majority of servers hold it, so even if one slow server is missing it, the entry still lives on enough servers to survive any minority failure. The gap is purely local; at the loglet level the committed prefix is complete. Allowing this avoids stalling the whole protocol on the slowest node.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART VI ═══════════════════════ -->
+<section id="part6" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part VI</div>
+  <h2>Native Loglet Operations &amp; Fault Tolerance</h2>
+</div>
+
+<p>With the setup in hand, we can implement the loglet's three data operations — and confront the one genuinely tricky corner case that the design creates. Then we'll tally exactly how many failures each operation can survive.</p>
+
+<h3 id="op-seal">Seal and Append</h3>
+
+<h4>Seal — the easy one</h4>
+<p>To seal, contact all log servers and ask each to set its sealed bit. If a <strong>majority</strong> respond success, the loglet is sealed, and future appends return an error. Simple. One subtlety to file away: the servers that respond will <em>not</em> all have the same local tail — a majority may have sealed, but a minority might hold extra entries, and even within the sealing majority the local tails can differ. We'll have to deal with that.</p>
+
+<h4>Append</h4>
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>The client sends the append to the <strong>sequencer</strong>, which assigns it a position and forwards it to all log servers.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>The sequencer counts successful local commits. When a <strong>majority</strong> respond success, the append is complete and it returns success to the client.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>If a majority of servers respond that they are <strong>sealed</strong>, the append <em>fails</em>. In all other cases (timeouts, etc.), retry after a timeout until either sealed or successful.</p>
+</div>
+
+<h3 id="zombie">Zombie Writes and Copying Suffixes</h3>
+
+<p>Now the hard part — and the most important idea in the lecture. Recall that when we seal, the responding servers can have different local tails. Some servers may hold an entry that others don't. What do we do with such a dangling suffix during <code>checkTail</code> after a seal?</p>
+
+<p>Here is the danger. The sequencer assigned that entry a position and forwarded it; a few servers stored it. Maybe it reached a majority and then some of those servers crashed — in which case it <em>was</em> committed. Or maybe it only ever reached a minority — in which case it was not. <strong>From the survivors alone, you cannot tell these two cases apart.</strong></p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Zombie Write</div>
+  <p>A <strong>zombie write</strong> is an append that was given a sequence number and stored on a few nodes, but was <em>not</em> confirmed accepted by a majority. After a seal, a zombie write looks identical to a genuinely-committed entry that simply lost some replicas to crashes. You must decide whether the loglet ends before it or includes it.</p>
+</div>
+
+<p>So at seal time you face a fork, and you must commit to one rule:</p>
+
+<table class="compare-table">
+  <tr><th>Under-approximate (drop the suffix)</th><th>Over-approximate (keep / copy the suffix)</th></tr>
+  <tr><td>Discard any entry not provably on a majority.</td><td>Copy the dangling suffix across servers so it <em>is</em> on a majority.</td></tr>
+  <tr><td><strong>Violates strong consistency:</strong> an append that really did commit (and was reported as committed to a client) could be lost forever.</td><td><strong>Safe:</strong> no committed entry is ever lost. At worst, a never-acknowledged entry gets promoted to committed.</td></tr>
+  <tr><td>Rejected.</td><td><strong>This is what the native loglet does.</strong></td></tr>
+</table>
+
+<div class="callout warning">
+  <div class="callout-title">Why Dropping the Suffix Is Unacceptable</div>
+  <p>Suppose the entry really was committed and the client was told "your payment went through," but then enough replicas crashed that it now sits on only a minority. If we dropped it during seal, we'd move to a new loglet with no record of it. Later, when someone reads, the payment is simply gone — "you never paid." Losing an acknowledged write is a fatal consistency violation, so Delos always copies the suffix.</p>
+</div>
+
+<p>Why is copying always safe? Because the <strong>sequencer</strong> guarantees there is never a conflict: at any given position, every server that holds anything holds the <em>same</em> thing. So "repairing" by copying a suffix from the servers that have it to those that don't can never overwrite a different value — there are no conflicts to resolve. Copying can only ever <em>promote</em> a minority entry to a majority, never corrupt one.</p>
+
+<div class="callout insight">
+  <div class="callout-title">The Contract This Forces on Clients</div>
+  <p>Over-approximating means a never-acknowledged write can become committed — so a client cannot trust that a <em>failed</em> append really failed. <strong>The contract: if an append fails, that does not guarantee it didn't go through.</strong> Only a subsequent <code>checkTail</code> gives a definitive answer. This is exactly like an online card payment that reports failure but actually succeeded — you must re-check. The reassuring half: if an append <em>succeeds</em>, it definitely succeeded. And appends rarely fail anyway — a failed append means the sequencer failed, which is uncommon.</p>
+</div>
+
+<h3 id="op-checktail">CheckTail — The Most Complex Operation</h3>
+
+<p>CheckTail returns the global tail and the seal status. You send it to all nodes, wait for a majority of responses, and then run a small state machine. (We assume exactly a majority responds; extra responses only help performance.) The cases:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>None sealed, tails agree:</strong> just return that common tail.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>None sealed, tails differ:</strong> wait until the <em>known tail</em> exceeds the <em>max tail</em> seen across responses, then return. (More on why below.)</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>All sealed, tails agree:</strong> the clean case — just return the agreed tail.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>All sealed, tails differ:</strong> repair by copying suffixes across servers (safe, per the sequencer guarantee), then return the repaired tail.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <p><strong>Some (not all) sealed:</strong> send seal to all servers, then retry checkTail — driving the loglet toward the fully-sealed cases above.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Why Wait for Known Tail &gt; Max Tail?</div>
+  <p>The <strong>max tail</strong> is the largest local tail any responding server reported. But a max tail does <em>not</em> mean that position is committed — it could be a minority (zombie) entry. The <strong>known tail</strong>, by contrast, only advances once a position is globally committed. By waiting until the known tail passes the max tail, checkTail guarantees that everything up to what it returns is genuinely globally committed — which is exactly what strict serializability requires.</p>
+</div>
+
+<h3 id="fault-budget">The Fault Budget</h3>
+
+<p>Finally, the bottom line: how many failures can the native loglet survive, operation by operation? Assume <code>2F + 1</code> log servers (so a majority is <code>F + 1</code>).</p>
+
+<table class="compare-table">
+  <tr><th>Operation / Property</th><th>Faults Tolerated</th><th>Why</th></tr>
+  <tr><td>No data loss</td><td><strong>F</strong></td><td>Classic majority quorum: every committed entry is on F+1 servers, so it survives any F failures.</td></tr>
+  <tr><td>Seal</td><td><strong>F</strong></td><td>Needs a majority to set the sealed bit, which survives F failures.</td></tr>
+  <tr><td>CheckTail</td><td><strong>F</strong></td><td>Needs a majority to respond, then runs the state machine. As long as a majority is up, it returns.</td></tr>
+  <tr><td>Append</td><td><strong>0</strong></td><td>Funnels through the single sequencer. If the sequencer is down, no appends — a single fault stops appends.</td></tr>
+</table>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>The native loglet makes a deliberate trade. It can survive many failures and still <em>close</em> the log (seal + checkTail), so it can always reconfigure to a new loglet and keep the system moving. The price: while the sequencer is down it cannot <em>append</em>. That's acceptable precisely because the recovery action — seal and reconfigure to a fresh loglet, on fresh servers if needed — remains highly available.</p>
+</div>
+
+<div class="quiz" id="quiz6-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">The native loglet can tolerate <code>F</code> faults for seal and checkTail but <code>0</code> faults for append. Why is this asymmetry acceptable in Delos's design?</div>
+  <div class="quiz-options" data-quiz="q6">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Appends are unimportant, so losing them doesn't matter.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Because seal and checkTail stay available, the system can always close a failed loglet and reconfigure to a new one; losing append availability is tolerable since recovery is the highly-available path.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>The sequencer never fails, so append actually tolerates F faults too.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>CheckTail and seal are cosmetic and don't affect availability.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q6','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q6">
+    <strong>Correct.</strong> The append bottleneck is the single sequencer, so one fault stops appends. But because seal and checkTail survive a minority of failures, the loglet can always be closed and the system can reconfigure to a fresh loglet (on new servers if needed) and resume. Keeping the <em>recovery path</em> highly available — not the append path — is exactly the trade Delos chose to make each loglet cheap and fast.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SYNTHESIS ═══════════════════════ -->
+<section id="synthesis" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>Every part of this lecture is one move in a single argument. <strong>Part I</strong> posed the problem: experimenting with consensus protocols in a live system is so risky that good ideas never ship. <strong>Part II</strong> gave the cure — the <em>virtual log</em>, which hides a chain of swappable loglets behind one continuous log, with <code>seal</code> and <code>reconfigure</code> as the levers for switching them, the way virtual memory hides physical pages behind one address space.</p>
+
+<p>From there the system splits cleanly in two. <strong>Part III</strong> built <em>upward</em>: a strictly-serializable database via state-machine replication, where read-write transactions append-then-replay and read-only transactions pick a linearization point with <code>checkTail</code>. <strong>Parts IV–VI</strong> built <em>downward</em>: the <em>control plane</em> (the highly-available MetaStore with its single-winner conditional write) absorbs all the expensive coordination, which is exactly what frees the <em>data plane</em> (the native loglet) from running consensus at all. The loglet only promises one thing — sealing stops appends — and so it can use a fast sequencer-plus-majority protocol, paying for that speed with the "zombie write" corner case, which it resolves by always over-approximating and copying suffixes.</p>
+
+<p>Notice the one idea that threads through every layer: <strong>"attempt" is not "knowledge."</strong> A reconfigure might lose a race; an appended transaction might have others slipped in front of it; a sealed loglet might hold a zombie suffix; a failed append might actually have committed. Every time, the cure is the same — go re-read the ground truth with a <code>checkTail</code> before you act. That single discipline is what lets Delos be both fast and correct.</p>
+
+<p>The results vindicate the design: Delos went from scratch to production in <strong>8 months</strong> on a ZooKeeper loglet, then earned a <strong>10× latency win</strong> by swapping in the native loglet underneath a running system that was already serving <strong>1.8 billion transactions a day</strong> — managing the metadata for Facebook's entire server fleet, exactly the Chubby/ZooKeeper-class role it set out to fill.</p>
+
+<div class="callout tip">
+  <div class="callout-title">What's Next</div>
+  <p>Delos closes the course's arc on consensus and replicated storage — from Paxos and Spanner's strict serializability to Azure Storage's sealed extents (whose layering and sealing you saw reused here wholesale). Next lecture we shift up the stack to <strong>microservices</strong> and how large applications are decomposed into independently-deployable services. As you go, keep the control/data-plane split in mind: it is one of the most reusable ideas in distributed systems, and it shows up far beyond logs.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

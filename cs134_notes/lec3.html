@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 3 — Logical Time: Clocks, Causality &amp; Vector Clocks</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 3 · Logical Time</div>
+  <a href="#part1">Part I — Why Physical Clocks Fail</a>
+  <a href="#why-timestamps" class="sub">What Timestamps Are For</a>
+  <a href="#time-of-day" class="sub">Time-of-Day Clocks</a>
+  <a href="#monotonic" class="sub">Monotonic Clocks</a>
+  <a href="#two-process" class="sub">The Two-Process Problem</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — What We Actually Want</a>
+  <a href="#ordering-function" class="sub">The Ordering Function</a>
+  <a href="#three-properties" class="sub">Agreement, Total Order, Accuracy</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — Happens-Before &amp; Causality</a>
+  <a href="#three-rules" class="sub">The Three Rules</a>
+  <a href="#spacetime" class="sub">Spacetime Diagrams</a>
+  <a href="#causality" class="sub">Why It's Really Causality</a>
+  <a href="#network-models" class="sub">Network Models</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — Lamport Clocks</a>
+  <a href="#lamport-algo" class="sub">The Algorithm</a>
+  <a href="#partial-order" class="sub">Only a Partial Order</a>
+  <a href="#tiebreak" class="sub">Breaking Ties for Total Order</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Applying Updates Safely</a>
+  <a href="#bank-example" class="sub">The Bank Example</a>
+  <a href="#hold-back-queue" class="sub">The Hold-Back Queue</a>
+  <a href="#fifo" class="sub">The FIFO Assumption</a>
+  <a href="#heartbeats" class="sub">Heartbeats</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part6">Part VI — Vector Clocks</a>
+  <a href="#vc-idea" class="sub">The Vector Idea</a>
+  <a href="#vc-algo" class="sub">The Algorithm</a>
+  <a href="#vc-compare" class="sub">Comparing &amp; Concurrency</a>
+  <a href="#quiz6" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#together">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">CS134 · Distributed Systems</div>
+  <h1>Logical Time: Clocks, Causality &amp; Vector Clocks</h1>
+  <p class="hero-sub">How replicas in a distributed system agree on the order of events when no two computers can ever agree on what time it is.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>Why Physical Clocks Fail Us</h2>
+</div>
+
+<p>Last lecture left us with a hard problem. We were building a <strong>replicated state machine</strong>: several copies (replicas) of the same service, each running the same code, so that if one machine dies the others keep going. The catch is that a replicated state machine only stays consistent if <em>every replica applies the same updates in the same order</em>. If a deposit and an interest payment hit two copies of a bank account in different orders, the two copies end up holding different balances.</p>
+
+<p>So the whole game reduces to one question: <strong>how do replicas agree on an order of events?</strong> The most obvious idea is to stamp every event with the time it happened and then sort by timestamp. This part is about why that obvious idea quietly breaks — which is exactly the motivation for everything that follows.</p>
+
+<h3 id="why-timestamps">First: What Do We Even Use Timestamps For?</h3>
+<p>Before attacking clocks, it helps to be precise about what we want from them. In code, timestamps serve two different jobs:</p>
+
+<div class="callout concept">
+  <div class="callout-title">Two Uses of Time</div>
+  <p><strong>Points in time</strong> — "this event happened <em>at</em> a specific moment." Examples: the class starts at 4:00, the browser cache entry expires at 5:30, this log line was printed at 12:01.<br><br><strong>Durations / intervals</strong> — "the gap <em>between</em> two events." Examples: the class lasts 50 minutes, the program ran for 3.2 seconds, retry after 200 ms.</p>
+</div>
+
+<p>Keep these two jobs in mind — the punchline of this part is that the clocks available to a real computer are each good at one job and bad at the other.</p>
+
+<h3 id="time-of-day">Time-of-Day Clocks</h3>
+<p>A <strong>time-of-day clock</strong> reports the real wall-clock time — "it is 3:00:00 PM." Because every machine drifts (a cheap crystal oscillator runs slightly fast or slow), these clocks are periodically corrected by <strong>NTP</strong>, the Network Time Protocol, which under the hood uses an algorithm like <strong>Cristian's algorithm</strong> from last lecture to ask a time server "what time is it?" and adjust.</p>
+
+<p>Here is the footgun. Suppose a process prints the time, NTP quietly corrects the clock in the background, and the process prints the time again:</p>
+
+<pre><code><span class="kw">print</span>(now())     <span class="cm"># 3:00:00 PM</span>
+<span class="cm"># ... NTP runs behind the scenes, decides the clock was 1s fast ...</span>
+<span class="kw">print</span>(now())     <span class="cm"># 2:59:59 PM   ← time went BACKWARDS</span></code></pre>
+
+<div class="callout warning">
+  <div class="callout-title">Time Can Jump Backwards</div>
+  <p>Because NTP <em>corrects</em> the clock, a time-of-day clock can jump forward <em>or backward</em>. If you measured a duration by subtracting two readings, you could get a negative number. Cloudflare once suffered a serious outage from exactly this: a backwards leap-second adjustment made a duration go negative and crashed a core service. Time-of-day clocks are fine for "roughly what time is it," but unsafe for measuring durations or comparing fine-grained order.</p>
+</div>
+
+<h3 id="monotonic">Monotonic Clocks</h3>
+<p>The fix for measuring durations is a <strong>monotonic clock</strong> — a counter that only ever moves forward, never jumps back, and is never corrected by NTP. In Python this is <code>time.monotonic()</code>; nearly every language has an equivalent. Subtract two monotonic readings and you get a trustworthy elapsed time.</p>
+
+<p>But a monotonic clock buys safety by giving up meaning. Each machine's monotonic counter started at some arbitrary moment (often boot) and ticks at its own rate. There is <em>no</em> shared zero, so a monotonic reading on machine A is simply <strong>not comparable</strong> to one on machine B. It answers "how long?" beautifully and "when, globally?" not at all.</p>
+
+<table class="compare-table">
+  <tr><th>Clock</th><th>Point in time?</th><th>Duration?</th></tr>
+  <tr><td>Time-of-day (NTP)</td><td>Yes — gives real wall time</td><td>No — can jump backward</td></tr>
+  <tr><td>Monotonic</td><td>No — no shared zero across machines</td><td>Yes — only moves forward</td></tr>
+</table>
+
+<h3 id="two-process">The Two-Process Problem</h3>
+<p>You might hope time-of-day clocks at least let two machines agree on the global state at a given instant. They don't. Consider processes P1 and P2, both starting with <code>x = 0</code>, whose clocks are slightly out of sync. P1 sets <code>x = 1</code> and tells P2.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="380" height="180" viewBox="0 0 380 180" style="display:block; margin:0 auto;">
+      <!-- P1 timeline -->
+      <text x="20" y="50" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">P1</text>
+      <line x1="55" y1="45" x2="350" y2="45" stroke="#d9d0c4" stroke-width="2"/>
+      <circle cx="120" cy="45" r="5" fill="#c0510a"/>
+      <text x="120" y="32" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c0510a">x=1</text>
+      <!-- P2 timeline -->
+      <text x="20" y="135" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">P2</text>
+      <line x1="55" y1="130" x2="350" y2="130" stroke="#d9d0c4" stroke-width="2"/>
+      <circle cx="240" cy="130" r="5" fill="#c0510a"/>
+      <text x="240" y="152" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c0510a">x=1</text>
+      <!-- message arrow -->
+      <line x1="125" y1="50" x2="235" y2="125" stroke="#2a2520" stroke-width="1.5" marker-end="url(#arrowB)"/>
+      <!-- 3PM cut -->
+      <line x1="190" y1="20" x2="190" y2="160" stroke="#c53030" stroke-width="1.5" stroke-dasharray="5,4"/>
+      <text x="190" y="14" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#c53030">3:00 PM</text>
+      <text x="155" y="98" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#6b6560">x=0</text>
+      <text x="290" y="98" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#6b6560">x=1</text>
+      <defs>
+        <marker id="arrowB" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#2a2520"/>
+        </marker>
+      </defs>
+    </svg>
+  </div>
+  <div class="figure-caption">At the red cut (3:00 PM), P1 already has <code>x=1</code> but P2 still reads <code>x=0</code> — a globally inconsistent state even though both clocks "agree" it is 3 PM.</div>
+</div>
+
+<p>At the instant both clocks call "3:00 PM," P1 has <code>x = 1</code> but P2 still has <code>x = 0</code>. A snapshot taken "at 3 PM" across the system is internally inconsistent. The wall clock simply does not give us a faithful global view of which event came first.</p>
+
+<div class="callout insight">
+  <div class="callout-title">The Realization</div>
+  <p>We have been chasing the wrong target. We don't actually need to know <em>what real time</em> each event happened at. For a replicated state machine, the <em>only</em> thing we care about is that all replicas agree on the <strong>relative order</strong> of events. Real time is a distraction; what matters is order. That shift in goal is the seed of the whole lecture.</p>
+</div>
+
+<div class="quiz" id="quiz1-box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">You need to measure how long a function took to run on a single machine. Which clock should you use, and why?</div>
+  <div class="quiz-options" data-quiz="quiz1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Time-of-day clock, because it gives the real wall-clock time the function started and ended.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Monotonic clock, because it only moves forward and is never corrected by NTP, so the difference is always a valid duration.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Either one works equally well, since both clocks are on the same machine.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Neither — you need a vector clock to measure a duration.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('quiz1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="quiz1">
+    <strong>Correct — B.</strong> A monotonic clock only ever moves forward, so subtracting two readings always yields a non-negative, meaningful elapsed time. A time-of-day clock (A) can be corrected backward by NTP mid-measurement, producing a negative or wrong duration — exactly the Cloudflare bug. Option D is a trap: vector clocks order events across machines, they are not a stopwatch.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>What We Actually Want From an "Order"</h2>
+</div>
+
+<p>We just decided that order, not real time, is the goal. But "order" is vague. Before designing any mechanism, good engineering practice is to write down the <em>requirements</em> precisely. This part nails down exactly what a good ordering scheme must guarantee — the checklist we will hold every later design up against.</p>
+
+<h3 id="ordering-function">Formalizing "Order" as a Function</h3>
+<p>Let's give each replica a function that assigns a number to every event. Write <code>Cᵢ(A)</code> for the timestamp that replica <em>i</em> gives to event A. The whole point of these numbers is comparison: we want</p>
+
+<pre><code>Cᵢ(A) &lt; Cᵢ(B)   <span class="cm">means "A is ordered before B"</span></code></pre>
+
+<p>So the design question becomes concrete: what properties should this function <code>Cᵢ</code> have so that replicas stay consistent? In lecture the class brainstormed these, and three rose to the top.</p>
+
+<h3 id="three-properties">The Three Properties</h3>
+
+<div class="callout concept">
+  <div class="callout-title">Property 1 — Agreement</div>
+  <p>All replicas must agree on the ordering of every pair of events. Formally, for any two replicas <em>i</em> and <em>j</em>, <code>Cᵢ</code> and <code>Cⱼ</code> rank every pair of events the same way. If replica 1 thinks A came before B, replica 2 must think so too.</p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Property 2 — Total Order</div>
+  <p>Every pair of events must be ordered — there are no ties. For any two distinct events A and B, either <code>C(A) &lt; C(B)</code> or <code>C(B) &lt; C(A)</code>. A tie would leave a replica with no rule for which update to apply first, reopening the door to inconsistency.</p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Property 3 — Accuracy (the "happens-before" property)</div>
+  <p>If event A really did happen before event B, the clocks should reflect it: A happening before B should imply <code>C(A) &lt; C(B)</code>. We don't want the mechanism to invent an order that contradicts a real cause-and-effect that already occurred.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Why Agreement Is the Liberating One</div>
+  <p>Notice what Agreement quietly buys us. If every replica is guaranteed to agree, then it <em>doesn't matter</em> what real-world time an event "really" happened at, or whether replica <em>j</em>'s internal numbering looks weird. As long as each replica's ordering is self-consistent and they all match, the system is correct. This is precisely why we are free to abandon real time in favor of invented "logical" numbers in the next part.</p>
+</div>
+
+<p>One question kept coming up in lecture: <em>what if two events happen at exactly the same time on different machines?</em> The professor's answer is worth internalizing: in a distributed system <strong>there is no such thing as "exactly the same time."</strong> You can always say one happened a hair before the other — and if you genuinely can't relate them, that's a real category we'll name later (<em>concurrent</em>). Hold that thought; it becomes the punchline of Part VI.</p>
+
+<div class="quiz" id="quiz2-box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Why does the <strong>Agreement</strong> property let us stop caring about real-world time entirely?</div>
+  <div class="quiz-options" data-quiz="quiz2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Because agreement guarantees the timestamps equal the true wall-clock time on every machine.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Because if all replicas already agree on a consistent order, the specific numbers (and whether they match real time) are irrelevant — correctness only needs a shared order.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Because agreement makes all the clocks monotonic, so they never go backward.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It doesn't — agreement is impossible without synchronized physical clocks.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('quiz2','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="quiz2">
+    <strong>Correct — B.</strong> Agreement says all replicas rank events identically. Once that holds, the actual values are just labels: any self-consistent, universally-shared ordering keeps the replicated state machine consistent, so the labels need not track real time at all. Option A is backwards (agreement says nothing about matching wall time), and D is wrong — the rest of the lecture builds agreement <em>without</em> synchronized physical clocks.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>Happens-Before &amp; Causality</h2>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Where We Are</div>
+  <p>Part II's Accuracy property said the clocks must respect when "A happened before B." But we never <em>defined</em> what "happened before" means when there is no global clock to consult. This part pins that down — it is the single most important definition in the lecture, introduced by Leslie Lamport.</p>
+</div>
+
+<h3 id="three-rules">Defining "Happens-Before" Without a Clock</h3>
+<p>Picture three processes drawn as horizontal timelines, with dots for events and arrows for messages between them. The deep idea is that we can decide some events happened before others <em>using only the structure of the program</em>, never consulting a clock. There are exactly three rules.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Same process, in order.</strong> If A and B happen on the same process and A comes first in the program, then A happened before B. (A single process executes its own events in a definite sequence.)</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Send before receive.</strong> If event B is the <em>sending</em> of a message and event C is the <em>receiving</em> of that same message, then B happened before C. You cannot receive a message before it was sent.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Transitivity.</strong> If A happened before B and B happened before C, then A happened before C. This is the "pedantic" rule the class kept forgetting — but it is what lets us chain the first two rules across many processes.</p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The Happens-Before Relation (→)</div>
+  <p>We write <code>A → B</code> ("A happened before B") when it can be derived from the three rules above: same-process ordering, send-before-receive, or transitivity through other events. Crucially, <code>→</code> is defined entirely by program structure and message flow — no physical clock is ever consulted.</p>
+</div>
+
+<h3 id="spacetime">Spacetime Diagrams</h3>
+<p>These three-timeline pictures are called <strong>spacetime diagrams</strong> (or <strong>Lamport diagrams</strong>). They are the standard way to visualize happens-before in the literature, so you will see them constantly. Let's trace one.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="210" viewBox="0 0 420 210" style="display:block; margin:0 auto;">
+      <defs>
+        <marker id="arrow3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#2a2520"/>
+        </marker>
+      </defs>
+      <!-- P1 -->
+      <text x="14" y="44" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">P1</text>
+      <line x1="45" y1="40" x2="400" y2="40" stroke="#d9d0c4" stroke-width="2"/>
+      <circle cx="90" cy="40" r="5" fill="#c0510a"/><text x="90" y="28" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#c0510a">A</text>
+      <circle cx="160" cy="40" r="5" fill="#c0510a"/><text x="160" y="28" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#c0510a">B</text>
+      <!-- P2 -->
+      <text x="14" y="114" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">P2</text>
+      <line x1="45" y1="110" x2="400" y2="110" stroke="#d9d0c4" stroke-width="2"/>
+      <circle cx="250" cy="110" r="5" fill="#c0510a"/><text x="250" y="132" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#c0510a">C</text>
+      <circle cx="330" cy="110" r="5" fill="#c0510a"/><text x="330" y="132" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#c0510a">D</text>
+      <!-- P3 -->
+      <text x="14" y="184" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">P3</text>
+      <line x1="45" y1="180" x2="400" y2="180" stroke="#d9d0c4" stroke-width="2"/>
+      <circle cx="120" cy="180" r="5" fill="#c0510a"/><text x="120" y="202" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#c0510a">F</text>
+      <circle cx="290" cy="180" r="5" fill="#c0510a"/><text x="290" y="202" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#c0510a">G</text>
+      <!-- messages -->
+      <line x1="165" y1="45" x2="245" y2="105" stroke="#2a2520" stroke-width="1.5" marker-end="url(#arrow3)"/>
+      <line x1="125" y1="175" x2="245" y2="115" stroke="#2a2520" stroke-width="1.5" marker-end="url(#arrow3)"/>
+    </svg>
+  </div>
+  <div class="figure-caption">Dots are events; arrows are messages. B sends to C; F sends to C. From the rules: A→B, C→D, F→G, B→C, F→C, and transitively A→C, A→D, B→D, F→D, and so on.</div>
+</div>
+
+<p>Now the subtle case. Does <strong>F happen before E?</strong> (Imagine E is an event on P2.) Thumbs down: there is <em>no</em> chain of same-process steps and message arrows linking F to E. F→G, sure — but nothing connects G or F to E. When no chain exists, the relation simply does not hold.</p>
+
+<div class="callout insight">
+  <div class="callout-title">"Not Ordered" Is a Feature, Not a Gap</div>
+  <p>A natural worry: if some event on P3 has no message connecting it to the others, can we order it at all? The answer is we <em>don't need to</em>. If an event happened completely independently — touching none of the others, influenced by none of them — there is no reason to force an order on it. Happens-before deliberately only relates events that could have influenced each other. Independence is information, not a missing answer.</p>
+</div>
+
+<h3 id="causality">Why It's Really About Causality</h3>
+<p>Step back and ask what happens-before is secretly capturing. If <code>A → B</code>, then A <em>could have caused</em> B — but B could <em>not</em> have caused A. Contrapositively: if A genuinely caused B, then certainly <code>A → B</code>. The relation is a conservative over-approximation of "could be a cause."</p>
+
+<p>Why care? Because violating causality produces baffling user-facing bugs. The lecture's example: Alice broadcasts "I lost my dog!" Bob, having seen it, broadcasts "I'm so sorry to hear that." A third user, Carol, due to a slow network, receives Bob's reply <em>before</em> Alice's original message — so Carol sees Bob apologizing for nothing.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Preserve Causality</div>
+  <p>The fundamental job of logical clocks is to <strong>preserve causal order</strong>: if one event causally led to another, every observer should see them in that order. Get this wrong and users see effects before causes — replies before messages, comments before posts. Almost everything in this lecture exists to make causal anomalies impossible.</p>
+</div>
+
+<h3 id="network-models">A Quick Detour: Network Models</h3>
+<p>The Alice/Bob/Carol delay raises a question — <em>how slow can the network be?</em> We model this with two assumptions about message delivery:</p>
+
+<table class="compare-table">
+  <tr><th>Synchronous model</th><th>Asynchronous model</th></tr>
+  <tr><td>There exists a bound <code>n</code> such that every message is delivered in less than <code>n</code> (say, 1 second).</td><td>A message can take an <em>arbitrary</em>, unbounded amount of time to arrive.</td></tr>
+  <tr><td>Easier to program: set a timeout of <code>n</code> and you <em>know</em> a message is lost.</td><td>Harder: a timeout never tells you whether a message is lost or just slow.</td></tr>
+  <tr><td>Convenient but <strong>unrealistic</strong> for the real internet.</td><td>Pessimistic but <strong>realistic</strong> across regions and data centers.</td></tr>
+</table>
+
+<p>Which should we build on? The synchronous model is easier for the developer, but it is a fantasy on a wide-area network. The synchronous model permits strictly <em>fewer</em> behaviors (messages always arrive within <code>n</code>); the asynchronous model permits <em>all</em> those behaviors plus arbitrary delays.</p>
+
+<div class="callout tip">
+  <div class="callout-title">The Engineering Move</div>
+  <p>Always design for the <strong>harder (asynchronous)</strong> model. If your system is correct under arbitrary delays, then it is automatically correct on any synchronous network too — you get those guarantees "for free." Build robust to the worst case, and the easy case takes care of itself. (Inside a tightly controlled data center the synchronous assumption can be reasonable, but geo-distributed, we assume asynchronous. The rest of the course does too.)</p>
+</div>
+
+<div class="quiz" id="quiz3-box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In the spacetime diagram, F→G but there is no message chain linking either to event E on another process. What is the correct conclusion about F and E?</div>
+  <div class="quiz-options" data-quiz="quiz3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>F happened before E, because F is drawn to the left of E in physical time.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>E happened before F, because we should default to ordering by process number.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Neither happened-before the other — with no connecting chain they are unrelated by →, which is a legitimate outcome, not an error.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It is impossible to build any system unless every pair of events is related by →.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('quiz3','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="quiz3">
+    <strong>Correct — C.</strong> Happens-before is derived only from same-process order, send-before-receive, and transitivity. With no chain connecting F and E, neither relates to the other — they are unordered, and that is a meaningful, intended result. Option A is the classic mistake of reading physical position off the diagram; the horizontal axis is <em>not</em> a trustworthy global clock.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>Lamport Clocks — Numbering Events</h2>
+</div>
+
+<p>We have a relation, <code>→</code>, defined by program structure. But a relation isn't a number, and to <em>sort</em> events into a queue we need actual numbers. Lamport's logical clock is the algorithm that assigns each event an integer <code>C(event)</code> such that <code>A → B</code> implies <code>C(A) &lt; C(B)</code> — turning the abstract relation into concrete, comparable timestamps. And it does so with a startlingly simple rule.</p>
+
+<h3 id="lamport-algo">The Algorithm</h3>
+<p>Every process keeps one integer counter, all starting at 0. Three rules update it:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Local event:</strong> before recording any local event, increment your own counter by 1, and stamp the event with the new value.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Sending a message:</strong> attach your current counter value to the outgoing message.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Receiving a message:</strong> set your counter to <code>max(local, message) + 1</code>, then stamp the receive event with that value.</p>
+</div>
+
+<p>Rule 3 is the clever bit. Just incrementing on receive isn't enough — if the local clock is 2 and a message arrives carrying clock 3, simply doing 2+1 gives 3, which doesn't beat the sender. Taking the <code>max</code> first guarantees the receive event's timestamp exceeds <em>both</em> the local history and the sender's history, preserving send-before-receive. Let's trace it on a small diagram (P1: A, B; P3: F; with B sending to an event C on P1, and a message reaching C):</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="430" height="200" viewBox="0 0 430 200" style="display:block; margin:0 auto;">
+      <defs>
+        <marker id="arrow4" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#2a2520"/>
+        </marker>
+      </defs>
+      <!-- P1 -->
+      <text x="14" y="44" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">P1</text>
+      <line x1="45" y1="40" x2="410" y2="40" stroke="#d9d0c4" stroke-width="2"/>
+      <circle cx="90" cy="40" r="5" fill="#c0510a"/><text x="90" y="28" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">A</text><text x="90" y="60" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" font-weight="600" fill="#c0510a">1</text>
+      <circle cx="170" cy="40" r="5" fill="#c0510a"/><text x="170" y="28" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">B</text><text x="170" y="60" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" font-weight="600" fill="#c0510a">2</text>
+      <circle cx="320" cy="40" r="5" fill="#c0510a"/><text x="320" y="28" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">C</text><text x="320" y="60" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" font-weight="600" fill="#c0510a">4</text>
+      <!-- P3 -->
+      <text x="14" y="164" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">P3</text>
+      <line x1="45" y1="160" x2="410" y2="160" stroke="#d9d0c4" stroke-width="2"/>
+      <circle cx="240" cy="160" r="5" fill="#c0510a"/><text x="240" y="182" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">F</text><text x="240" y="148" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" font-weight="600" fill="#c0510a">3</text>
+      <!-- message F -> C -->
+      <line x1="245" y1="155" x2="315" y2="48" stroke="#2a2520" stroke-width="1.5" marker-end="url(#arrow4)"/>
+      <text x="300" y="110" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">carries 3</text>
+    </svg>
+  </div>
+  <div class="figure-caption">A=1, B=2 on P1; F=3 on P3. F sends a message carrying clock 3 to event C on P1. C = max(local 2, msg 3) + 1 = <strong>4</strong>.</div>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">These Are Not Synchronized Clocks</div>
+  <p>It is tempting to read these integers as a synchronized global time. They are <em>not</em>. The numbers on different processes are not on a shared scale and say nothing about real time — F=3 and B=2 doesn't mean F happened "after" B in any wall-clock sense. They only encode the happens-before relation. This is the entire reason we abandoned physical clocks: these logical numbers <em>cannot</em> jump backward, because the protocol forbids it.</p>
+</div>
+
+<h3 id="partial-order">The Catch: Only a Partial Order</h3>
+<p>Lamport clocks faithfully deliver Accuracy (<code>A → B ⟹ C(A) &lt; C(B)</code>) and Agreement. But check the three properties again — we are missing <strong>Total Order</strong>. Two unrelated events on different processes can receive the <em>same</em> integer.</p>
+
+<p>In the running example, A and D might both be 1, B and E both 2 — concurrent events sharing a timestamp. Worse, the <em>converse</em> of accuracy fails:</p>
+
+<div class="callout insight">
+  <div class="callout-title">The One-Way Street</div>
+  <p><code>A → B</code> implies <code>C(A) &lt; C(B)</code>. But <code>C(A) &lt; C(B)</code> does <strong>not</strong> imply <code>A → B</code>! A smaller Lamport timestamp could mean A happened before B — or it could mean they are concurrent and the numbers just landed that way. Lamport clocks keep one direction of the implication and lose the other. Remember this gap: it is exactly what vector clocks (Part VI) will repair.</p>
+</div>
+
+<h3 id="tiebreak">Forcing a Total Order: Break Ties with Process ID</h3>
+<p>We need <em>some</em> rule to order two events that share a Lamport number, and every replica must break the tie <em>the same way</em> (or Agreement breaks). The trick relies on one fact:</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Insight — Same Process, Never Equal</div>
+  <p>Two events on the <em>same</em> process can never have the same Lamport timestamp, because each local event increments the counter. Therefore the (timestamp, process-id) pair is <strong>globally unique</strong>, and we can break ties by process id.</p>
+</div>
+
+<p>So every event is timestamped with the pair <code>(clock, pid)</code>, and we compare pairs lexicographically:</p>
+
+<pre><code><span class="cm"># (clock, pid) of event A is "less than" that of B when:</span>
+clockA &lt; clockB
+  <span class="kw">or</span> (clockA == clockB <span class="kw">and</span> pidA &lt; pidB)</code></pre>
+
+<p>The process ids here are not the operating-system PIDs — they are agreed-upon unique indices the system assigns to each participant up front (every node knows everyone's index). With this lexicographic rule, <em>any</em> two distinct events compare strictly, all replicas compare them identically, and we finally have all three properties: Agreement, Total Order, and Accuracy.</p>
+
+<div class="quiz" id="quiz4-box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A process has local Lamport clock 5 and receives a message stamped with clock 9. What value does it assign to the receive event?</div>
+  <div class="quiz-options" data-quiz="quiz4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div><code>6</code> — just increment the local clock by 1.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div><code>9</code> — adopt the message's clock, since it's larger.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div><code>10</code> — take max(5, 9) and add 1.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div><code>14</code> — add the two clocks together.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('quiz4','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="quiz4">
+    <strong>Correct — C.</strong> The receive rule is <code>max(local, message) + 1 = max(5, 9) + 1 = 10</code>. Adding 1 to the max guarantees the receive event's timestamp strictly exceeds both the sender's (9) and the local history (5), preserving send-before-receive. Option B (just adopting 9) would tie with the send event and break strict ordering; A ignores the larger incoming clock entirely.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>Applying Updates Safely</h2>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Closing the Loop</div>
+  <p>Parts I–IV built a total order on events. But ordering alone isn't the goal — the goal (from the very start) was replicas applying updates in that order without diverging. The trap: a replica can't apply the lowest-timestamped update it has seen <em>so far</em>, because a lower-numbered update might still be in flight. This part is how we know it is finally safe to act.</p>
+</div>
+
+<h3 id="bank-example">The Replicated Bank, Concretely</h3>
+<p>Two replicas of a bank account. A client in <strong>Los Angeles</strong> deposits \$100; an admin in <strong>New York</strong> adds 1% interest. Each request goes first to its local replica, gets a Lamport timestamp, and must eventually be applied in the same order at both replicas. Let's trace the timestamps. R1 starts at clock 2 (id 1), R2 starts at clock 7 (id 2):</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>LA deposit arrives at R1 → timestamped <code>3.1</code> (clock 3, pid 1). NYC interest arrives at R2 → timestamped <code>8.2</code>. <strong>Nothing is applied yet</strong> — we have only timestamped the requests.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>Each replica forwards its event to the other. R2 receives <code>3.1</code> and stamps the receive <code>9.2</code> = max(8,3)+1. R1 receives <code>8.2</code> and stamps it <code>9.1</code> = max(3,8)+1.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>Now R1 has <em>heard</em> from R2 an event timestamped 8.2. So R1 knows R2 has no un-sent update earlier than 8.2 — and therefore none earlier than 3.1. R1 can <strong>safely apply</strong> its own 3.1 deposit: nothing smaller can ever arrive.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p>By the same logic R1 can then apply 8.2 (nothing lies between 3.1 and 8.2). And R2, having heard 3.1 from R1, knows R1 will never send anything below 3.1, so R2 may apply 3.1 too. Both replicas apply <code>3.1</code> then <code>8.2</code> — same order. Consistent.</p>
+</div>
+
+<h3 id="hold-back-queue">The Hold-Back Queue</h3>
+<p>The mechanism behind that trace is a per-replica <strong>hold-back queue</strong>. Every arriving update is placed in the queue and sorted by its <code>(clock, pid)</code> timestamp. You may <em>not</em> apply an update the instant it arrives — you must wait.</p>
+
+<div class="callout concept">
+  <div class="callout-title">The Delivery Rule</div>
+  <p>You may apply (deliver) the update at the <strong>head</strong> of the queue only once you have received a message with a <em>higher</em> timestamp from <strong>every</strong> other replica. At that point you are certain no replica can still send anything smaller than the head — so the head is final, and applying it can never be contradicted later.</p>
+</div>
+
+<h3 id="fifo">The Assumption That Makes It Work: FIFO Channels</h3>
+<p>Why is "I heard 8.2 from R2" enough to rule out a sneaky earlier 5.2 still in flight? Because we assume each pair of replicas communicates over a <strong>FIFO (first-in-first-out)</strong> channel.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — FIFO Channels</div>
+  <p>On a FIFO channel between two participants, if you receive a message from a sender, you have already received <em>everything that sender sent before it</em>. Messages from one source arrive in send order. This is guaranteed in practice by protocols like TCP. So receiving 8.2 from R2 proves R2 has nothing earlier left to deliver to you.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">FIFO Is Per-Channel, Not Global</div>
+  <p>FIFO only orders messages along a <em>single</em> sender→receiver channel. It does <strong>not</strong> order messages across different senders — which is exactly the Alice/Bob/Carol anomaly: Alice→Carol and Bob→Carol are separate channels, so Carol can see Bob's reply before Alice's message. FIFO per channel is what we assume; cross-channel causal ordering is a harder, separate problem.</p>
+</div>
+
+<p>Pulling it together, this scheme rests on three standing assumptions: (1) every replica knows all the other replicas, (2) channels between each pair are FIFO, and (3) every replica runs the Lamport-clock protocol. Because everyone runs the protocol, R1 <em>knows</em> R2's clock can only increase past 8 — there is no skew to fear, since these are logical, not physical, clocks.</p>
+
+<h3 id="heartbeats">Heartbeats: Don't Wait Forever</h3>
+<p>There is a cost. A replica can't apply the head of its queue until it hears a higher timestamp from <em>every</em> other replica — so a single quiet replica stalls everyone. The whole system moves at the speed of its slowest, most silent node.</p>
+
+<div class="callout tip">
+  <div class="callout-title">The Fix — Periodic Heartbeats</div>
+  <p>Have each replica periodically send a tiny "tick" message carrying just its current clock, even when it has no real update. In the bank example, R1 and R2 later send heartbeats bumping their clocks to 10.1 and 10.2; now each has heard a higher number from the other and can apply any held-back update. The cost is modest network overhead — even with 20 nodes, occasional empty clock messages are cheap — and the course will return to ways of reducing this coordination later.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">The Honest Caveat: We Reorder Reality</div>
+  <p>The LA client may have clicked "deposit" before the NYC admin clicked "interest" in real wall-clock time — yet Lamport order might apply them the other way. That's allowed: the two clients never communicate, so neither happens-before the other, and users only learn the result when their transaction is reported <em>done</em> (like a credit-card "transaction succeeded"), not when they click. The one thing that would break this is a <strong>bypass channel</strong> — if the admin phoned the client to coordinate, real causality would escape the system's view. We assume no such side channel exists.</p>
+</div>
+
+<div class="quiz" id="quiz5-box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">The update at the head of a replica's hold-back queue is timestamped <code>3.1</code>. When is it safe to apply it?</div>
+  <div class="quiz-options" data-quiz="quiz5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Immediately on arrival — it has the smallest timestamp seen so far.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Once the replica has received a message with a timestamp higher than 3.1 from every other replica, since FIFO channels then guarantee nothing smaller can still arrive.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>After exactly 1 second has passed, the synchronous-network bound.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>As soon as any one other replica reports a higher timestamp.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('quiz5','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="quiz5">
+    <strong>Correct — B.</strong> Only after hearing a higher timestamp from <em>every</em> other replica is the replica certain no one can still deliver something smaller than 3.1 — FIFO channels mean a higher message implies all earlier ones already arrived. Option D (just one replica) is insufficient: a different, silent replica might still hold an earlier update. Option A is the exact mistake the hold-back queue prevents. Option C wrongly assumes a synchronous network — we build for the asynchronous model.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART VI ═══════════════════════ -->
+<section id="part6" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part VI</div>
+  <h2>Vector Clocks — Recovering Concurrency</h2>
+</div>
+
+<p>Lamport clocks got us a working replicated state machine, but they have a real blind spot we flagged in Part IV: <code>C(A) &lt; C(B)</code> does not tell you whether A actually happened before B or whether they were merely concurrent. The two cases look identical. Often we genuinely <em>need</em> to tell them apart — and that need motivates vector clocks.</p>
+
+<h3 id="vc-idea">Why We'd Want Concurrency Back</h3>
+<p>Total order is sometimes overkill. Some operations <strong>commute</strong> — applying them in either order gives the same result — so forcing an order on them only creates needless waiting:</p>
+
+<ul style="margin: 0 0 18px 24px;">
+  <li>Updates to <em>two different bank accounts</em> never need ordering.</li>
+  <li>Two <em>deposits</em> to the same account commute (a+b = b+a), so their order is irrelevant.</li>
+  <li>Two Facebook posts from <em>different users</em> needn't be ordered — but a comment that <em>replies</em> to a post must come after it.</li>
+</ul>
+
+<p>What we really want to order is only the <em>causally related</em> events. That is <strong>causal ordering</strong>, and it usually suffices. To get it we must be able to detect concurrency precisely — and detect it we cannot, with a single Lamport integer. Beyond replication, this precision is invaluable for <em>debugging, testing, and monitoring</em> distributed executions, where you need to know the exact order — or genuine lack of order — between events.</p>
+
+<h3 id="vc-algo">The Vector Idea &amp; Algorithm</h3>
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Vector Clocks</div>
+  <p>Instead of one integer, label each event with a <strong>vector of N integers</strong>, one per process in the system. Entry <code>V[i]</code> is the count of events on process <em>i</em> that causally precede this event. The vector is a compact record of "how much of every process's history this event is aware of."</p>
+</div>
+
+<p>All vectors start at <code>[0, 0, 0]</code> (for three processes). Two update rules:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Local event on process <em>j</em>:</strong> increment <em>only</em> your own entry, <code>V[j] += 1</code>. (This is why the first event on P1 is <code>[1,0,0]</code>, not <code>[0,0,0]</code> — increment first, then stamp, so no two events on a process share a vector.)</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Receiving a vector <code>D</code> on process <em>j</em>:</strong> take the element-wise <code>max</code> of your vector and <code>D</code> (a <em>merge</em>, absorbing everything the sender knew), then increment your own entry <code>V[j] += 1</code>.</p>
+</div>
+
+<p>Let's trace. P1 does two local events; then sends to P3; P3 also has its own local event:</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="440" height="200" viewBox="0 0 440 200" style="display:block; margin:0 auto;">
+      <defs>
+        <marker id="arrow6" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#2a2520"/>
+        </marker>
+      </defs>
+      <!-- P1 -->
+      <text x="14" y="44" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">P1</text>
+      <line x1="45" y1="40" x2="420" y2="40" stroke="#d9d0c4" stroke-width="2"/>
+      <circle cx="95" cy="40" r="5" fill="#c0510a"/><text x="95" y="63" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" font-weight="600" fill="#c0510a">100</text>
+      <circle cx="185" cy="40" r="5" fill="#c0510a"/><text x="185" y="63" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" font-weight="600" fill="#c0510a">200</text>
+      <!-- P3 -->
+      <text x="14" y="164" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">P3</text>
+      <line x1="45" y1="160" x2="420" y2="160" stroke="#d9d0c4" stroke-width="2"/>
+      <circle cx="110" cy="160" r="5" fill="#c0510a"/><text x="110" y="148" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" font-weight="600" fill="#c0510a">001</text>
+      <circle cx="320" cy="160" r="5" fill="#c0510a"/><text x="320" y="148" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" font-weight="600" fill="#c0510a">202</text>
+      <!-- message 200 -> P3 -->
+      <line x1="190" y1="46" x2="315" y2="153" stroke="#2a2520" stroke-width="1.5" marker-end="url(#arrow6)"/>
+      <text x="270" y="100" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">sends 200</text>
+    </svg>
+  </div>
+  <div class="figure-caption">P1: 100, 200. P3's own event: 001 (it has heard from nobody). On receiving 200, P3 merges: max(001, 200)=201, then +1 on its own entry → <strong>202</strong>.</div>
+</div>
+
+<p>Notice P3's independent event is <code>001</code>, not <code>100</code> — P3 has received no message, so it knows nothing about P1's or P2's progress. The merge step is the whole point: a vector ends up holding the <em>union of the freshest information</em> from every process the event causally depends on. No single process knows who has the freshest data overall; the element-wise max ensures the receiver ends up with the best of both.</p>
+
+<h3 id="vc-compare">Comparing Vectors &amp; Detecting Concurrency</h3>
+<p>Now the payoff. We compare two vectors element by element:</p>
+
+<table class="compare-table">
+  <tr><th>Relation</th><th>Definition</th><th>Meaning</th></tr>
+  <tr><td><code>VA = VB</code></td><td>every entry equal</td><td>same event (uninteresting)</td></tr>
+  <tr><td><code>VA &lt; VB</code></td><td>every entry ≤, and at least one strictly &lt;</td><td>A → B (A happened before B)</td></tr>
+  <tr><td><code>VA ∥ VB</code></td><td>neither ≤ the other (one bigger somewhere, smaller elsewhere)</td><td><strong>concurrent</strong></td></tr>
+</table>
+
+<p>That third row is what Lamport clocks could never express. Take <code>VA = [1,1,0,0]</code> and <code>VB = [0,0,1,1]</code>: A is bigger in the first two entries, B is bigger in the last two. Neither is ≤ the other, so there is <strong>no</strong> message chain linking them — they are genuinely concurrent, <code>A ∥ B</code>.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Vector Clocks Capture the Exact Partial Order</div>
+  <p>Lamport clocks kept only one direction: <code>A → B ⟹ C(A) &lt; C(B)</code>, losing the converse. Vector clocks restore it: <code>VA &lt; VB</code> <em>if and only if</em> <code>A → B</code>, and incomparable vectors mean exactly "concurrent." The vector encodes the true happens-before partial order with no loss of precision — recovering the very information Lamport clocks threw away.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">What "Concurrent" Really Means Here</div>
+  <p>Concurrent does <em>not</em> mean "happened at the same wall-clock instant." It means the two events are <strong>incomparable</strong> under happens-before — no chain of messages connects them, so from the system's standpoint neither caused the other. They could have occurred seconds apart in real time; what matters is that no causal relationship exists to order them.</p>
+</div>
+
+<details>
+<summary>Why a vector entry might already exceed the incoming one</summary>
+<div class="details-body">
+<p>When merging, can your local vector already hold a <em>bigger</em> value than the message for some entry? Yes — for entries <em>other than the sender's own</em>. Suppose process 3 is at <code>[0,0,5]</code> (lots of local events) and process 2 sends you <code>[0,1,0]</code>. After merge you'd take max per entry. The guarantee is narrow: when you hear directly from process <em>i</em>, you can't have a higher value for <em>i</em>'s own entry than <em>i</em> itself reports. But for everyone else, you may already know more — perhaps you've heard from them a thousand times while the sender hasn't heard from them at all. That's exactly why we take the element-wise max: nobody knows who holds the freshest information for which process, so we union the best of both.</p>
+</div>
+</details>
+
+<div class="quiz" id="quiz6-box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Two events have vector clocks <code>VA = [2,0,0]</code> and <code>VB = [0,1,1]</code>. What is their relationship?</div>
+  <div class="quiz-options" data-quiz="quiz6">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>A → B, because A's first entry (2) is larger.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>B → A, because B has more non-zero entries.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>They are concurrent (A ∥ B): A is bigger in entry 1, B is bigger in entries 2 and 3, so neither vector is ≤ the other.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>They are the same event, since the entries sum to the same total.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('quiz6','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="quiz6">
+    <strong>Correct — C.</strong> For <code>VA &lt; VB</code> we'd need every entry of A to be ≤ B's. But A[0]=2 &gt; B[0]=0, while A[1]=0 &lt; B[1]=1 — A is larger in one place and smaller in another. Neither is ≤ the other, so they are incomparable: <strong>concurrent</strong>. No chain of messages links them. (Summing entries, as in D, is meaningless — vector clocks compare component-wise, never by total.)
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SUMMARY ═══════════════════════ -->
+<section id="together" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This lecture is one long argument, and every part is a move in it. We started (<strong>Part I</strong>) with a need from last lecture — replicas must apply updates in the same order — and discovered that physical clocks can't deliver it: time-of-day clocks leap backward, monotonic clocks can't be compared across machines, and a wall-clock "snapshot" of the system is internally inconsistent.</p>
+
+<p>That failure forced a reframing (<strong>Part II</strong>): we don't need real time, we need an <em>order</em> with three properties — Agreement, Total Order, and Accuracy. Accuracy referenced "happens-before," so we had to define it (<strong>Part III</strong>) from program structure alone — same-process order, send-before-receive, transitivity — and saw it is really a conservative model of <em>causality</em>, the thing whose violation makes users see replies before messages.</p>
+
+<p><strong>Part IV</strong> turned that relation into numbers with Lamport clocks (<code>max+1</code> on receive), then patched in a total order by breaking ties with process ids. <strong>Part V</strong> cashed all of this in: a hold-back queue plus FIFO channels lets a replica know precisely when an update is final and safe to apply — at the cost of waiting on the slowest node, softened by heartbeats. Finally <strong>Part VI</strong> repaired Lamport's one blind spot — the inability to tell "before" from "concurrent" — with vector clocks, which encode the exact causal partial order.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The One Sentence to Remember</div>
+  <p>In a distributed system you cannot agree on <em>what time it is</em>, but you can agree on <em>what happened before what</em> — and logical clocks (Lamport for a total order, vectors for the exact causal order) turn that agreement into concrete, comparable timestamps that keep replicas consistent.</p>
+</div>
+
+<table class="compare-table">
+  <tr><th></th><th>Lamport Clock</th><th>Vector Clock</th></tr>
+  <tr><td>Shape</td><td>single integer</td><td>vector of N integers</td></tr>
+  <tr><td>Captures A → B?</td><td>yes (one direction only)</td><td>yes, exactly (iff)</td></tr>
+  <tr><td>Detect concurrency?</td><td>no</td><td>yes (incomparable vectors)</td></tr>
+  <tr><td>Total order?</td><td>yes, with (clock, pid) tiebreak</td><td>partial order (by design)</td></tr>
+  <tr><td>Cost</td><td>cheap (1 number per message)</td><td>N numbers per message</td></tr>
+</table>
+
+<div class="callout tip" style="margin-top: 32px;">
+  <div class="callout-title">What's Next</div>
+  <p>We now have the bedrock primitive of the course — logical time — underlying nearly every technique to come. The next lecture builds directly on vector clocks to take <strong>consistent global snapshots</strong> of a running distributed system: capturing a coherent picture of every replica's state at "the same logical moment" even though no real moment exists. That is the foundation for checkpointing, deadlock detection, and debugging the systems we'll keep building.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

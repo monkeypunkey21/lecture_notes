@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 19 — Interactive Textbook</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 19 · Distributed Systems</div>
+  <a href="#part1">Part I — The Map of the Course</a>
+  <a href="#why-recap" class="sub">Why End With a Recap</a>
+  <a href="#review-ncas" class="sub">NCas, Caching &amp; Real-Time Order</a>
+  <a href="#review-diamond" class="sub">The Diamond Pattern</a>
+  <a href="#quiz-recap" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Three Distilled Lessons</a>
+  <a href="#lesson-goals" class="sub">Lesson 1 — System Goals</a>
+  <a href="#lesson-defensive" class="sub">Lesson 2 — Think Defensively</a>
+  <a href="#lesson-specs" class="sub">Lesson 3 — Specifications</a>
+  <a href="#quiz-lessons" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — Serverless &amp; Data Processing</a>
+  <a href="#serverless" class="sub">Serverless Functions</a>
+  <a href="#serverless-state" class="sub">The Stateless Problem</a>
+  <a href="#spark" class="sub">MapReduce → Spark</a>
+  <a href="#streaming" class="sub">Stream &amp; Actor Systems</a>
+  <a href="#quiz-cloud" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — Reliability &amp; Correctness</a>
+  <a href="#overload" class="sub">Overload Control</a>
+  <a href="#metastable" class="sub">Metastable Failures</a>
+  <a href="#verification" class="sub">Verification &amp; Testing</a>
+  <a href="#monitoring" class="sub">Monitoring &amp; Tracing</a>
+  <a href="#quiz-reliability" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Frontiers</a>
+  <a href="#consistency-frontier" class="sub">Weaker Consistency</a>
+  <a href="#disaggregation" class="sub">Disaggregation</a>
+  <a href="#byzantine" class="sub">Byzantine &amp; Blockchain</a>
+  <a href="#classic-spins" class="sub">Spins on Classics</a>
+  <a href="#quiz-frontier" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part6">Part VI — How to Study &amp; What's Next</a>
+  <a href="#exam-advice" class="sub">Exam Strategy</a>
+  <a href="#synthesis">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">CS134 · Distributed Systems</div>
+  <h1>Lessons Learned &amp; the Road Ahead</h1>
+  <p class="hero-sub">The final lecture — distilling the whole course into three durable lessons for building systems, then touring the open frontier: serverless, data processing, reliability, verification, and beyond.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>The Map of the Course</h2>
+</div>
+
+<h3 id="why-recap">Why End With a Recap?</h3>
+<p>This is the last lecture of the quarter, and the last one for a reason. Across the term we built a large toolbox — and a toolbox is only useful if you can see how the tools relate. Before looking forward to research frontiers, the professor steps back to draw the map: what did we actually cover, and what are the few high-level ideas that survive after the details fade?</p>
+
+<p>If you are coming to this page cold, here is the one-paragraph version of the whole course. A <strong>distributed system</strong> is a set of separate computers (nodes), connected by a network, that cooperate to look like a single reliable service. The hard part is that nodes can crash, messages can be lost or delayed, and there is no shared clock — yet clients still want correct answers and good performance. Everything in the course is a technique for coping with that reality.</p>
+
+<div class="callout concept">
+  <div class="callout-title">The Topics We Covered</div>
+  <p>In rough order: <strong>clocks</strong> (ordering events without a shared time); <strong>MapReduce</strong> (a first distributed application); <strong>snapshots</strong> (capturing a consistent global state); <strong>replication &amp; fault tolerance</strong> via <strong>primary-backup</strong> and <strong>Paxos</strong>; <strong>consistency</strong> models from strong to weak; <strong>consensus</strong> (and a practical system, ZooKeeper); <strong>sharding</strong> (scaling out by splitting data); <strong>transactions</strong> (guarantees across multiple shards); and real systems — <strong>Dynamo, Azure Storage, Spanner, NCas</strong>, and more.</p>
+</div>
+
+<p>Notice the shape: foundations first (clocks, snapshots), then the two great problems — <em>fault tolerance</em> (staying correct when nodes die) and <em>scalability</em> (staying fast as load grows) — and finally the systems that combine these into something deployable. The whole course is a layered tower; each layer assumes the one below.</p>
+
+<h3 id="review-ncas">NCas, Caching &amp; the Real-Time Ordering Trap</h3>
+<p>The lecture opened by revisiting three quiz questions, because they expose subtle ideas worth nailing down. The most important concerned <strong>NCas</strong> — the caching layer studied last time (modeled on Facebook's Memcache-style infrastructure). Let's reconstruct the scenario carefully, because it is a classic correctness pitfall.</p>
+
+<p>The frontend sends <strong>read requests</strong>. Several of them hit the <strong>cache</strong> and return immediately with the cached value. But here is the catch: <em>before</em> those reads were even issued, a <strong>write</strong> had already happened that eventually <em>invalidates</em> the very value those reads are returning. The writer finished its work first in real time — yet the readers never see it. They serve stale data.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="170" viewBox="0 0 420 170" style="display:block; margin:0 auto;">
+      <!-- timeline axis -->
+      <line x1="20" y1="150" x2="400" y2="150" stroke="#d9d0c4" stroke-width="2"/>
+      <polygon points="400,150 392,146 392,154" fill="#d9d0c4"/>
+      <text x="370" y="166" font-family="JetBrains Mono, monospace" font-size="11" fill="#6b6560">time</text>
+      <!-- write -->
+      <line x1="60" y1="30" x2="150" y2="30" stroke="#c0510a" stroke-width="3"/>
+      <circle cx="60" cy="30" r="4" fill="#c0510a"/>
+      <circle cx="150" cy="30" r="4" fill="#c0510a"/>
+      <text x="60" y="22" font-family="JetBrains Mono, monospace" font-size="12" font-weight="600" fill="#c0510a">WRITE x=2 (completes)</text>
+      <line x1="150" y1="30" x2="150" y2="150" stroke="#c0510a" stroke-width="1" stroke-dasharray="3,3"/>
+      <!-- reads -->
+      <line x1="220" y1="80" x2="300" y2="80" stroke="#2563eb" stroke-width="3"/>
+      <circle cx="220" cy="80" r="4" fill="#2563eb"/>
+      <circle cx="300" cy="80" r="4" fill="#2563eb"/>
+      <text x="220" y="72" font-family="JetBrains Mono, monospace" font-size="12" font-weight="600" fill="#2563eb">READ → cache hit → x=1 (stale!)</text>
+      <line x1="250" y1="110" x2="330" y2="110" stroke="#2563eb" stroke-width="3"/>
+      <circle cx="250" cy="110" r="4" fill="#2563eb"/>
+      <circle cx="330" cy="110" r="4" fill="#2563eb"/>
+      <text x="250" y="128" font-family="JetBrains Mono, monospace" font-size="12" font-weight="600" fill="#2563eb">READ → x=1 (stale!)</text>
+    </svg>
+  </div>
+  <div class="figure-caption">The write completes (in real time) before the reads even begin — yet the reads return the old value. Real-time order is violated.</div>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Real-Time Ordering Guarantee</div>
+  <p>A system respects <strong>real-time ordering</strong> if an operation that <em>finishes</em> before another operation <em>starts</em> is seen as happening first by everyone. Concretely: if a write completes at wall-clock time <code>t</code>, any read that starts after <code>t</code> must reflect that write (or a later one). This is the property at the heart of <strong>linearizability</strong>, the strongest single-object consistency model.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">NCas Trades Real-Time Order for Speed — On Purpose</div>
+  <p>NCas does <strong>not</strong> provide real-time ordering guarantees, and that is a deliberate design choice, not a bug. Invalidating the cache on the <em>critical path</em> of every write would make writes slow. Instead NCas invalidates lazily, off the critical path. The price is that reads can briefly see stale data. This is the course's central theme in miniature: <strong>a real-time guarantee was sacrificed to win a performance benefit.</strong></p>
+</div>
+
+<h3 id="review-diamond">The Diamond Pattern</h3>
+<p>The third review question was about the <strong>diamond pattern</strong>, a microservice topology where a request fans out and reconverges: one service calls a downstream service that is also reached by another path, so two routes meet again at the same point — forming a diamond shape in the call graph.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="240" height="180" viewBox="0 0 240 180" style="display:block; margin:0 auto;">
+      <!-- nodes -->
+      <circle cx="120" cy="28" r="20" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="120" y="33" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">A</text>
+      <circle cx="50" cy="92" r="20" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="50" y="97" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">B</text>
+      <circle cx="190" cy="92" r="20" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="190" y="97" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">C</text>
+      <circle cx="120" cy="156" r="20" fill="#eff4ff" stroke="#2563eb" stroke-width="2"/>
+      <text x="120" y="161" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">D</text>
+      <!-- edges -->
+      <line x1="106" y1="42" x2="64" y2="78" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="134" y1="42" x2="176" y2="78" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="64" y1="106" x2="106" y2="142" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="176" y1="106" x2="134" y2="142" stroke="#d9d0c4" stroke-width="2"/>
+    </svg>
+  </div>
+  <div class="figure-caption">The diamond: A reaches D through both B and C. Service D (or its cached data) is touched along two paths.</div>
+</div>
+
+<p>The subtle point the professor wanted to correct: the diamond pattern is about <strong>caching correctness</strong>, <em>not</em> about programmability or performance. If you naively add caches to a diamond, you can get <strong>wrong results</strong> — because the same underlying data is reached through two different routes, and one route's cache may go stale relative to the other. The fix seen last time was to <strong>track every service visited</strong> along a request's path, and track which services are listed by the cached items, so invalidations propagate correctly across both arms of the diamond.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Connecting Back</div>
+  <p>Both review points are the same lesson wearing different clothes: <strong>caching is a performance optimization that quietly threatens correctness.</strong> NCas threatens real-time order; the diamond threatens cross-path consistency. Hold onto this — it is the bridge into Part II, where we name the principles that let us reason about exactly these trade-offs.</p>
+</div>
+
+<div class="quiz" id="quiz-recap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Why does NCas allow a read to return a stale value even after a conflicting write has fully completed?</div>
+  <div class="quiz-options" data-quiz="qrecap">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Because NCas has no cache at all, so every read goes to the database</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Because cache invalidation is kept off the write's critical path to keep writes fast, sacrificing real-time ordering</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Because reads are always slower than writes, so they finish in the wrong order</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Because the network reordered the messages randomly with no design intent</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('qrecap','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="qrecap">
+    <strong>Correct — B.</strong> NCas deliberately invalidates the cache lazily, off the critical path of the write, so writes stay cheap. The cost of that choice is that a read can hit a stale cached value even though the write already finished — exactly a violation of real-time ordering. It is a chosen trade-off, not an accident, which is why A and D are wrong. C misdescribes the mechanism: the issue is staleness in the cache, not which operation runs faster.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>Three Distilled Lessons</h2>
+</div>
+
+<p>If you remember nothing else from this course in five years, the professor wants it to be these three lessons. They are not specific to any one system — they are <em>how to think</em> when you sit down to build any system, in academia or industry. Every system in the course was presented through this exact lens.</p>
+
+<h3 id="lesson-goals">Lesson 1 — Agree on the System Goals First</h3>
+<p><strong>Why this matters:</strong> the single most common way to build a bad system is to start writing code before deciding what the system is <em>for</em>. Without explicit goals you cannot tell whether a design is good — "good" is only meaningful relative to a target.</p>
+
+<p>So before any design or implementation, agree on the <strong>requirements</strong>, and treat them as <strong>goals</strong>. This is precisely how every system in the course was presented: first, <em>what is this system trying to achieve?</em> Once the goals are pinned down, the design "falls out for free" — the right structure becomes almost obvious given the constraints.</p>
+
+<p>Requirements come in several flavors. They can be about <strong>correctness</strong> (e.g. linearizability), about <strong>performance</strong> (latency, throughput), or about other properties entirely — for example, NCas required that it could be <em>incrementally deployed</em> and that it needed <em>no modification to the user application</em>. Those are real, design-shaping requirements that have nothing to do with correctness or speed.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Goals Imply Non-Goals, and Non-Goals Are a Gift</div>
+  <p>Naming your goals automatically names your <strong>non-goals</strong> — the things you are <em>happy to ignore</em>. NCas's non-goal: it does not care about <strong>write-heavy</strong> workloads. If an application writes far more than it reads, caching is the wrong tool — you pay constant invalidation cost for little benefit. By declaring write-heavy workloads out of scope, NCas is free to optimize aggressively for the read-heavy case it actually targets.</p>
+</div>
+
+<h4>Why goals exist at all: there are always trade-offs</h4>
+<p>The deep reason goals are unavoidable: <strong>no system works perfectly in every case.</strong> Performance and correctness, latency and consistency, simplicity and generality — these pull against each other. A system that is great in some cases must, somewhere, be worse in others. If you do not choose your goals deliberately, you will <em>still</em> make trade-offs — you will just make them by accident, and you may sacrifice exactly the cases you cared about most.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Goals Are How You Steer the Trade-offs</div>
+  <p>Identifying goals and non-goals is the <em>mechanism</em> by which you navigate trade-offs correctly. It tells you which property you are allowed to sacrifice in order to gain another that matters more. CAP, linearizability-vs-availability, the latency cost of strong consistency — all of these are choices, and your goals are the rulebook for making them on purpose instead of by chance.</p>
+</div>
+
+<h3 id="lesson-defensive">Lesson 2 — Think Defensively</h3>
+<p><strong>Why this matters:</strong> a system that only works in a clean lab is not a real system. Production environments are hostile. To build something <em>robust</em> — able to tolerate faults and adversarial conditions — you must enumerate the corner cases <em>before</em> they happen to you.</p>
+
+<p>The defensive questions to ask about any system: <em>Where will it run? Who can interact with it? What is the worst thing that can happen in this environment?</em> Then get specific:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Can messages be lost?</strong> Networks drop and delay packets. A protocol that assumes reliable delivery is already broken.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Can components crash?</strong> Nodes die mid-operation, mid-write, mid-handshake. What state are you left in?</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Can the system get overloaded?</strong> Demand can exceed capacity. Does the system degrade gracefully or collapse?</p>
+</div>
+
+<p>This is exactly the methodology the course used over and over: first catalog the <em>kinds of faults</em> that can occur, then ask, at each step, <em>"what could go wrong here?"</em> Defensive design is not pessimism for its own sake — it is the discipline of preparing for bad things by first naming them. You cannot defend against a failure mode you have never articulated.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Trap of the Sandbox</div>
+  <p>The most dangerous assumption is that your system runs in a friendly "sandbox bubble." Anything destined for production — anything real users or adversaries touch — must be designed against the full menagerie of failures. A system that handles only the happy path is not robust; it is a demo.</p>
+</div>
+
+<h3 id="lesson-specs">Lesson 3 — Specifications Are Very, Very Important</h3>
+<p><strong>Why this matters:</strong> the most powerful idea in the whole course is that you can describe <em>what</em> a system promises without describing <em>how</em> it delivers. That separation is what lets two different people — the client and the system builder — reason independently and still agree.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — A Specification Decouples "What" From "How"</div>
+  <p>A <strong>specification</strong> is a contract that states what a system guarantees, while saying <em>nothing</em> about its implementation. <strong>Linearizability</strong> is the textbook example: it tells a client exactly what behavior to expect (operations appear instantaneous and in real-time order) without prescribing whether you use Paxos, primary-backup, a single server, or anything else. The spec is the interface; the implementation is hidden behind it.</p>
+</div>
+
+<p>This decoupling pays off on two independent levels. As a <strong>client</strong>, you can reason about what you are allowed to build on top, using only the contract. As a <strong>system builder</strong>, you can reason about how to satisfy the contract, freely changing the implementation. As long as the contract holds, neither side needs to understand the other's internals. We saw this with consistency conditions like linearizability and sequential consistency, but also with <strong>isolation</strong> levels for transactions and with the properties of <strong>consensus</strong>.</p>
+
+<h4>Specs make systems comparable</h4>
+<p>There is a second, subtler payoff. Specifications give us a <strong>common language to compare systems.</strong> If system X "offers linearizability" and system Y "offers sequential consistency," we can immediately rank their guarantees, because we can compare the <em>specs</em>. Without specifications, comparing two systems would mean comparing two messy implementations directly — with no shared abstract model, that is nearly impossible.</p>
+
+<div class="compare-table">
+  <tr><th>Without a Specification</th><th>With a Specification</th></tr>
+  <tr><td>Must compare raw implementations</td><td>Compare contracts, not code</td></tr>
+  <tr><td>Client and builder are tangled together</td><td>Client and builder reason independently</td></tr>
+  <tr><td>"Is X stronger than Y?" is hard to even ask</td><td>Guarantees rank against each other directly</td></tr>
+  <tr><td>Changing the implementation may break clients</td><td>Implementation is free to change behind the contract</td></tr>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">The Three Lessons Reinforce Each Other</div>
+  <p>These are not independent. <strong>Goals</strong> tell you which guarantee to aim for; <strong>specifications</strong> are how you write that guarantee down precisely; <strong>defensive thinking</strong> is how you make sure your implementation actually upholds the spec under failure. Goals → spec → robust implementation is the whole arc of system design in three words.</p>
+</div>
+
+<div class="quiz" id="quiz-lessons">
+  <div class="quiz-question">According to the lecture, what is the primary reason a specification like linearizability is so valuable?</div>
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-options" data-quiz="qlessons">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>It guarantees the fastest possible implementation of any system</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>It forces every system to use the same internal data structures</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>It decouples what a system promises from how it is built, letting clients and builders reason separately and letting systems be compared</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It eliminates the need to ever think about faults or trade-offs</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('qlessons','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="qlessons">
+    <strong>Correct — C.</strong> A spec is a contract about behavior that says nothing about implementation, so the client can reason about what to build on top while the builder independently reasons about how to satisfy it — and because specs are abstract, two systems' guarantees can be ranked against each other. A is wrong because specs say nothing about speed (often the strongest specs are the slowest). B is the opposite of the truth: a spec frees the implementation to vary. D confuses specs with the other two lessons.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>Serverless &amp; Data Processing</h2>
+</div>
+
+<p>The rest of the lecture is a guided tour of <strong>open problems</strong> — places where the field is still moving, and where the course's fundamentals get applied to new questions. Think of it as a map of where to go next. We begin with two of the hottest practical areas: the serverless cloud, and large-scale data processing.</p>
+
+<h3 id="serverless">Serverless Functions</h3>
+<p><strong>Why this matters:</strong> the dominant trend in cloud computing is offloading more and more responsibility to the provider. Understanding serverless is understanding where the industry is heading.</p>
+
+<p>The cloud evolved through stages. First it was simply <strong>renting physical machines</strong> for a while. Then <strong>virtual machines (VMs)</strong>. Then <strong>lightweight containers</strong>. Now the frontier is <strong>functions as a service</strong> — serverless.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Serverless / Function-as-a-Service</div>
+  <p>In a <strong>serverless</strong> model, you write a function that handles an incoming event — say, an HTTP request — and hand it to the provider (AWS Lambda, Azure Functions, Google Cloud Functions). The provider does <em>everything else</em>: allocates VMs to run it, load-balances across many VMs under heavy load, and scales VMs up and down with demand. "Serverless" does <strong>not</strong> mean there are no servers — it means <em>someone else manages the servers.</em></p>
+</div>
+
+<pre><code><span class="cm"># You write only this. The provider runs it for you.</span>
+<span class="kw">def</span> <span class="fn">handler</span>(event):
+    <span class="cm"># 'event' is an incoming HTTP request, queue message, etc.</span>
+    result <span class="op">=</span> process_request(event)
+    <span class="kw">return</span> result</code></pre>
+
+<p>The economic model is <strong>pay-per-execution</strong>. When a load spike arrives, the provider allocates VMs for you; when it subsides, the provider deallocates them. You are not billed for VM <em>allocation</em> — you are billed per <em>execution</em>. The provider of course marks this up, so a unit of compute costs more than renting raw VMs yourself. What you buy with that premium is freedom from VM management, scaling, and upgrades.</p>
+
+<h3 id="serverless-state">The Stateless Problem</h3>
+<p>Here is the catch that makes serverless interesting from a distributed-systems view: <strong>serverless functions are short-lived and have no permanent state.</strong> Why? Because if a function held state, the provider could not freely kill and migrate VMs to balance load — it would have to track, replicate, and manage that state. So providers impose a rule: <em>keep any state in an external service</em> (S3, DynamoDB, etc.); the function itself stays stateless.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Statelessness Creates Hard New Problems</div>
+  <p>Pushing all state outside the function does not make state problems vanish — it relocates them. Two big questions follow: <strong>(1)</strong> How do you give serverless a correct, efficient, <em>fault-tolerant</em> abstraction for state? <strong>(2)</strong> How do you build rich applications on top of something with no internal state? These are active research areas, not solved problems.</p>
+</div>
+
+<p>The lecture pointed at concrete work. One paper provides <strong>fault-tolerant, transactional state for serverless workflows</strong> — assuming an external store, it tackles <strong>idempotence</strong>: if a function crashes mid-execution and restarts, how do you avoid corrupting state by applying an effect twice? Another, <em>"From Laptops to Lambdas,"</em> shows you can build surprisingly powerful things on top of stateless functions — for instance, parallelizing a Chrome compilation across <em>thousands</em> of serverless functions so it finishes in seconds instead of hours.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Idempotence Is the Serverless Fault-Tolerance Workhorse</div>
+  <p>Because a serverless function can crash and be retried at any moment, the safest design makes each operation <strong>idempotent</strong> — applying it twice has the same effect as applying it once. This is the same defensive instinct from Lesson 2, applied to a new environment: assume the crash <em>will</em> happen, and make the retry safe.</p>
+</div>
+
+<h3 id="spark">MapReduce → Spark</h3>
+<p><strong>Why this matters:</strong> the course saw MapReduce only briefly. Spark is the natural next step, and its core idea is a clean, memorable systems insight.</p>
+
+<p>First, the problem with MapReduce. MapReduce achieves fault tolerance by <strong>writing every stage's output to disk.</strong> One MapReduce stage runs, dumps its result to disk; if you chain many stages into a pipeline, you pay a disk write <em>after every stage</em>. For multi-stage jobs that is enormous, wasted I/O — you only actually care about the final output.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Spark's Lineage</div>
+  <p><strong>Spark</strong> keeps intermediate data <em>in memory</em> and records <strong>lineage</strong>: metadata describing how each piece of data was derived from the inputs. It persists only the original inputs, not the intermediate stages. If a worker fails, Spark consults the lineage to find <em>exactly</em> which piece of data was lost and which input it came from, then re-runs <em>only</em> that slice of the pipeline — instead of re-storing and re-running everything.</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="440" height="170" viewBox="0 0 440 170" style="display:block; margin:0 auto;">
+      <!-- MapReduce row -->
+      <text x="10" y="34" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#c53030">MapReduce</text>
+      <rect x="100" y="20" width="50" height="26" rx="5" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="125" y="37" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">map</text>
+      <text x="165" y="37" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" fill="#c53030">💾</text>
+      <rect x="185" y="20" width="50" height="26" rx="5" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="210" y="37" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">map</text>
+      <text x="250" y="37" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" fill="#c53030">💾</text>
+      <rect x="270" y="20" width="60" height="26" rx="5" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="300" y="37" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">reduce</text>
+      <text x="345" y="37" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" fill="#c53030">💾</text>
+      <text x="100" y="60" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">disk write after every stage</text>
+      <!-- Spark row -->
+      <text x="10" y="124" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#2d8a4e">Spark</text>
+      <text x="78" y="124" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" fill="#2d8a4e">💾</text>
+      <rect x="100" y="110" width="50" height="26" rx="5" fill="#fff" stroke="#2d8a4e" stroke-width="2"/>
+      <text x="125" y="127" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">map</text>
+      <line x1="150" y1="123" x2="185" y2="123" stroke="#2d8a4e" stroke-width="2"/>
+      <rect x="185" y="110" width="50" height="26" rx="5" fill="#fff" stroke="#2d8a4e" stroke-width="2"/>
+      <text x="210" y="127" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">map</text>
+      <line x1="235" y1="123" x2="270" y2="123" stroke="#2d8a4e" stroke-width="2"/>
+      <rect x="270" y="110" width="60" height="26" rx="5" fill="#fff" stroke="#2d8a4e" stroke-width="2"/>
+      <text x="300" y="127" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">reduce</text>
+      <text x="345" y="127" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" fill="#2d8a4e">💾</text>
+      <text x="100" y="150" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">in-memory; only inputs + final output persisted</text>
+    </svg>
+  </div>
+  <div class="figure-caption">MapReduce checkpoints to disk between every stage; Spark keeps data in memory and recovers lost pieces via lineage.</div>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Recompute vs. Re-store — A Recurring Trade-off</div>
+  <p>Spark trades <em>storage</em> for <em>recomputation</em>. Rather than persist everything so it can be reloaded after a crash, it persists almost nothing and is willing to <em>recompute</em> the lost slice from lineage. This is a deep, reusable pattern: when computation is cheap relative to I/O, remembering <em>how</em> to rebuild data can beat storing the data itself.</p>
+</div>
+
+<h3 id="streaming">Stream &amp; Actor Systems</h3>
+<p>Data processing has a different "flavor" from the fault-tolerance-centric core of the course. It cares overwhelmingly about <strong>throughput</strong> (data crunched per second) and about <strong>efficient communication</strong>, and relatively little about latency or fine-grained fault tolerance. The course leaned the other way — toward faults and consistency — so these are complementary worlds.</p>
+
+<p>Two directions worth knowing:</p>
+<ul style="margin: 0 0 18px 22px;">
+  <li style="margin-bottom: 8px;"><strong>Stream processing</strong> — instead of batch jobs over a fixed dataset, you process a continuous flow of incoming events as data-flow pipelines, aiming for high throughput and fault tolerance on a never-ending stream. (The <em>Naiad</em> / Timely Dataflow line of work, now commercialized as <strong>Materialize</strong>, pushes this view.)</li>
+  <li><strong>Actor-based systems</strong> like <strong>Ray</strong> — an alternative model where computation is organized around lightweight actors; heavily used for distributed reinforcement learning and ML workloads.</li>
+</ul>
+
+<div class="quiz" id="quiz-cloud">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">What is Spark's central improvement over plain MapReduce?</div>
+  <div class="quiz-options" data-quiz="qcloud">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>It writes the output of every stage to disk twice for extra durability</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>It keeps intermediate data in memory and tracks lineage, so on failure it recomputes only the lost slice instead of persisting and re-running everything</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>It removes fault tolerance entirely to run faster</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It runs the entire job on a single powerful machine to avoid the network</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('qcloud','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="qcloud">
+    <strong>Correct — B.</strong> MapReduce achieves fault tolerance by checkpointing every stage to disk, which is wasteful for multi-stage pipelines. Spark instead keeps data in memory and records lineage, so after a worker fails it pinpoints exactly which data was lost and recomputes only that piece. A describes the MapReduce problem, not a fix. C is wrong — Spark keeps fault tolerance, it just achieves it via recomputation. D contradicts the whole point of a distributed cluster.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>Reliability &amp; Correctness</h2>
+</div>
+
+<p>The course mostly asked <em>"how do we build a correct system?"</em> But in the real world there is a second, equally hard question: <em>"how do we know our deployed system is behaving as expected — and how do we keep it alive under stress?"</em> This part surveys the research that lives there.</p>
+
+<h3 id="overload">Overload Control</h3>
+<p><strong>Why this matters:</strong> real systems regularly face load beyond their capacity. The naive failure mode is catastrophic — the system simply crashes. The goal of <strong>overload control</strong> is for a system to degrade <em>predictably</em> under heavy load: stay up, keep its <strong>SLOs</strong> (Service Level Objectives — promises like "99% of requests answer within 100 ms") for at least <em>some</em> requests, rather than collapsing for all of them. There is active research on this for microservice applications specifically.</p>
+
+<h3 id="metastable">Metastable Failures</h3>
+<p><strong>Why this matters:</strong> this is a failure mode so subtle that almost no one thought about it until roughly a decade ago, and it is now a serious concern at companies like Amazon.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Metastable Failure</div>
+  <p>A system is vulnerable to a <strong>metastable failure</strong> if, under high load, a triggering event can push it into a bad stable state that it cannot escape <em>on its own</em> — <strong>even after both the original trigger and the high load are removed.</strong> The system stays stuck and requires <em>manual</em> recovery (an operator restarting it, draining queues, etc.). The bad state is "metastable": self-sustaining once entered.</p>
+</div>
+
+<p>The classic example is <strong>retries amplifying load</strong>. Many systems retry on timeout: a client that hears nothing for 10 seconds re-sends its request. Now walk through the death spiral:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>The system is running near capacity. Load is high but it is coping.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>Something bad happens — a single node crashes, or one machine gets briefly bottlenecked. The system can no longer keep up with incoming requests.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>Requests start timing out. Each timed-out client <strong>retries</strong>, adding a duplicate request on top of the original.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p>Now the system faces the original load <em>plus</em> a flood of retries. It falls further behind, causing more timeouts, causing more retries — a self-reinforcing loop.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <p>The system is fully choked. Even if you fix the crashed node and the load returns to normal, the backlog of retrying requests keeps it jammed. It will not recover until an operator manually drains the queue.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">A "Fix" Can Be the Trap</div>
+  <p>Retries are a sensible, common reliability tactic — yet here they are the very thing that prevents recovery. This is the unsettling lesson of metastable failures: a mechanism that helps in the normal case can become the engine of an unrecoverable state under load. Defensive design (Lesson 2) means asking not just "does my retry help?" but "what happens when <em>everyone</em> retries at once?"</p>
+</div>
+
+<h3 id="verification">Verification, Testing &amp; Model Checking</h3>
+<p><strong>Why this matters:</strong> "correctness" means <em>does the system satisfy its specification?</em> — and there is a whole research ecosystem devoted to answering that with more than hope.</p>
+
+<p>The techniques form a spectrum of rigor:</p>
+<ul style="margin: 0 0 18px 22px;">
+  <li style="margin-bottom: 8px;"><strong>Testing</strong> — run the system on many inputs and check outcomes.</li>
+  <li style="margin-bottom: 8px;"><strong>Model checking</strong> — systematically explore reachable states. The <strong>P language</strong> lets you describe a distributed protocol and then test or model-check it systematically.</li>
+  <li><strong>Full verification</strong> — mathematical proof that an implementation meets its spec. <strong>IronFleet</strong> was a landmark: the first full-fledged proof of a <em>real-world</em> distributed system implementation satisfying both <strong>safety</strong> and <strong>liveness</strong> properties.</li>
+</ul>
+
+<div class="callout insight">
+  <div class="callout-title">Even Verified Systems Can Have Bugs</div>
+  <p>A humbling result: researchers took a <em>verified</em> system and still found bugs in it — because the <strong>assumptions</strong> behind the proof were imperfect. A proof only guarantees the system is correct <em>relative to its assumptions</em>; if those assumptions don't match reality, bugs slip through. Verification is not a panacea — but for truly critical systems, it is still worth doing.</p>
+</div>
+
+<h3 id="monitoring">Monitoring &amp; Tracing</h3>
+<p>Building a correct system is only half the battle; once it is running, you need to <em>see inside it.</em> When a production system has a problem, can you even tell? And if so, can you locate and fix it? <strong>Distributed tracing</strong> tackles this by reconstructing <strong>causal</strong> relationships between events across many machines — so you can follow a single request's journey through dozens of services and find where it went wrong. Closely related is <strong>profiling</strong>: measuring where time actually goes, so you know what is fast and what is slow.</p>
+
+<div class="quiz" id="quiz-reliability">
+  <div class="quiz-question">What makes a <em>metastable</em> failure especially dangerous compared to an ordinary overload?</div>
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-options" data-quiz="qreliability">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>It only happens when the hardware physically catches fire</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>The system remains stuck in the bad state even after the trigger and the excess load are removed, requiring manual recovery</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>It can always be fixed automatically within milliseconds by the system itself</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It is caused exclusively by malicious adversaries breaking the protocol</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('qreliability','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="qreliability">
+    <strong>Correct — B.</strong> The defining feature of a metastable failure is that removing the original cause is not enough — the system stays in the self-sustaining bad state (e.g. a retry storm feeding itself) and only manual intervention breaks the cycle. C is the exact opposite of the truth, which is why metastable failures are feared. A and D describe unrelated failure causes; metastability is about dynamics under load, not fire or adversaries.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>Frontiers — Where the Field Is Headed</h2>
+</div>
+
+<p>The final batch of open problems pushes on the course's deepest assumptions: what consistency we settle for, how hardware is organized, what we assume about node behavior, and even how we frame classic problems like consensus.</p>
+
+<h3 id="consistency-frontier">Weaker, Smarter Consistency</h3>
+<p>The course studied consistency from strong (linearizability) to weak (eventual). Research is filling in the rich middle ground, because strong consistency is <em>expensive</em> and weak consistency is sometimes <em>too weak</em>:</p>
+<ul style="margin: 0 0 18px 22px;">
+  <li style="margin-bottom: 8px;"><strong>Monotonicity</strong> — generalizing eventual consistency to identify systems that work correctly <em>without</em> ever needing stronger guarantees. If your computation is monotonic, eventual consistency is enough.</li>
+  <li style="margin-bottom: 8px;"><strong>Strong causal consistency</strong> — strong enough to guarantee nearly everything you'd want, yet implementable far faster than sequential consistency.</li>
+  <li><strong>Impossibility results</strong> — continued study of what you provably <em>cannot</em> achieve, mapping out the fundamental trade-off boundaries of the design space.</li>
+</ul>
+
+<div class="callout tip">
+  <div class="callout-title">This Is Lesson 1, Generalized</div>
+  <p>Every item here is the goals-and-trade-offs lesson at the frontier. The research question is literally: <em>what is the weakest (cheapest) consistency that still meets our goals?</em> Picking the right point on the strong-to-weak spectrum is exactly the trade-off navigation the course kept emphasizing.</p>
+</div>
+
+<h3 id="disaggregation">Disaggregation</h3>
+<p><strong>Why this matters:</strong> data-center networks are getting dramatically faster, and that changes what hardware layouts are possible.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Resource Disaggregation</div>
+  <p>Traditionally each machine bundles <strong>compute, memory, and storage</strong> together. <strong>Disaggregation</strong> breaks them apart: pool all the CPUs, all the memory, and all the storage in the data center as separate shared resources. Any node can reach the giant shared memory pool over the network using a fast protocol like <strong>RDMA</strong> (Remote Direct Memory Access). The catch: remote pooled memory is <em>slower</em> than local memory.</p>
+</div>
+
+<p>The research questions: how do you use this huge shared-but-slower memory <em>efficiently</em>, and how do you do it <em>automatically</em> — gaining the benefits without forcing every application to be rewritten? (UCLA's own Harry Xu's group works heavily in this space.)</p>
+
+<h4>Systems for Machine Learning</h4>
+<p>A closely related frontier: building systems to support ML training and inference efficiently, correctly, and with fault tolerance. This is <em>fundamentally</em> a distributed-systems problem — training a huge model spans thousands of nodes, so the moment a node fails you must answer the course's oldest question in a new setting: <em>what do we do when a node dies mid-computation?</em></p>
+
+<h3 id="byzantine">Byzantine Faults &amp; Blockchain</h3>
+<p>The whole course assumed the worst a node could do was <strong>crash</strong> — fail silently but never lie. There is a strictly harder world.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Byzantine Faults</div>
+  <p>A <strong>Byzantine</strong> node is not just crashed — it is <em>malicious</em>: it can actively violate the protocol, send conflicting messages to different peers, and lie. Tolerating Byzantine behavior (<strong>Byzantine Fault Tolerance</strong>, BFT, and <strong>Byzantine consensus</strong>) is much harder than tolerating crashes and requires stronger protocols with stronger assumptions about how many nodes can misbehave.</p>
+</div>
+
+<p>This matters enormously for <strong>peer-to-peer systems like blockchains</strong>, where there is no trusted coordinator and participants genuinely may be adversarial. The starting point is the foundational Byzantine fault tolerance / Byzantine consensus literature.</p>
+
+<h3 id="classic-spins">Fresh Spins on Classic Problems</h3>
+<p>Even decades-old problems still yield new results. Two examples the professor found striking:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Better vector clocks.</strong> The classic vector clock supports random access to its components — but in practice we <em>never</em> randomly access one component; we only <strong>compare</strong> whole clocks. Exploiting that, recent work structures the vector clock as a <strong>tree</strong>, achieving much better performance for the operation we actually use.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Statistical consensus.</strong> Classic consensus is deterministic: "tolerate <code>F</code> faults using <code>2F+1</code> nodes." But what does "<code>F</code> faults" even mean in a real fleet? A Berkeley group argues we should think <em>probabilistically</em> — nodes have some crash probability, so design for <em>statistically</em> very high availability instead. In a 5-node, fault-tolerant-up-to-2 system, there is still a small chance all 3 remaining fail; statistical thinking confronts that directly rather than ignoring it.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Why "F Faults" Is an Odd Abstraction</div>
+  <p>The deterministic "tolerate exactly F faults" framing is convenient for proofs but disconnected from reality, where nodes fail with <em>probabilities</em>, not in fixed counts. Reframing consensus around crash probabilities is a genuinely different way to specify the goal — a reminder that even our most settled abstractions are choices that can be revisited.</p>
+</div>
+
+<div class="quiz" id="quiz-frontier">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">How does a Byzantine fault differ from the crash faults assumed throughout most of the course?</div>
+  <div class="quiz-options" data-quiz="qfrontier">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>A Byzantine node simply runs slower than the others but always tells the truth</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>A Byzantine node can behave maliciously — violating the protocol and sending conflicting or false messages — not just failing silently</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>A Byzantine node can only ever lose network messages, never send wrong ones</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>There is no difference; the terms are interchangeable</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('qfrontier','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="qfrontier">
+    <strong>Correct — B.</strong> A crash-faulty node fails silently but never acts dishonestly; a Byzantine node may actively break the protocol, lie, and send different messages to different peers. That is why Byzantine consensus needs stronger protocols and is essential for adversarial settings like blockchains. A and C understate the threat (slowness and message loss are crash-style, not Byzantine), and D is wrong because the distinction is precisely what makes BFT a harder problem.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART VI ═══════════════════════ -->
+<section id="part6" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part VI</div>
+  <h2>How to Study &amp; What's Next</h2>
+</div>
+
+<h3 id="exam-advice">Exam Strategy</h3>
+<p>The lecture closed with concrete advice for the final, and it maps directly onto the three lessons. Take it seriously — it tells you what the exam actually rewards.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Exam Tests Two Kinds of Understanding</div>
+  <p>Every lecture matters, but two themes recur in exam questions. <strong>(1) Trade-offs, goals, and specifications</strong> — <em>why</em> does a system make a given trade-off, and why does it matter? <strong>(2) Implementation</strong> — <em>how</em> does a mechanism actually work to provide its guarantee? You need both: the conceptual "why" and the mechanical "how."</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">A Big Chunk of the Exam Is About the Assignments</div>
+  <p>There will be a significant exam component asking <strong>detailed questions about the assignments.</strong> The expectation is that you fully understand <em>your own</em> implementation and the assignment specifications — the details of your solution, why it works, and what it guarantees. If you leaned heavily on AI while coding, go back and re-read what you built until you genuinely understand it. The exam will <em>not</em> ask about some "canonical" reference solution you never wrote — it asks about <em>your</em> solution, which means understanding your own code is the whole game.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">A Study Plan, Mapped to This Page</div>
+  <p>Work through every lecture, with extra weight on points the professors flagged in class (often the in-lecture questions). For each system, be able to state its <strong>goals and non-goals</strong> (Lesson 1), articulate its <strong>specification</strong> (Lesson 3), and trace <em>how</em> its implementation upholds that spec under failure (Lesson 2). Then make sure you can explain your assignment solutions line by line. Parts II and VI of this page are your conceptual scaffolding; Parts I, III–V are the systems and frontiers that hang on it.</p>
+</div>
+
+<!-- ═══════════════════════ SYNTHESIS ═══════════════════════ -->
+<section id="synthesis" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This last lecture is the course folding back on itself. The opening review — NCas's stale reads and the diamond pattern — was not a random warm-up; it is <strong>Lesson 1 in action.</strong> NCas sacrifices real-time ordering (a correctness non-goal) to win read performance (its real goal), and the diamond pattern shows what breaks when you add caching without respecting the system's correctness specification. The whole course, distilled, is the discipline of making those sacrifices <em>on purpose.</em></p>
+
+<p>From there the three lessons become a single method. You <strong>choose goals and non-goals</strong> (Lesson 1) so you know which trade-offs you are allowed to make. You write those goals down as a precise <strong>specification</strong> (Lesson 3), which both decouples client-reasoning from builder-reasoning and lets you rank systems against one another. And you <strong>think defensively</strong> (Lesson 2) to make sure your implementation actually holds the spec when messages drop, nodes crash, and load spikes. Goal → spec → robust implementation: that is the arc behind every system in the course, from Paxos to Spanner to NCas.</p>
+
+<p>The frontiers then show the same method applied where the answers aren't known yet. <strong>Serverless</strong> relocates the state problem and leans on idempotence — defensive design in a new environment. <strong>Spark</strong> trades storage for recomputation — a goal-driven trade-off. <strong>Metastable failures</strong> are what happen when a defensive mechanism (retries) is itself the trap. <strong>Verification</strong> is the attempt to <em>prove</em> the implementation matches the spec — and even it is only as good as its assumptions. <strong>Weaker consistency, disaggregation, Byzantine consensus, statistical consensus</strong> — each one revisits a course concept by changing a goal, an assumption, or a specification. Once you see the field this way, every paper in the tour is the same three lessons, asked at a harder difficulty.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The One Sentence to Keep</div>
+  <p>There is no system that is best in all cases — so the entire craft of building distributed systems is choosing your goals, writing them down as a specification, and defending that specification against everything that can go wrong.</p>
+</div>
+
+<div class="callout tip" style="margin-top: 32px;">
+  <div class="callout-title">What's Next</div>
+  <p>This is the final lecture, so "next" is the final exam — and then the field itself. On the exam, lead with the lessons: for any system, state its goals/non-goals, its specification, and how its implementation survives faults, and be ready to explain your own assignment code in detail. Beyond the exam, every frontier in Parts III–V is a doorway — pick the papers on serverless state, metastable failures, verification (IronFleet, the P language), disaggregation, or BFT that match your interest, and follow the citations outward. The professor's parting advice: work on what genuinely interests you, because the field is vast enough that good, careful work always finds an audience. Have a great summer.</p>
+</div>
+</section>
+
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

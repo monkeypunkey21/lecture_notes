@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 16 — Google Spanner · Interactive Textbook</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 16 — Spanner</div>
+  <a href="#part1">Part I — The Spanner Problem</a>
+  <a href="#what-is-spanner" class="sub">What Is Spanner?</a>
+  <a href="#the-goals" class="sub">The Goals (and the Paradox)</a>
+  <a href="#the-key-insight" class="sub">The Key Insight</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — TrueTime</a>
+  <a href="#tt-now" class="sub">TT.now() and the Interval</a>
+  <a href="#tt-after-before" class="sub">after() and before()</a>
+  <a href="#tt-causality" class="sub">The One Thing We Know</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — Architecture &amp; Leases</a>
+  <a href="#sharding" class="sub">Shards, Paxos &amp; Leaders</a>
+  <a href="#two-phase-commit" class="sub">Cross-Shard Transactions</a>
+  <a href="#disjointness" class="sub">The Disjointness Invariant</a>
+  <a href="#lease-protocol" class="sub">Enforcing Disjointness</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — Strict Serializability</a>
+  <a href="#serializability" class="sub">Serializability Recap</a>
+  <a href="#monotonic-ts" class="sub">Monotonic Timestamps</a>
+  <a href="#commit-protocol" class="sub">The Commit Protocol</a>
+  <a href="#commit-wait" class="sub">Why We Wait</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Lock-Free Reads</a>
+  <a href="#snapshot-reads" class="sub">Snapshot Reads</a>
+  <a href="#t-safe" class="sub">Computing T-safe</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#synthesis">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">CS134 · Distributed Systems</div>
+  <h1>Google Spanner — Transactions Across the Planet</h1>
+  <p class="hero-sub">How a database that spans the globe pulls off the seemingly impossible: strictly-ordered, distributed transactions made efficient by knowing exactly how wrong its clocks are.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>The Spanner Problem</h2>
+</div>
+
+<p>Every system we have studied so far in this course made a trade-off. Earlier we saw Azure Storage, which could give you transactions — but only within a single partition. Dynamo gave us scale and availability but only eventual consistency. The recurring lesson has been that you cannot have everything: pick scale, pick strong guarantees, pick global reach — but not all three at once.</p>
+
+<p>Today's system, <strong>Google Spanner</strong>, is interesting precisely because it refuses that trade-off. It is a database that is replicated across the entire planet, scales to enormous size, <em>and</em> offers full transactions that touch data in different parts of the world. To a student who has internalized the usual trade-offs, the natural reaction — which a student in lecture voiced directly — is "isn't that impossible?" Answering that is the whole point of this lecture.</p>
+
+<h3 id="what-is-spanner">What Is Spanner?</h3>
+
+<p>Spanner is Google's <strong>geo-distributed database</strong>. "Geo-distributed" means its data lives in data centers scattered around the globe — different cities, different continents — so that the data is close to users everywhere and survives even the total loss of a data center. It began as an internal system to power Google's advertising backend, and is now also sold as a cloud product to outside customers.</p>
+
+<p>The single most important thing Spanner offers, the thing that makes the paper famous, is <strong>geo-distributed transactions</strong>: a transaction can read and write data that is spread across shards living in different regions of the world, and the database still behaves as if all transactions happened one at a time in a sensible order.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — A Transaction</div>
+  <p>A <strong>transaction</strong> is a group of reads and writes that the database must treat as a single, indivisible unit: either <em>all</em> of its effects happen, or <em>none</em> of them do, and no other transaction can observe a half-finished state. Spanner's claim to fame is supporting transactions that span shards and continents — not just data sitting on one machine.</p>
+</div>
+
+<h3 id="the-goals">The Goals (and the Paradox)</h3>
+
+<p>As always, start with what the system is trying to achieve. Spanner sets out to be all of the following at once:</p>
+
+<table class="compare-table">
+  <tr><th>Goal</th><th>What it means</th></tr>
+  <tr><td>Scalable</td><td>Sharded across many machines so it can grow without limit.</td></tr>
+  <tr><td>Multi-version</td><td>Each key stores many versions, tagged by time — just like Dynamo kept multiple versions of a value. This is what makes lock-free reads possible later.</td></tr>
+  <tr><td>Globally distributed</td><td>Replicas live in different data centers and regions across the world.</td></tr>
+  <tr><td>Synchronously replicated</td><td>Replication happens on the critical path — a write is not "done" until replicas agree.</td></tr>
+  <tr><td>Distributed transactions</td><td>A single transaction can atomically touch many shards in many regions.</td></tr>
+</table>
+
+<p>Here is the tension. To be scalable, Spanner <strong>shards</strong> its data — it chops the key space into pieces and spreads them across machines. (You will also see these pieces called <strong>tablets</strong> or <strong>partitions</strong>; all three words mean the same thing — a subset of the data living together.) Each shard is independently replicated with <strong>Paxos</strong>, the consensus protocol we studied that lets a group of replicas agree on a sequence of operations even when some of them fail.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Paradox</div>
+  <p>Transactions that cross regions require <strong>multiple rounds of communication across the world</strong>, and the speed of light makes that slow — tens to hundreds of milliseconds per round trip. Worse, to order transactions correctly across regions you seemingly need synchronized clocks, and a recurring theme of this entire course has been that <em>physical clock synchronization is hard and you generally can't trust clocks at all.</em> So how can Spanner be fast <em>and</em> correctly ordered across the globe?</p>
+</div>
+
+<h3 id="the-key-insight">The Key Insight: Bound the Uncertainty</h3>
+
+<p>Throughout the course we have taken a pessimistic stance toward physical clocks: "we know nothing — two machines' clocks could disagree by an arbitrary, unknowable amount." Spanner makes one small but powerful change to that stance.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>Instead of saying <em>"I know nothing about how out-of-sync the clocks are,"</em> Spanner says <em>"I know exactly one thing: a conservative <strong>bound</strong> on how out-of-sync they could possibly be."</em> Knowing that bound — never the exact time, just a guaranteed-correct error range — is enough to order transactions across the planet. When clocks are well-synced (the common case), the bound is tiny and Spanner is fast; when the bound grows, Spanner simply slows down and waits the uncertainty out, but stays correct.</p>
+</div>
+
+<p>This is the heart of everything that follows. In practice Google measured that the skew between their clocks is almost always below <strong>10 milliseconds</strong>, which is small enough for Spanner to perform very well. The mechanism that exposes this bound to the rest of the system is an API called <strong>TrueTime</strong> — our subject for Part II.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Where We're Headed</div>
+  <p>The rest of the lecture builds in layers: <strong>TrueTime</strong> (Part II) gives us a trustworthy notion of "now." We use it to keep Paxos leaders' <strong>leases disjoint</strong> (Part III), which lets us assign <strong>monotonic timestamps</strong> across leaders (Part IV), which gives us <strong>strict serializability</strong>, and finally <strong>lock-free reads</strong> (Part V). Each piece depends on the one before it — keep that chain in mind.</p>
+</div>
+
+<div class="quiz" id="quiz1">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">What is the single insight that lets Spanner do what earlier systems could not?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>It perfectly synchronizes every clock so they all read the exact same time.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>It assumes a known, conservative <em>bound</em> on clock uncertainty, rather than assuming nothing about clocks at all.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>It avoids transactions across regions entirely.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It abandons strong consistency in favor of eventual consistency, like Dynamo.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct — B.</strong> Spanner does not synchronize clocks perfectly (A is impossible, and indeed the course stresses you can't trust clocks). Instead it weakens the usual pessimism just slightly: it assumes a <em>conservative bound</em> on how far off a clock can be. That bound is what TrueTime exposes. C and D describe the very trade-offs Spanner is famous for <em>avoiding</em> — it genuinely supports cross-region transactions with strong ordering.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>TrueTime — Honest Clocks</h2>
+</div>
+
+<p>We just claimed Spanner relies on a known bound on clock uncertainty. <strong>TrueTime</strong> is the concrete API that delivers that bound to the rest of the system. Before we can use it, we need to understand precisely what it tells us — and, just as importantly, what it does <em>not</em>.</p>
+
+<h3 id="tt-now">TT.now() — Time as an Interval</h3>
+
+<p>An ordinary clock call returns a single number: "it is 12:00:00.000." TrueTime refuses to lie like that. Instead, the core method <code>TT.now()</code> returns an <strong>interval</strong> with two endpoints, <code>earliest</code> and <code>latest</code>:</p>
+
+<pre><code><span class="kw">struct</span> <span class="tp">TTinterval</span> { <span class="tp">earliest</span>; <span class="tp">latest</span>; }
+
+<span class="cm">// The true physical time at this instant is guaranteed</span>
+<span class="cm">// to lie somewhere inside [earliest, latest].</span>
+<span class="tp">TTinterval</span> <span class="fn">now</span>()</code></pre>
+
+<p>The promise is simple and absolute: the <em>real</em> physical time, right now, is somewhere inside that interval. It can never be earlier than <code>earliest</code>, and never later than <code>latest</code>. The width of the interval <em>is</em> the clock uncertainty — a narrow interval means the clocks are well-synced, a wide interval means we are unsure.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — TT.now()</div>
+  <p><code>TT.now()</code> returns <code>[earliest, latest]</code>, a conservative window guaranteed to contain the true time. We never learn the exact instant; we only learn a range we can completely trust. Correctness <em>depends</em> on this interval being conservative — if TrueTime ever reported an interval that did <em>not</em> actually contain the real time, the whole protocol breaks.</p>
+</div>
+
+<details>
+<summary>Where does the bound actually come from?</summary>
+<div class="details-body">
+<p>Google implements TrueTime with <strong>GPS receivers and atomic clocks</strong> in each data center, plus careful knowledge of the deployment — even the lengths of the cables, which determine signal propagation delays. From the GPS error bounds and these physical measurements, they derive a guaranteed-conservative uncertainty interval. The professor was candid that the exact engineering is fiddly; for this course we simply <em>assume</em> TrueTime's interval is correct and conservative, and reason from there.</p>
+<p>One student asked how conservative — "is it 99.something percent?" The paper doesn't state the exact confidence, but it is assumed very high; it cannot be a literal 100% guarantee, but it is engineered to be effectively certain.</p>
+</div>
+</details>
+
+<h3 id="tt-after-before">after() and before() — Asking About a Specific Time</h3>
+
+<p>Two helper methods are built on top of <code>TT.now()</code>. Both take a timestamp <code>t</code> you care about and answer a yes/no question — but conservatively, so they only say "yes" when they are <em>certain</em>.</p>
+
+<pre><code><span class="cm">// Has time t DEFINITELY already passed?</span>
+<span class="fn">after</span>(t)  = <span class="kw">true</span> <span class="kw">iff</span> TT.now().earliest &gt; t
+
+<span class="cm">// Has time t DEFINITELY not yet arrived?</span>
+<span class="fn">before</span>(t) = <span class="kw">true</span> <span class="kw">iff</span> TT.now().latest &lt; t</code></pre>
+
+<p>The logic is worth dwelling on. <code>after(t)</code> says "t has passed" only when even the <em>earliest</em> possible real time is already past <code>t</code> — so there is no doubt. <code>before(t)</code> says "t hasn't arrived" only when even the <em>latest</em> possible real time is still before <code>t</code>. If <code>t</code> falls <em>inside</em> the current interval, both answer false: we genuinely don't know yet.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="150" viewBox="0 0 420 150" style="display:block; margin:0 auto;">
+      <!-- timeline -->
+      <line x1="20" y1="60" x2="400" y2="60" stroke="#d9d0c4" stroke-width="2"/>
+      <!-- interval bracket -->
+      <line x1="160" y1="48" x2="160" y2="72" stroke="#c0510a" stroke-width="3"/>
+      <line x1="280" y1="48" x2="280" y2="72" stroke="#c0510a" stroke-width="3"/>
+      <line x1="160" y1="60" x2="280" y2="60" stroke="#c0510a" stroke-width="4"/>
+      <text x="160" y="40" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c0510a">earliest</text>
+      <text x="280" y="40" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c0510a">latest</text>
+      <text x="220" y="92" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">now() interval</text>
+      <!-- t1 -->
+      <line x1="80" y1="50" x2="80" y2="70" stroke="#2d8a4e" stroke-width="2"/>
+      <text x="80" y="120" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2d8a4e">t1</text>
+      <text x="80" y="138" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#2d8a4e">after(t1)=true</text>
+      <!-- t3 inside -->
+      <line x1="220" y1="50" x2="220" y2="70" stroke="#7c3aed" stroke-width="2"/>
+      <text x="220" y="120" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#7c3aed">t3</text>
+      <text x="220" y="138" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#7c3aed">both=false</text>
+      <!-- t2 -->
+      <line x1="360" y1="50" x2="360" y2="70" stroke="#2563eb" stroke-width="2"/>
+      <text x="360" y="120" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2563eb">t2</text>
+      <text x="360" y="138" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#2563eb">before(t2)=true</text>
+    </svg>
+  </div>
+  <div class="figure-caption">The board example. <code>t1</code> is left of the whole interval, so it has definitely passed. <code>t2</code> is right of it, so it definitely hasn't arrived. <code>t3</code> falls inside, so we cannot tell — both <code>after</code> and <code>before</code> return false.</div>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Why before() Is Almost Useless — and after() Is the Workhorse</div>
+  <p>A student noticed something sharp: <code>before(t)</code> is only true <em>at the instant you call it</em>. As soon as a little time passes, the latest endpoint marches forward and the answer can flip. So the protocol almost never makes a decision based on <code>before()</code>. Instead it repeatedly calls <code>after()</code> and <strong>waits</strong> until <code>after(t)</code> becomes true — because once a time has definitely passed, it stays passed. This "wait until <code>after()</code> is true" pattern, called <strong>commit-wait</strong>, is the single most important move in the entire protocol; you will see it again in Parts III, IV, and V.</p>
+</div>
+
+<h3 id="tt-causality">The One Thing We Know Across Machines</h3>
+
+<p>Now the payoff. Recall the classic two-process picture from earlier in the course: process P1 takes a timestamp, then sends a message; process P2 takes a timestamp the moment it receives the message.</p>
+
+<p><strong>Without</strong> TrueTime, comparing P1's timestamp and P2's timestamp tells us <em>nothing</em>. They are readings from two different physical clocks that may drift arbitrarily — P2's reading could be smaller, equal, or larger than P1's. The only thing we know is the obvious causal fact that the receive happened after the send in <em>real</em> time; the <em>numbers</em> tell us nothing.</p>
+
+<p><strong>With</strong> TrueTime, each process records not a number but a TrueTime interval — call them <code>tt1 = [e1, L1]</code> and <code>tt2 = [e2, L2]</code>. Now we can state exactly one solid relationship between their four endpoints:</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The TrueTime Causality Guarantee</div>
+  <p>If event 1 happened before event 2 in real time, then <code>tt1.earliest &lt; tt2.latest</code>. That is the <em>only</em> relationship we can rely on — and it is enough to recover causality from physical timestamps.</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="160" viewBox="0 0 420 160" style="display:block; margin:0 auto;">
+      <line x1="20" y1="120" x2="400" y2="120" stroke="#d9d0c4" stroke-width="2"/>
+      <!-- tt1 narrow -->
+      <line x1="70" y1="48" x2="70" y2="64" stroke="#2563eb" stroke-width="3"/>
+      <line x1="150" y1="48" x2="150" y2="64" stroke="#2563eb" stroke-width="3"/>
+      <line x1="70" y1="56" x2="150" y2="56" stroke="#2563eb" stroke-width="4"/>
+      <text x="70" y="40" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2563eb">e1</text>
+      <text x="150" y="40" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2563eb">L1</text>
+      <text x="110" y="80" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#2563eb">tt1 (event 1)</text>
+      <!-- tt2 wide, possibly huge -->
+      <line x1="110" y1="96" x2="110" y2="112" stroke="#c0510a" stroke-width="3"/>
+      <line x1="380" y1="96" x2="380" y2="112" stroke="#c0510a" stroke-width="3"/>
+      <line x1="110" y1="104" x2="380" y2="104" stroke="#c0510a" stroke-width="4"/>
+      <text x="110" y="148" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c0510a">e2</text>
+      <text x="380" y="148" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c0510a">L2</text>
+      <text x="245" y="92" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#c0510a">tt2 (event 2)</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Even when tt2's interval is huge and overlaps tt1, the guarantee <code>e1 &lt; L2</code> still holds. We know nothing else — not <code>e1</code> vs <code>e2</code>, not <code>L1</code> vs <code>L2</code>. If real event 1 truly came first, TrueTime's honesty makes it <em>impossible</em> for tt2 to sit entirely before tt1.</div>
+</div>
+
+<p>Why must this hold? If event 2 really happened after event 1 in physical time, and both intervals are honest (each truly contains its real moment), then the real time of event 2 is past the real time of event 1. The latest endpoint <code>L2</code> sits at or beyond event 2's real time, which is beyond event 1's real time, which is at or beyond <code>e1</code>. So <code>e1 &lt; L2</code> is forced. If TrueTime ever let <code>tt2</code> sit entirely before <code>tt1</code> in this situation, one of the two intervals would have to be lying — violating the conservatism promise.</p>
+
+<div class="quiz" id="quiz2">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Event A happened before event B in real time, recorded as TrueTime intervals <code>ttA</code> and <code>ttB</code>. What can we conclude with certainty?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div><code>ttA.latest &lt; ttB.earliest</code> — the intervals never overlap.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div><code>ttA.earliest &lt; ttB.latest</code>, and nothing more.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div><code>ttA.earliest &lt; ttB.earliest</code> and <code>ttA.latest &lt; ttB.latest</code>.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Nothing — physical clocks drift, so the intervals are meaningless.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct — B.</strong> The single guaranteed relationship is <code>ttA.earliest &lt; ttB.latest</code>. A is too strong: the intervals are allowed to overlap (ttB can have a huge range that starts before ttA's latest). C is also too strong for the same reason — we know nothing about earliest-vs-earliest or latest-vs-latest. D was true for plain timestamps, but the entire point of TrueTime's honest intervals is that they <em>do</em> let us recover this one causal fact.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>Architecture &amp; Lease Disjointness</h2>
+</div>
+
+<p>We now have an honest clock. But to use it for transactions we first need the lay of the land: how Spanner's data and replicas are organized, and one subtle correctness problem about <em>leaders</em> that TrueTime turns out to solve elegantly.</p>
+
+<h3 id="sharding">Shards, Paxos, and Leaders</h3>
+
+<p>Spanner's data type is not the usual key→value. It is <strong>(key, timestamp) → value</strong>. The same key can have many entries, one per timestamp — that is exactly what "multi-version" means, and it is why a read can ask for the value "as of" some past moment. The data is chopped into <strong>tablets</strong> (= partitions = shards), each a subset of these (key, timestamp)→value entries. Many tablets can live on one server, and underneath sits a distributed file system we will ignore today.</p>
+
+<p>Take one vertical slice of the stack — a single shard:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>The shard is <strong>replicated across zones</strong> (regions), so it survives the loss of an entire data center. The replicas run <strong>Paxos</strong> together to agree on the shard's sequence of operations.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>One replica is elected <strong>leader</strong> via Paxos, using long-lived <strong>leases</strong> (time-bounded "I am the leader" grants). All <em>writes</em> funnel through the leader, which proposes them to the others.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><em>Reads</em> may be served by <strong>any up-to-date replica</strong>, not just the leader — a key to performance and locality. (How a replica decides it is "up-to-date" is the subject of Part V.)</p>
+</div>
+
+<h3 id="two-phase-commit">Cross-Shard Transactions: Two-Phase Commit</h3>
+
+<p>A single shard's Paxos log handles transactions that stay <em>inside</em> that shard. But Spanner's headline feature is transactions that span <em>many</em> shards across <em>many</em> zones. For those, Spanner layers <strong>two-phase commit (2PC)</strong> on top of the per-shard Paxos groups.</p>
+
+<p>Concretely: a transaction touching several shards involves the <em>leader</em> of each shard. One of those leaders is designated the <strong>coordinator</strong> of the transaction; the rest are participants. Each leader runs a <strong>transaction manager</strong> data structure to play its part in the 2PC.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The Locking Rule</div>
+  <p>Any operation that is a <strong>transaction</strong> — touching multiple partitions or bundling several sub-operations — must <strong>acquire locks</strong> on all the partitions it touches before writing. Operations that are <em>not</em> transactions bypass the lock table entirely. Locks are what serialize conflicting transactions on the same data.</p>
+</div>
+
+<h4>Why store the transaction manager's state in Paxos?</h4>
+
+<p>Here is a subtle but vital design choice. The transaction manager's state — "we are in the middle of committing transaction X" — is itself written into Paxos, i.e. replicated, not just kept in the leader's memory. The professor asked the class why. The answer:</p>
+
+<div class="callout insight">
+  <div class="callout-title">Surviving a Mid-Transaction Crash</div>
+  <p>Imagine the coordinator (or any leader) crashes <em>partway through</em> the two-phase commit. If its transaction state lived only in memory, the replica promoted to replace it would have no idea where the transaction was — was it committed? aborted? still preparing? By writing every intermediate transaction step into Paxos, the state is replicated, so the new leader can <strong>resume the transaction exactly where it stopped.</strong> A transaction is an <em>effectful, durable process</em>, so its progress must be made durable just like any other write.</p>
+</div>
+
+<p>A student raised the obvious cost: every transactional write now pays for a Paxos round across all the data centers holding replicas of every shard it touches. That <em>is</em> expensive, and Spanner doesn't pretend otherwise. The professor's response: the genuinely clever part of Spanner is using physical time to eliminate <em>other</em> coordination overhead. The Paxos round-trip itself is the irreducible price of agreement — at some point, machines must communicate to be sure everyone knows the same thing.</p>
+
+<h3 id="disjointness">The Disjointness Invariant</h3>
+
+<p>Now the problem TrueTime solves here. Leadership is granted by a <strong>lease</strong> — a window of time during which a replica believes it is the leader. For correctness, Spanner requires:</p>
+
+<div class="callout warning">
+  <div class="callout-title">Leases Must Be Disjoint</div>
+  <p>Each leader's lease interval must be <strong>disjoint</strong> from every past and future leader's lease — they may never overlap. If two replicas both believed they were leader at the same moment, they could each accept conflicting writes and assign conflicting timestamps, corrupting the system. (This is the classic split-brain danger.)</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="120" viewBox="0 0 420 120" style="display:block; margin:0 auto;">
+      <line x1="20" y1="90" x2="400" y2="90" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="395" y="110" text-anchor="end" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">time →</text>
+      <!-- R1 lease -->
+      <rect x="40" y="40" width="150" height="22" rx="5" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="115" y="55" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#c0510a">R1 is leader</text>
+      <!-- gap arrow -->
+      <line x1="190" y1="51" x2="230" y2="51" stroke="#2d8a4e" stroke-width="2" stroke-dasharray="3,3"/>
+      <text x="210" y="34" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#2d8a4e">gap</text>
+      <!-- R3 lease -->
+      <rect x="230" y="40" width="150" height="22" rx="5" fill="#eff4ff" stroke="#2563eb" stroke-width="2"/>
+      <text x="305" y="55" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#2563eb">R3 is leader</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Consecutive leases must not overlap. The whole challenge: different replicas, in different regions, must coordinate this <em>without</em> a god's-eye clock telling them the real time.</div>
+</div>
+
+<h3 id="lease-protocol">Enforcing Disjointness with TrueTime + Quorums</h3>
+
+<p>The class brainstormed this, and it combines two ideas we already have. The clever result is that Spanner enforces disjointness <strong>without running Paxos for the lease itself</strong> — it borrows just one ingredient from Paxos: the <strong>majority quorum</strong>.</p>
+
+<h4>Idea 1 — The single-vote rule (each replica self-polices via TrueTime)</h4>
+
+<p>Every replica obeys a personal rule about granting lease votes:</p>
+
+<div class="callout concept">
+  <div class="callout-title">The Single-Vote Rule</div>
+  <p>If a replica grants a lease vote at time <code>t</code>, it will <strong>not grant another vote</strong> until <code>TT.after(t.latest + lease_length)</code> is true — i.e. until it is <em>certain</em> the previous lease it voted for has fully expired. By waiting for the conservative <code>latest</code> endpoint (plus the lease length) to definitely pass, each replica single-handedly guarantees it never double-votes into overlapping leases.</p>
+</div>
+
+<h4>Idea 2 — Quorum overlap (the magic that ties replicas together)</h4>
+
+<p>But disjointness must hold across <em>all</em> replicas, not just one. Here the quorum does the work. A leader needs lease votes from a <strong>majority</strong> of replicas. Between any two consecutive leaders' majorities, <strong>at least one replica is common to both</strong> — because two majorities of the same set must overlap.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Insight</div>
+  <p>That one shared replica — whichever it happens to be — <em>forces</em> disjointness through its own single-vote rule. It voted for the old leader, so by its personal rule it refuses to vote for the new leader until the old lease has definitely expired. No replica needs to <em>know</em> it is the pivotal one; the math of quorum overlap guarantees that <em>some</em> replica always plays this role.</p>
+</div>
+
+<p>Let's trace it. Suppose R1 becomes leader <em>i</em>, R3 becomes leader <em>i+1</em>, and R2 is in <em>both</em> quorums:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>R1 requests a lease, sampling TrueTime as <code>T1</code>. A majority (including R2) votes yes. R1 holds its lease from <code>T1.earliest</code> for the lease length — using <em>earliest</em> keeps it conservative, so R1 never overstays.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>Later, R3 wants to become leader and asks for votes. R2, having voted for R1, applies its single-vote rule: it will <strong>not</strong> vote for R3 until <code>after(T2.latest + lease_length)</code> — where <code>T2</code> was R2's reading when it voted for R1.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>So R3's lease can only begin (<code>T3.earliest</code>) <em>after</em> that gap. The arithmetic guarantees R1's lease ends before R3's lease begins. <strong>Disjoint.</strong></p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">A Note on the Cost</div>
+  <p>A student asked: what if network delay means R1 only hears its acceptances near the end of the window? Then R1's lease is simply <em>shorter</em> — measured from when it sent its request, not when replies arrived. Congestion shrinks leases but never breaks correctness. Conservatism always errs toward safety, paying in performance, never in correctness. This same "err conservative, lose a little speed" tradeoff is the through-line of the whole lecture.</p>
+</div>
+
+<div class="quiz" id="quiz3">
+  <div class="quiz-question">Which two ingredients combine to guarantee that consecutive leader leases never overlap?</div>
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>A globally-synchronized atomic clock plus a central lease server.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Each replica's TrueTime-based single-vote rule, plus the guaranteed overlap of any two majority quorums.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Running a full round of Paxos to agree on each lease interval explicitly.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>The coordinator telling every replica exactly when each lease starts and ends.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct — B.</strong> Each replica's single-vote rule (don't vote again until <code>after(t.latest + lease_length)</code>) makes <em>that replica</em> safe; quorum overlap guarantees at least one replica is shared between consecutive leaders, and that shared replica forces global disjointness. A is impossible (no perfect global clock) and reintroduces a central point of failure. C is exactly what Spanner <em>avoids</em> — it borrows only the quorum idea from Paxos, not a full Paxos run. D would require a coordinator who already knows the real time, which is the very thing we don't have.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>Strict Serializability &amp; the Commit Protocol</h2>
+</div>
+
+<p>Disjoint leases were not the goal — they are a tool. The goal is <strong>strict serializability</strong> for read-write transactions, and we will now see how disjointness makes it achievable. First, what exactly are we promising?</p>
+
+<h3 id="serializability">Serializability, Then Strict Serializability</h3>
+
+<p><strong>Serializability</strong> means the database may interleave transactions however it likes, as long as the result is equivalent to running them <em>one at a time in some order</em> — as if single-threaded. Each transaction's sub-operations happen atomically with respect to others.</p>
+
+<p>Consider two transactions doing a get-then-set increment. An interleaving like <code>get→2, set→3, get→1, set→2</code> is still serializable, because we can reorder it to be equivalent to "transaction 2, then transaction 1" run back-to-back. Serializability lets us reorder freely, as long as atomicity is preserved.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Strict Serializability</div>
+  <p><strong>Strict serializability</strong> adds one requirement to serializability: if transaction T1 <em>completes before</em> T2 <em>starts</em> (in real, wall-clock time), then the chosen serial order must also place T1 before T2. This is the <strong>real-time ordering guarantee</strong>. You can still freely reorder transactions whose lifetimes <em>overlap</em>; you may only <em>not</em> reorder ones separated in real time. Spanner also calls this <strong>external consistency</strong> or <strong>strict visibility</strong>.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">A Familiar Analogy</div>
+  <p>Strict serializability is to serializability exactly what <strong>linearizability</strong> is to sequential consistency — both add the real-time ordering requirement on top of "behaves like some sequential order." If you understood linearizability earlier in the course, you already understand the shape of this guarantee; it's the same idea lifted from single objects to whole multi-key transactions.</p>
+</div>
+
+<p>Spanner lets a developer choose <em>per transaction</em> between full strict serializability (with locks, stronger but slower) and <strong>snapshot isolation</strong> (lock-free reads at a chosen timestamp, weaker but faster — our Part V). The choice is a knob trading guarantees against efficiency.</p>
+
+<h3 id="monotonic-ts">Monotonic Timestamps as the Serial Order</h3>
+
+<p>How does Spanner realize a serial order? It stamps every transaction with a <strong>monotonically increasing commit timestamp</strong>. Because the timestamps strictly increase and each transaction gets a distinct one, the order of timestamps <em>is</em> the serialization order — and Spanner engineers it so that order also respects real time.</p>
+
+<p>For a <em>single</em> leader this is trivial: it just hands out locally increasing numbers. The hard part is making timestamps monotonic <em>across</em> leaders, where a dying leader may never have talked to its successor. This is where Part III pays off:</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">Disjointness → Monotonicity</div>
+  <p>Each leader assigns timestamps only <em>inside its own lease interval</em>. Because leases are disjoint and ordered in time, the intervals don't overlap — so a later leader's timestamps are automatically larger than any earlier leader's. Within its own interval each leader trivially keeps its numbers increasing. The disjointness from Part III is precisely what makes timestamps monotonic globally without leaders ever coordinating directly.</p>
+</div>
+
+<h3 id="commit-protocol">The Commit Protocol, Step by Step</h3>
+
+<p>Now the full read-write transaction across shards. Writes are <strong>buffered at the client</strong> until commit — the client does not push individual writes as it goes. Instead it reads everything it needs, computes all its writes, and then sends them together. (One student misheard "buffered" as batching for efficiency; the professor clarified it means the client <em>holds all the writes and ships them in one commit message</em>, not that it delays to batch many transactions.)</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Reads.</strong> The client issues reads to the leader of each shard it needs. Each leader <strong>acquires read locks</strong> and returns the most recent data. (Locks have timeouts and need client keep-alives, so a crashed client doesn't hold them forever — that's how Spanner avoids stuck locks.)</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Commit request.</strong> When all reads are done, the client sends one message to every participating leader containing <em>all</em> its writes, and designates one leader as the <strong>coordinator</strong>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Prepare (non-coordinator leaders).</strong> Each participant acquires <strong>write locks</strong>, picks a prepare timestamp <code>T</code> larger than any timestamp it has used before, <strong>logs it via Paxos</strong> (so it survives a crash), and sends a <em>prepared</em> message to the coordinator.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Choose commit timestamp (coordinator).</strong> The coordinator acquires its write locks and picks a commit timestamp <code>S</code> that is greater than <em>all three</em> of: (a) every participant's prepared <code>T</code>; (b) its own <code>TT.now().latest</code> at the moment it received the commit message; (c) every timestamp it has previously assigned (for monotonicity).</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <p><strong>Log &amp; commit-wait.</strong> The coordinator logs <code>S</code> via Paxos (or aborts on timeout). Then it <strong>waits until <code>TT.after(S)</code> is true</strong> — until <code>S</code> is definitely in the past everywhere.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">6</div>
+  <p><strong>Apply.</strong> Only after the wait does the coordinator tell the participants and the client to commit, and the writes actually take effect, stamped with <code>S</code>.</p>
+</div>
+
+<p>Why does the prepare phase exist at all? Because each participant leader might <em>also</em> be coordinating other transactions. Its prepared <code>T</code> announces "this is a timestamp I consider safe for this transaction — it's after everything I'm already in the middle of." The coordinator then takes the max over all those, plus its own clock, guaranteeing the final <code>S</code> sits after every concurrent transaction's claim.</p>
+
+<h3 id="commit-wait">Why We Wait Before Writing — Commit-Wait</h3>
+
+<p>Step 5's wait is the crux, so let's see what breaks without it. Strict serializability demands: if T1 finishes before T2 starts in real time, then <code>commit_ts(T2) &gt; commit_ts(T1)</code>. Picking <code>S</code> larger than <code>TT.now().latest</code> guarantees <code>S</code> is past real-time-now. But that's not enough on its own.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Bug Commit-Wait Prevents</div>
+  <p>If we applied the write the instant we chose <code>S</code>, the write could become visible <em>before</em> real time actually reached <code>S</code>. Then a later transaction that started after we "finished" might still get a timestamp <em>below</em> <code>S</code> — or another transaction supposed to be ordered after us could read state inconsistent with our timestamp. By <strong>waiting until <code>TT.after(S)</code></strong> before making the write visible, Spanner guarantees that by the time anyone can see the effect, real time has genuinely passed <code>S</code> — so any later transaction is forced to get a strictly larger timestamp. Timestamp order then truly matches real-time order.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">This Is Where the Clock Bound Buys Speed</div>
+  <p>The length of the commit-wait is exactly the TrueTime uncertainty — you wait out the interval width. When clocks are tightly synced (sub-10ms skew, the common case), the wait is tiny and throughput is high. When uncertainty spikes, the wait grows and Spanner slows — but never becomes incorrect. <em>That</em> is the entire bargain: trade a small, bounded wait for planet-scale strict serializability without endless coordination rounds.</p>
+</div>
+
+<div class="quiz" id="quiz4">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">After choosing commit timestamp <code>S</code>, why does the coordinator wait until <code>TT.after(S)</code> before applying the writes?</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>To give slow replicas time to catch up on unrelated Paxos logs.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>So that by the time the write is visible, real time has definitely passed <code>S</code>, forcing every later transaction to get a strictly larger timestamp — preserving real-time order.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Because Paxos requires a fixed delay between the prepare and commit phases.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>To batch multiple client transactions together for efficiency.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct — B.</strong> Commit-wait makes the write invisible until <code>after(S)</code> is certain, which guarantees real time has truly reached <code>S</code> before anyone observes the effect. Any transaction that starts later therefore reads a clock past <code>S</code> and is forced to commit at a higher timestamp — so timestamp order matches real-time order, exactly the strict-serializability requirement. A, C, and D describe unrelated mechanisms; the wait is fundamentally about the real-time ordering guarantee, and its <em>duration</em> is precisely the TrueTime uncertainty.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>Lock-Free Snapshot Reads</h2>
+</div>
+
+<p>We have strict serializability for read-write transactions — but it costs locks and coordination. Many workloads are read-heavy and don't need that. Spanner's other guarantee, <strong>snapshot isolation</strong>, lets <em>any</em> replica serve reads with <strong>no locks at all</strong>, by reading a consistent snapshot of the database at a chosen timestamp. This is where the multi-version design from Part I finally pays off.</p>
+
+<h3 id="snapshot-reads">Reading at a Timestamp</h3>
+
+<p>Because every value is stored as <code>(key, timestamp) → value</code>, "the database as of time <code>T</code>" is well-defined: for each key, take the newest version with timestamp ≤ <code>T</code>. That frozen view is a <strong>snapshot</strong>, and reading it requires no locks — you're reading immutable past versions, so no concurrent writer can interfere.</p>
+
+<p>The client specifies a read timestamp <code>T</code> meaning "give me a snapshot no older than <code>T</code>." Any replica can answer — <em>but it must first make sure it is safe to do so.</em></p>
+
+<div class="callout warning">
+  <div class="callout-title">Why a Replica Can't Just Answer Immediately</div>
+  <p>A replica might still be processing transactions that will write values at or before <code>T</code> but haven't landed yet. If it answered now, it could return a snapshot that later turns out to be wrong — missing a write that belongs before <code>T</code>. The replica must <strong>wait until it is certain no future write can change the answer</strong> at timestamp <code>T</code>.</p>
+</div>
+
+<h3 id="t-safe">Computing T-safe</h3>
+
+<p>Each replica maintains a value <strong>T-safe</strong>: the largest timestamp at which it can correctly serve a snapshot read right now. It serves a read for <code>T</code> only once <code>T-safe ≥ T</code>; otherwise it waits for T-safe to climb. T-safe is the <strong>minimum of two components</strong>, because two different kinds of pending work could still affect old timestamps:</p>
+
+<div class="callout concept">
+  <div class="callout-title">Component 1 — T-paxos (committed writes)</div>
+  <p><code>T-paxos</code> is the timestamp of the <strong>highest Paxos write already applied</strong> at this replica. It increases monotonically because writes are applied in timestamp order. The payoff of strict serializability: if write at timestamp <code>X</code> has been applied, then <em>every</em> write with a smaller timestamp has also been applied — so the replica's view at any time ≤ <code>T-paxos</code> is complete and final.</p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Component 2 — T-TM (in-flight prepared transactions)</div>
+  <p>Some transactions may be <strong>prepared but not yet committed</strong>. From the commit protocol we know a prepared transaction's final timestamp will be <em>at least</em> its prepare timestamp — never below it. So define <code>T-TM = (min over all prepared transactions of their prepare timestamps) − 1</code>, or <code>∞</code> if none are prepared. Below <code>T-TM</code>, no pending transaction can still insert a write.</p>
+</div>
+
+<pre><code><span class="cm">// A replica may serve a snapshot read at T only when T &le; T-safe</span>
+T_safe = <span class="fn">min</span>( T_paxos , T_TM )
+
+<span class="cm">// T_paxos = timestamp of highest applied Paxos write</span>
+<span class="cm">// T_TM    = (min prepared-timestamp) - 1, or +infinity if none prepared</span></code></pre>
+
+<p>The reasoning behind <code>T-TM</code> deserves a careful look. When a transaction is prepared with timestamp <code>p</code>, we know with certainty its eventual commit timestamp will be <code>≥ p</code> — it can land at <code>p</code>, or later, but <em>never</em> before <code>p</code>. So for any read timestamp strictly below the smallest such <code>p</code>, that pending transaction is irrelevant: it cannot retroactively change history that old. For read timestamps at or above <code>p</code>, though, we genuinely don't yet know where the transaction will commit — so we must hold off.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="150" viewBox="0 0 420 150" style="display:block; margin:0 auto;">
+      <line x1="20" y1="90" x2="400" y2="90" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="395" y="112" text-anchor="end" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">time →</text>
+      <!-- safe zone -->
+      <rect x="20" y="78" width="180" height="24" fill="#edf7f0" opacity="0.8"/>
+      <text x="110" y="125" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#2d8a4e">can serve reads here</text>
+      <!-- T-safe marker -->
+      <line x1="200" y1="60" x2="200" y2="100" stroke="#2d8a4e" stroke-width="3"/>
+      <text x="200" y="50" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2d8a4e">T-safe</text>
+      <!-- unsafe zone -->
+      <rect x="200" y="78" width="180" height="24" fill="#fef0f0" opacity="0.8"/>
+      <text x="290" y="125" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#c53030">must wait — pending writes</text>
+      <!-- prepared txn -->
+      <circle cx="250" cy="90" r="4" fill="#c0510a"/>
+      <text x="250" y="74" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#c0510a">prepared p</text>
+    </svg>
+  </div>
+  <div class="figure-caption">A replica freely serves reads at any timestamp ≤ T-safe. Above T-safe lies the recent horizon where committed and prepared transactions might still alter the answer — so the replica waits until T-safe advances past the requested timestamp.</div>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">How the Pieces Connect</div>
+  <p><code>T-paxos</code> works <em>because</em> of Part IV's strict serializability (writes apply in monotonic timestamp order). <code>T-TM</code> works <em>because</em> of Part IV's commit protocol (a commit timestamp is never below its prepare timestamp). And both rest on Part II's TrueTime giving meaningful, monotonic timestamps in the first place. Snapshot reads are the capstone that consumes everything built before it.</p>
+</div>
+
+<div class="quiz" id="quiz5">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A replica has applied all Paxos writes up to timestamp 100, and has one prepared-but-uncommitted transaction with prepare timestamp 80. What is its <code>T-safe</code>, and can it serve a read at timestamp 75?</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div><code>T-safe = 100</code>; yes, it can serve the read at 75.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div><code>T-safe = 79</code>; yes, it can serve the read at 75.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div><code>T-safe = 80</code>; no, it must wait.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div><code>T-safe = 75</code>; no, the read timestamp must be strictly less than T-safe.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct — B.</strong> <code>T-paxos = 100</code> and <code>T-TM = 80 − 1 = 79</code>, so <code>T-safe = min(100, 79) = 79</code>. A read at 75 ≤ 79 is safe to serve. The prepared transaction at 80 can only ever commit at timestamp ≥ 80, so it can never affect a snapshot as of 75 — exactly why we subtract one and take the minimum. A ignores the pending transaction; C and D miscompute the minus-one rule.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SYNTHESIS ═══════════════════════ -->
+<section id="synthesis" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>Spanner began as an apparent contradiction: a database that is globally distributed, synchronously replicated, scalable, <em>and</em> offers strictly-ordered transactions spanning the world — everything the course's earlier trade-offs said you couldn't have at once. The entire lecture was the unwinding of that contradiction, and every piece depended on the one before it.</p>
+
+<p>It starts with humility about clocks. We've always said "we know nothing about physical time." Spanner relaxes that to "we know <strong>one bound</strong> on the uncertainty," and packages it as <strong>TrueTime</strong> — honest intervals instead of dishonest single numbers, with the workhorse pattern of <em>waiting until <code>after(t)</code> is certain.</em></p>
+
+<p>That honest clock lets Spanner keep <strong>Paxos leader leases disjoint</strong>, fusing TrueTime's single-vote rule with quorum overlap — no central clock, no extra consensus, just a guaranteed shared voter forcing the gap. Disjoint leases hand each leader a private slice of the timeline, which makes <strong>commit timestamps monotonic across leaders</strong> for free. Monotonic timestamps <em>are</em> the serialization order; the <strong>two-phase commit with commit-wait</strong> pins that order to real time, delivering <strong>strict serializability</strong>. And the same timestamps, plus the multi-version store, let any replica serve <strong>lock-free snapshot reads</strong> by tracking <code>T-safe = min(T-paxos, T-TM)</code>.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Through-Line</div>
+  <p>One bargain recurs at every layer: <strong>be conservative, and pay for uncertainty in time, never in correctness.</strong> Leases that shrink under congestion, commit-waits that lengthen when clocks drift, reads that stall until T-safe climbs — in every case Spanner trades a little speed to stay correct, and because real clock skew is almost always under 10 ms, it stays fast in practice. Spanner doesn't beat the speed of light or perfectly sync clocks; it just refuses to <em>lie</em> about what it knows, and squeezes maximum performance out of an honest bound.</p>
+</div>
+
+<p>Since the 2012 paper, Spanner has steadily grown a full <strong>SQL</strong> layer and ever more use cases. The professor's closing observation is itself a systems lesson: the genuinely hard part of building a database isn't the query language — it's reliability, monitoring, and resilience. Spanner nails those, so it makes sense to keep piling features onto a foundation that is already battle-tested.</p>
+
+<div class="callout tip">
+  <div class="callout-title">What's Next</div>
+  <p>We're near the end of the course. Next lecture covers <strong>Velos</strong>, and the finale will be a survey of open problems and state-of-the-art in distributed systems followed by an open Ask-Me-Anything. As you review, keep Spanner's central trick in your pocket — using a <em>bounded</em> notion of physical time to sidestep coordination — because the tension between coordination cost and consistency guarantees is the thread that ties this entire course together. (Exam tip from lecture: questions draw on both the worksheets and your lab implementation, so be sure you understand what your lab actually did, including the half you didn't personally write.)</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

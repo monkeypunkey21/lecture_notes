@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 5 — Fault Tolerance &amp; Primary-Backup Replication</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 5</div>
+  <a href="#part1">Part I — Fault-Tolerance Trade-offs</a>
+  <a href="#why-tolerance" class="sub">Why We Need This</a>
+  <a href="#snapshot-recap" class="sub">Recovering from a Snapshot</a>
+  <a href="#tradeoffs" class="sub">The Three Trade-offs</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Primary-Backup Replication</a>
+  <a href="#client-server" class="sub">The Client-Server Recap</a>
+  <a href="#pb-model" class="sub">The Primary &amp; the Backup</a>
+  <a href="#two-failures" class="sub">Handling Two Failures</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — When &amp; What to Sync</a>
+  <a href="#mapreduce-loop" class="sub">Walking the Loop</a>
+  <a href="#externalization" class="sub">Externalization</a>
+  <a href="#what-to-send" class="sub">Snapshot vs Delta</a>
+  <a href="#workloads" class="sub">Aside — Workloads</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — The View Service</a>
+  <a href="#discover-primary" class="sub">Discovering the Primary</a>
+  <a href="#views" class="sub">Views &amp; View Numbers</a>
+  <a href="#view-change" class="sub">The View-Change Protocol</a>
+  <a href="#not-critical" class="sub">Off the Critical Path</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Split Brain</a>
+  <a href="#the-partition" class="sub">The Network Partition</a>
+  <a href="#the-fix" class="sub">The Fix — Backup Acks</a>
+  <a href="#valid-views" class="sub">Valid vs Invalid Views</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#together">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">CS134 · Distributed Systems</div>
+  <h1>Fault Tolerance &amp; Primary-Backup Replication</h1>
+  <p class="hero-sub">An interactive guide to Lecture 5 — how a service survives a crashed machine by keeping a live backup, when to sync them, and how the view service and split-brain problem keep everyone agreeing on who is in charge.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>What We Actually Want From Fault Tolerance</h2>
+</div>
+
+<h3 id="why-tolerance">Why Are We Learning This?</h3>
+<p>A <strong>distributed system</strong> is a collection of separate computers (we call them <em>nodes</em> or <em>processes</em>) that cooperate over a network to behave like a single service. The whole reason we spread a service across many machines is that any one machine can <strong>crash</strong> — its power dies, its disk fails, someone trips over the cable. The promise of distribution is that the service keeps running even when individual pieces fall over. <strong>Fault tolerance</strong> is the machinery that delivers on that promise.</p>
+
+<p>So far in this course we have built up two tools. First, <strong>logical clocks</strong> let many copies of a service (a <em>replicated state machine</em>, or RSM — several nodes all running the same code so they stay identical) apply updates in the same order. But ordering alone does not save you when a replica dies. Second, we introduced <strong>snapshots</strong>: a node periodically writes its entire state to stable storage (a <strong>checkpoint</strong>) so that after a crash it can be restored. This lecture asks the harder question: snapshots can recover a crashed node, but <em>how good is that recovery</em>, and can we do better?</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Replicated State Machine (RSM)</div>
+  <p>An <strong>RSM</strong> is a set of replicas that each run the <em>same deterministic code</em> on the <em>same sequence of inputs</em>. Because the code is deterministic and the input order is identical, every replica ends up in exactly the same state. That equivalence is the foundation of every fault-tolerance scheme in this lecture: a backup is useful precisely because it is a state machine identical to the primary.</p>
+</div>
+
+<h3 id="snapshot-recap">Recovering From a Snapshot, Step by Step</h3>
+<p>Before we critique snapshots, let's nail down exactly how recovery works for a <em>single</em> node. (For replicated state machines we do not actually need the fancy coordinated, multi-node snapshots from earlier lectures — a plain single-node checkpoint is enough here.) Picture a process that takes a checkpoint, keeps working, and then crashes:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Detect the failure.</strong> Something in the system must first notice that the node has stopped responding. Nothing can recover a crash that nobody has observed.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Restore the latest checkpoint.</strong> A new or restarted node reads the most recent checkpoint off stable storage and loads that entire state back into memory.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Rebuild ephemeral state.</strong> Things that don't live in the checkpoint — open network connections, channels to other nodes — have to be re-established from scratch.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Resume.</strong> Replay any recorded in-flight messages, then continue processing as normal.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">The Problem When Failures Are Frequent</div>
+  <p>This scheme is correct, but it is <strong>time-consuming</strong>. Every recovery means re-reading a whole checkpoint and rebuilding all connections. If failures are rare you barely notice; if they are frequent, the cost of constantly restoring snapshots becomes punishing. That cost is exactly what motivates the rest of the lecture.</p>
+</div>
+
+<h3 id="tradeoffs">The Trade-offs Every Fault-Tolerance Scheme Must Make</h3>
+<p>The professor asked the class to brainstorm what properties we want from a fault-tolerance mechanism. The answers fall into a small, important set. The first one is absolute; the rest are dials we trade against each other.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Correctness Is Non-Negotiable</div>
+  <p><strong>Correctness is the one guarantee we never sacrifice.</strong> No matter how clever the scheme, it must never return a wrong answer or let the service diverge from what a single correct machine would have done. Everything else — speed, cost, freshness — is a trade-off. System design is the art of choosing where to land on those trade-offs, because there is no design that wins on every axis at once.</p>
+</div>
+
+<p>Once correctness is locked in, three measurable trade-offs remain:</p>
+
+<h4>1. Cost on normal execution</h4>
+<p>This is the overhead you pay <em>in the good case</em>, when nothing has failed. Recall the goal of coordinated snapshots from earlier: instead of "stopping the world" to take a snapshot, we wanted the system to keep working while the snapshot was taken. The leftover overhead — extra latency, CPU, memory, or network traffic on the critical path — is the cost on normal execution.</p>
+
+<h4>2. Recovery freshness</h4>
+<p>After a failure, <strong>how far back in time</strong> do we resume from? If you checkpoint once an hour and crash at minute 59, you lose 59 minutes of work. Fresher recovery means losing less.</p>
+
+<h4>3. Time to recover</h4>
+<p>How long does it take to get from "we noticed the crash" back to "we are serving requests again"? Restoring a big checkpoint and rebuilding channels takes time.</p>
+
+<table class="compare-table">
+  <tr><th>Trade-off</th><th>How Snapshots Score</th></tr>
+  <tr><td>Cost on normal execution</td><td><strong>Low</strong> — occasionally saving state off the critical path is cheap; requests keep flowing.</td></tr>
+  <tr><td>Recovery freshness</td><td><strong>Stale</strong> — you only have state as of the last checkpoint, so you lose everything since.</td></tr>
+  <tr><td>Time to recover</td><td><strong>Slow-ish</strong> — you must reload the checkpoint and re-establish all channels.</td></tr>
+</table>
+
+<div class="callout tip">
+  <div class="callout-title">Where This Is Heading</div>
+  <p>Snapshots are cheap when healthy but slow and stale when recovering. The mechanism in Part II — primary-backup replication — flips this profile: it pays a <em>higher</em> cost during normal execution in exchange for recovery that is <em>instant and perfectly fresh</em>. Keep these three dials in mind; we will re-score the new scheme against them at the end.</p>
+</div>
+
+<div class="quiz" id="quiz1">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A team checkpoints their service to disk once every hour. A node crashes 58 minutes after its last checkpoint. On which trade-off does this scheme score <em>worst</em>?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Cost on normal execution — hourly checkpoints are expensive to take.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Recovery freshness — recovery rewinds to a state up to an hour stale.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Correctness — the recovered state will be wrong.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Nothing — hourly checkpoints are optimal on every axis.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct — it's recovery freshness.</strong> Because the only saved state is the last checkpoint, recovery rewinds the node to where it was up to an hour ago, throwing away the most recent 58 minutes of work. Cost on normal execution is actually <em>low</em> for snapshots (saving occasionally is cheap), and correctness is never violated — the recovered state is internally consistent, just old. That staleness is precisely the weakness primary-backup replication is designed to eliminate.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>Primary-Backup Replication</h2>
+</div>
+
+<h3 id="client-server">First, a Recap: The Client-Server Model</h3>
+<p>The setting for this lecture is the everyday <strong>client-server</strong> pattern, the key abstraction for the control plane of a distributed system. A <strong>client</strong> sends a request; a <strong>server</strong> listens for requests, processes them (one at a time, or concurrently), and sends back a response. That's it. Everything below is about making the "server" half survive a crash without the client noticing.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="320" height="90" viewBox="0 0 320 90" style="display:block; margin:0 auto;">
+      <rect x="10" y="30" width="80" height="34" rx="8" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="50" y="52" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="600" fill="#2a2520">client</text>
+      <rect x="230" y="30" width="80" height="34" rx="8" fill="#eff4ff" stroke="#2563eb" stroke-width="1.5"/>
+      <text x="270" y="52" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="600" fill="#2a2520">server</text>
+      <line x1="92" y1="40" x2="228" y2="40" stroke="#d9d0c4" stroke-width="2" marker-end="url(#arrowR)"/>
+      <line x1="228" y1="56" x2="92" y2="56" stroke="#d9d0c4" stroke-width="2" marker-end="url(#arrowL)"/>
+      <text x="160" y="33" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">request</text>
+      <text x="160" y="72" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">response</text>
+      <defs>
+        <marker id="arrowR" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#c0510a"/></marker>
+        <marker id="arrowL" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#c0510a"/></marker>
+      </defs>
+    </svg>
+  </div>
+  <div class="figure-caption">The plain client-server loop. Primary-backup replication hides a second machine behind the "server."</div>
+</div>
+
+<h3 id="pb-model">The Primary and the Backup</h3>
+<p>Here is the central idea of the lecture.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Primary-Backup Replication</div>
+  <p>We run <strong>two replicas</strong>: a <strong>primary</strong> and a <strong>backup</strong>. To the client they look like a single server — the client only ever talks to the primary. The <strong>backup silently keeps a copy of the primary's state</strong>. If the primary crashes, the backup is promoted and takes over with the exact same state, so the client barely notices. (You can have several backups, but the assignment uses just one.)</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="340" height="160" viewBox="0 0 340 160" style="display:block; margin:0 auto;">
+      <!-- dashed service boundary -->
+      <rect x="150" y="15" width="170" height="130" rx="14" fill="none" stroke="#d9d0c4" stroke-width="2" stroke-dasharray="6 5"/>
+      <text x="235" y="33" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" letter-spacing="1" fill="#6b6560">SERVICE</text>
+      <!-- client -->
+      <rect x="10" y="62" width="80" height="36" rx="8" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="50" y="85" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="600" fill="#2a2520">client</text>
+      <!-- primary -->
+      <rect x="175" y="48" width="120" height="34" rx="8" fill="#eff4ff" stroke="#2563eb" stroke-width="1.5"/>
+      <text x="235" y="70" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#2563eb">primary</text>
+      <!-- backup -->
+      <rect x="175" y="100" width="120" height="34" rx="8" fill="#f5f0e8" stroke="#6b6560" stroke-width="1.5"/>
+      <text x="235" y="122" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#6b6560">backup</text>
+      <!-- client to primary -->
+      <line x1="92" y1="72" x2="173" y2="64" stroke="#c0510a" stroke-width="2" marker-end="url(#a2)"/>
+      <!-- primary to backup sync -->
+      <line x1="235" y1="84" x2="235" y2="98" stroke="#2d8a4e" stroke-width="2" marker-end="url(#a3)"/>
+      <text x="248" y="95" font-family="DM Sans, sans-serif" font-size="10" fill="#2d8a4e">sync</text>
+      <defs>
+        <marker id="a2" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#c0510a"/></marker>
+        <marker id="a3" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#2d8a4e"/></marker>
+      </defs>
+    </svg>
+  </div>
+  <div class="figure-caption">The client talks only to the primary. The primary syncs its state to the backup. The dashed box is the boundary between "inside the service" and "the outside world" — a boundary that becomes crucial in Part III.</div>
+</div>
+
+<h3 id="two-failures">Handling the Two Kinds of Failure</h3>
+<p>With two replicas there are exactly two failures to worry about, and each has a simple answer:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>The primary fails.</strong> Promote a backup to be the new primary. Because the backup already holds an identical copy of the state, it can start serving immediately.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>The backup fails.</strong> Add a fresh machine as a new backup (or, if none is available, run with no backup for now and accept the reduced safety).</p>
+</div>
+
+<p>That sketch raises the two questions that drive the rest of the lecture, and they are worth stating precisely now because we will spend Parts III–V answering them:</p>
+
+<div class="callout insight">
+  <div class="callout-title">The Two Questions That Define the Protocol</div>
+  <p><strong>(1) When should the primary sync with the backup?</strong> Syncing on every single operation would be correct but slow. Can we sync less often? <br><br><strong>(2) What information should the primary send when it syncs?</strong> The whole state every time? Just the change? The answers to these two questions <em>are</em> primary-backup replication.</p>
+</div>
+
+<div class="quiz" id="quiz2">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Why can a freshly-promoted backup start serving the client <em>immediately</em>, with no recovery delay?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>It first reads the primary's last disk checkpoint into memory.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>It already holds a live, in-sync copy of the primary's state.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>The client resends every request it has ever made so the backup can replay them.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>The view service pushes the full state to the backup at promotion time.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct.</strong> The backup has been continuously kept in sync, so at the moment of promotion it already <em>is</em> a current copy of the service — no checkpoint to reload, no log to replay. That is exactly why primary-backup gives instant, fresh recovery, in contrast to snapshots which must reload an old checkpoint. Option A describes snapshot recovery; option C would be hopelessly slow and isn't how this works.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>When to Sync, and What to Send</h2>
+</div>
+
+<h3 id="mapreduce-loop">Walking Through a Server Loop</h3>
+<p>To answer "when should we sync?", the lecture uses a concrete example: the <strong>master server</strong> from MapReduce (a system that splits a big computation into many small <em>tasks</em> handed out to <em>worker</em> machines). The master sits in a loop, and each pass through the loop looks like this:</p>
+
+<pre><code><span class="cm">// master server loop — assigns tasks to workers</span>
+<span class="kw">while</span> <span class="kw">true</span>:
+    msg  <span class="op">=</span> <span class="fn">receive</span>()          <span class="cm">// 1. a worker asks for work</span>
+    task <span class="op">=</span> <span class="fn">pick_new_task</span>()    <span class="cm">// 2. choose a task to give it</span>
+    <span class="fn">mark_assigned</span>(task)        <span class="cm">// 3. record locally that it's taken</span>
+    <span class="fn">respond</span>(msg.sender, task) <span class="cm">// 4. TELL the worker — leaves the service!</span></code></pre>
+
+<p>Assume the primary and backup start this loop perfectly in sync. The professor walked the class through "what if the primary crashes <em>right here</em>?" at each line. Trace it carefully — this trace is the heart of the lecture:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Crash after <code>receive()</code>?</strong> No problem. The primary only pulled a message off its queue and parsed it — a purely local change. The backup, being in sync, has the <em>same message in its own queue</em>. If promoted, it pulls that same message and proceeds identically.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Crash after <code>pick_new_task()</code>?</strong> Still fine. Choosing a task is deterministic and local; the backup would make the identical choice.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Crash after <code>mark_assigned()</code>?</strong> Still fine, <em>and this is the subtle one.</em> The primary changed its local state, but the backup never saw it. Yet because the backup holds the same queue, it would pull the same message, pick the same task, and mark it assigned itself. The local change is reproducible, so divergence is harmless. <strong>No outside party has seen anything.</strong></p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Crash <em>during</em> <code>respond()</code>?</strong> <span style="color:var(--red);font-weight:600;">Now we are in danger.</span> The response leaves the service and reaches a worker. The outside world has now observed a result. If the primary crashes here and the backup (which never recorded this assignment as externalized) takes over, the two have <strong>diverged</strong> in a way that is visible to others and cannot be undone.</p>
+</div>
+
+<h3 id="externalization">Externalization &amp; Observable Consistency</h3>
+<p>That trace reveals the single rule that governs <em>when</em> to sync. The dividing line is whether a state change has become visible <em>outside</em> the primary-backup group.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Sync Before You Externalize</div>
+  <p>We <strong>cannot tolerate a primary failure after a state update becomes externally visible.</strong> Once anything escapes the service boundary — a response to a client, a request to another service, a write to a shared disk — it can never be taken back. Therefore the primary must <strong>sync with the backup just before any externally-visible action</strong>, so that both replicas already agree on it. Conversely, as long as a change is purely internal, the primary is free to stay out of sync, because the backup can always reproduce internal work itself.</p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Observable (Observational) Consistency</div>
+  <p>We judge the system from the viewpoint of an <strong>outside observer</strong>. If, from the external world's perspective, nothing has changed, then internal divergence simply doesn't matter — the primary can crash, the backup can take over, and no observer can tell the difference. We only owe consistency at the boundary where the system reveals itself to the outside.</p>
+</div>
+
+<p>Why does crashing at step 3 truly cause no problem? Because the message the primary pulled came off <em>its own</em> queue, and the in-sync backup has an identical queue. The primary "consumed" the message privately and crashed before telling anyone. When the backup is promoted, it pulls that same first message from its own queue and continues — it never even knows the primary got partway through. <em>Same input, same deterministic code, same result.</em></p>
+
+<div class="callout warning">
+  <div class="callout-title">Footgun — Messages Can Be Sent Twice</div>
+  <p>This protocol can send the same response <strong>twice</strong>. Suppose the primary syncs, sends a response, then crashes; the backup, promoted, also sends that same response. The client now receives it twice. That is acceptable — it is the <em>client's</em> job to recognize a duplicate (e.g., via a request ID) and ignore the second copy. Sending too many times is a solvable nuisance. The unacceptable failure is the opposite: a state change that <em>diverges</em> and can't be reconciled. The protocol deliberately errs toward duplicates.</p>
+</div>
+
+<h3 id="what-to-send">What to Send: Whole Snapshot or Just the Delta?</h3>
+<p>Now the second question. When the primary syncs, what does it actually transmit?</p>
+
+<p>The naïve answer — "send a full snapshot of the entire state every time" — is correct but <strong>slow</strong>. A core assumption of distributed systems is that <strong>sending data over the network is expensive</strong> compared to a local operation, so we avoid it whenever we can. Shipping the whole state on every sync would crush the cost-on-normal-execution dial.</p>
+
+<p>The better answer is to send a <strong>delta</strong>: just the operation that changed the state, not the whole state. But that only works under conditions, and there is one case where a full snapshot is genuinely unavoidable:</p>
+
+<table class="compare-table">
+  <tr><th>Send the full state when…</th><th>Send just the delta (operations) when…</th></tr>
+  <tr><td>A <strong>brand-new backup</strong> joins (bootstrapping). It knows nothing, so it must receive everything once.</td><td>The backup is already up and in sync — then each new operation is enough to keep it current.</td></tr>
+  <tr><td>Expensive, but a one-time cost per new backup.</td><td>Cheap and ongoing — but requires <strong>same order</strong> and <strong>determinism</strong>.</td></tr>
+</table>
+
+<div class="callout warning">
+  <div class="callout-title">Two Conditions for Shipping Operations Instead of State</div>
+  <p>Sending only the operations works <em>only if</em>: <strong>(1)</strong> they are applied in the <strong>same order</strong> on both replicas (unless every operation commutes), and <strong>(2)</strong> request processing is <strong>deterministic</strong>. If an operation uses randomness, reads the wall clock, or otherwise behaves non-deterministically, replaying the same request would produce a <em>different</em> result and the backup would drift apart. To fix that, the primary must also ship along any extra state the backup needs to reproduce the result exactly — for example, the random number that was drawn.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Putting the Sync Protocol Together</div>
+  <p><strong>When to sync:</strong> before any state change becomes externally visible. <strong>How to sync:</strong> on a new backup's arrival, send the <em>complete state</em>; once it's running alongside the primary, send only <em>operations</em>, plus any captured non-determinism (random draws, etc.). With that, we have a fault-tolerance scheme that recovers <em>instantly and freshly</em> if the primary fails — at the price of a network round-trip on every externally-visible operation.</p>
+</div>
+
+<h3 id="workloads">Aside: Why Not All Operations Are Equal (Workloads)</h3>
+<p>The lecture took a useful detour here. If we must sync before <em>externalizing</em>, a natural follow-up is: does the primary really have to inform the backup for <em>every</em> request? The answer depends on what the request <em>does</em>, which leads into a short tour of how API methods differ.</p>
+
+<p>Consider an Instagram-style service: <code>get_posts</code>, <code>get_followers</code>, <code>follow</code>, <code>delete_post</code>, <code>send_message</code>. Even a simple key-value store has at least a <code>GET</code> and a <code>PUT</code>/<code>set</code>. These methods differ along several axes:</p>
+
+<ul style="margin: 0 0 18px 22px;">
+  <li><strong>Read vs write</strong> — does it modify state, or just fetch it?</li>
+  <li><strong>I/O-bound vs CPU-bound</strong> — does it touch lots of state (I/O-heavy) or mostly compute (CPU-heavy)?</li>
+  <li><strong>Coordination</strong> — does it touch a single item, or items scattered across the state (requiring more coordination)?</li>
+  <li><strong>Load characteristics</strong> — some methods are called far more often than others, with spikes (Black Friday), daily cycles, and hotspots (a few celebrity accounts get most of the traffic).</li>
+</ul>
+
+<div class="callout insight">
+  <div class="callout-title">There Is No Universal Optimization</div>
+  <p>System design is about <strong>making the right assumptions about your workload</strong>. <strong>Caching</strong> is the classic example: it helps enormously when you repeatedly read a small set of keys, but it is <em>detrimental</em> when writes are frequent (every write invalidates cached entries) or when reads are spread across many keys (low hit rate). An optimization that wins on one workload can lose on another — which is why companies tune the same read/write primitives differently rather than shipping one "optimal" design.</p>
+</div>
+
+<p>For our assignment, the relevant takeaway is concrete: a <strong>key-value store is typically read-heavy</strong> (an 80/20 or more skew toward reads is common). That matters for syncing, because reads don't change state. This unlocks the read optimization:</p>
+
+<div class="callout tip">
+  <div class="callout-title">The Read Optimization (Optional)</div>
+  <p>The primary <strong>does not need to inform the backup for reads</strong>. Why is that safe? Because if the backup is externally consistent with the primary, a promoted backup would produce the <em>identical</em> response for that read anyway — so the primary can serve it without ever telling the backup. (For the assignment, the professor recommends <em>not</em> implementing this — its safety relies on subtle assumptions — unless you want extra difficulty.)</p>
+</div>
+
+<div class="quiz" id="quiz3">
+  <div class="quiz-question">The MapReduce master pulls a worker's message off its queue, picks a task, and marks it assigned locally — then crashes, all before responding to the worker. The in-sync backup is promoted. What happens?</div>
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>The system diverges, because the backup never learned the task was assigned.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>No harm — the backup pulls the same message from its identical queue and reproduces the same work; nothing escaped the service.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>The task is lost forever and no worker will ever get it.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>The client receives a corrupted response.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct.</strong> The assignment was marked <em>only locally</em> — nothing was externalized — so observable consistency is intact. The backup holds the same queue, so when promoted it pulls the same first message, picks the same task deterministically, and marks it assigned itself. Same input plus deterministic code yields the same result. Divergence (option A) would only occur if the primary had crashed <em>after</em> the response left the service, when an outsider has already seen a result the backup doesn't know about.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>The View Service — Who Is the Primary?</h2>
+</div>
+
+<h3 id="discover-primary">The Problem We Quietly Created</h3>
+<p>We declared "when the primary fails, promote a backup." But step back and ask a programmer's question: <strong>the client was talking to the primary, and it just crashed — who does the client talk to now?</strong> The client needs to know, at all times, <em>which replica is the primary</em>.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Why Hard-Coding the Primary Fails</div>
+  <p>The obvious "solution" — bake the primary's address into the client's code — does not work. The whole point is that <strong>the primary gets replaced when it fails</strong>. A hard-coded client would keep talking to a dead machine forever, with no way to discover the replacement. We need a <em>reliable, dynamic</em> way to learn who the primary is.</p>
+</div>
+
+<h3 id="views">Views and View Numbers</h3>
+<p>The answer is a new component: the <strong>view service</strong>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The View Service and a "View"</div>
+  <p>The <strong>view service</strong> maintains the current membership of the primary-backup group. That membership is called a <strong>view</strong>. Each view contains a <strong>view number</strong> (incremented every time membership changes), the current <strong>primary</strong>, and the current <strong>backup</strong>. Whenever something changes — a crash, a new backup joining — the view service produces a new view with a higher number. Clients and replicas ask the view service "what's the current view?" to learn who is in charge.</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="380" height="120" viewBox="0 0 380 120" style="display:block; margin:0 auto;">
+      <text x="190" y="20" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" letter-spacing="1" fill="#6b6560">A SEQUENCE OF VIEWS</text>
+      <!-- view boxes -->
+      <g font-family="JetBrains Mono, monospace" font-size="11">
+        <rect x="10" y="40" width="100" height="58" rx="8" fill="#fff" stroke="#d9d0c4" stroke-width="1.5"/>
+        <text x="60" y="56" text-anchor="middle" font-weight="600" fill="#c0510a">view 1</text>
+        <text x="60" y="74" text-anchor="middle" fill="#2a2520">P: S1</text>
+        <text x="60" y="90" text-anchor="middle" fill="#6b6560">B: —</text>
+
+        <rect x="140" y="40" width="100" height="58" rx="8" fill="#fff" stroke="#d9d0c4" stroke-width="1.5"/>
+        <text x="190" y="56" text-anchor="middle" font-weight="600" fill="#c0510a">view 2</text>
+        <text x="190" y="74" text-anchor="middle" fill="#2a2520">P: S1</text>
+        <text x="190" y="90" text-anchor="middle" fill="#2a2520">B: S2</text>
+
+        <rect x="270" y="40" width="100" height="58" rx="8" fill="#fff" stroke="#d9d0c4" stroke-width="1.5"/>
+        <text x="320" y="56" text-anchor="middle" font-weight="600" fill="#c0510a">view 3</text>
+        <text x="320" y="74" text-anchor="middle" fill="#2a2520">P: S2</text>
+        <text x="320" y="90" text-anchor="middle" fill="#2a2520">B: S3</text>
+      </g>
+      <line x1="112" y1="69" x2="138" y2="69" stroke="#c0510a" stroke-width="2" marker-end="url(#vn)"/>
+      <line x1="242" y1="69" x2="268" y2="69" stroke="#c0510a" stroke-width="2" marker-end="url(#vn)"/>
+      <defs><marker id="vn" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#c0510a"/></marker></defs>
+    </svg>
+  </div>
+  <div class="figure-caption">View 1: S1 alone. View 2: S2 joins as backup. View 3: S1 died, so the backup S2 was promoted to primary and S3 joined as the new backup. The number only ever goes up.</div>
+</div>
+
+<p>What triggers a new view? A <strong>primary crash</strong>, a <strong>backup crash</strong>, or a request to <strong>add or change a backup</strong>. To detect crashes, the view service <strong>periodically exchanges heartbeat ("are you alive?") messages</strong> with the replicas.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Why Only a Backup May Be Promoted</div>
+  <p>When the primary dies, the new primary must be <strong>up to date</strong>. The view service guarantees this with one rule: <strong>only a node that was already a backup can be promoted.</strong> A backup has been kept in sync, so it is provably current. This is exactly why the view service — not some arbitrary outside entity — must be the one to choose backups: it is the only party that knows which nodes are caught up (it learns this from the heartbeats with the primary and backup).</p>
+</div>
+
+<h3 id="view-change">The View-Change Protocol</h3>
+<p>Transitioning from one view to the next is a small protocol with three steps:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>The view service <strong>announces the new view</strong> to all replicas (broadcasts the new membership).</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>The new primary <strong>syncs with the new backup</strong>, if there is one — bringing the fresh backup up to date (a full-state transfer for a brand-new node, as we saw in Part III).</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>The new primary <strong>acknowledges the new view</strong> to the view service, confirming the backup is ready. Only then is the view change complete.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">A Hole We Deliberately Ignore</div>
+  <p>What if the new primary <strong>dies in the middle</strong> — after the announcement but before it can acknowledge? Then we are stuck. In a real system you would handle this (typically with manual override and restart). For the assignment, we simply <strong>assume the primary does not crash during the view change</strong>, to keep things tractable.</p>
+</div>
+
+<h3 id="not-critical">The Key Win: The View Service Is Off the Critical Path</h3>
+<p>At first this feels like we have just moved the single point of failure. Before, "if the primary fails, we're stuck"; now, "if the view service fails, we're stuck." Have we gained anything? <strong>Yes — and the reason is subtle and important.</strong></p>
+
+<p>The trick is that the client does <strong>not</strong> contact the view service before every operation. Instead, the client contacts the view service <strong>once per session</strong>, <strong>caches the view</strong>, and then fires all its requests directly at the primary. The view service only re-enters the picture when the cache is stale.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Caching the View &amp; When to Invalidate It</div>
+  <p>The client caches the current view across many operations. It <strong>invalidates the cache</strong> when an operation <em>fails</em> — i.e., it gets no response, or it gets an explicit "I am not the primary" rejection from the replica it contacted. Only then does it go back to the view service to learn the new primary.</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Keep the Fault-Tolerant Part Off the Hot Path</div>
+  <p>Because the view service handles only the rare "who's the primary?" lookup and not the steady stream of real requests, it is <strong>not on the critical path</strong>. A component that sees little traffic adds almost no overhead to normal execution and is therefore <em>much easier to make fault-tolerant</em> — you can afford to make it slower and more careful. This principle — push the part that needs strong fault tolerance off the hot path — is exactly what real systems like <strong>Apache ZooKeeper</strong> exploit to get high reliability without sacrificing performance.</p>
+</div>
+
+<div class="quiz" id="quiz4">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Even though "the view service is down ⇒ we're stuck" sounds just as bad as "the primary is down ⇒ we're stuck," the view-service design is genuinely better. Why?</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>The view service never crashes because it stores nothing.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Clients cache the view and only consult the view service rarely, so it sits off the critical path and is far easier to make fault-tolerant.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>The view service replicates itself automatically with zero extra machinery.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Clients contact the view service before every single operation, so failures are caught instantly.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct.</strong> Because clients cache the view and only re-consult the view service when their cached primary stops responding, the view service handles a tiny trickle of lookups rather than the full request load. Being off the critical path, it adds negligible normal-execution overhead and can be made reliable cheaply (the property ZooKeeper exploits). Option D is the opposite of the design, and option A/C overstate things — the view service can fail and isn't magically self-replicating in this lecture; for now we just assume it's reliable.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>Split Brain — When Two Nodes Both Think They're Primary</h2>
+</div>
+
+<h3 id="the-partition">The Failure That Breaks Everything</h3>
+<p>Here is the scenario that motivates the final, costly piece of the protocol. Recall from earlier in the course that a <strong>network partition</strong> is a failure where messages between two groups of nodes are dropped or arbitrarily delayed — the nodes are alive, but they can't talk to each other. Watch what a partition does to our scheme:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>We're in a healthy view: <strong>S1 is primary, S2 is backup</strong>, and a client has cached this view.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>A <strong>network partition</strong> cuts S1 off from the view service. S1 is perfectly healthy, but its heartbeats no longer arrive.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>The view service can't tell "crashed" from "unreachable" (a deep theme of this course). It assumes S1 is dead and <strong>promotes S2 to primary</strong> in a new view. S2 agrees and starts acting as primary.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p>Meanwhile the <strong>client still holds the old cached view</strong> and keeps sending requests to S1 — which is alive and still believes it is the primary, and happily serves them.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">The Disaster — Split Brain</div>
+  <p>Now <strong>two nodes both believe they are the primary</strong>: S1 (talking to the stale client) and S2 (talking to the view service). Two partitions of the system disagree about who is in charge, each acts independently, and their states <strong>diverge arbitrarily</strong>. This is the <strong>split-brain problem</strong>, and it shatters correctness — the one guarantee we swore never to give up.</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="380" height="170" viewBox="0 0 380 170" style="display:block; margin:0 auto;">
+      <!-- partition line -->
+      <line x1="190" y1="10" x2="190" y2="160" stroke="#c53030" stroke-width="2" stroke-dasharray="5 5"/>
+      <text x="190" y="170" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#c53030">network partition</text>
+      <!-- left side: client + S1 -->
+      <rect x="20" y="30" width="90" height="34" rx="8" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="65" y="52" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="600" fill="#2a2520">client</text>
+      <rect x="20" y="100" width="90" height="34" rx="8" fill="#eff4ff" stroke="#2563eb" stroke-width="1.5"/>
+      <text x="65" y="118" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#2563eb">S1</text>
+      <text x="65" y="131" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" fill="#6b6560">"I'm primary"</text>
+      <line x1="65" y1="64" x2="65" y2="98" stroke="#c0510a" stroke-width="2" marker-end="url(#sp)"/>
+      <!-- right side: view service + S2 -->
+      <rect x="270" y="30" width="90" height="34" rx="8" fill="#f3effe" stroke="#7c3aed" stroke-width="1.5"/>
+      <text x="315" y="46" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" font-weight="700" fill="#7c3aed">view svc</text>
+      <text x="315" y="58" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" fill="#6b6560">P: S2</text>
+      <rect x="270" y="100" width="90" height="34" rx="8" fill="#edf7f0" stroke="#2d8a4e" stroke-width="1.5"/>
+      <text x="315" y="118" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#2d8a4e">S2</text>
+      <text x="315" y="131" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" fill="#6b6560">"I'm primary"</text>
+      <line x1="315" y1="64" x2="315" y2="98" stroke="#2d8a4e" stroke-width="2" marker-end="url(#sp)"/>
+      <defs><marker id="sp" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#6b6560"/></marker></defs>
+    </svg>
+  </div>
+  <div class="figure-caption">Split brain: the partition leaves S1 serving a stale client while S2 is promoted by the view service. Two "primaries," two diverging states.</div>
+</div>
+
+<h3 id="the-fix">The Fix: The Primary Must Get Backup Acknowledgements</h3>
+<p>How do we forbid split brain? Several tempting ideas don't fully work — checking reachability through other servers fails if those are partitioned too; telling every client about a view change fails because you can't wait for unreachable clients to agree. The robust answer turns out to be a rule we already half-stated:</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — The Primary Must Forward Every Operation to the Backup and Wait for an Ack</div>
+  <p>Before the primary responds to a client, it must <strong>forward the operation to the backup and receive an acknowledgement.</strong> This closes the split brain: the new primary was always a backup, so the <em>old</em> primary will inevitably try to contact it. When S1 forwards a request to S2, S2 — which now knows from the view service that <em>it</em> is the primary — replies <strong>"you are not the primary anymore."</strong> S1 then returns a failure to the client, the client invalidates its cached view and goes to the view service, and discovers the real primary S2. No two nodes can serve as primary at once.</p>
+</div>
+
+<p>Why does this work so cleanly? Because of the promotion rule from Part IV: <strong>only a backup can become the new primary.</strong> The old primary <em>always talks to what it thinks is its backup</em>, and that backup is exactly the node that may have been promoted. So the old primary cannot help but encounter the new primary on its next forward — there is no way for some stranger node to become primary behind the old primary's back. The forced conversation is what makes a mistaken old primary discover the truth.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Price: This Is Slow, and Fundamentally So</div>
+  <p>This is precisely why primary-backup replication has a <strong>high cost on normal execution</strong> — every single operation requires a network round-trip to the backup before the client hears anything. Worse, if the new primary S2 is itself unreachable, the old primary S1 <strong>blocks and waits</strong>, unable to make progress. This isn't sloppy engineering: combining <em>network partitions</em> with <em>crashes</em> makes certain things <strong>provably impossible</strong> in distributed systems, so we must accept a suboptimal, sometimes-blocking outcome. A later lecture introduces a more symmetric protocol that can keep progressing even when some nodes are down.</p>
+</div>
+
+<h3 id="valid-views">Legal and Illegal View Transitions</h3>
+<p>The split-brain analysis directly constrains which view transitions the assignment may allow. The rule: <strong>you may change the primary or the backup, but never lose the chain of an up-to-date node.</strong></p>
+
+<table class="compare-table">
+  <tr><th>Valid transitions</th><th>Illegal transitions</th></tr>
+  <tr><td>Add a backup: <code>(S1, —) → (S1, S2)</code></td><td>Change <em>both</em> roles at once: <code>(S1, S2) → (S3, S4)</code></td></tr>
+  <tr><td>Replace a failed backup: <code>(S1, S2) → (S1, S3)</code></td><td>Transition to a view with <em>no primary</em></td></tr>
+  <tr><td>Promote backup on primary failure: <code>(S1, S2) → (S2, S3)</code></td><td>Demote a primary into a backup &amp; invent a new primary from nowhere</td></tr>
+  <tr><td>Promote with no new backup yet: <code>(S1, S2) → (S2, —)</code></td><td>Move the view <em>number backward</em> in time</td></tr>
+</table>
+
+<p>The thread tying all the legal moves together: every new view must keep a node that was <em>already in sync</em> — which is exactly why you can never swap both the primary and the backup in a single step, and why view numbers only ever increase.</p>
+
+<div class="quiz" id="quiz5">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">After a partition heals into split brain, the old primary S1 (still serving a stale client) forwards its next operation to its backup, which is now the real primary S2. What stops the divergence?</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>S2 silently applies S1's operation, keeping both copies identical.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>S2 replies "you are not the primary"; S1 fails the client, which then re-queries the view service and finds S2 — because only a former backup can be promoted, S1 is forced to meet the new primary.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>The view service broadcasts to every client simultaneously, so the stale client instantly switches.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Nothing — split brain is unavoidable, so we accept the divergence.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct.</strong> Because the primary must forward every operation and wait for an ack, and because only a former backup can be promoted, the old primary S1 inevitably contacts S2 — its old backup, now the genuine primary. S2 rejects the request, S1 fails the client, and the client invalidates its cache and rediscovers S2. Option C is wrong because you cannot rely on reaching every client (some may be partitioned), and option A would <em>cause</em> divergence rather than prevent it.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SUMMARY ═══════════════════════ -->
+<section id="together" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This lecture is one continuous argument, each part forcing the next into existence. We started by asking what we actually want from fault tolerance and found three dials — <strong>cost on normal execution</strong>, <strong>recovery freshness</strong>, and <strong>time to recover</strong> — all sitting beneath the one rule we never break: <strong>correctness</strong>. Snapshots score well on cost but badly on freshness, which set us hunting for something fresher.</p>
+
+<p>That something was <strong>primary-backup replication</strong>: keep a live, in-sync backup so recovery is instant and perfectly fresh. To make it work we answered two questions. <em>When</em> to sync? Only before a change becomes <strong>externally visible</strong> — the principle of observable consistency, traced through the MapReduce loop line by line. <em>What</em> to send? A full snapshot to <strong>bootstrap a new backup</strong>, then cheap <strong>deltas</strong> afterward, as long as execution is ordered and deterministic.</p>
+
+<p>But "promote a backup" silently assumed the client could find the new primary, which forced the <strong>view service</strong> into existence — a registry of <strong>views</strong> (primary + backup + an ever-increasing number), kept reliable precisely by sitting <strong>off the critical path</strong> through client-side caching. And the view service's inability to distinguish "crashed" from "partitioned" gave birth to <strong>split brain</strong>, whose only robust cure is the rule that the primary must <strong>forward every operation to the backup and wait for an ack</strong> — which is exactly why this scheme is fast to recover but expensive during normal execution.</p>
+
+<div class="callout insight">
+  <div class="callout-title">The Trade-off, Re-scored</div>
+  <p>Compared to snapshots, primary-backup <strong>flips the profile</strong>: it pays a heavy normal-execution cost (a backup round-trip on every externalizing operation) in exchange for recovery that is instant and maximally fresh. There is no free lunch — only a different, deliberate point in the design space. <em>Choosing that point well, given your workload, is the whole craft of system design.</em></p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">What's Next</div>
+  <p>Two threads were left dangling on purpose. First, primary-backup is <strong>asymmetric and blocking</strong> — it has a built-in hierarchy and grinds to a halt when the new primary is unreachable. In <strong>two lectures</strong> we will meet a more <strong>symmetric replication protocol</strong> that keeps making progress even when some nodes are down, and which can even be used to make the view service itself reliable. Second, we assumed each replica simply produces the same response; <strong>next lecture</strong> tackles <strong>consistency of data across replicas</strong> head-on — what it really means for copies to agree.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

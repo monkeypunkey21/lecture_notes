@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 15 — Azure Storage &amp; Cloud-Native Applications</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 15</div>
+  <a href="#part1">Part I — Cloud-Native Applications</a>
+  <a href="#storage-types" class="sub">Three Storage Types</a>
+  <a href="#composition" class="sub">From Monolith to Workflows</a>
+  <a href="#serverless" class="sub">Serverless &amp; Multiplexing</a>
+  <a href="#tradeoffs" class="sub">Pros &amp; Cons</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Azure Storage: Goals &amp; Architecture</a>
+  <a href="#requirements" class="sub">Design Goals</a>
+  <a href="#two-layers" class="sub">Two Kinds of Tasks</a>
+  <a href="#stamps" class="sub">Stamps &amp; Location Service</a>
+  <a href="#three-layers" class="sub">The Three Stamp Layers</a>
+  <a href="#two-replication" class="sub">Two Kinds of Replication</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — The Stream Layer</a>
+  <a href="#append-only" class="sub">Append-Only, Not Read/Write</a>
+  <a href="#streams-extents" class="sub">Streams, Extents, Blocks</a>
+  <a href="#sealing" class="sub">Sealing &amp; Immutability</a>
+  <a href="#stream-impl" class="sub">How Replication Works</a>
+  <a href="#failure" class="sub">Failure: Seal &amp; Move On</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — The Partition Layer</a>
+  <a href="#range-partition" class="sub">Range Partitions</a>
+  <a href="#commit-checkpoint" class="sub">Commit Log + Checkpoint</a>
+  <a href="#serving" class="sub">Serving a Partition</a>
+  <a href="#load-balance" class="sub">Splitting &amp; Merging</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Inter-Stamp &amp; Big Lessons</a>
+  <a href="#inter-stamp" class="sub">Disaster Recovery</a>
+  <a href="#unified" class="sub">One Service, Free Multiplexing</a>
+  <a href="#compute-storage" class="sub">Compute–Storage Separation</a>
+  <a href="#cap-critique" class="sub">Did They Beat CAP?</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#synthesis">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">CS134 · Distributed Systems</div>
+  <h1>Azure Storage &amp; the Rise of Cloud-Native Apps</h1>
+  <p class="hero-sub">An interactive guide to Lecture 15 — how modern apps are stitched together from cloud services, and how Azure Storage layers a file system, a sharding engine, and replication into one production storage platform.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>How Applications Are Built Today</h2>
+</div>
+
+<p>Before we dive into the star of today's lecture — a real production storage system called <strong>Azure Storage</strong> — we need to understand the world it lives in. The way software is built has shifted, and that shift is exactly <em>why</em> a system like Azure Storage exists and looks the way it does.</p>
+
+<p>In the past, an application was usually a <strong>monolith</strong>: one big program, running on machines you owned, that did everything itself — accepted requests, stored data, ran the business logic, all in one codebase. Today, applications are increasingly assembled out of <em>cloud services</em> you don't own and didn't write. To understand that style of application, you first need a vocabulary for the kinds of data these services store.</p>
+
+<h3 id="storage-types">The Three Storage Types</h3>
+
+<p>Azure Storage is built to serve three different shapes of data. The whole rest of the lecture is about how one system manages all three at once, so let's pin down what each is.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Blobs, Tables, Queues</div>
+  <p>A <strong>blob</strong> ("Binary Large OBject") is an unstructured file — just raw bytes the system doesn't try to interpret. Audio, video, images, arbitrary text dumps. Amazon's S3 is blob storage.<br><br>
+  A <strong>table</strong> is structured data with a schema: rows and columns, like a SQL table. Each row is one data item — think user profiles or business records.<br><br>
+  A <strong>queue</strong> is an ordered channel for message delivery: one component puts messages in, another takes them out.</p>
+</div>
+
+<p>The interesting one is the queue, because it does more than you might first guess. The obvious use is <strong>data movement</strong>: a sensor streams temperature readings into a queue, and a downstream component consumes them. That covers streaming pipelines and publish/subscribe ("PubSub"), where one writer fans a message out to many readers.</p>
+
+<p>But queues are also used for <strong>control flow</strong>, not just data flow. You can wire compute components together with queues to build a <em>workflow</em>: a user makes a request, that request becomes an event, and the event flows from stage to stage through queues. Here the queue carries a "do the next step" signal, not a payload of data. This dual role — moving data <em>and</em> orchestrating events — is what makes queues the glue of cloud applications.</p>
+
+<h3 id="composition">From Monolith to Composition of Services</h3>
+
+<p>Armed with blobs, tables, and queues, here is the modern pattern. Instead of one monolith, you build your application as a <strong>composition of services</strong>, each doing one job, connected by these storage types:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Ingest with blobs.</strong> A crawler scrapes a website (say, posts from a social network) and dumps the raw text into blobs — no need to structure it yet.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Orchestrate with queues.</strong> A serverless function picks posts off the blobs and passes them down a chain of services via queues — one expands links, another scores each post for usefulness.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Annotate with tables.</strong> Each stage consults structured tables of metadata (annotations, scores) to do its job, and writes structured results back to tables.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Produce blobs for clients.</strong> The final stage writes processed results back into blobs that a separate search service can query on the other end.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">The Word for This: Orchestration</div>
+  <p>These compositions of services are called <strong>workflows</strong> or <strong>orchestrations</strong>. They come in recurring shapes — fan-out (one stage spawns many), fan-in (many results merge into one), timers, and so on. The whole industry is moving from "one program does everything" toward "many small services, composed."</p>
+</div>
+
+<h3 id="serverless">Serverless &amp; the Provider's Multiplexing Trick</h3>
+
+<p>The other half of this shift is <em>compute</em> that you also don't manage. The traditional model is: you rent a virtual machine (VM) from a cloud provider and run whatever you want on it — but you're responsible for deploying it, scaling it, and keeping it alive.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Serverless</div>
+  <p><strong>Serverless</strong> means you hand the provider your <em>code</em> — typically a function that runs in response to an event — instead of running a VM yourself. The provider spawns VMs to run your function when load arrives, kills them when load drops, and maintains them. You offload all deployment responsibility. Examples: AWS Lambda, Azure Functions / Durable Functions.</p>
+</div>
+
+<p>Why do providers love this? Because of <strong>multiplexing</strong>. You pay per invocation — a few cents per second your function actually runs. Behind the scenes the provider can pack many different customers' serverless workloads onto a single physical machine. When one workload goes idle, another runs in its place. The provider squeezes far more useful work out of each machine and pockets the savings. (Keep this idea of packing many tenants onto shared hardware in mind — it returns when we discuss Azure Storage's design goals.)</p>
+
+<h3 id="tradeoffs">The Pros and the Cons</h3>
+
+<p>This cloud-native style is a genuine trade-off, not a free win. Here is the balance sheet that came out of the lecture discussion.</p>
+
+<table class="compare-table">
+  <tr><th>Benefits</th><th>Costs</th></tr>
+  <tr><td>You depend on others for most functionality, so <em>you do less work</em>.</td><td>You depend on others — if their software is unreliable, you take the hit, and it's out of your control.</td></tr>
+  <tr><td>No deployment, management, or operations to run yourself.</td><td><strong>Vendor lock-in:</strong> no standards across providers, so switching platforms is painful.</td></tr>
+  <tr><td>Providers multiplex many tenants, lowering cost per invocation.</td><td>The app becomes <strong>scattered</strong> — hard to analyze, hard to reason about end-to-end correctness and performance.</td></tr>
+  <tr><td>Centralizing data can improve security (well-paid security teams, data stays in one place).</td><td>Centralization is also a security risk: a vulnerability in a shared service exposes everyone's data.</td></tr>
+</table>
+
+<div class="callout warning">
+  <div class="callout-title">A Real Cautionary Tale</div>
+  <p>When the AWS us-east-1 region went down over a simple DNS issue, <em>every</em> company relying on that infrastructure was effectively offline for a day. That's the dark side of "let someone else run it": a single dependency failing can take your whole business with it.</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea of Part I</div>
+  <p>Modern distributed applications are no longer monoliths — they are <strong>orchestrations of cloud services</strong> glued together with blobs, tables, and queues, running on serverless or VM compute. This is powerful and convenient, but it makes the application scattered, locked-in, and hard to reason about end-to-end. Fast, reliable storage systems like Azure Storage are what make this whole style <em>possible</em>.</p>
+</div>
+
+<div class="quiz" id="quiz-1-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A team is building a pipeline where a crawler continuously produces raw web pages, and a separate analytics service consumes them whenever it's free. Which storage type is the natural fit for <em>connecting</em> these two components?</div>
+  <div class="quiz-options" data-quiz="q1" id="quiz1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>A table, because the data has structure</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>A queue, to decouple the producer from the consumer</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>A blob, because it stores arbitrary bytes</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>A serverless function, since it scales automatically</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct — a queue.</strong> Queues exist precisely to connect a component that <em>produces</em> data continuously with one that <em>consumes</em> it at its own pace, decoupling their speeds. The crawled pages themselves might well be stored in blobs (C is where the bytes live), but the <em>connection</em> between producer and consumer is the queue's job. A is wrong because the raw pages aren't structured rows, and D names a compute model, not a way to link two components.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>Azure Storage: Goals &amp; Architecture</h2>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Where We're Headed</div>
+  <p>Part I gave us the <em>why</em>: cloud apps need a storage service that can hold blobs, tables, and queues for many tenants, fast and reliably. Azure Storage is that service. It has run in production in Microsoft Azure since 2008, and the paper we follow was published at SOSP 2011. The rest of the lecture builds it up layer by layer.</p>
+</div>
+
+<h3 id="requirements">Design Goals — What Are They Trying to Achieve?</h3>
+
+<p>As with every system in this course, we start by asking <em>what do they want</em>, then look at <em>how they get it</em>. Azure Storage's stated goals:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Strong consistency.</strong> They argue this is essential for ease of use — without it, clients can't predict what a read will return. (This is the classic strong-vs-eventual debate; Azure picks the strong side.)</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Availability and partition tolerance.</strong> They claim to want all three of strong consistency, availability, and partition tolerance at once — a claim we'll scrutinize hard at the end.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Finding data in a huge store.</strong> Azure Storage isn't one user's storage — it's a single service shared across <em>all</em> users. So "where does this account's data live?" is a real problem to solve.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Disaster recovery.</strong> Like Dynamo, they replicate across data centers so that if an entire data center is lost, the data survives.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <p><strong>Scalability, load balancing, and multi-tenancy.</strong> Serve thousands of users by packing them all into the same big storage — never dedicate a whole machine to one tenant.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Why Multi-Tenancy Obsesses Them</div>
+  <p>Multi-tenancy is the same <em>multiplexing</em> idea from serverless: cram many accounts onto shared machines so no resource is wasted. Machines cost money to buy, power, and cool, so leaving them idle is pure loss. The goal is to utilize hardware as close to 100% as economically safe. (Spoiler: Azure aims for ~70% — high, but deliberately not 100%, as we'll see.)</p>
+</div>
+
+<h3 id="two-layers">Two Different Kinds of Tasks</h3>
+
+<p>Managing a big distributed service involves two very different categories of work, and recognizing the split is key to understanding what Azure Storage does — and what it deliberately ignores.</p>
+
+<table class="compare-table">
+  <tr><th>Application / Distributed-Systems Tasks</th><th>Cluster-Management Tasks</th></tr>
+  <tr><td>How is data stored, sharded, partitioned?</td><td>Detecting that a node has failed or is healthy</td></tr>
+  <tr><td>What code does each node run?</td><td>What to do when a node joins or leaves</td></tr>
+  <tr><td>Recovering from a fault to preserve consistency</td><td>Monitoring, deployment, updating servers</td></tr>
+  <tr><td>Load-balancing the data itself</td><td>Which rack a node goes on; how nodes find each other</td></tr>
+</table>
+
+<p>The left column is what <em>this class</em> is about — the distributed-systems layer on top. The right column is handled by a separate <strong>cluster manager</strong> (Kubernetes, or Azure's "Fabric Controller"). Azure Storage explicitly offloads <em>all</em> cluster-management duties to the Fabric Controller. It only worries about the left column: given a substrate of nodes it can assume are healthy (or knows when they're not), how do we build reliable storage on top?</p>
+
+<h3 id="stamps">Stamps and the Location Service</h3>
+
+<p>Now the architecture. The top-level unit is the <strong>storage stamp</strong>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Storage Stamp</div>
+  <p>A <strong>stamp</strong> is a cluster of storage nodes (each with disks and compute). It's the coarsest level of sharding — sharding <em>at the level of accounts</em>. The hard rule: <strong>one account lives in exactly one stamp.</strong> Many accounts can share a stamp (that's multi-tenancy), but a single account is never split across stamps.</p>
+</div>
+
+<p>Why force one account into one stamp? To keep data lookup dead simple. Azure Storage is queried by URL — your account name in the URL tells the system exactly which stamp's cluster to search. The cost: your account can't grow bigger than a single stamp. But stamps are so large (petabytes, thousands of accounts) that this only bites truly enormous accounts, who must manually split themselves across several account names.</p>
+
+<p>To map an account to its stamp, there's a <strong>location service</strong>: it knows which stamps exist and which accounts live where, and a DNS lookup talks to it. When a request arrives, you hit the location service first, learn the stamp, and only then go find the data.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Have We Seen This Before?</div>
+  <p>The location service is a <strong>centralized</strong> point that decides when to migrate accounts and knows where everything lives — exactly like the <em>view service</em> or the <em>MapReduce master</em> from earlier in the course. So what do we need from it? It must be <strong>fault-tolerant</strong>, <strong>off the hot path</strong> (so its slowness doesn't hurt every request), and — because it can afford to be a bit slower — <strong>strongly consistent</strong>. It runs a Paxos-based protocol to achieve this. It doesn't need to scale much, since it's consulted rarely.</p>
+</div>
+
+<p>One more design number: a stamp is kept at only <strong>~70% utilization</strong>. Push higher and you lose headroom to absorb failures, migrate load, or recover. Seventy percent sounds conservative until you learn that typical industry utilization is often only 10–20% — so 70% is already aggressive.</p>
+
+<h3 id="three-layers">The Three Layers Inside a Stamp</h3>
+
+<p>Each stamp is itself built from three stacked layers. This layering is the elegant core of the whole system: each layer does exactly one thing.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="380" height="220" viewBox="0 0 380 220" style="display:block; margin:0 auto;">
+      <!-- Front End -->
+      <rect x="40" y="20" width="300" height="44" rx="8" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="190" y="40" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="14" font-weight="700" fill="#c0510a">Front End (stateless routing)</text>
+      <text x="190" y="56" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">finds partition &amp; stream servers</text>
+      <!-- Partition Layer -->
+      <rect x="40" y="84" width="300" height="50" rx="8" fill="#eff4ff" stroke="#2563eb" stroke-width="2"/>
+      <text x="190" y="104" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="14" font-weight="700" fill="#2563eb">Partition Layer</text>
+      <text x="190" y="121" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">blobs / tables / queues → streams; sharding + transactions</text>
+      <!-- Stream Layer -->
+      <rect x="40" y="154" width="300" height="50" rx="8" fill="#edf7f0" stroke="#2d8a4e" stroke-width="2"/>
+      <text x="190" y="174" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="14" font-weight="700" fill="#2d8a4e">Stream Layer</text>
+      <text x="190" y="191" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">replicated, fault-tolerant file system (knows nothing of blobs)</text>
+      <!-- arrows -->
+      <line x1="190" y1="64" x2="190" y2="84" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="190" y1="134" x2="190" y2="154" stroke="#d9d0c4" stroke-width="2"/>
+    </svg>
+  </div>
+  <div class="figure-caption">The three layers inside a stamp. We'll spend Part III on the stream layer and Part IV on the partition layer; the front end we ignore.</div>
+</div>
+
+<ul style="margin: 0 0 18px 22px;">
+  <li style="margin-bottom:8px;"><strong>Stream layer (bottom):</strong> a distributed, fault-tolerant, replicated <em>file system</em>. It stores binary files (called "streams") and knows <em>nothing</em> about blobs, tables, or queues. It's the durable substrate.</li>
+  <li style="margin-bottom:8px;"><strong>Partition layer (middle):</strong> maps the high-level abstractions (blobs, tables, queues) down onto streams, and provides transactions and sharding.</li>
+  <li><strong>Front end (top):</strong> a stateless router that finds the right partition and stream servers. We won't discuss it further.</li>
+</ul>
+
+<h3 id="two-replication">Two Kinds of Replication</h3>
+
+<p>Azure Storage replicates data in <em>two</em> ways at once. Understanding why it needs both is one of the lecture's central insights.</p>
+
+<table class="compare-table">
+  <tr><th>Intra-Stamp (inside one stamp)</th><th>Inter-Stamp (across stamps)</th></tr>
+  <tr><td>Synchronous, <strong>on the critical path</strong> of every request</td><td>Asynchronous, <strong>off the critical path</strong>, per-object</td></tr>
+  <tr><td>Guards against frequent small failures: a disk dies, a switch fails, a machine crashes</td><td>Guards against rare big disasters: an entire data center / stamp is lost</td></tr>
+  <tr><td>Happens <strong>all the time</strong> → must have very low latency</td><td>Happens <strong>periodically</strong>, in batches → must use network bandwidth optimally</td></tr>
+  <tr><td>Recover without crossing data centers</td><td>Recover from catastrophe, possibly with manual intervention</td></tr>
+</table>
+
+<div class="callout insight">
+  <div class="callout-title">Why Both? Different Failure Profiles</div>
+  <p>Small hardware failures happen constantly, so intra-stamp replication must be cheap and instant — you don't want to phone another data center every time a disk dies. Big disasters are rare but devastating, so inter-stamp replication can afford to be slow and batched, optimizing bandwidth instead of latency. The two are <strong>complementary</strong>: together they cover the whole spectrum of failures, from a single dead disk to a flooded data center.</p>
+</div>
+
+<div class="quiz" id="quiz-2-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Why is the location service allowed to run a (relatively slow) Paxos protocol without crippling Azure Storage's performance?</div>
+  <div class="quiz-options" data-quiz="q2" id="quiz2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Paxos is actually faster than reading from disk</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>It's consulted rarely and kept off the hot path, so its latency doesn't touch every request</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>It only runs Paxos when a data center fails</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It is eventually consistent, so it never blocks</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct.</strong> The location service only answers "which stamp holds this account?" — a question asked occasionally, not on every data read. Because it sits off the hot path, it can afford to be slower in exchange for being fault-tolerant and strongly consistent (Paxos gives both). D is wrong: the service is <em>strongly</em> consistent, not eventually consistent, precisely because it can afford to be. C is wrong because it runs continuously, not only during disasters.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>The Stream Layer — A File System Built on Append</h2>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Mental Reset</div>
+  <p>For all of Part III, <em>forget blobs, tables, and queues entirely.</em> The stream layer is a replicated, fault-tolerant file system. The only question it answers is: how do we store binary files reliably and fast? The partition layer (Part IV) will later map the high-level abstractions onto these files.</p>
+</div>
+
+<h3 id="append-only">The Neat Trick: Append, Not Write</h3>
+
+<p>A normal file system gives you two operations: <strong>read</strong> and <strong>write</strong> (overwrite data anywhere). The stream layer's key design decision — and a trick used in many high-performance systems — is to instead offer only <strong>read</strong> and <strong>append</strong>. You can read existing data and you can add new data at the end, but you can never overwrite what's already there.</p>
+
+<p>Why give up arbitrary writes? Because immutability buys enormous simplicity and speed, as we'll see when failures hit. But first, the data model.</p>
+
+<h3 id="streams-extents">Streams, Extents, and Blocks</h3>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The Three Levels</div>
+  <p>A <strong>stream</strong> is a "file" — but really it's just an ordered <em>sequence of pointers to extents</em>. The stream holds no data itself.<br><br>
+  An <strong>extent</strong> is a chunk of actual data, roughly a gigabyte in size, made of a sequence of blocks. <strong>Extents are the unit of replication</strong> — each one is stored in 3 replicas.<br><br>
+  A <strong>block</strong> is the smallest unit of read or write, on the order of a few megabytes (e.g. 4&nbsp;MB). You always read or write a whole block — never a sub-block fragment, because validation/checksums happen at the block level.</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="170" viewBox="0 0 420 170" style="display:block; margin:0 auto;">
+      <!-- Stream = sequence of pointers -->
+      <text x="20" y="28" font-family="JetBrains Mono, monospace" font-size="13" font-weight="600" fill="#c0510a">stream "foo/myfile":</text>
+      <rect x="20" y="40" width="50" height="28" rx="5" fill="#fff" stroke="#c0510a" stroke-width="2"/>
+      <text x="45" y="59" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">→E1</text>
+      <rect x="78" y="40" width="50" height="28" rx="5" fill="#fff" stroke="#c0510a" stroke-width="2"/>
+      <text x="103" y="59" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">→E2</text>
+      <rect x="136" y="40" width="50" height="28" rx="5" fill="#fff" stroke="#c0510a" stroke-width="2"/>
+      <text x="161" y="59" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">→E3</text>
+      <rect x="194" y="40" width="62" height="28" rx="5" fill="#fef3eb" stroke="#c0510a" stroke-width="2" stroke-dasharray="4 2"/>
+      <text x="225" y="59" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c0510a">→E4 (open)</text>
+      <!-- Extent = sequence of blocks -->
+      <text x="20" y="105" font-family="JetBrains Mono, monospace" font-size="13" font-weight="600" fill="#2d8a4e">extent E4 = blocks:</text>
+      <rect x="20" y="118" width="44" height="26" rx="4" fill="#edf7f0" stroke="#2d8a4e" stroke-width="2"/>
+      <text x="42" y="135" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">blk</text>
+      <rect x="70" y="118" width="44" height="26" rx="4" fill="#edf7f0" stroke="#2d8a4e" stroke-width="2"/>
+      <text x="92" y="135" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">blk</text>
+      <rect x="120" y="118" width="44" height="26" rx="4" fill="#edf7f0" stroke="#2d8a4e" stroke-width="2"/>
+      <text x="142" y="135" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">blk</text>
+      <text x="178" y="135" font-family="JetBrains Mono, monospace" font-size="14" fill="#6b6560">← append</text>
+      <line x1="225" y1="68" x2="120" y2="118" stroke="#d9d0c4" stroke-width="1.5" stroke-dasharray="3 3"/>
+    </svg>
+  </div>
+  <div class="figure-caption">A stream is a list of extent pointers; an extent is a list of blocks. New data is appended to the last (open) extent.</div>
+</div>
+
+<h3 id="sealing">Sealing: How Immutability Works</h3>
+
+<p>Here is the mechanism that makes append-only work. An extent can be <strong>sealed</strong>. Once sealed, it is immutable forever — no more appends, the data never changes again. At any moment, <em>only the last extent in a stream is unsealed</em>; everything before it is frozen.</p>
+
+<p>So a file grows like this: you keep appending blocks to the current open extent; every so often you seal it and start a fresh open extent at the end. To add a new extent pointer to a stream, you must first seal the previous one — there's no way to have two open extents. This invariant is the backbone of the whole design.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Why This Makes Pointer Operations Magic</div>
+  <p>Because extents are immutable and live independently somewhere in the cluster, the stream is just <em>metadata over data</em>. Consider two hypothetical operations on a stream:
+  <br>• <strong>Reverse the order of the extents</strong> → just rewrite the pointer list. <em>No data moves.</em> Blazing fast.
+  <br>• <strong>Modify the first block of every extent</strong> → since extents are immutable, you must create a brand-new copy of every extent (E1′, E2′, …) and re-replicate all of them. <em>Catastrophically slow.</em>
+  <br>This is counterintuitive — you'd guess modifying one block per extent is cheaper than touching all of them. The append-only design <em>flips</em> the cost: rearranging pointers is trivial, while mutating data is expensive. The partition layer will exploit this constantly.</p>
+</div>
+
+<h3 id="stream-impl">How Replication Actually Works</h3>
+
+<p>Now the implementation. There are three players:</p>
+
+<ul style="margin: 0 0 18px 22px;">
+  <li style="margin-bottom:8px;"><strong>Client</strong> — actually the partition layer above, not an outside user.</li>
+  <li style="margin-bottom:8px;"><strong>Stream Manager (SM)</strong> — a Paxos cluster that owns the stream namespace and all the pointers, and assigns extents to extent nodes.</li>
+  <li><strong>Extent Nodes (EN)</strong> — many nodes that know nothing about streams; they just store blocks and extents.</li>
+</ul>
+
+<p>To create a new extent, the client asks the Paxos-backed stream manager, which picks a <strong>replica set</strong> (three extent nodes), records the mapping, and hands it back. Then the client does the actual data writes directly with those nodes — the stream manager steps aside.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>Client wants a new extent → asks the <strong>Stream Manager (Paxos)</strong>, which chooses 3 extent nodes as the replica set and stores the mapping.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>Client sends an <code>append</code> to the <strong>primary</strong> extent node.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>Primary writes locally, forwards to the 2nd replica; the 2nd forwards to the 3rd. This is a replication chain, just like primary-backup view chains earlier in the course.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p>Each writes, acknowledgements flow back, and once all three have the data the primary returns success to the client.</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea: Paxos Off the Critical Path</div>
+  <p>Why doesn't running Paxos in the stream manager destroy scalability? Because the stream manager is consulted <strong>rarely</strong> — only when a new extent (≈1 GB) is created, which adds just one pointer. The flood of actual data — millions of megabyte-sized block appends — flows <em>directly</em> between client and extent nodes, never touching Paxos. By <strong>decoupling pointer management (rare, Paxos) from data writes (constant, direct)</strong>, Azure pushes the expensive consensus protocol entirely off the hot path. This decoupling is the single most important idea in the stream layer.</p>
+</div>
+
+<h3 id="failure">When a Node Fails: Seal and Move On</h3>
+
+<p>What happens if, mid-append, a replica fails? The client either times out or gets an error. Now the append-only design pays off spectacularly:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>Client sends an append; one of the three replicas fails to respond (timeout after, say, 100&nbsp;ms, or an explicit error).</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>Client tells the Stream Manager to <strong>seal</strong> the extent <em>at the last successfully-replicated point</em>. Anything written beyond that point is simply discarded — the metadata never records it, so for all purposes it never existed.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>The SM (highly available via Paxos — survives even multiple node failures) hands the client a <strong>fresh extent on a new replica set</strong>, avoiding the failed node.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p>Client resumes appending to the new extent. The paper reports this whole reaction takes ~<strong>20&nbsp;ms</strong>.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Why Sealing Sidesteps the "Did It Write?" Problem</div>
+  <p>A subtle danger: maybe the failed replica <em>did</em> apply the append but its response was lost. Doesn't that risk inconsistency? No — because we <strong>seal at the agreed point</strong>. All replicas (and the client) agree on how far the data is valid; anything past the seal is invisible. Even if a replica secretly wrote more, no one's metadata points to it, so it's as if it doesn't exist. The client just re-appends that data to the new extent. Immutability + sealing turns a messy partial-failure into a clean "freeze here, continue there."</p>
+</div>
+
+<p>From the client's perspective, a write that hit a failure simply "took 100&nbsp;ms longer" — an almost seamless experience. <strong>Append + read + seal</strong> together deliver high availability and great performance: they push Paxos off the critical path <em>and</em> let the system recover from failures in milliseconds.</p>
+
+<div class="quiz" id="quiz-3-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">An operation reverses the order of extents in a stream; another modifies the first block of every extent. Which is faster in Azure's stream layer, and why?</div>
+  <div class="quiz-options" data-quiz="q3" id="quiz3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Modifying blocks is faster — you only touch one block per extent</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Reversing is faster — it only rewrites pointers; modifying forces re-copying and re-replicating every extent</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>They take the same time, since both touch every extent</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Modifying is faster because reversing must re-seal every extent</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct — reversing wins.</strong> Reversing only rewrites the stream's pointer list, which is pure metadata; no extent data is touched or re-replicated. Modifying blocks runs into immutability: since sealed extents can't change, you must create a fresh copy of <em>every</em> extent (E1′, E2′, …) and re-replicate all of them across three nodes each — hugely expensive. This is the counterintuitive payoff of append-only design: pointer rearrangement is cheap, data mutation is dear. A is the naive (wrong) intuition the lecture deliberately set up.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>The Partition Layer — Serving Blobs, Tables &amp; Queues</h2>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Climbing Up a Layer</div>
+  <p>Now we can bring blobs, tables, and queues back. The stream layer gave us a replicated file system. The partition layer's job is to map those high-level abstractions onto streams, provide transactions, and — crucially — <em>shard and load-balance</em>. Note the clean split of duties: <strong>the partition layer does sharding; the stream layer does replication.</strong> The partition layer replicates nothing itself.</p>
+</div>
+
+<p>A key implementation fact: <em>all</em> data in Azure Storage is stored as big <strong>object tables</strong>. Every blob for an account lives in one "blob table," every queue in a queue table, and so on. So underneath, everything is a giant table — which raises the question that drives this whole layer: <strong>how do you scale serving a single enormous table?</strong></p>
+
+<p>The partition layer has three components:</p>
+
+<ul style="margin: 0 0 18px 22px;">
+  <li style="margin-bottom:8px;"><strong>Partition Manager (PM):</strong> assigns partitions to partition servers and load-balances across them.</li>
+  <li style="margin-bottom:8px;"><strong>Partition Servers (PS):</strong> shard servers; each serves a set of partitions. A given partition is served by exactly one server (so it can offer consistency and transactions).</li>
+  <li><strong>Lock Service:</strong> a Paxos log service (like Chubby / ZooKeeper). It elects the partition manager and hands out <em>leases</em> that decide which server owns which partition.</li>
+</ul>
+
+<h3 id="range-partition">Range Partitions</h3>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Range Partition</div>
+  <p>The partition layer shards a table by <strong>sorting</strong> it and slicing it into contiguous key ranges. Each slice is a <strong>range partition</strong> — a shard of the table — and is served by one partition server. To scale, you simply hand different ranges to different servers.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Why a Lease, If Each Server Owns Disjoint Data?</div>
+  <p>You might ask: if partitions are disjoint, why need a lock at all? Because <em>ownership isn't known ahead of time</em> and must move (for load balancing or failover). The lock service holds, per partition, a small record (think a ZooKeeper file named <code>P1</code>) saying "partition server #1 owns this, for this lease period." The <strong>lease</strong> guarantees exactly one server serves a partition at a time — which is what makes single-server consistency and transactions sound.</p>
+</div>
+
+<h3 id="commit-checkpoint">The Commit Log + Checkpoint Trick</h3>
+
+<p>Now the elegant heart of the partition layer. Instead of storing the table as a literal data structure and overwriting it on every update, Azure stores updates as an <strong>append-only commit log</strong> plus periodic <strong>checkpoints</strong>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Log + Checkpoint</div>
+  <p>Every write (insert / update / delete) is <em>appended</em> to a <strong>commit log</strong> as "I changed row R to value V." Periodically the system writes a <strong>checkpoint</strong>: a materialized snapshot of the whole table. The current table = <strong>latest checkpoint + replay the commit log on top of it.</strong></p>
+</div>
+
+<p>A range partition stores its state in two mirrored forms — on disk (for durability) and in memory (for speed):</p>
+
+<table class="compare-table">
+  <tr><th>On Disk (three streams)</th><th>In Memory</th></tr>
+  <tr><td><strong>Metadata stream</strong> — pointers to all the streams needed to load this partition</td><td>—</td></tr>
+  <tr><td><strong>Commit log stream</strong> — all inserts/updates/deletes since the last checkpoint</td><td><strong>Memory table</strong> — in-memory copy of the commit log (updates since checkpoint)</td></tr>
+  <tr><td><strong>Row data stream</strong> — the checkpoint of the actual table data</td><td>Cache of the latest checkpoint</td></tr>
+</table>
+
+<div class="callout tip">
+  <div class="callout-title">Three Streams Per Partition</div>
+  <p>Each partition is exactly three streams in the stream layer — metadata, commit log, and row-data (checkpoint). Because a partition is "just three streams," it can be exported to storage and re-imported on a <em>different</em> partition server effortlessly — that's how ownership moves during load balancing.</p>
+</div>
+
+<h3 id="serving">Serving a Partition</h3>
+
+<p>When a partition server takes ownership of a partition, it loads it like this:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>Read the <strong>metadata stream</strong> to find which streams to pull.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>Load the <strong>latest checkpoint</strong> (row data) into memory.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>Replay the <strong>commit log</strong> on top of the checkpoint → now memory holds the fully materialized, up-to-date partition.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Updates</strong> arrive → append to the commit log (disk) and the memory table, then return success. <strong>Reads</strong> check the in-memory log first, then the in-memory checkpoint, so they always see the latest data.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <p>When the log grows past a limit, write a fresh checkpoint that squashes everything in — then the old log can be safely dropped.</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">Why This Hybrid Is So Good</div>
+  <p>The magic is that the commit log <strong>maps perfectly onto the stream layer's append operation</strong>. Every write is just an append — which, as Part III showed, is blazing fast and often skips Paxos entirely. So updates are nearly free. The checkpoint then prevents the log from growing without bound (fast loading, no need to replay millions of events). Together you get: <strong>fast updates</strong> (cheap appends), <strong>fast recovery</strong> (replay the log), <strong>fast loading</strong> (frequent checkpoints), and an easy way to keep memory and disk in sync. It's the best of both ends of the speed/durability spectrum — and it works precisely <em>because</em> the layer below is append-only.</p>
+</div>
+
+<h3 id="load-balance">Load Balancing: Splitting and Merging</h3>
+
+<p>Range partitions can grow large, and a single server can be overloaded — by CPU, storage bandwidth, or storage size. The fix is load balancing: <strong>split</strong> hot partitions (too many requests) into two, and <strong>merge</strong> cold ones, guided by profiling. Here's a split:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>The partition server checkpoints the partition, creating a materialized view.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>It stops serving traffic for that partition.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>It creates new streams (metadata, commit log, data) for the two resulting partitions.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p>It updates the new partitions' metadata streams and resumes serving both — possibly moving one to a different partition server.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Splitting Is Fast — Because No Data Moves</div>
+  <p>Creating those new streams is <em>fast</em>, even though it goes through Paxos (~20–100&nbsp;ms). Why? Because you only create new <strong>pointers</strong> to existing extents — <em>the data on disk never moves</em>. Re-replicating gigabytes of data would be catastrophic; instead you just re-point. This is the same append-only payoff from Part III, and it rests on the system's deepest design decision:</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Decoupling Insight</div>
+  <p>Azure Storage <strong>decouples how data is replicated (the extent / stream level) from how it is served and sharded (the partition level)</strong>. Replication lives entirely below; sharding lives entirely above and only manipulates pointers. That separation is what makes load balancing cheap, recovery fast, and the whole system scalable.</p>
+</div>
+
+<div class="quiz" id="quiz-4-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In the commit-log-plus-checkpoint design, what is the primary benefit of keeping a separate append-only commit log instead of just updating a stored table directly?</div>
+  <div class="quiz-options" data-quiz="q4" id="quiz4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>It lets the partition layer replicate data without the stream layer</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Each write becomes a cheap append onto the stream layer, making updates extremely fast</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>It removes the need for checkpoints entirely</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It allows reads to skip the in-memory state</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct.</strong> The commit log maps directly onto the stream layer's <code>append</code> operation, and appends are extremely fast (often skipping Paxos). So every update is just a quick append, giving high write throughput and crash recovery. A is wrong — replication is still done by the stream layer, not the partition layer. C is backwards: checkpoints are still needed to stop the log from growing unbounded. D is wrong because reads consult the in-memory log first, not skip it.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>Inter-Stamp Replication &amp; the Big Lessons</h2>
+</div>
+
+<h3 id="inter-stamp">Inter-Stamp Replication: The Disaster Safeguard</h3>
+
+<p>We promised two kinds of replication. Part III–IV covered intra-stamp (the synchronous, on-the-critical-path replication done by the stream layer). Inter-stamp replication is the other half: <strong>disaster recovery across data centers.</strong></p>
+
+<p>All operations are sent <strong>asynchronously</strong> to another data center, in the background, in <em>batches</em>. The remote data center does <em>not</em> serve reads — it just holds a copy of the data. If a stamp is lost, someone must manually intervene to promote the secondary copy. This isn't a day-to-day mechanism; it's a safeguard so that a natural catastrophe doesn't permanently erase, say, all of a bank's data.</p>
+
+<h3 id="unified">Lesson 1: One Unified Service → Free Multiplexing</h3>
+
+<p>Azure Storage serves blobs, tables, and queues through a <em>single</em> infrastructure. Beyond the obvious simplicity (one team, one codebase, one logical way to handle everything) and the ability to batch requests across types, there's a subtler performance win:</p>
+
+<div class="callout insight">
+  <div class="callout-title">Multiplexing for Free</div>
+  <p>The three data types have <em>different</em> resource appetites: <strong>blobs</strong> are big and want lots of disk; <strong>tables</strong> benefit from I/O parallelization across many disks; <strong>queues</strong> mostly live in memory. Run them on the same infrastructure and their demands <em>balance out</em>, so every machine's CPU, disk, and memory get used near their best capacity. Mixing complementary workloads is exactly the multiplexing/utilization goal from Part I — and here you get it for free.</p>
+</div>
+
+<h3 id="compute-storage">Lesson 2: Compute–Storage Separation</h3>
+
+<p>This ties back to Part I's cloud-native applications. Because Azure Storage exists as a fast, separate storage service, applications can <strong>separate compute from storage</strong>: run your logic in VMs or serverless, keep all your data in Azure Storage, and <em>scale each independently</em>. Need more disk? Add storage. Need more CPU? Add compute. You no longer over-provision one just to get the other.</p>
+
+<div class="callout warning">
+  <div class="callout-title">What Makes This Even Possible?</div>
+  <p>Separating compute from storage means every data access now crosses the <strong>network</strong> to reach Azure Storage — a real performance overhead. This only works because systems like Azure Storage (and Dynamo) are <em>fast and efficient enough</em> to absorb that network round-trip. If storage were slow, no large application could tolerate the latency, and compute–storage separation would collapse. Fast storage is the enabling condition for the entire cloud-native style.</p>
+</div>
+
+<h3 id="cap-critique">Lesson 3: Did They Actually Beat CAP?</h3>
+
+<p>Recall their bold claim: strong consistency <em>and</em> availability <em>and</em> partition tolerance, all at once. The <strong>CAP theorem</strong> says you can't have all three when a network partition occurs — under a partition you must sacrifice either consistency or availability. So did Azure Storage beat CAP?</p>
+
+<div class="callout warning">
+  <div class="callout-title">No — And Here's the Tell</div>
+  <p>Azure Storage runs <strong>centralized, Paxos-based services</strong> in many places: the location service, the stream manager, the partition lock service. Paxos sacrifices <strong>availability</strong> to keep consistency under partitions. So strictly speaking, the "all three" claim is impossible — it's partly a marketing framing, and you should be critical of it.</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Real Insight Behind the Claim</div>
+  <p>What they <em>actually</em> achieve is that every centralized, availability-sacrificing service sits <strong>off the data / critical path</strong>. The Paxos services are consulted rarely (creating an extent, moving a partition, locating an account) — not on every read or write. So <em>most of the time</em> the system is extremely fast and available; you only pay the consensus cost in rare cases. They didn't beat CAP — they <em>hid</em> CAP's cost by keeping consensus off the hot path. This is the recurring theme of the entire lecture.</p>
+</div>
+
+<div class="quiz" id="quiz-5-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">How does Azure Storage reconcile its claim of "strong consistency + availability + partition tolerance" with the CAP theorem?</div>
+  <div class="quiz-options" data-quiz="q5" id="quiz5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>It genuinely beats CAP by using a novel consensus protocol</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>It drops partition tolerance, since data centers never partition</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>It uses Paxos (sacrificing availability) only off the critical path, so the system is fast and available almost all the time</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It is actually eventually consistent and the claim is simply false</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct.</strong> The CAP theorem cannot be beaten, and Azure Storage doesn't (A is wrong). Its centralized Paxos services <em>do</em> sacrifice availability — but they're consulted rarely and kept off the data path, so the common-case read/write stays fast and available; you only pay the consensus cost in rare situations. B is wrong because partitions absolutely happen and partition tolerance is non-negotiable in a distributed store. D is wrong because the data path really is strongly consistent — the cleverness is <em>where</em> the consensus cost is paid, not pretending it doesn't exist.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SYNTHESIS ═══════════════════════ -->
+<section id="synthesis" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This lecture was really one story told at five altitudes, and they all rhyme.</p>
+
+<p>We opened with <strong>cloud-native applications</strong> (Part I): apps are now orchestrations of services glued together with blobs, tables, and queues, running on serverless compute that providers multiplex across tenants. That created a demand — a fast, reliable, multi-tenant storage service — which <strong>Azure Storage</strong> exists to fill.</p>
+
+<p>Part II laid out Azure Storage's <strong>architecture</strong>: accounts sharded into stamps via a Paxos-backed location service, and each stamp built from three layers with two complementary kinds of replication. Then we descended into those layers. The <strong>stream layer</strong> (Part III) is an append-only replicated file system whose single deepest trick — streams are pointers, extents are immutable, sealing freezes them — makes pointer operations free and data mutation expensive, lets failures be handled by "seal and move on" in 20&nbsp;ms, and pushes Paxos off the critical path. The <strong>partition layer</strong> (Part IV) builds blobs/tables/queues on top using a commit-log-plus-checkpoint hybrid that maps every write onto the stream layer's fast append, and shards via range partitions that split and merge cheaply because <em>only pointers move</em>.</p>
+
+<p>The thread tying every part together is <strong>decoupling expensive-but-rare work from cheap-but-constant work</strong>. Replication is decoupled from sharding. Pointer management (rare, Paxos) is decoupled from data writes (constant, direct). Consensus is decoupled from the hot path. That's how Azure Storage can run Paxos all over the place yet still be fast — and why, in Part V, its "we beat CAP" claim is really "we hid CAP's cost off the critical path."</p>
+
+<p>Stepping back to the course: we've now seen many ways to shard. <strong>Modulo hashing, consistent hashing, Chord, and Dynamo</strong> all shard in a <em>decentralized</em> way, where nodes collectively decide placement. Azure Storage is the opposite — sharding happens at <em>two</em> layers (stream and partition), each decided by a <em>centralized</em> manager — yet it stays scalable by pushing those centralized controllers off the data path. Same goal (scale, fault tolerance), opposite philosophy.</p>
+
+<div class="callout tip" style="margin-top: 32px;">
+  <div class="callout-title">What's Next</div>
+  <p>Azure Storage is the first of our closing tour of real production systems. The lecture sequence continues with <strong>Spanner</strong> (Google's globally-distributed, strongly-consistent database with synchronized clocks), then <strong>Delos</strong> and <strong>Newcastle</strong>, before the final lecture. Watch for the same recurring move you saw today — keeping consensus and centralized coordination <em>off the critical path</em> while delivering strong guarantees — and notice how each system makes a different bargain among consistency, availability, and the cost of coordination.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

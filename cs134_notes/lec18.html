@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 18 — Caching for Microservices (NuCache)</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 18 — NuCache</div>
+  <a href="#part1">Part I — Microservices</a>
+  <a href="#why-microservices" class="sub">Why Microservices Exist</a>
+  <a href="#anatomy" class="sub">Anatomy of a Service</a>
+  <a href="#service-mesh" class="sub">Service Meshes &amp; Sidecars</a>
+  <a href="#benefits" class="sub">Why Industry Loves Them</a>
+  <a href="#quiz-micro" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Graphs &amp; Their Costs</a>
+  <a href="#lossy-graph" class="sub">The Graph Is Lossy</a>
+  <a href="#drawbacks" class="sub">The Price You Pay</a>
+  <a href="#improving" class="sub">How To Go Faster</a>
+  <a href="#quiz-graph" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — Caching &amp; Coherence</a>
+  <a href="#what-is-caching" class="sub">What Caching Buys Us</a>
+  <a href="#coherence" class="sub">The Coherence Problem</a>
+  <a href="#prior-art" class="sub">State of the Art Before</a>
+  <a href="#quiz-cache" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — Goals &amp; Correctness</a>
+  <a href="#goals" class="sub">What NuCache Wants</a>
+  <a href="#trace-correctness" class="sub">Correctness via Traces</a>
+  <a href="#reordering" class="sub">The Reordering Insight</a>
+  <a href="#quiz-correct" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — The Diamond Problem</a>
+  <a href="#diamond" class="sub">The Diamond Pattern</a>
+  <a href="#dependency-tracking" class="sub">Dependency Tracking</a>
+  <a href="#quiz-diamond" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part6">Part VI — Implementation</a>
+  <a href="#components" class="sub">Cache Manager &amp; Wrappers</a>
+  <a href="#messages" class="sub">Three Messages</a>
+  <a href="#trace-miss" class="sub">Trace: A Cache Miss</a>
+  <a href="#trace-invalidate" class="sub">Trace: Invalidation</a>
+  <a href="#who-saves" class="sub">Who Saves the Item?</a>
+  <a href="#eval" class="sub">Evaluation</a>
+  <a href="#quiz-impl" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#synthesis">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">CS134 · Distributed Systems</div>
+  <h1>Caching Microservices the Right Way</h1>
+  <p class="hero-sub">An interactive guide to Lecture 18 — how NuCache makes cache invalidation automatic, correct, and off the critical path for real microservice deployments.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>Microservices — The World This System Lives In</h2>
+</div>
+
+<p>Every system we study in this class solves a problem that only exists because of how real software is built. So before we can understand <strong>NuCache</strong> — the system this lecture is about — we have to understand the kind of application it runs inside. That application is almost always built out of <strong>microservices</strong>. If the term is new to you, don't worry; we'll build it from the ground up.</p>
+
+<h3 id="why-microservices">Why Do Microservices Exist?</h3>
+
+<p>Imagine you're building a hotel-booking website. The naive way is a <strong>monolith</strong>: one giant program that handles searching for hotels, taking reservations, processing payments, sending emails — everything — all in a single codebase, deployed as one unit. That works fine when the company is small. It stops working when you have hundreds of engineers, because everyone is editing the same enormous program, and a bug anywhere can take the whole thing down.</p>
+
+<p>The microservices answer is to <em>split the application into many small, independent services</em>, where each service does one thing. One service handles hotel search. Another handles reservations. Another handles payments. They run on separate machines and talk to each other over the network.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Microservice Architecture</div>
+  <p>A <strong>microservice architecture</strong> structures an application as a collection of small, independently deployed services that communicate over the network. Each service owns its own logic, its own data (often backed by its own key-value store or database), and its own deployment — and crucially, each can be <strong>written in a different programming language</strong>.</p>
+</div>
+
+<p>That last point — different languages per service — is one of the main benefits. The search team can use Go, the payments team can use Java, and neither has to agree on a single language. But it immediately creates a problem: <em>if two services are written in different languages and store their data in different formats, how do they talk to each other?</em></p>
+
+<h3 id="anatomy">How Services Actually Communicate</h3>
+
+<p>The answer is a <strong>serialization library</strong> plus a well-defined <strong>API</strong>. Serialization means turning an in-memory object (a Go struct, a Java object) into a language-neutral stream of bytes that travels over the network, then turning it back into a native object on the other side. Popular libraries for this are <strong>gRPC</strong> and <strong>Apache Thrift</strong>.</p>
+
+<p>On top of serialization, services expose APIs and call each other with <strong>RPCs</strong> (remote procedure calls) — something we've seen earlier in this course. There are two communication styles worth distinguishing:</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Two Ways Services Talk</div>
+  <p><strong>RPC (request/response):</strong> service A calls service B and <em>waits to hear back</em> — like a function call across the network. <strong>Queues (fire-and-forget):</strong> service A sends an event into a queue and moves on <em>without waiting for a response</em>. Use RPC when you need the answer; use a queue when you only need to notify.</p>
+</div>
+
+<p>Each service is its own little world: it has its own state (a KV store or database behind it), it's deployed on its own machines, and it can independently be <strong>sharded</strong> (split across machines for capacity), <strong>replicated</strong> (copied for fault tolerance), and multithreaded. A separate team owns the deployment and upgrades of each service.</p>
+
+<h3 id="service-mesh">Service Meshes and Sidecars</h3>
+
+<p>Beyond their actual business logic, every microservice has to repeatedly do a set of <em>generic</em> chores: discover which other services exist on the network and how to call them, authenticate requests, serialize data, encrypt traffic for privacy, and monitor per-request metrics. Re-implementing all of that inside every service would be wasteful and error-prone.</p>
+
+<p>So the industry factors it out into a <strong>service mesh</strong>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Service Mesh &amp; Sidecar</div>
+  <p>A <strong>service mesh</strong> is a software layer that implements the generic, application-wide microservice tasks (discovery, auth, encryption, serialization, monitoring). It is typically realized as a <strong>sidecar</strong>: a small companion process deployed <em>next to each service</em> that intercepts all incoming and outgoing communication and performs these tasks on the service's behalf. Examples: Dapr, Istio.</p>
+</div>
+
+<p>The mental picture: every service ships with a little buddy process (the sidecar) glued to its side. Every byte the service sends or receives passes through the sidecar first. <strong>This matters for NuCache</strong>, because the sidecar is exactly the natural place to slot in new interception logic without touching the service's own code.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Why This Matters Later</div>
+  <p>Keep the sidecar in mind. When NuCache says it intercepts communication "very easily on top of the sidecar," it means it can observe and modify every service call <em>without the service team rewriting anything</em>. That is the whole reason NuCache can be "plug-and-play."</p>
+</div>
+
+<h3 id="benefits">Why Does Industry Love Microservices?</h3>
+
+<p>Companies like AWS, Netflix, and Twitter run microservice graphs with <em>hundreds or thousands</em> of services. Why pay all this complexity? The benefits the class surfaced are, above all, <strong>organizational</strong>:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Fine-grained modularity.</strong> Each team knows exactly the one service it owns and works on. You don't need to understand the whole company's codebase.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Independent iteration.</strong> A team can upgrade or redeploy its service whenever it wants, without coordinating a giant company-wide release.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Independent scaling and SLAs.</strong> You scale only the services that need it, and each team owns its own performance guarantees (SLAs) instead of being blocked by the whole monolith.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Fault localization.</strong> When something breaks at 3 AM, you only page the team that owns the broken service — not everyone who knows the monolith. Faults stay contained and are easier to fix.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">The "It's 3 AM" Story</div>
+  <p>The professor relayed why a real microservice engineer values them: in a monolith, when the app crashes you must wake the engineers who understand the <em>whole</em> thing. With microservices, whichever service crashed, you page only <em>that</em> service's team. Fault tolerance and fault <em>localization</em> are the recurring answer to "why X?" in this class — and microservices give both.</p>
+</div>
+
+<div class="quiz" id="quiz-micro">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">What is the primary role of a <strong>sidecar</strong> in a microservice deployment?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>It stores the service's database so the service stays stateless.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>It intercepts all of a service's incoming/outgoing traffic to handle generic tasks like auth, encryption, serialization, and monitoring.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>It compiles the service from one language into another at runtime.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It is the load balancer that decides which replica of a service receives a request.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct — B.</strong> A sidecar is a companion process deployed next to each service that implements the service-mesh's generic, application-wide tasks (discovery, authentication, encryption, serialization, monitoring) by intercepting all traffic to and from the service. A is wrong because the service owns its own state separately; the sidecar is not a database. The fact that the sidecar already intercepts every message is precisely why NuCache can hook into it without modifying service code.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>The Microservice Graph and What It Costs</h2>
+</div>
+
+<p>We keep drawing microservices as a <strong>graph</strong>: nodes are services, and an edge from service A to service B means "A can call B." This picture is intuitive, but the lecture spends real time warning that it is <em>dangerously incomplete</em>. Understanding why is the key that unlocks NuCache's hardest design constraints.</p>
+
+<h3 id="lossy-graph">The Graph Is Lossy — Calls Are Dynamic</h3>
+
+<p>Ask the precise question: what does an edge from Service 1 to Service 2 actually <em>mean</em>? It's tempting to say "Service 1 calls Service 2." But can we be more precise — and is "more precise" even possible?</p>
+
+<div class="callout warning">
+  <div class="callout-title">An Edge Does NOT Mean "Always Calls"</div>
+  <p>An edge means a service <em>might</em> call another. It does not tell you whether the call happens on <em>every</em> request, only <em>some</em> requests, in what <em>order</em>, or in <em>parallel</em>. If Service 1 sometimes routes to Service 2 and sometimes to Service 3 (say, for A/B testing), the graph drawing is identical — yet the behavior differs per request.</p>
+</div>
+
+<p>This is what we mean when we say the graph is <strong>lossy</strong>: there is no static graph that captures all the information, because <em>service calls are dynamic and messy at runtime</em>. A service might try Service 2 first, fall back to Service 3 if the data isn't there, fall back again if a service is down, do load balancing, and so on. The exact set and order of calls depends on the request and on live conditions.</p>
+
+<figure class="figure">
+  <div class="figure-box">
+    <svg width="360" height="170" viewBox="0 0 360 170" style="display:block; margin:0 auto;">
+      <!-- Service 1 -->
+      <rect x="20" y="65" width="70" height="40" rx="8" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="55" y="90" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">S1</text>
+      <!-- Service 2 -->
+      <rect x="200" y="20" width="70" height="40" rx="8" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="235" y="45" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">S2</text>
+      <!-- Service 3 -->
+      <rect x="200" y="110" width="70" height="40" rx="8" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="235" y="135" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">S3</text>
+      <!-- edges -->
+      <line x1="90" y1="78" x2="200" y2="42" stroke="#c0510a" stroke-width="2" stroke-dasharray="5,4"/>
+      <line x1="90" y1="92" x2="200" y2="128" stroke="#c0510a" stroke-width="2" stroke-dasharray="5,4"/>
+      <text x="300" y="44" text-anchor="start" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">sometimes?</text>
+      <text x="300" y="134" text-anchor="start" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">sometimes?</text>
+    </svg>
+  </div>
+  <figcaption class="figure-caption">The same two edges could mean "always call both," "call one or the other," "call in this order," or "call in parallel." The dashed edges encode <em>possibility</em>, not certainty.</figcaption>
+</figure>
+
+<p>A student asked the natural question: why not just make engineers <em>declare</em> the dependencies up front? The trouble is that even a complete list of services a service <em>could</em> call doesn't tell you which it <em>will</em> call for a specific request, or in what order. So you can't take the static list for granted when optimizing.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — No Ahead-of-Time Graph</div>
+  <p>In a real microservice deployment, <strong>you do not know the call graph ahead of time.</strong> Calls are dynamic, data-dependent, and unordered from the outside. Any system that wants to be deployed for real — NuCache included — must work <em>without</em> assuming it knows who calls whom. This single assumption shapes almost every hard decision in the rest of the lecture.</p>
+</div>
+
+<p>The graph hides one more thing: a single node may actually be a service that is <strong>sharded</strong> and <strong>replicated</strong> across many machines for scalability and fault tolerance. So the clean picture is hiding both dynamism <em>and</em> internal multiplicity.</p>
+
+<h3 id="drawbacks">The Price You Pay</h3>
+
+<p>Microservices aren't free. The class enumerated the drawbacks, and they sort into two buckets — performance and reasoning:</p>
+
+<table class="compare-table">
+  <tr><th>Drawback</th><th>Why It Hurts</th></tr>
+  <tr><td>Increased latency</td><td>A request now traverses a whole stack — sidecar → network → sidecar — at every hop. Serialization and encryption add cost on top.</td></tr>
+  <tr><td>Many moving parts</td><td>More components means more independent things that can fail or misbehave.</td></tr>
+  <tr><td>Hard to reason about</td><td>To know what the <em>whole</em> application guarantees, you must compose the separate specs of every team's service. No single place holds the whole picture.</td></tr>
+  <tr><td>Hard to debug / program</td><td>You can't open one IDE and write the whole app, or use one type system across it. Every service hides behind its API.</td></tr>
+</table>
+
+<div class="callout tip">
+  <div class="callout-title">This Lecture's Focus: Performance</div>
+  <p>Of all these drawbacks, this lecture zeroes in on <strong>latency</strong>. Every hop through serialization, encryption, network, and sidecar adds delay — and a deep graph stacks many hops. NuCache is fundamentally a <em>performance</em> system: it tries to skip hops entirely.</p>
+</div>
+
+<h3 id="improving">How Could We Make Microservices Faster?</h3>
+
+<p>The class brainstormed ways to cut microservice latency. They're worth knowing because they frame the design space NuCache lives in:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Fusion / merging.</strong> Combine related services into one, doing the work all at once instead of in a chain of separate RPCs.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Co-location.</strong> Run related services on the same machine or data center so calls stay local. A more intense version runs them in ultra-lightweight containers on one machine — minimal serialization, no encryption, no network.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Speculative execution.</strong> For services that frequently produce <em>stragglers</em> (bad tail latencies), fire off two copies and take whichever finishes first — a hedge that raises your odds of a fast response.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Brute-force the primitives.</strong> Minimize serialization cost, minimize encryption cost, offload frequent operations to specialized hardware (e.g., NICs).</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <p><strong>Caching.</strong> If a call's result hasn't changed, skip the call entirely and reuse the saved answer. <em>This</em> is the path NuCache takes.</p>
+</div>
+
+<div class="quiz" id="quiz-graph">
+  <div class="quiz-question">Why is the microservice "graph" considered a <strong>lossy</strong> representation?</div>
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Because graphs can only store a few hundred nodes before running out of memory.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Because an edge only means a service <em>might</em> call another — it captures neither whether the call happens for a given request, nor the order, nor parallelism.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Because the graph forgets which programming language each service is written in.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Because the graph cannot show how a service is sharded across machines.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct — B.</strong> The graph is lossy because real service calls are dynamic and data-dependent: an edge encodes only <em>possibility</em>, not whether the call fires on a specific request, in what order, or in parallel. (Option D is a real limitation too — the graph also hides sharding — but the lecture's central point about <em>lossiness</em> is the dynamism of calls, which is what forces NuCache to work without an ahead-of-time graph.)
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>Caching and the Coherence Problem</h2>
+</div>
+
+<p>We just saw that caching is one way to cut microservice latency. Now let's make "caching" precise, see exactly what it buys us, and then meet the problem that makes it hard — the problem NuCache exists to solve.</p>
+
+<h3 id="what-is-caching">What Caching Buys Us</h3>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Caching a Service Call</div>
+  <p>A service call that has <strong>no side effects</strong> (it only reads, it doesn't write) can be <strong>cached</strong>: its result is saved, and the next identical call returns the saved result <em>without re-issuing the call</em> — as long as the downstream data hasn't been modified.</p>
+</div>
+
+<p>Concretely: imagine a hotel-reservation app. The front-end service calls the hotel service to get hotel details. We put a cache at the front-end that saves the hotel service's responses. The next time the front-end needs the same hotel info, it finds the result in the cache and returns it immediately — <em>completely skipping</em> the hotel backend and everything below it.</p>
+
+<figure class="figure">
+  <div class="figure-box">
+    <svg width="380" height="150" viewBox="0 0 380 150" style="display:block; margin:0 auto;">
+      <rect x="10" y="55" width="80" height="40" rx="8" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="50" y="80" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#2a2520">front-end</text>
+      <!-- cache -->
+      <rect x="130" y="10" width="70" height="36" rx="8" fill="#edf7f0" stroke="#2d8a4e" stroke-width="2"/>
+      <text x="165" y="33" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#2d8a4e">cache</text>
+      <!-- hotel -->
+      <rect x="290" y="55" width="80" height="40" rx="8" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="330" y="80" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#2a2520">hotel</text>
+      <!-- arrow cache hit -->
+      <line x1="90" y1="60" x2="135" y2="40" stroke="#2d8a4e" stroke-width="2"/>
+      <text x="100" y="42" text-anchor="start" font-family="DM Sans, sans-serif" font-size="10" fill="#2d8a4e">hit → return</text>
+      <!-- arrow cache miss -->
+      <line x1="90" y1="80" x2="290" y2="80" stroke="#d9d0c4" stroke-width="2" stroke-dasharray="5,4"/>
+      <text x="150" y="100" text-anchor="start" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">miss → call backend</text>
+    </svg>
+  </div>
+  <figcaption class="figure-caption">A cache hit at the front-end skips the entire hotel backend subtree. On a miss, the call proceeds normally.</figcaption>
+</figure>
+
+<div class="callout insight">
+  <div class="callout-title">Caching Skips Whole Subtrees</div>
+  <p>A study by Alibaba found that on production traces, <strong>40% of microservice call graphs avoid calling up to hundreds of services</strong> thanks to caching. A single cache hit near the top of a deep graph can short-circuit an enormous amount of downstream work. That is why caching is such a powerful lever for latency.</p>
+</div>
+
+<h3 id="coherence">The Coherence Problem</h3>
+
+<p>Here is the catch. A cached value is only valid <em>while the underlying data hasn't changed</em>. The instant some write modifies the data at a backend service, every cache holding a result derived from that data is now <strong>stale</strong> — it would return a wrong answer.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Hard Part — Keeping Caches Coherent</div>
+  <p>When a write happens at some backend service, we must <strong>tell every cache that depends on that data to invalidate (discard) its copy.</strong> In a distributed setting, with a deep dynamic graph, finding all those caches and notifying them is <em>expensive</em> — and getting it wrong means clients silently read stale data.</p>
+</div>
+
+<p>This is the <strong>coherence problem</strong>, and it's the same fundamental tension we've seen with caches everywhere in this course: caching speeds up reads, but every write now has to do extra work to keep the caches honest.</p>
+
+<h3 id="prior-art">What People Did Before NuCache</h3>
+
+<p>To appreciate NuCache's contribution, look at the unsatisfying options that existed before it:</p>
+
+<table class="compare-table">
+  <tr><th>Prior approach</th><th>What it gives — and its flaw</th></tr>
+  <tr><td><strong>Backend-only caching</strong></td><td>Only cache right in front of your database, saving the database round-trip. Safe, but it misses the huge wins of caching <em>high up</em> the graph where you'd skip whole subtrees.</td></tr>
+  <tr><td><strong>Custom invalidation protocol</strong></td><td>Hand-write a bespoke invalidation scheme per application. Can be correct and fast, but it's enormous manual effort for every single app — not automated, not reusable.</td></tr>
+  <tr><td><strong>TTL (time-to-live) per service</strong></td><td>The only existing <em>automation</em>: each cache entry expires after a fixed time. Simple, but <strong>stale</strong> — within the TTL window you can read outdated data, breaking correctness. And how do you even pick the right TTL?</td></tr>
+</table>
+
+<div class="callout warning">
+  <div class="callout-title">Why TTL Isn't Good Enough</div>
+  <p>With TTL, suppose you cache a hotel result with a 10-minute expiry. If the hotel's data changes 1 minute later, every read for the next 9 minutes returns <em>stale</em> data. TTL trades correctness for automation — and it forces you to guess an expiry time, which badly complicates reasoning about the consistency of the end-to-end application.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Where We're Headed</div>
+  <p>NuCache's pitch: automatic invalidation that is also <em>correct</em> (never serves stale data the original system wouldn't have), and that works across <em>any</em> application without per-app custom protocols. The rest of the lecture is how it pulls that off.</p>
+</div>
+
+<div class="quiz" id="quiz-cache">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">What is the main correctness weakness of <strong>TTL-based</strong> caching?</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>It cannot cache calls that have side effects.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>It only works for backend-only caches, not front-end caches.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Between an update and the entry's expiry, reads can return stale data — and choosing the right expiry is itself hard.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It requires a custom invalidation protocol to be written per application.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct — C.</strong> A TTL entry stays in the cache until its timer expires, so any update that happens before expiry leaves the cache serving stale data for the remainder of the window — a correctness violation. It also forces you to guess a TTL value, which complicates reasoning about end-to-end consistency. D describes a <em>different</em> prior approach (custom protocols); TTL is in fact the only one of the three that was automated, which is exactly why its staleness flaw matters.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>NuCache: Goals and a Definition of Correctness</h2>
+</div>
+
+<p>We now have the problem fully framed. <strong>NuCache</strong> is a system that provides <em>automatic cache invalidation for microservice applications</em>. Before any mechanism, we have to nail down two things: what we want from such a system (its goals), and what it even <em>means</em> for it to be correct. The correctness definition is the intellectual heart of this lecture.</p>
+
+<h3 id="goals">What Should NuCache Want?</h3>
+
+<p>The class derived NuCache's goals from first principles by asking "what would you demand from a caching layer you'd actually deploy?" Here's the consolidated list:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Correctness.</strong> The application <em>with</em> caches must behave the same as the original application <em>without</em> them. No new, surprising behaviors.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Performance — on both paths.</strong> The <em>hot path</em> (cache hit) must be faster. But equally, the <em>cold path</em> (cache miss) must add almost no overhead — because if misses become slow, no one will adopt the system. You want "good hot <em>and</em> good cold."</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Low overhead.</strong> The cache-management machinery itself must not add much cost (CPU, network, latency) to the system.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Support real deployments.</strong> Must handle sharding and <em>dynamic call graphs</em> — no ahead-of-time knowledge of who calls whom (recall Part II).</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <p><strong>Plug-and-play.</strong> No modifications to the application code <em>or</em> the database. You add NuCache and get benefits.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">6</div>
+  <p><strong>Incrementally deployable.</strong> Add caching to just a small part of the graph and still get benefits — no global coordination, because that would be unacceptable in a real deployment.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Connecting Back</div>
+  <p>Goals 4 and 5 are direct consequences of Parts I and II. "Plug-and-play with no code changes" is achievable <em>because</em> of the sidecar (Part I). "Support dynamic call graphs with no ahead-of-time knowledge" is mandatory <em>because</em> the graph is lossy (Part II). The goals aren't arbitrary — they fall out of the world microservices live in.</p>
+</div>
+
+<h3 id="trace-correctness">Defining Correctness with Execution Traces</h3>
+
+<p>Goal #1 says "behaves the same." But a microservice app isn't a single function with one input and one output — it's a swarm of services handling many concurrent requests. So how do we formalize "the same"?</p>
+
+<p>We use the same tool we've used all course for consistency models: <strong>execution traces</strong>. We monitor the requests flowing between services and between clients and services, and record them as a trace. Then:</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Correctness as Trace Containment</div>
+  <p>Let <code>E_cache</code> be the set of all execution traces observable in the <strong>cache-enabled</strong> system, and <code>E_orig</code> the set of traces observable in the <strong>original</strong> (no-cache) system. NuCache is correct if <code>E_cache ⊆ E_orig</code>: <strong>every</strong> behavior the cached system can exhibit was already a possible behavior of the original system. Caching may never <em>add</em> a new execution that the original couldn't produce.</p>
+</div>
+
+<p>This is the trace-based, "subset of executions" style of definition we've used for linearizability and serializability. The intuition the class offered — "running with and without NuCache gives the same output" — is exactly right; traces are just how we express "same output" when there's no single input/output pair.</p>
+
+<h3 id="reordering">The Reordering Insight — Why NuCache Can Be Fast</h3>
+
+<p>Now watch a problem appear, and then watch a beautiful insight dissolve it.</p>
+
+<p><strong>The problem.</strong> Front-end has a cache for the hotel service. Request A: <em>upload a review</em> — it goes in, updates the database at the backend, returns to the client, and finishes. <em>Then</em>, after A finishes, Request B: <em>get reviews</em> — it hits the cache and returns the cached reviews.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Stale-Read Bug</div>
+  <p>Request B's cached answer might <em>not</em> include Request A's freshly-uploaded review. In the original system, since B started strictly after A finished, B would always see A's review. So the cached system produced an execution the original couldn't — it violates <code>E_cache ⊆ E_orig</code>. To fix it the obvious way, we'd have to invalidate the cache <em>on the critical path</em> of every write (like the Chubby system does), paying that cost on every read or write. That kills the performance benefit.</p>
+</div>
+
+<p>Here is the key question the professor poses: <em>does the client actually care?</em> Think about what a client can observe. A client only ever sees the execution <strong>from its own perspective</strong>. It cannot talk to other clients, so it has no way to know that "A finished before B started" in real time.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Reorder Across Clients</div>
+  <p>This is the same idea as <strong>sequential consistency</strong>. Clients do <em>not</em> require real-time ordering <em>across each other</em> — only the order of their own operations matters to them. So NuCache is allowed to <strong>reorder operations across different clients</strong> (never within a single client). For each cache-enabled trace, if <em>some</em> cross-client reordering of it lies inside <code>E_orig</code>, the trace is acceptable.</p>
+</div>
+
+<p>Why is this legitimate? Because in the real system there was never a guarantee that A finished before B anyway. A tiny bit of network delay, or different thread scheduling, could have let A and B overlap. The clients couldn't tell. So we can simply ignore real-time ordering <em>across</em> clients — the original system would have had alternative executions where the order came out the other way.</p>
+
+<div class="callout insight">
+  <div class="callout-title">The Payoff: Off the Critical Path</div>
+  <p>Given this relaxed correctness condition, NuCache can <strong>push all cache management off the critical path.</strong> Requests are processed with essentially no added latency; invalidation happens asynchronously, in the background, and still satisfies correctness. This is the whole reason NuCache can be both correct <em>and</em> fast.</p>
+</div>
+
+<details>
+<summary>Is this just sequential consistency? (A subtle "no")</summary>
+<div class="details-body">
+<p>The professor flagged this as the question he got in nearly every job interview. The honest answer is <em>not exactly</em>. Classical consistency conditions (sequential consistency, linearizability) are defined for systems with two roles: <strong>clients</strong> and <strong>servers</strong>. But in a microservice environment, a service is <em>also a client</em> of other services — the roles blur. There is no straightforward lifting of sequential consistency into the microservice setting. NuCache therefore uses a <em>custom</em> correctness condition that borrows the <em>insight</em> of sequential consistency (ignore cross-client real-time order) but is not literally sequential consistency. The professor noted this as an open and interesting research direction: what is the right generalized correctness condition for microservices?</p>
+</div>
+</details>
+
+<div class="quiz" id="quiz-correct">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Why is NuCache <em>allowed</em> to reorder operations across different clients, and why does this help?</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Clients run on the same machine, so their order doesn't physically exist.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Clients can't observe real-time order across each other, so reordering keeps each client's own view valid — which lets NuCache push invalidation off the critical path.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Reordering is the only way to guarantee strict linearizability across all clients.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Because TTLs make ordering irrelevant once an entry expires.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct — B.</strong> A client only sees its own perspective and cannot observe real-time ordering relative to other clients — and the original system, due to network and scheduling jitter, could itself have produced either order. So reordering across (but never within) clients keeps every trace inside the original's set of behaviors, which is what permits NuCache to move all cache management off the critical path. C is wrong: this is <em>weaker</em> than linearizability, deliberately — it mirrors the insight behind sequential consistency, not strict real-time ordering.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>The Diamond Problem and Dependency Tracking</h2>
+</div>
+
+<p>The reordering insight handles ordering <em>across independent clients</em>. But there's a nastier pattern where reordering doesn't save us — where caching can produce an execution the original system simply could not. NuCache needs a separate mechanism for it. This is the <strong>diamond pattern</strong>.</p>
+
+<h3 id="diamond">The Diamond Pattern</h3>
+
+<p>Consider a graph where one entry service S1 can call both S2 and S3, and <em>both</em> S2 and S3 can reach the same downstream service S4. Drawn out, the call paths form a diamond. The danger arises <em>within a single request</em>:</p>
+
+<figure class="figure">
+  <div class="figure-box">
+    <svg width="280" height="220" viewBox="0 0 280 220" style="display:block; margin:0 auto;">
+      <!-- S1 -->
+      <circle cx="140" cy="30" r="22" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="140" y="35" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">S1</text>
+      <!-- S2 -->
+      <circle cx="65" cy="110" r="22" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="65" y="115" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">S2</text>
+      <!-- S3 -->
+      <circle cx="215" cy="110" r="22" fill="#edf7f0" stroke="#2d8a4e" stroke-width="2"/>
+      <text x="215" y="115" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">S3</text>
+      <!-- S4 -->
+      <circle cx="140" cy="190" r="22" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="140" y="195" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">S4</text>
+      <!-- edges -->
+      <line x1="124" y1="46" x2="81" y2="94" stroke="#c0510a" stroke-width="2"/>
+      <line x1="156" y1="46" x2="199" y2="94" stroke="#c0510a" stroke-width="2"/>
+      <line x1="81" y1="126" x2="124" y2="174" stroke="#c53030" stroke-width="2"/>
+      <line x1="199" y1="126" x2="156" y2="174" stroke="#2d8a4e" stroke-width="2" stroke-dasharray="5,4"/>
+      <text x="40" y="160" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#c53030">writes K</text>
+      <text x="240" y="160" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#2d8a4e">reads K (cached!)</text>
+    </svg>
+  </div>
+  <figcaption class="figure-caption">Within one request: S1 → S2 → S4 <strong>writes</strong> key K. Then S1 → S3, and S3 has a stale <strong>cached</strong> read of S4's K. S3 returns the old value — an execution impossible in the original system.</figcaption>
+</figure>
+
+<p>Trace it carefully, all inside a <em>single</em> request:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>S1 calls S2. S2 calls S4 and <strong>writes</strong> a new value to key K.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>Control returns up to S1. Now S1 calls S3 to <strong>read</strong> something from S4 — the very key K.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>S3 has a <em>cache</em> of S4's data. Because NuCache deliberately keeps invalidation off the critical path, that cache may still hold the <strong>old</strong> value of K. S3 returns stale data.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Why Reordering Can't Save Us Here</div>
+  <p>In a real system, if you write K and then read K, the read <em>must</em> see the new value. There's no legal execution where it returns the old one. So this stale read is an execution that <strong>was not observable in the original system</strong>, even after any reordering. Unlike the cross-client case of Part IV, we cannot reorder our way out — this is a genuine bug we must prevent.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Same Bug as "Mega-Clients"</div>
+  <p>This is exactly what would go wrong if clients weren't truly independent — if a single "mega-client" controlled several mini-clients and passed information between them. The diamond is the in-graph version of that: information flows from the write (via S2/S4) back up and into the read (via S3), even though S2 and S3 never directly talk. The fix for the diamond also fixes the mega-client scenario.</p>
+</div>
+
+<h3 id="dependency-tracking">The Fix: Dependency Tracking</h3>
+
+<p>NuCache's solution is elegantly conservative. Every cache item is tagged with <strong>all the downstream services that were visited to produce it</strong>. And every in-flight request keeps a running record of <strong>all the services it has visited so far</strong>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Dependency Tracking</div>
+  <p>When NuCache saves a cache item at S3, it records "this item <strong>depends on</strong> S3 and S4" (the services consulted to build it). When a later request reaches S3 and is about to check that cache, it compares: <em>have I already visited any service this cache item depends on?</em> If the request's visited-set <strong>intersects</strong> the item's dependency-set, NuCache <strong>ignores the cache item entirely</strong> and re-issues the call.</p>
+</div>
+
+<p>Walk it through on the diamond. The request goes S1 → S2 → S4 → back to S1, and now heads to S3. Its visited set is {S1, S2, S4}. The cache item at S3 depends on {S3, S4}. They intersect at <strong>S4</strong> — so NuCache refuses to use the cached read. It re-runs the call and gets the fresh value. Bug avoided.</p>
+
+<div class="callout insight">
+  <div class="callout-title">A Causality Guarantee — and a Conservative One</div>
+  <p>This is a form of <strong>causality tracking</strong>: the request remembers everything it has touched, and if a cache item could have been affected by something the request already did, it declines to trust the cache. The assumption is deliberately conservative: "if I've gone back to S4 in this request, assume I might have modified <em>any</em> key in S4's database — I might have destroyed all of it." So if a cache item depends on S4 and I've visited S4, I won't even look at it. Better to lose a cache hit than serve a stale read.</p>
+</div>
+
+<p>Crucially, dependency tracking is what lets NuCache keep invalidation <em>off the critical path</em> (Part IV) while still being correct on the diamond: it doesn't need real-time invalidation messages to catch the diamond, because the request's own visited-set already tells it when not to trust a cache.</p>
+
+<div class="quiz" id="quiz-diamond">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In the diamond pattern, a request has visited {S1, S2, S4} and reaches a cache item at S3 that depends on {S3, S4}. What does NuCache do, and why?</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Use the cached value — S3 and the request never directly communicated.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Ignore the cache item and re-issue the call, because the visited-set and dependency-set intersect at S4, so the cached value may be stale.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Use the cached value but flag it for later invalidation by the cache manager.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Reorder the read before the write so the cache stays valid.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct — B.</strong> The cache item depends on S4, and the request has already visited S4 — so the request might have modified data the cached value was derived from. NuCache conservatively ignores the cache and re-runs the call. D is wrong because reordering cannot rescue a write-then-read-the-same-key dependency <em>within one request</em>; that's precisely the case reordering can't fix, which is why dependency tracking exists as a separate mechanism.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART VI ═══════════════════════ -->
+<section id="part6" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part VI</div>
+  <h2>Implementation and Evaluation</h2>
+</div>
+
+<p>We've built up the <em>why</em> and the <em>what</em>. Now the <em>how</em>: the concrete machinery that realizes correct, off-critical-path invalidation, plus how we measure whether it actually works.</p>
+
+<h3 id="components">The Components: Cache Manager and Wrappers</h3>
+
+<p>NuCache adds three kinds of components to an existing application, and modifies <em>none</em> of the original code or database:</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — NuCache's Three Pieces</div>
+  <p><strong>The cache</strong> — just an off-the-shelf cache (e.g. Redis); nothing custom. <strong>Wrappers</strong> — a library that wraps every call a service makes to another service or to its database, intercepting it to do bookkeeping. <strong>Cache manager</strong> — <em>one thread per microservice shard</em>, with a <strong>FIFO input message queue</strong>. It processes messages one at a time, which gives a total order — and that order is the key to correctness.</p>
+</div>
+
+<p>The wrappers feed the cache manager: whenever a wrapper intercepts something interesting, it <em>adds a message to the cache manager's FIFO queue</em>. The cache manager, being a single serial thread per shard, processes those messages in a strict total order. (For sharded services there's one cache manager thread per shard, but for this class you can picture a single thread per service.)</p>
+
+<h3 id="messages">The Three Message Types</h3>
+
+<p>Everything the cache manager learns arrives as one of three messages on its queue:</p>
+
+<table class="compare-table">
+  <tr><th>Message</th><th>When the wrapper sends it</th></tr>
+  <tr><td><strong>start call</strong></td><td>When a request begins processing at a service. Initializes that request's wrapper state.</td></tr>
+  <tr><td><strong>end call</strong></td><td>When a request finishes. Carries the request's <em>read-set</em> (every key it read + every downstream call it made) and its return value.</td></tr>
+  <tr><td><strong>invalidate call</strong></td><td>After a request <em>writes</em> a key, to tell the cache manager that key was modified.</td></tr>
+</table>
+
+<p>Two subtleties the lecture stressed. First, the wrapper accumulates reads into a <strong>read-set</strong> during the call and only ships the whole set at <em>end call</em> — not one message per read — for performance. Second, downstream <em>calls</em> are added to the read-set too, not just database reads, "to capture the transitive relationships of read" (this is what feeds the dependency tracking of Part V).</p>
+
+<h3 id="trace-miss">Trace: A Cache Miss, Step by Step</h3>
+
+<p>Picture five timelines: the front-end service thread, the front-end cache thread, the front-end cache-manager thread, the hotel service thread, and the hotel cache-manager thread. Solid arrows are inter-service (network) communication; dashed arrows are local. A front-end request needs hotel info:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Check the cache.</strong> Before calling hotel, the front-end wrapper marks "this call happened in this request" and checks its cache. <em>Miss</em> — the item isn't there.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Make the real call.</strong> The front-end issues the inter-service call to the hotel service.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>start call.</strong> Before hotel begins executing, its wrapper sends <em>start call</em> to the hotel cache manager.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Read, accumulate.</strong> Hotel reads key <code>ID</code> from its database. The wrapper adds <code>ID</code> to this request's read-set — it does <em>not</em> message the cache manager yet.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <p><strong>end call.</strong> Hotel finishes. The wrapper sends <em>end call</em> to the hotel cache manager carrying the read-set ({<code>ID</code>}) and the return value (the hotel info). The hotel info also flows back to be (potentially) saved upstream.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">6</div>
+  <p><strong>Decide whether to save.</strong> The cache manager checks: between this read and now, was there any concurrent <em>write</em> to <code>ID</code>? If no write happened, the read is provably still valid, so the cache manager tells the upstream (front-end) cache manager to save the value. The front-end cache is set to the hotel info.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">7</div>
+  <p><strong>Next time: hit.</strong> The subsequent identical request finds the value in the front-end cache and skips the hotel call entirely.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Why Saving Is Conditional</div>
+  <p>A student asked: is the cache populated immediately at <em>end call</em>? No. The cache manager first verifies no concurrent write touched the key. A cached read is only valid "until a write happens to this key" — until someone modifies <code>ID</code>, this is "a fantastically good cache result that can stay there." If a write <em>did</em> overlap, NuCache may decline to save. The read-set + return value are carried precisely so the manager can make this decision after the fact.</p>
+</div>
+
+<h3 id="trace-invalidate">Trace: Invalidation, Step by Step</h3>
+
+<p>Now suppose, sometime after the front-end has happily cached the hotel info, a write lands at the hotel service:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>Some request writes a new value to key <code>ID</code> at the hotel backend. The front-end doesn't know yet and may keep hitting its cache — which, by the reordering rule of Part IV, is fine <em>from that client's perspective</em>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>When the write completes, the wrapper sends <em>invalidate call</em> to the hotel cache manager: "key <code>ID</code> changed."</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>The hotel cache manager looks up <strong>every completed request that had read <code>ID</code></strong> and that it had told an upstream cache to save. It keeps a dictionary: <em>for each key, which cached calls depend on it.</em></p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p>It tells each relevant upstream cache manager to <strong>evict</strong> those cache entries. The front-end deletes the stale hotel info from its cache.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <p>The next front-end request now <em>misses</em>, so it re-issues the hotel call and fetches fresh data.</p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Why Not Just Push the New Value Down on Invalidate?</div>
+  <p>A student asked: when invalidating, why not also send the new value so the upstream cache can update instead of evict-then-refetch? Because a cache in front of a <em>database</em> shares the database's read/write-by-key API — but a cache in front of a <em>service</em> does not. The cached value might be <em>any arbitrary function</em> of the underlying data (e.g. the service returns <code>factorial(5)</code>, not <code>5</code>). To know what the new value translates to upstream, you'd have to <strong>re-run the service's arbitrary code</strong> — which isn't free, and may call yet more services. So NuCache evicts rather than recomputes.</p>
+</div>
+
+<h3 id="who-saves">Why the Cache Manager — Not the Front-End — Saves</h3>
+
+<p>It would seem simpler to let the front-end write to its own cache directly after it gets a response. NuCache deliberately routes the save through the cache manager instead. Here's the execution that shows why:</p>
+
+<div class="callout warning">
+  <div class="callout-title">Saves Must Not Overtake Invalidates</div>
+  <p>Suppose the front-end saves to its cache itself. There's no guarantee the save lands <em>before</em> a concurrent invalidate — the service might be overloaded, delaying the save. If the save arrives <em>after</em> a delete/invalidate, the stale item gets re-inserted and stays cached forever (until some <em>later</em> invalidation). By funneling saves and invalidates through the cache manager's single FIFO queue, NuCache enforces a sequential order so a <strong>save can never overtake an invalidate</strong>. The cache manager is the ground truth for what's in the upstream cache.</p>
+</div>
+
+<details>
+<summary>One more imprecision: reads vs. concurrent writes within a call</summary>
+<div class="details-body">
+<p>Because the read-set is only sent at <em>end call</em> (for performance), the cache manager learns <em>that</em> a request read some keys but not the <em>precise time</em> each read happened. Now imagine two backend threads: thread 1 runs a request that starts, reads key K, then ends; thread 2 writes K (an invalidate) somewhere during thread 1's window. Even if thread 1's read actually happened <em>after</em> the write (so it saw the correct, new value), the cache manager cannot tell — from its view the read could have happened anywhere between start and end, possibly <em>before</em> the write. To stay safe, NuCache must <strong>conservatively invalidate the whole call</strong> and refuse to cache it. This is a deliberate performance-for-precision trade: in the rare case a write overlaps a request, NuCache may miss a cacheable result. (This relies on the local database being linearizable so that "read after write" genuinely sees the write.)</p>
+</div>
+</details>
+
+<h3 id="eval">Evaluation — What to Measure, and What They Found</h3>
+
+<p>The lecture treated "what should we even measure?" as a skill worth practicing — it's the first question of any systems-research project. The metrics that matter for a system like NuCache:</p>
+
+<table class="compare-table">
+  <tr><th>Metric</th><th>Why you care</th></tr>
+  <tr><td>Cache hit rate</td><td>How often caching actually helps.</td></tr>
+  <tr><td>Latency — read &amp; write, hit &amp; miss</td><td>Two bifurcations: reads vs. writes, <em>and</em> the hot path (hit) vs. the cold path (miss). You must verify misses stay cheap.</td></tr>
+  <tr><td>Throughput</td><td>How many requests the whole application can process per unit time.</td></tr>
+  <tr><td>Overhead of new components</td><td>Cache managers and wrappers cost CPU, storage, and network. The single-threaded cache manager can become a <em>bottleneck</em>; does the system scale with more shards?</td></tr>
+  <tr><td>Invalidation time</td><td>Even though invalidation is off the critical path, is it fast (milliseconds) or does it take minutes on a big graph?</td></tr>
+  <tr><td>Correctness</td><td>Validate that behavior matches the original system.</td></tr>
+</table>
+
+<p>The class then predicted how NuCache would help three classic graph shapes — the <strong>chain</strong>, the <strong>fan-out</strong>, and the <strong>fan-in</strong> — and matched it to results:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Chain → biggest latency win.</strong> A cache near the top of a long chain skips many sequential network hops at once, collapsing a long path into one cache hit.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Fan-in → biggest throughput win.</strong> When many callers funnel into one backend, caching their results means that potential bottleneck service stops being the bottleneck, freeing capacity for the whole system.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Low overhead, confirmed.</strong> A latency-distribution plot (showing all percentiles, not just the tail) found that with 0% cache hits, NuCache's extra work — checking the queue and the cache — adds <em>less than 1 ms</em> in the best case and only a few ms even at the worst tail. Adoption-safe.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Invalidation is fast.</strong> About <em>2 ms per hop</em>; a chain of 5 takes roughly 10 ms to fully invalidate — comfortably off the critical path.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">A Reusable Evaluation Skill</div>
+  <p>Notice the structure: measure the <em>benefit</em> (hit rate, latency/throughput wins by graph shape), measure the <em>cost</em> (overhead on the cold path, cache-manager bottleneck, invalidation time), and validate <em>correctness</em>. Benefit, cost, correctness — that triad is how you evaluate almost any systems addition, not just NuCache.</p>
+</div>
+
+<div class="quiz" id="quiz-impl">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Why does NuCache route cache <em>saves</em> through the single-threaded cache manager's FIFO queue rather than letting the front-end write its cache directly?</div>
+  <div class="quiz-options" data-quiz="q6">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>The front-end is written in a different language and can't access the cache.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>So a delayed save can never overtake an invalidate and re-insert stale data; the FIFO queue gives a single sequential order that keeps the cache the ground truth.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>To compress the read-set before storing it, saving memory.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Because the cache manager re-runs the service code to compute the value to store.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q6','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q6">
+    <strong>Correct — B.</strong> If the front-end saved directly, a save delayed by an overloaded service could land <em>after</em> an invalidate, re-inserting stale data that stays cached until some later invalidation. The cache manager's single FIFO queue imposes a total order so saves can't overtake invalidates, making it the authoritative ground truth for the cache. D is the opposite of NuCache's design — the lecture explicitly explained you <em>can't</em> cheaply recompute the upstream value because the service runs arbitrary code.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SYNTHESIS ═══════════════════════ -->
+<section id="synthesis" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This lecture is a single, tight argument, and every part is load-bearing for the next. Trace the chain of reasoning:</p>
+
+<p><strong>Parts I–II set the stage.</strong> Modern applications are microservices — many small, independently deployed, multi-language services talking over the network through sidecars. They bring huge organizational wins (modularity, independent scaling, fault localization) but pay a steep latency tax, because every call crosses serialization, encryption, network, and sidecar. And the call graph is <em>lossy and dynamic</em>: we can't know ahead of time who calls whom. That single fact — no ahead-of-time graph — constrains everything that follows.</p>
+
+<p><strong>Part III names the lever and the obstacle.</strong> Caching can skip entire subtrees of the graph (Alibaba: 40% of graphs avoid hundreds of calls), making it the most powerful latency tool. But caches go stale on writes — the coherence problem — and the prior art was unsatisfying: backend-only caching misses the big wins, custom protocols don't generalize, and TTLs serve stale data.</p>
+
+<p><strong>Part IV is the intellectual core.</strong> NuCache defines correctness as trace containment (<code>E_cache ⊆ E_orig</code>), then makes the crucial observation — borrowed from sequential consistency — that clients can't observe real-time order across <em>each other</em>. That licenses reordering across clients, which in turn lets NuCache push <em>all</em> cache management off the critical path. This is why it's simultaneously correct and fast.</p>
+
+<p><strong>Part V patches the one hole reordering leaves.</strong> The diamond pattern lets a write and a stale cached read of the <em>same key</em> happen within a single request — an execution no reordering can legalize. Dependency tracking fixes it: tag each cache item with the services it depends on, track each request's visited services, and refuse any cache item whose dependencies intersect what the request has already touched.</p>
+
+<p><strong>Part VI makes it real.</strong> Wrappers (riding the sidecar) emit <em>start / end / invalidate</em> messages into a per-shard cache manager whose single FIFO queue imposes the total order that keeps saves from overtaking invalidates. Off-the-shelf caches store the data; the cache manager is the ground truth. And the evaluation closes the loop on the goals: sub-millisecond cold-path overhead, big latency wins on chains, big throughput wins on fan-ins, fast off-path invalidation.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The One Thing to Remember</div>
+  <p><strong>NuCache makes microservice caching automatic and correct by weakening correctness exactly as much as clients can't tell — reordering across clients to push invalidation off the critical path — and then plugging the one remaining leak (the diamond) with conservative dependency tracking.</strong> Pick the weakest correctness condition your clients can't distinguish from the strong one, and you buy enormous performance freedom.</p>
+</div>
+
+<p>Notice how this lecture re-uses the toolkit of the whole course: <strong>execution traces</strong> and "subset of behaviors" for defining correctness (as with linearizability and serializability); the <strong>sequential-consistency insight</strong> that real-time cross-client order is unobservable; <strong>FIFO total order</strong> as the backbone of a protocol (as in so many of our systems); <strong>causality tracking</strong> via dependency sets; and <strong>sharding/replication</strong> as the path to scale. NuCache is a synthesis lecture by design — it's the last main system of the class, and it shows the course's ideas working together on a fresh problem.</p>
+
+<div class="callout tip">
+  <div class="callout-title">What's Next</div>
+  <p>This was the last <em>main system</em> of the course. The next and final lecture steps back: open questions and future work in distributed systems, where the field is heading today versus what we've covered, and an "Ask Me Anything." Come with questions — about NuCache's open problems (like a general correctness condition for microservices, which the professor flagged as genuinely unsolved), about the systems we've studied, or about distributed systems research broadly. The pieces you've assembled here — traces, consistency relaxations, FIFO ordering, causality, sharding — are exactly the lenses you'll use to think about whatever comes after this class.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

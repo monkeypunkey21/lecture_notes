@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 12 — Sharding, Consistent Hashing &amp; Chord</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 12</div>
+  <a href="#part1">Part I — Why Sharding</a>
+  <a href="#scaling-problem" class="sub">Two Problems with Replication</a>
+  <a href="#vertical-horizontal" class="sub">Vertical vs. Horizontal Scaling</a>
+  <a href="#sharding-def" class="sub">What Sharding Is</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Sharding ≠ Fault Tolerance</a>
+  <a href="#orthogonal" class="sub">Two Orthogonal Goals</a>
+  <a href="#hybrids" class="sub">Hybrids (HDFS)</a>
+  <a href="#design-problems" class="sub">The Design Problems</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — Data Lookup</a>
+  <a href="#centralized" class="sub">Centralized Lookup (HDFS)</a>
+  <a href="#decentralized" class="sub">Going Decentralized</a>
+  <a href="#strawmen" class="sub">Strawman Approaches</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — Hashing &amp; Its Limits</a>
+  <a href="#hash-functions" class="sub">What a Hash Function Does</a>
+  <a href="#modulo-hash" class="sub">Modulo Hashing</a>
+  <a href="#rehash-problem" class="sub">The Rehashing Disaster</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Consistent Hashing</a>
+  <a href="#the-ring" class="sub">The Ring</a>
+  <a href="#join-remove" class="sub">Join &amp; Removal</a>
+  <a href="#virtual-nodes" class="sub">Virtual Nodes</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part6">Part VI — Chord Lookup</a>
+  <a href="#successor-only" class="sub">Successor-Only Routing</a>
+  <a href="#finger-tables" class="sub">Finger Tables</a>
+  <a href="#lookup-trace" class="sub">A Lookup, Step by Step</a>
+  <a href="#join-protocol" class="sub">The Join Protocol</a>
+  <a href="#correctness-perf" class="sub">Correctness vs. Performance</a>
+  <a href="#quiz6" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#synthesis">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">CS134 · Distributed Systems</div>
+  <h1>Sharding, Consistent Hashing &amp; the Chord Protocol</h1>
+  <p class="hero-sub">An interactive guide to Lecture 12 — how to split a system's data across many machines, find any item quickly, and survive nodes joining and leaving without moving everything.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>Why We Need Sharding</h2>
+</div>
+
+<p>Everything in this course up to now has been about <strong>replication</strong>: making several copies of a system so that if one machine fails, the others keep going. We built ordering (Lamport and vector clocks), fault tolerance (primary–backup, Paxos), and a whole menu of consistency models (linearizability, sequential, causal, eventual). All of that assumed one thing without questioning it: <em>every replica holds the entire system and handles every request.</em> This lecture is where we finally challenge that assumption.</p>
+
+<h3 id="scaling-problem">Two Problems with Full Replication</h3>
+<p>If every replica is a complete copy of the system, two problems appear the moment the system gets big. Both come down to the same uncomfortable fact: <strong>your system can only be as capable as your weakest machine.</strong></p>
+
+<div class="callout warning">
+  <div class="callout-title">Problem 1 — It Doesn't Scale</div>
+  <p>If every replica must handle <em>every</em> operation, then adding replicas does nothing to share the workload — each one still does the full amount of work. Worse, the <strong>weakest replica is the bottleneck</strong>: the slowest machine in the group caps how fast the whole system can process requests. You can't grow throughput by adding machines.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Problem 2 — It Doesn't Fit</div>
+  <p>If every replica must store the <em>complete</em> state, then your smallest machine has to be big enough to hold all of it. A small, cheap machine literally cannot be used as a replica because the data won't fit. Your storage capacity is capped by your smallest box.</p>
+</div>
+
+<p>Notice these two problems are about <em>load</em> and <em>capacity</em>, not about crashes. Replication already solved crashes. These are new problems that replication, by its very design, makes worse.</p>
+
+<h3 id="vertical-horizontal">Vertical vs. Horizontal Scaling</h3>
+<p>Suppose you run a service and you hit these limits. What are your options? There are two, and the lecture wants you to feel why one of them won.</p>
+
+<table class="compare-table">
+  <tr><th>Vertical Scaling</th><th>Horizontal Scaling</th></tr>
+  <tr><td>Buy one bigger, more powerful machine.</td><td>Buy more small, cheap machines.</td></tr>
+  <tr><td>Simple: no new protocol needed.</td><td>Needs protocols to coordinate the machines.</td></tr>
+  <tr><td><strong>Very expensive</strong> — a giant machine costs far more than the equivalent aggregate power in small boxes.</td><td><strong>Much cheaper</strong> per unit of capacity, and you keep adding cheap boxes as load grows.</td></tr>
+  <tr><td>Hits a ceiling: there's only so big a single machine can get.</td><td>Scales as far as your protocols allow.</td></tr>
+</table>
+
+<p>For a while, "just buy a bigger machine" was genuinely how companies coped. But a big machine is dramatically more expensive than a collection of small machines with the same total processing power and storage. So the industry moved to horizontal scaling — and that move is <em>exactly</em> what creates the need for the rest of this lecture. Small machines can't each hold everything, so we need a principled way to spread the data out. That technique is sharding.</p>
+
+<h3 id="sharding-def">What Sharding Is</h3>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Sharding</div>
+  <p><strong>Sharding</strong> is a technique that <em>partitions</em> a system's state across multiple machines. Instead of every machine holding the whole dataset, each machine (a <strong>shard</strong>) holds only a slice of it. The goal: take a set of data items and split them across a set of machines.</p>
+</div>
+
+<p>Picture a single machine holding three keys, <code>X</code>, <code>Y</code>, and <code>Z</code>. Sharding might put <code>X</code> on machine 1, <code>Y</code> on machine 2, and <code>Z</code> on machine 3. Now ask: which of our two problems does this fix?</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="380" height="150" viewBox="0 0 380 150" style="display:block; margin:0 auto;">
+      <!-- before -->
+      <rect x="10" y="40" width="90" height="70" rx="8" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="55" y="30" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">one machine</text>
+      <text x="55" y="68" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" fill="#2a2520">X</text>
+      <text x="55" y="88" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" fill="#2a2520">Y</text>
+      <text x="55" y="108" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" fill="#2a2520">Z</text>
+      <!-- arrow -->
+      <text x="135" y="80" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="22" fill="#c0510a">→</text>
+      <!-- after -->
+      <rect x="175" y="55" width="55" height="40" rx="8" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="202" y="80" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" fill="#2a2520">X</text>
+      <rect x="245" y="55" width="55" height="40" rx="8" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="272" y="80" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" fill="#2a2520">Y</text>
+      <rect x="315" y="55" width="55" height="40" rx="8" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="342" y="80" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" fill="#2a2520">Z</text>
+      <text x="272" y="120" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">three shards, one key each</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Sharding splits the keyspace. Each shard stores only its slice — so no single machine must hold the whole dataset.</div>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Sharding Reliably Solves Storage, Only Sometimes Solves Load</div>
+  <p>The <strong>storage problem is solved</strong>: state is genuinely spread out, so no machine needs to hold everything. The <strong>load problem is only partly solved</strong>. If a request needs just <code>X</code>, only machine 1 is involved — great. But a request that asks for <code>X</code>, <code>Y</code>, <em>and</em> <code>Z</code> must touch all three shards. So we can't <em>always</em> guarantee that each machine processes fewer requests. Splitting the data does not automatically split the work.</p>
+</div>
+
+<div class="quiz" id="quiz1">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A company's service is too slow and runs out of storage. Why is <strong>horizontal scaling</strong> usually preferred over <strong>vertical scaling</strong>?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>A collection of small machines is much cheaper than one giant machine with the same total power.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>A single bigger machine can never improve performance at all.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Horizontal scaling needs no coordination protocols, so it is simpler.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Vertical scaling cannot fix storage problems, only latency.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','a')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct — A.</strong> The lecture's central economic argument is that buying one enormous machine costs far more than buying many small machines with the same aggregate processing power and storage. That cost gap is the reason the industry moved to horizontal scaling. B is wrong because a bigger machine <em>does</em> help — it's just expensive and eventually hits a ceiling. C is backwards: horizontal scaling is the one that <em>requires</em> new protocols (which is what the rest of the lecture builds).
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>Sharding Is Not Fault Tolerance</h2>
+</div>
+
+<p>This is the single idea the professor said to take away above all others: if you remember only one thing from this lecture, remember that sharding and replication are different things, even though both add machines to your system.</p>
+
+<h3 id="orthogonal">Two Goals That Happen to Look Alike</h3>
+<p>Sharding adds machines. Replication adds machines. It's tempting to lump them together. But they serve <em>opposite</em> purposes, and confusing them leads to broken designs.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Orthogonal Techniques</div>
+  <p><strong>Replication</strong> exists for <em>fault tolerance</em>: keep extra copies so a crash doesn't lose data. <strong>Sharding</strong> exists for <em>performance</em>: split the data so the system can scale. They are <strong>orthogonal</strong> — you can do either, both, or neither. Sharding by itself gives you <em>zero</em> fault tolerance: if a shard fails, the state on it is lost forever, because there is no copy anywhere else.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Footgun — "We Sharded, So We're Safe"</div>
+  <p>A naive engineer reasons "we have lots of machines now, so we're protected against failure." Wrong. Sharding spreads data out but never duplicates it. A single shard failing destroys its slice of the data permanently. To get fault tolerance, you must <em>also</em> replicate — for example, keep replicas of each shard.</p>
+</div>
+
+<h3 id="hybrids">Hybrids: HDFS in Practice</h3>
+<p>Real systems usually want both performance <em>and</em> reliability, so they combine the techniques. The canonical example is the <strong>Hadoop Distributed File System (HDFS)</strong>.</p>
+
+<p>HDFS shards everything — it splits files into chunks spread across many machines — <em>and</em> it replicates each chunk, by default storing it on (say) two, three, or four machines. So a chunk <code>X</code> lives on two machines, <code>Y</code> on two machines, and so on. Sharding gives the scalability; the extra copies give the fault tolerance. When you design a storage system, you genuinely have to think about both questions separately: "How do I store data reliably?" and "How do I scale to handle more load?"</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="380" height="170" viewBox="0 0 380 170" style="display:block; margin:0 auto;">
+      <text x="190" y="20" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#c0510a">HDFS: shard + replicate</text>
+      <!-- machine 1 -->
+      <rect x="20" y="50" width="100" height="90" rx="8" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="70" y="42" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">m1</text>
+      <text x="70" y="85" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" fill="#c0510a">X</text>
+      <text x="70" y="115" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" fill="#2d8a4e">Y</text>
+      <!-- machine 2 -->
+      <rect x="140" y="50" width="100" height="90" rx="8" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="190" y="42" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">m2</text>
+      <text x="190" y="85" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" fill="#c0510a">X</text>
+      <text x="190" y="115" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" fill="#2563eb">Z</text>
+      <!-- machine 3 -->
+      <rect x="260" y="50" width="100" height="90" rx="8" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="310" y="42" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">m3</text>
+      <text x="310" y="85" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" fill="#2d8a4e">Y</text>
+      <text x="310" y="115" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" fill="#2563eb">Z</text>
+      <text x="190" y="160" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">each chunk on 2 machines — sharded AND fault-tolerant</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Sharding and replication composed: every key is on two distinct machines, so the data is both spread out (scalable) and duplicated (survives one failure).</div>
+</div>
+
+<h3 id="design-problems">The Design Problems Sharding Forces Us to Solve</h3>
+<p>The goal "partition data across machines" sounds simple, but the moment you try it, a swarm of hard questions appears. The class brainstormed these; here are the ones that matter, because the rest of the lecture is dedicated to solving them.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Finding items efficiently.</strong> Given a key, which machine has it? A client needs to know which shard to talk to, ideally without an expensive search.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Uniform partitions.</strong> We want keys spread evenly across machines — even with respect to <em>storage</em> (how many items each holds) and with respect to <em>usage</em> (how many requests each gets). These are different! An even split of items can still be a terrible split of load.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Communication.</strong> Do machines need to talk to each other to locate an item? Tightly-coupled data (asking for A almost always means also asking for B) may end up on different shards, forcing cross-shard communication.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Churn — a changing set of machines.</strong> This is genuinely new. With replication you fix the count ("3 replicas, replace failures"). With sharding for scale, you might add or remove <em>many</em> machines throughout the day as load fluctuates. How do we cope when the membership keeps shifting?</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <p><strong>Load skew.</strong> Even a perfectly even split of items can be lopsided if some items are hammered far more than others — small numbers used more than big ones, words starting with "A" more than "Z".</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">What We'll Tackle Today vs. Later</div>
+  <p>This lecture solves item lookup, uniform partitioning, and churn (adding/removing machines). The <em>cross-shard</em> problems — what happens when one operation needs data from several shards at once, and keeping that data consistent — are deferred to a future lecture on <strong>distributed transactions</strong>. Keep that thread in mind: it's the natural sequel to today.</p>
+</div>
+
+<div class="quiz" id="quiz2">
+  <div class="quiz-question">Your team shards a key-value store across 10 machines, one slice each, with no extra copies. One machine's disk dies. What is the correct conclusion?</div>
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>No data is lost; the other 9 machines automatically held copies.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>That machine's slice of the data is lost forever, because sharding alone provides no fault tolerance.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>The whole system is lost, because every machine depended on that one.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Nothing is lost as long as the lookup service is still running.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct — B.</strong> Sharding only <em>partitions</em> state; it never duplicates it. With one slice per machine and no replication, that slice exists in exactly one place, so its loss is permanent. This is the lecture's headline takeaway: sharding and fault tolerance are orthogonal. A is wrong because nothing made copies. C is wrong because the other 9 slices are fine — only the dead machine's slice is gone, not the whole system.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>Data Lookup — Finding the Right Shard</h2>
+</div>
+
+<p>Of all the design problems, the most fundamental is the first: <em>given a key, which machine holds it?</em> If you can't answer that cheaply, nothing else works. There are two broad families of answers — centralized and decentralized — and the trade-off between them drives the rest of the lecture.</p>
+
+<h3 id="centralized">Centralized Lookup — The HDFS Name Server</h3>
+<p>The most obvious approach: keep one special server, a <strong>lookup service</strong>, that knows the location of every item. When a new data server joins, it contacts the lookup service to learn what to fetch. When you create a new item, you ask the lookup service to assign it to some machine. To find anything, you ask the lookup service first.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The HDFS Name Server</div>
+  <p>HDFS uses exactly this design. A single <strong>name server</strong> holds the map of where each piece of data lives. Separate <strong>data servers</strong> hold the actual data and join or leave the system as needed. Every lookup goes through the name server.</p>
+</div>
+
+<table class="compare-table">
+  <tr><th>Pro of Centralized Lookup</th><th>Con of Centralized Lookup</th></tr>
+  <tr><td><strong>Simple.</strong> One straightforward protocol — ask the name server. This simplicity is exactly why Hadoop chose it.</td><td><strong>The name server is a bottleneck.</strong> Every lookup, every new item, every joining server must go through it. Nothing in the system works without it.</td></tr>
+  <tr><td>Easy to reason about and operate.</td><td><strong>Limited scalability.</strong> A single server must know about <em>everything</em> in the system, so it caps how large the system can grow.</td></tr>
+</table>
+
+<h4>Why Does a Bottleneck Design Work for HDFS Anyway?</h4>
+<p>This is the subtle, exam-worthy point. A central name server <em>should</em> be a scalability nightmare — yet HDFS ships it and it works fine. Why? The answer is about the <strong>ratio of lookup work to data work</strong>, and it comes from HDFS's coarse granularity.</p>
+
+<div class="callout insight">
+  <div class="callout-title">It's All About Granularity</div>
+  <p>HDFS does <em>not</em> shard at the level of tiny items like <code>X</code>, <code>Y</code>, <code>Z</code>. It shards in huge chunks — think <strong>1 GB at a time</strong>. You never ask "where is this little record?"; you ask "where is this 1 GB chunk?", then go read the whole chunk and do your work. Lookups are <em>infrequent</em> (one per giant chunk) and <em>cheap</em> (they only move location metadata — keys, not whole rows). So the name server handles very few, very light requests relative to the enormous data work the data servers do. The ratio makes the bottleneck negligible.</p>
+</div>
+
+<p>This works because of <em>what HDFS is for</em>: massive <strong>batch processing</strong>. Recall the genomics / log-processing applications from early in the course — you grok through an entire dataset, reading every item, rather than randomly fetching one key. In that workload, random access to individual items is unnecessary, so fetching huge chunks via infrequent lookups is exactly right. The centralized design and the batch-processing model fit each other perfectly.</p>
+
+<h3 id="decentralized">Going Decentralized</h3>
+<p>But <em>this</em> course cares about systems with many small items and random access — like the key-value store in the assignment. There, a single name server fielding a lookup for every tiny key really would melt. So we need a <strong>decentralized</strong> approach.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Decentralized Lookup</div>
+  <p>In a <strong>decentralized</strong> scheme there is <em>no</em> single node that knows everything. Instead, each node can determine where to find an item — possibly by communicating with a few other nodes, but never by consulting one all-knowing directory. The rest of the lecture builds protocols of this kind.</p>
+</div>
+
+<h3 id="strawmen">Two Strawmen (So We Know What to Avoid)</h3>
+<p>Before the real solution, two deliberately bad ideas sharpen our intuition for what "good" must mean.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Randomly assign each item to a node.</strong> The distribution is even — but in a possibly-bad way (it ignores load and coupling). Worse, <em>lookup is impossible</em>: since you placed the item randomly, finding it later means searching every node. No structure means no efficient lookup.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Put everything on one machine.</strong> The opposite failure: lookup is trivially easy (it's all in one place), but there's no spread at all — we've thrown away the entire point of sharding.</p>
+</div>
+
+<p>The lesson: a good scheme needs <em>both</em> an even spread <em>and</em> an efficient, structured way to locate any item. That tension is what consistent hashing resolves.</p>
+
+<div class="quiz" id="quiz3">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">HDFS uses a single centralized name server for lookups. Why doesn't this become a crippling bottleneck in practice?</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>HDFS shards at a coarse granularity (e.g. 1 GB chunks), so lookups are rare and lightweight relative to the huge data transfers — a favorable work ratio.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>The name server is fully replicated with Paxos, removing the bottleneck.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Clients cache every location forever, so the name server is never contacted twice.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>HDFS supports fine-grained random access to individual keys efficiently.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','a')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct — A.</strong> The key is granularity. Because data is fetched in gigantic chunks, you do one cheap, metadata-only lookup and then move enormous amounts of data. Lookups are infrequent and light, so the name server's load is tiny compared to the data servers' work. C is the wrong reason — the professor specifically noted the simple protocol has <em>no</em> caching and still works; caching would help but isn't what makes the base design viable. D is the opposite of the truth: HDFS deliberately does <em>not</em> support cheap random access to tiny items.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>Hashing and Its Hidden Cost</h2>
+</div>
+
+<p>We need a decentralized way to map keys to nodes that gives an even spread <em>and</em> a cheap lookup. The first honest attempt is range partitioning, which fails for a subtle reason — and fixing it leads us straight to hashing.</p>
+
+<h3>First Try: Range Partitioning</h3>
+<p>Assign keys to nodes by numeric range: keys 0–100 go to node 1, 100–200 to node 2, and so on. Lookup is easy (compute which range a key falls in — a "delegator function"). The <em>item</em> distribution can even be made even. So what's wrong?</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Problem — Skewed Request Distribution</div>
+  <p>Items may be evenly spread, but <strong>requests</strong> are not. Real datasets are skewed: small numbers get used more than big ones; words starting with "A" more than "Z". A linear split puts all the popular low keys on one node, hammering it while others idle. Range partitioning gives even <em>storage</em> but lopsided <em>load</em> — exactly the storage-vs-usage distinction from Part II.</p>
+</div>
+
+<h3 id="hash-functions">What a Good Hash Function Does</h3>
+<p>The fix is to destroy the natural ordering of keys so that adjacent, similar keys land far apart. That's what a hash function is for.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Hash Function</div>
+  <p>A <strong>hash function</strong> takes values from an input space (keys) and maps them into an output space (think: a range of integers). A <em>good</em> one is:</p>
+  <p>• <strong>Deterministic</strong> — the same key always hashes to the same value (so we can find it again later).<br>
+  • <strong>Apparently random / uniform</strong> — it spreads keys across the output space evenly, scrambling any structure in the input so popular, clustered keys are scattered.</p>
+</div>
+
+<p>Hashing won't perfectly fix load skew — some individual keys are still hotter than others — but by scattering keys uniformly it breaks up the <em>systematic</em> skew of range partitioning. Hash functions are the key building block of essentially every sharding scheme in the distributed-systems literature.</p>
+
+<h3 id="modulo-hash">Modulo Hashing</h3>
+<p>The simplest way to turn a hash into a server assignment: take the hash of the key, then reduce it modulo the number of servers.</p>
+
+<pre><code><span class="cm"># with 4 servers, place key k on:</span>
+server = hash(k) % 4   <span class="cm"># → 0, 1, 2, or 3</span></code></pre>
+
+<p>For example, to store student transcripts across four servers, you might hash on date of birth and take the result mod 4. The benefits are real: <strong>no communication is needed</strong> (any client computes the location itself) and it is extremely fast — you just run the hash and you're done.</p>
+
+<h3 id="rehash-problem">The Hidden Cost: Rehashing on Membership Change</h3>
+<p>Modulo hashing has a fatal flaw that surfaces the instant the set of servers changes — and remember, with sharding-for-scale the membership changes <em>constantly</em>. The number of servers is baked into the formula. Change it, and almost every key's assignment changes.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="400" height="220" viewBox="0 0 400 220" style="display:block; margin:0 auto;">
+      <text x="200" y="18" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#c0510a">key k, using hash(k) = k+1</text>
+      <!-- mod 4 row -->
+      <text x="55" y="55" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#2a2520">% 4</text>
+      <text x="120" y="55" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">k=3→0</text>
+      <text x="190" y="55" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">k=4→1</text>
+      <text x="260" y="55" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">k=7→0</text>
+      <text x="330" y="55" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">k=8→1</text>
+      <!-- arrows -->
+      <line x1="120" y1="65" x2="120" y2="100" stroke="#c53030" stroke-width="2"/>
+      <line x1="190" y1="65" x2="190" y2="100" stroke="#c53030" stroke-width="2"/>
+      <line x1="260" y1="65" x2="260" y2="100" stroke="#c53030" stroke-width="2"/>
+      <line x1="330" y1="65" x2="330" y2="100" stroke="#c53030" stroke-width="2"/>
+      <text x="200" y="92" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#c53030">add a 5th server → recompute % 5</text>
+      <!-- mod 5 row -->
+      <text x="55" y="125" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#2a2520">% 5</text>
+      <text x="120" y="125" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#c53030">k=3→4</text>
+      <text x="190" y="125" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#c53030">k=4→0</text>
+      <text x="260" y="125" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#c53030">k=7→3</text>
+      <text x="330" y="125" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#c53030">k=8→4</text>
+      <text x="200" y="170" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" fill="#c53030" font-weight="700">every key moved!</text>
+      <text x="200" y="195" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">adding one machine forces almost all data to migrate</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Modulo hashing's disaster: going from 4 servers to 5 changes the divisor, so nearly every key maps to a different server and must be physically moved.</div>
+</div>
+
+<h4>How Much <em>Must</em> Move? The Theoretical Floor</h4>
+<p>Modulo hashing moves <em>everything</em> — but that's a flaw of the <em>scheme</em>, not a law of nature. What's the minimum data movement physically required when you add a node and want to return to an even split?</p>
+
+<div class="callout insight">
+  <div class="callout-title">The Lower Bound — keys ÷ nodes</div>
+  <p>If you have an even split and add one node, that new node must end up holding its fair share. The minimum number of keys you must move to it is <strong>(total keys) ÷ (number of nodes)</strong>. You can't do better than this — the new node has to get <em>some</em> data to pull its weight. Modulo hashing moves vastly more than this floor; a good scheme should move only about this much.</p>
+</div>
+
+<p>So we have our target. We want a decentralized hashing scheme where adding or removing a node moves only ≈ keys/nodes of the data, not all of it. That scheme is consistent hashing.</p>
+
+<div class="quiz" id="quiz4">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">With <code>hash(k) % N</code> for placement, what happens when you grow the cluster from <code>N</code> to <code>N+1</code> servers?</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Only the keys that belong on the new server move; everything else stays put.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Almost every key gets a new assignment, forcing a massive, near-total data migration.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Nothing moves, because the hash of each key is unchanged.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Exactly keys ÷ nodes move, which is the theoretical minimum.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct — B.</strong> The number of servers is the divisor in the formula, so changing it changes the remainder for nearly every key — <code>hash(k) % 4</code> and <code>hash(k) % 5</code> agree only by coincidence. That means almost all data must be physically relocated. C is wrong because although the <em>hash</em> is unchanged, the <em>modulo</em> result changes. D describes the theoretical floor (keys ÷ nodes) that a <em>good</em> scheme achieves — modulo hashing moves far more than that minimum.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>Consistent Hashing — The Ring</h2>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">A Note on the Name</div>
+  <p>"Consistent hashing" has <em>nothing</em> to do with the consistency models (linearizability, causal, etc.) from earlier lectures. It's an unfortunate name collision. Here "consistent" just means the mapping stays mostly stable when nodes come and go.</p>
+</div>
+
+<h3 id="the-ring">The Core Trick: Hash Onto a Circle</h3>
+<p>Modulo hashing failed because the assignment depended on the <em>count</em> of servers. Consistent hashing removes that dependency with one elegant move: present the hash output as a <strong>circle</strong> (a ring) rather than a flat number line, and place <em>both</em> keys and servers on it.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Consistent Hashing</div>
+  <p>Imagine the hash output space wrapped into a ring (say positions 0 through 16, then back to 0). Hash each <strong>data item</strong> to a point on the ring. Also hash each <strong>node's ID</strong> (e.g. its IP address) to a point on the same ring. Then: <strong>each node is responsible for the keys lying between its predecessor and itself</strong> — the arc of the ring leading up to that node.</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="280" height="280" viewBox="0 0 280 280" style="display:block; margin:0 auto;">
+      <circle cx="140" cy="140" r="100" fill="none" stroke="#d9d0c4" stroke-width="2"/>
+      <!-- nodes -->
+      <circle cx="140" cy="40" r="9" fill="#c0510a"/>
+      <text x="140" y="28" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#c0510a">S1</text>
+      <circle cx="240" cy="140" r="9" fill="#c0510a"/>
+      <text x="258" y="145" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#c0510a">S2</text>
+      <circle cx="140" cy="240" r="9" fill="#c0510a"/>
+      <text x="140" y="262" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#c0510a">S3</text>
+      <circle cx="40" cy="140" r="9" fill="#c0510a"/>
+      <text x="22" y="145" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#c0510a">S4</text>
+      <!-- keys -->
+      <circle cx="200" cy="62" r="5" fill="#2563eb"/>
+      <text x="212" y="55" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2563eb">k</text>
+      <circle cx="216" cy="200" r="5" fill="#2563eb"/>
+      <text x="228" y="208" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2563eb">k</text>
+      <circle cx="70" cy="205" r="5" fill="#2563eb"/>
+      <text x="58" y="213" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2563eb">k</text>
+      <!-- direction arrow -->
+      <text x="140" y="145" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">key → next</text>
+      <text x="140" y="162" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">node clockwise</text>
+    </svg>
+  </div>
+  <div class="figure-caption">The ring. Each key (blue) is owned by the first node (orange) clockwise from it — i.e. each node owns the arc from its predecessor up to itself.</div>
+</div>
+
+<h4>Locating a Key</h4>
+<p>To find a key's home: hash the key to its point on the ring, then walk clockwise to the <strong>next</strong> node — that node owns it. If a node keeps a sorted list of the server positions, it can do this with a binary search instead of a linear scan. Simple and fully decentralized.</p>
+
+<div class="callout tip">
+  <div class="callout-title">This Is Used Everywhere</div>
+  <p>Consistent hashing is not a toy. It powers production databases including <strong>MongoDB, Cassandra, and Memcached</strong>. Today we study it through <strong>Chord</strong>, a foundational 2001 paper that worked out the details and won a "Test of Time" award at SIGCOMM in 2011.</p>
+</div>
+
+<h3 id="join-remove">Why the Ring Wins: Minimal Movement on Join &amp; Removal</h3>
+<p>Here's the payoff. Recall the floor from Part IV: adding a node should move only ≈ keys/nodes. The ring achieves it — and does something even nicer.</p>
+
+<h4>Adding a Server</h4>
+<p>Drop a new node <code>S5</code> onto the ring between <code>S1</code> and <code>S2</code>. <code>S5</code> now owns the arc that previously belonged to <code>S2</code> (the part now falling before <code>S5</code>). So <code>S2</code> hands those keys — and <em>only</em> those — to <code>S5</code>. Every other server is completely oblivious; they keep serving requests as if nothing happened.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>New node <code>S5</code> lands on the ring between <code>S1</code> and <code>S2</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>The keys in <code>S5</code>'s new arc were previously owned by <code>S2</code> (its successor). Only <strong>S2</strong> needs to send keys.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>On average this is the <strong>minimum</strong> number of keys (≈ keys/nodes), and only <strong>one</strong> server does any work. All other servers are untouched.</p>
+</div>
+
+<h4>Removing a Server</h4>
+<p>Symmetric. Remove a node and its keys flow to its <strong>successor</strong> (the next node clockwise), which now owns the merged arc. Again only one server is involved, moving the minimum amount.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Chord Minimizes Movement and Disruption</div>
+  <p>Consistent hashing's headline property: when nodes join or leave, on average it moves only the <em>minimum</em> number of keys (≈ keys/nodes), and <strong>only one server</strong> sends data while everyone else stays oblivious. Both join and removal have these same characteristics. This is precisely the churn problem from Part II, solved.</p>
+</div>
+
+<h3 id="virtual-nodes">The Catch and the Fix: Virtual Nodes</h3>
+<p>The keyspace is huge and the number of servers <code>N</code> is small. When you hash only <code>N</code> server IDs onto a giant ring, you can <strong>get unlucky</strong>: by chance, two servers land close together (tiny arc, little data) while another spans a huge arc (overloaded). On average the split is even, but any particular random placement can be badly lopsided.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Why Not Just Space Servers Evenly?</div>
+  <p>Tempting, but it defeats the purpose. The whole benefit of hashing is that <em>no coordination</em> is needed — each server's position is computed independently from its ID. To place servers at hand-picked even positions, you'd need a decision process and broadcasts to agree on who sits where, reintroducing exactly the communication hashing let us avoid.</p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Virtual Nodes</div>
+  <p>Instead of one ring position per server, give each server <strong>multiple IDs</strong> — combine its IP with several random identifiers, hash each, and scatter them around the ring. These are <strong>virtual nodes</strong>. With <code>N</code> servers and <code>V</code> virtual nodes each, every virtual node owns on average <strong>1/(V·N)</strong> of the space. The larger <code>V</code>, the more you'd have to get unlucky for the load to be uneven — so larger <code>V</code> means better load balancing.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">A Free Bonus: Heterogeneity</div>
+  <p><code>V</code> is a knob we can vary <em>per server</em>. Give a powerful machine a large <code>V</code> and a weak machine a small <code>V</code>, and the powerful one naturally claims more of the ring. So virtual nodes also let us account for <strong>heterogeneous hardware</strong> — different machines with different specs — for free, with no special mechanism.</p>
+</div>
+
+<p>One small cost: with virtual nodes, a joining server may need to pull keys from up to <code>V</code> different successors instead of just one. That sounds worse, but it's also a benefit — the data movement is now spread across many senders, so we can load-balance who sends what and avoid a single network bottleneck.</p>
+
+<div class="quiz" id="quiz5">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In consistent hashing, why do systems introduce <strong>virtual nodes</strong> (multiple ring positions per server)?</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>To make lookups O(1) instead of O(log n).</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>With only N random positions you can get unlucky and split the ring unevenly; many positions per server make the split even — and let you weight servers by capacity.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>To provide fault tolerance, since each virtual node is a replica of the data.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>To eliminate the need for a hash function entirely.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct — B.</strong> Hashing only a few server IDs onto a large ring can, by bad luck, leave some arcs huge and others tiny. Spreading each server across many virtual positions averages this out (each owns ≈ 1/(V·N) of the ring), so larger V means better balance. The per-server V also doubles as a capacity weight for heterogeneous hardware. C is wrong — virtual nodes are still just one server; they add no data redundancy and no fault tolerance (that's replication's job).
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART VI ═══════════════════════ -->
+<section id="part6" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part VI</div>
+  <h2>Chord Lookup — Finger Tables in O(log n)</h2>
+</div>
+
+<p>We can place keys and minimize movement. The last question is routing: a node receives a request for some key it doesn't own. <em>How does it find the node that does?</em> The answer evolves from a slow baseline to Chord's clever O(log n) structure.</p>
+
+<h3 id="successor-only">The Baseline: Know Only Your Successor</h3>
+<p>The minimal routing state: each node knows only its <strong>successor</strong> (the next node clockwise) and nothing else. To look up a key: if you don't own it, forward the request to your successor; repeat. Eventually you reach the node whose arc contains the key.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="360" height="120" viewBox="0 0 360 120" style="display:block; margin:0 auto;">
+      <circle cx="40" cy="60" r="14" fill="#c0510a"/><text x="40" y="65" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#fff">n0</text>
+      <circle cx="120" cy="60" r="14" fill="#c0510a"/><text x="120" y="65" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#fff">n1</text>
+      <circle cx="200" cy="60" r="14" fill="#c0510a"/><text x="200" y="65" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#fff">n2</text>
+      <circle cx="280" cy="60" r="14" fill="#c0510a"/><text x="280" y="65" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#fff">n3</text>
+      <circle cx="335" cy="60" r="9" fill="#2563eb"/><text x="335" y="40" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2563eb">key</text>
+      <line x1="54" y1="60" x2="106" y2="60" stroke="#d9d0c4" stroke-width="2" marker-end="url(#a)"/>
+      <line x1="134" y1="60" x2="186" y2="60" stroke="#d9d0c4" stroke-width="2" marker-end="url(#a)"/>
+      <line x1="214" y1="60" x2="266" y2="60" stroke="#d9d0c4" stroke-width="2" marker-end="url(#a)"/>
+      <line x1="294" y1="60" x2="326" y2="60" stroke="#c0510a" stroke-width="2" marker-end="url(#a)"/>
+      <defs><marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#c0510a"/></marker></defs>
+      <text x="180" y="105" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">hop, hop, hop... up to N hops in the worst case</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Successor-only routing: correct but slow. Finding a key can take a linear number of hops in the number of nodes.</div>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">The Downside — Linear Hops</div>
+  <p>This works and needs almost no state, but it's slow: a lookup can take <strong>O(n)</strong> network messages — one per node — in the worst case. With many (virtual) nodes, that's far too many round trips. We care about message count, not local computation, so this is the metric that matters.</p>
+</div>
+
+<p>The opposite extreme — every node knows <em>every</em> other node — gives O(1) lookups but is infeasible: Chord targets systems with a huge number of nodes, so storing all of them everywhere is prohibitive. We want something in between.</p>
+
+<h3 id="finger-tables">The Fix: Finger Tables (Binary Search on the Ring)</h3>
+<p>The "in between" is to keep just <strong>log n</strong> pointers per node, chosen so that lookups become a binary search. The insight, which the class derived: from each node, keep a pointer to the node about <strong>half the ring away</strong>, another a <strong>quarter</strong> away, an <strong>eighth</strong>, a sixteenth, and so on — each entry covering half the distance of the previous.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Finger Table</div>
+  <p>Each node maintains a <strong>finger table</strong> of <code>log n</code> entries. Entry <code>i</code> points to the node responsible for the position <strong>2<sup>i</sup> away</strong> around the ring (the successor of that position). By threading lookups through successive finger tables, every node sits at the root of a binary lookup tree over the whole ring — so a lookup halves the remaining distance at each step.</p>
+</div>
+
+<h4>The Lookup Rule</h4>
+<p>At the current node, to find key <code>K</code>: scan your finger table for the <strong>highest entry <code>F</code> whose position is still less than <code>K</code></strong> (the farthest finger that doesn't overshoot the target). Forward the request to <code>F</code> and let it continue. If no such finger exists — i.e. all your fingers are past <code>K</code> — then <em>your own successor</em> owns the key and you're done.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Why Scan the Whole Table?</div>
+  <p>We deliberately don't care about local computation cost — checking every finger-table entry is cheap. What we minimize is <em>network messages</em>. So we always take the biggest legal jump to cover the most ring per hop, even though finding it means scanning the whole table.</p>
+</div>
+
+<h3 id="lookup-trace">A Lookup, Step by Step</h3>
+<p>Here is the lecture's worked example: resolve <strong>key 26</strong> starting from <strong>node 1</strong>, on a ring whose nodes include 1, 4, 9, 11, 14, 18, 20, 21, 28. Node 1's finger entries point to (among others) nodes 4, 9, 11, 14, and 18.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>At node 1, target 26.</strong> Scan node 1's fingers for the largest that is still below 26. That's <strong>18</strong>. Jump to node 18.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>At node 18, target 26.</strong> Its largest finger below 26 is <strong>20</strong>. Jump to node 20.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>At node 20, target 26.</strong> Its largest finger below 26 is <strong>21</strong>. Jump to node 21.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>At node 21, target 26.</strong> No finger is still below 26, so the rule says: my <em>successor</em> owns it. Node 21's successor is <strong>28</strong>, and 28 owns the arc containing 26. <strong>Done</strong> — found in a handful of hops, not a linear walk.</p>
+</div>
+
+<details>
+<summary>Expand: a second trace — resolve key 12 from node 28</summary>
+<div class="details-body">
+<p>Starting at node 28, target 12 (remember the ring wraps around past 0): take the biggest legal finger each step — <strong>28 → 4 → 9 → 11</strong>, then the next step reaches <strong>18</strong>, the successor that owns 12's arc. Notice that a node always knows the keys it owns itself, so if the lookup ever lands on the owning node it stops immediately rather than hopping further.</p>
+</div>
+</details>
+
+<div class="callout insight">
+  <div class="callout-title">Why O(log n)?</div>
+  <p>Each finger entry covers a distance double the previous, so each hop at least <strong>halves</strong> the remaining gap to the target — exactly like binary search. Halving a space of size <code>n</code> takes <code>log n</code> steps, so lookups complete in <strong>O(log n) hops</strong> in the worst case (with some constant factors). We went from O(n) to O(log n) by storing just log n pointers.</p>
+</div>
+
+<h3 id="join-protocol">The Hard Part: Joining the Ring</h3>
+<p>Lookups are settled. The genuinely tricky part is what happens when a node <em>joins</em>: every affected finger table must be fixed and data must move. A new node <code>N</code> joins knowing one arbitrary existing node <code>N0</code>.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Find your successor.</strong> Ask <code>N0</code> to look up <code>N</code> <em>as if it were a key</em> — the ordinary finger-table lookup — to find <code>N</code>'s successor on the ring.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Find your predecessor.</strong> Ask that successor "who is your predecessor?" — that's now <code>N</code>'s predecessor. Update the successor's predecessor pointer to point at <code>N</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Fill your own finger table.</strong> For each entry, compute its target position and ask the system to find that position's successor (again, just like a key lookup). Easy.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Fix everyone else's fingers.</strong> The hard part: which <em>other</em> nodes have a finger that should now point at <code>N</code>? We must not scan all of them.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">The Key Optimization for Step 4</div>
+  <p>A node <code>P</code> gets <code>N</code> as its <em>i</em>-th finger entry only if <code>P</code> precedes <code>N</code> by at least <strong>2<sup>i−1</sup></strong>. In other words, a node too <em>close</em> to <code>N</code> could never have <code>N</code> as a <em>far</em> finger entry. So for finger entry <code>i</code>, we jump straight to the relevant region: find the predecessor of the position <code>N − 2<sup>i−1</sup></code>, check whether that node's <em>i</em>-th entry should now be <code>N</code> (i.e. whether <code>N</code> beats its current entry), update if so, then walk to <em>its</em> predecessor and repeat for the same entry until we pass out of range. This examines only the few nodes that could possibly be affected — as few as <code>i</code> in the best case — instead of the whole ring.</p>
+</div>
+
+<details>
+<summary>Expand: worked join — node 6 joins a ring of {0, 1, 3}</summary>
+<div class="details-body">
+<p>Chord finger tables are written with a <em>start</em> column: for entry <code>i</code> at node <code>n</code>, <code>start = n + 2<sup>i</sup></code>, and the entry's value is the <em>successor</em> of that start. (The "interval" column is just the range between consecutive starts — purely a visual aid, derivable from the starts, so it carries no real information.)</p>
+<p>Node 6 joins. Its starts are <code>6+1=7</code>, <code>6+2=0</code> (wrapping), <code>6+4=2</code>. The successors are: <code>succ(7)=0</code>, <code>succ(0)=0</code>, <code>succ(2)=3</code> — so node 6's finger table is <code>[0, 0, 3]</code>.</p>
+<p>Now existing nodes update. Node 0's last entry, whose start is <code>0+4=4</code>, previously pointed past 6; its successor is now <strong>6</strong>. Likewise an entry with start 5 now has successor 6, and start 4 → successor 6. The entry from 7 still points to 0 (unchanged). The protocol finds exactly these by jumping to the predecessor of <code>6 − 2<sup>i−1</sup></code> for each entry and walking backward, rather than touching every node.</p>
+</div>
+</details>
+
+<h3 id="correctness-perf">Separating Correctness from Performance</h3>
+<p>Fixing every finger table on every join means lots of communication — each join touches many nodes. That's expensive under heavy churn. Chord's escape is one of its most important and reusable ideas, and it returns next lecture in Dynamo.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Correctness vs. Performance</div>
+  <p>Chord <strong>separates correctness from performance</strong>. For <em>correctness</em>, a joining node needs only one thing immediately: its <strong>successor</strong>. With the right successor, requests can always be forwarded to where they belong and the node knows which keys it owns. The <strong>finger tables and predecessor pointers are not needed for correctness</strong> — they're a performance optimization, repaired lazily by a periodic <strong>stabilization protocol</strong>.</p>
+</div>
+
+<table class="compare-table">
+  <tr><th>Successor pointers</th><th>Finger tables &amp; predecessors</th></tr>
+  <tr><td>Required for <strong>correctness</strong> — the system can't run without them.</td><td>Only for <strong>performance</strong> — speed up lookups from O(n) to O(log n).</td></tr>
+  <tr><td>Set up immediately when a node joins.</td><td>Updated lazily/periodically via stabilization.</td></tr>
+  <tr><td>Tell you where to forward and which keys you own.</td><td>Let you take big binary-search jumps.</td></tr>
+</table>
+
+<p>So performance degrades gracefully: with intact fingers, lookups are O(log n); with stale fingers but correct successors, the worst case falls back to following successor pointers — "not fantastic, not terrible either." And there's a reassuring theorem: take a stable ring of <code>n</code> nodes (good fingers), then add <code>n</code> more nodes with <em>correct successors but no fingers at all</em> — lookups <em>still</em> take O(log n) with high probability. The intuition: you only follow slow successor hops until you reach any node that <em>does</em> have good fingers, and with half the nodes fingered, you reach one quickly and jump from there.</p>
+
+<div class="quiz" id="quiz6">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In Chord, why are <strong>finger tables</strong> described as needed for performance but <strong>not</strong> for correctness?</div>
+  <div class="quiz-options" data-quiz="q6">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Finger tables store the data itself, so losing them loses data.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>As long as every node knows its correct successor, requests can always be forwarded to the right owner; fingers only make those lookups faster (O(log n) instead of O(n)).</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Finger tables are required for correctness, but successors are optional.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Without finger tables, lookups return wrong answers, just more slowly.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q6','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q6">
+    <strong>Correct — B.</strong> Correctness only needs the successor chain: with correct successors, a request can always be passed clockwise until it reaches the owning node, and each node knows which keys it owns. Finger tables merely let you skip ahead in binary-search fashion, turning O(n) hops into O(log n). So fingers can be stale or missing and lookups are still <em>correct</em> (just slower) — which is exactly why Chord repairs them lazily via stabilization. D is wrong: missing fingers slow lookups but never make them incorrect.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SYNTHESIS ═══════════════════════ -->
+<section id="synthesis" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This lecture closed out the "foundations" arc of the course by attacking a problem replication never could. Every earlier technique — clocks, Paxos, the consistency-model menu — assumed <em>every replica holds everything and handles everything</em>. That assumption caps the system at the capability of its weakest machine. <strong>Sharding</strong> breaks it by partitioning state across machines, enabling cheap horizontal scaling.</p>
+
+<p>The whole lecture is one chain of "this fails, so we fix it":</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Sharding solves storage and (sometimes) load</strong> — but provides zero fault tolerance. Sharding and replication are <em>orthogonal</em>: performance vs. reliability. Real systems like HDFS compose both.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>We need to find items.</strong> Centralized lookup (HDFS name server) is simple but a bottleneck — tolerable only because HDFS's coarse 1 GB granularity makes lookups rare. For small-item workloads we go decentralized.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Range partitioning</strong> skews load; <strong>modulo hashing</strong> spreads load but moves nearly all data whenever membership changes — fatal under churn.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Consistent hashing (the ring)</strong> makes assignment independent of node count: join/remove moves only ≈ keys/nodes, with just one server involved. <strong>Virtual nodes</strong> fix unlucky splits and handle heterogeneous hardware.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <p><strong>Chord's finger tables</strong> route any lookup in O(log n) hops via binary search on the ring, while <strong>separating correctness (successors) from performance (fingers)</strong> so the system stays correct and fast even under heavy churn.</p>
+</div>
+
+<p>If you carry one sentence out of today, make it the orthogonality principle: <strong>sharding improves performance, replication provides fault tolerance, and although both add machines, they are fundamentally different goals.</strong> And keep the correctness-vs-performance separation in your toolkit — it's a design pattern, not just a Chord detail.</p>
+
+<div class="callout tip" style="margin-top: 32px;">
+  <div class="callout-title">What's Next</div>
+  <p><strong>Next time: fault tolerance for Chord, and Dynamo.</strong> We deferred the scary case — nodes that <em>crash</em> rather than gracefully leave (a crashed successor breaks the correctness chain, far worse than a voluntary removal). Dynamo combines sharding with replication and reuses today's correctness-vs-performance idea. A few lectures later, <strong>distributed transactions</strong> will finally tackle the cross-shard problems we skipped: pulling data from multiple shards consistently. After that, a guest speaker from MongoDB on consensus. Today's ring is the substructure all of it is built on.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

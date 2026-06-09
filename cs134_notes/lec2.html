@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 2 — Interactive Textbook</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 2 — Distributed Systems</div>
+  <a href="#part1">Part I — Why MapReduce?</a>
+  <a href="#big-data" class="sub">The Big-Data Problem</a>
+  <a href="#properties" class="sub">Desirable Properties</a>
+  <a href="#strawman" class="sub">A Strawman That Fails</a>
+  <a href="#quiz-why" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — The MapReduce Model</a>
+  <a href="#map-reduce-funcs" class="sub">Map and Reduce</a>
+  <a href="#word-count" class="sub">Example: Word Count</a>
+  <a href="#page-rank" class="sub">Example: PageRank</a>
+  <a href="#join" class="sub">Example: Joining Tables</a>
+  <a href="#quiz-model" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — Execution &amp; Architecture</a>
+  <a href="#barrier" class="sub">The Synchronization Barrier</a>
+  <a href="#master" class="sub">The Master Node</a>
+  <a href="#control-data" class="sub">Control vs. Data Plane</a>
+  <a href="#quiz-exec" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — Client / Server &amp; RPC</a>
+  <a href="#cs-model" class="sub">The Client–Server Model</a>
+  <a href="#rpc" class="sub">Remote Procedure Calls</a>
+  <a href="#threading" class="sub">Blocking, Threads &amp; Pools</a>
+  <a href="#quiz-rpc" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Fault Tolerance</a>
+  <a href="#checkpointing" class="sub">Checkpointing to Disk</a>
+  <a href="#master-fail" class="sub">When the Master Fails</a>
+  <a href="#rsm" class="sub">Replicated State Machines</a>
+  <a href="#state-vs-events" class="sub">State vs. Events</a>
+  <a href="#quiz-fault" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part6">Part VI — Clock Synchronization</a>
+  <a href="#why-clocks" class="sub">Why Ordering Needs Clocks</a>
+  <a href="#cristian" class="sub">Cristian's Algorithm / NTP</a>
+  <a href="#monotonic" class="sub">Drift &amp; Monotonicity</a>
+  <a href="#quiz-clocks" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#synthesis">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">CS134 · Distributed Systems</div>
+  <h1>MapReduce, RPC &amp; the First Encounter with Faults</h1>
+  <p class="hero-sub">An interactive guide to Lecture 2 — how to process petabytes of data across thousands of unreliable machines, and the recurring trade-offs that shape every distributed system.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>Why MapReduce? The Big-Data Problem</h2>
+</div>
+
+<p>Before we learn <em>how</em> a system works, it helps to feel the pain it was built to relieve. So start with a concrete scenario the lecture used: imagine you run a genomics biotech company that produces personalized DNA ancestry reports. Each user uploads megabytes of genome data, and you have <strong>millions of users</strong>. You want to scan all of that data to find which genes correlate with susceptibility to a particular disease.</p>
+
+<p>This is not a niche problem. The lecture lined up several others that share its shape:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Web search ranking.</strong> Google's original product ranked web pages by how relevant they'd be to a query. To do that, you have to analyze essentially the <em>entire web</em> and run statistics over it.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Ad selection.</strong> Choosing which ad to show requires analyzing clicks and actions from <em>billions</em> of users.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>System diagnostics.</strong> Analyzing data-center logs and transactions — data that ranges from terabytes to petabytes in size.</p>
+</div>
+
+<h3 id="big-data">The common pattern: too much data for one machine</h3>
+
+<p>What ties these together? Each application has <strong>a lot of data</strong> — far more than any single computer can hold or process in reasonable time. A single server cannot store the whole web, and even if it could, processing it on one machine would take forever, because one machine simply does not scale to that workload.</p>
+
+<p>So we need two things at once: <strong>distributed storage</strong> (spread the data across many machines) and <strong>distributed processing</strong> (compute on it in parallel). This is exactly the gap MapReduce fills.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Term — Distributed Processing</div>
+  <p>Splitting a single computation across many machines so they work on different pieces of the data <em>at the same time</em>, then combining their partial results into one answer. The goal is to finish a job that no single machine could complete on its own.</p>
+</div>
+
+<h3 id="properties">What do we actually want from such a system?</h3>
+
+<p>The professor asked the room to brainstorm the properties a distributed-processing system should have. Their answers, cleaned up and organized, give us the design goals MapReduce was built to hit:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Scalability.</strong> The more machines we add, the more load (throughput) we can handle. Throwing more hardware at the problem should buy more performance.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Fault tolerance.</strong> When you run on hundreds or thousands of cheap machines, some <em>will</em> fail mid-computation. The system must make progress and still finish despite failures.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Simplicity.</strong> An application developer should <em>not</em> have to rewrite all the low-level distribution and fault-handling logic from scratch. The framework hides that.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Wide applicability (generality).</strong> The framework must serve many kinds of applications — search ranking, ad selection, genomics, log analysis. If it only fit one app, you'd just build that app directly.</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — You Can't Have Everything</div>
+  <p>The single most important theme of this entire course makes its first appearance here: <strong>you cannot have high throughput, low latency, and perfect fault tolerance all at once.</strong> Every system has to sacrifice something. The art of system design is choosing which property matters least for your use case and giving <em>that</em> one up.</p>
+</div>
+
+<h4>The property MapReduce chooses to sacrifice: latency</h4>
+
+<p>If you can't have everything, what does MapReduce give up? <strong>Latency.</strong> MapReduce is built for <em>batch jobs</em> — large computations that run overnight or weekly. You compute the latest page rankings, the best ads per user, or the latest diagnostics in a big synchronous batch, store the results, and then when a user needs an answer they just look up the precomputed result.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Why Sacrificing Latency Is Safe Here</div>
+  <p>Because results are precomputed in the background and merely <em>looked up</em> on demand, the user-facing response is still fast — even though the heavy computation that produced it was slow. Insisting on low latency <em>during</em> the batch job would make the system far harder to build, so MapReduce deliberately declares low latency a <strong>non-goal</strong>.</p>
+</div>
+
+<h3 id="strawman">A strawman solution — and why it fails</h3>
+
+<p>Here's the most obvious idea: partition the data across many servers, and have each server process only its own local chunk. Problem solved, right? Let's test it against PageRank.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Why "Just Process Local Data" Breaks</div>
+  <p>To rank a web page, you can't look at 5 pages in isolation and declare a ranking — a page's importance depends on <em>all</em> the pages that link to it, which live on other machines. There are <strong>inter-data dependencies</strong>: PageRank needs the whole web, and the genomics analysis needs every user who carries a given gene. A computation that only ever touches local data can't capture these cross-machine relationships.</p>
+</div>
+
+<p>So the real requirement is a system that does distributed processing <em>but still lets data from different machines come together</em> when the computation demands it. That "bringing together" step is the heart of MapReduce, which we build up next.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Where This Leads</div>
+  <p>Keep the four goals — scalable, fault-tolerant, simple, general — in your head. In Part III we'll revisit each one and check it off, and the fault-tolerance goal will dominate Parts V and VI. The "you can't have everything" trade-off returns every single time.</p>
+</div>
+
+<div class="quiz" id="quiz-why">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Why does MapReduce treat <strong>low latency</strong> as an explicit non-goal?</div>
+  <div class="quiz-options" data-quiz="qwhy">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Because network hardware in 2004 was too slow to support it.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Because it runs batch jobs whose results are precomputed and later looked up, so giving up latency simplifies the design without hurting users.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Because MapReduce can actually achieve low latency, high throughput, and perfect fault tolerance simultaneously.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Because reducing latency would make the programming model more general.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('qwhy','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="qwhy">
+    <strong>Correct — B.</strong> Since you can't optimize every property at once, MapReduce sacrifices the one its use cases tolerate best: latency. Its jobs run in the background (overnight/weekly) and store results that users simply read later, so the slow batch never reaches the user-facing path. C is exactly the myth the lecture debunks — you <em>cannot</em> have all three at once — and D inverts the relationship, since simplicity/generality come from the model, not from latency.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>The MapReduce Programming Model</h2>
+</div>
+
+<p>MapReduce, introduced in 2004 and popularized by the open-source <strong>Hadoop</strong> framework, is really <em>two</em> things bundled together:</p>
+
+<table class="compare-table">
+  <tr><th>Programming interface</th><th>Distributed execution framework</th></tr>
+  <tr><td>The <code>map</code> and <code>reduce</code> functions you write.</td><td>The machinery that runs them across a cluster.</td></tr>
+  <tr><td>Delivers <strong>simplicity</strong> and <strong>generality</strong>.</td><td>Delivers <strong>scalability</strong> and <strong>fault tolerance</strong>.</td></tr>
+</table>
+
+<p>Notice how cleanly this maps onto our four goals: two come from the interface you program against, two come from the framework that executes it. You write two small functions; the framework handles the hard distributed-systems parts.</p>
+
+<h3 id="map-reduce-funcs">The two functions: map and reduce</h3>
+
+<p>Everything in MapReduce is expressed as <strong>keys and values</strong>. Each data item is a (key, value) pair. The computation flows through five stages:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Partition.</strong> The (key, value) data is split across machines. Usually we partition it the way it already sits on disk — if machine 1 already holds a chunk, we leave it there rather than shuffling it around (moving data is expensive).</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Map.</strong> Each machine applies the user's <code>map</code> function to its local partition, producing intermediate (key, value) pairs.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Coalesce (the shuffle).</strong> All intermediate pairs are regrouped <em>by key</em>: every value tagged with key <code>A</code> is gathered together, every <code>C</code> together, and so on — even though they came from different machines. This is the most expensive and most important step.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Reduce.</strong> The user's <code>reduce</code> function runs once per key, receiving <em>all</em> the values for that key, and produces the final output.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <p><strong>Output.</strong> Collect the reducer outputs as the answer.</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="240" viewBox="0 0 420 240" style="display:block; margin:0 auto;">
+      <!-- column labels -->
+      <text x="55" y="18" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#6b6560">PARTITIONS</text>
+      <text x="190" y="18" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#6b6560">MAP OUT</text>
+      <text x="300" y="18" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#c0510a">COALESCE BY KEY</text>
+      <text x="392" y="18" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#6b6560">REDUCE</text>
+      <!-- partitions -->
+      <rect x="20" y="35" width="70" height="40" rx="6" fill="#fff" stroke="#d9d0c4"/>
+      <text x="55" y="60" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">M1</text>
+      <rect x="20" y="100" width="70" height="40" rx="6" fill="#fff" stroke="#d9d0c4"/>
+      <text x="55" y="125" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">M2</text>
+      <rect x="20" y="165" width="70" height="40" rx="6" fill="#fff" stroke="#d9d0c4"/>
+      <text x="55" y="190" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">M3</text>
+      <!-- map outputs -->
+      <text x="155" y="48" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">A B</text>
+      <text x="155" y="113" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">A C</text>
+      <text x="155" y="178" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">A C</text>
+      <!-- arrows partition -> map -->
+      <line x1="90" y1="55" x2="148" y2="44" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="90" y1="120" x2="148" y2="109" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="90" y1="185" x2="148" y2="174" stroke="#d9d0c4" stroke-width="2"/>
+      <!-- coalesce boxes -->
+      <rect x="250" y="40" width="100" height="32" rx="6" fill="#fef3eb" stroke="#c0510a"/>
+      <text x="300" y="61" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#c0510a">A: [.,.,.]</text>
+      <rect x="250" y="100" width="100" height="32" rx="6" fill="#fef3eb" stroke="#c0510a"/>
+      <text x="300" y="121" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#c0510a">C: [.,.]</text>
+      <rect x="250" y="160" width="100" height="32" rx="6" fill="#fef3eb" stroke="#c0510a"/>
+      <text x="300" y="181" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#c0510a">B: [.]</text>
+      <!-- arrows map -> coalesce (crossing) -->
+      <line x1="185" y1="44" x2="248" y2="56" stroke="#e8833a" stroke-width="1.5"/>
+      <line x1="185" y1="44" x2="248" y2="176" stroke="#e8833a" stroke-width="1.5"/>
+      <line x1="185" y1="109" x2="248" y2="56" stroke="#e8833a" stroke-width="1.5"/>
+      <line x1="185" y1="109" x2="248" y2="116" stroke="#e8833a" stroke-width="1.5"/>
+      <line x1="185" y1="174" x2="248" y2="56" stroke="#e8833a" stroke-width="1.5"/>
+      <line x1="185" y1="174" x2="248" y2="116" stroke="#e8833a" stroke-width="1.5"/>
+      <!-- reduce outputs -->
+      <line x1="350" y1="56" x2="372" y2="56" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="350" y1="116" x2="372" y2="116" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="350" y1="176" x2="372" y2="176" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="392" y="60" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">rA</text>
+      <text x="392" y="120" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">rC</text>
+      <text x="392" y="180" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">rB</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Data flow: map runs locally per partition, then the orange "coalesce / shuffle" regroups every value by its key so each reducer sees one key's complete list.</div>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">A Built-In Assumption: One Key Fits on One Machine</div>
+  <p>What if a single key has so many values that they don't fit on one reducer? MapReduce simply <strong>assumes that doesn't happen</strong>. The model relies on there being <em>orders of magnitude more keys than machines</em>, so each key's value-list is small enough to process on a single machine. If that assumption breaks, plain MapReduce can't handle it.</p>
+</div>
+
+<h3 id="word-count">Worked example: word count</h3>
+
+<p>The classic MapReduce job is counting how many times each word appears across a set of files. Here's how the two functions are written:</p>
+
+<pre><code><span class="cm">// key = filename, value = the text of that file</span>
+<span class="kw">function</span> <span class="fn">map</span>(key, value):
+    <span class="kw">for</span> word <span class="kw">in</span> <span class="fn">split</span>(value):
+        <span class="fn">emit</span>(word, <span class="nb">1</span>)        <span class="cm">// one tuple (word, 1) per occurrence</span>
+
+<span class="cm">// key = a word, values = list of 1's, one per occurrence</span>
+<span class="kw">function</span> <span class="fn">reduce</span>(key, values):
+    <span class="fn">emit</span>(key, <span class="fn">sum</span>(values))   <span class="cm">// total count for this word</span></code></pre>
+
+<p>The mapper emits <code>(word, 1)</code> for every word it sees. After the coalesce step, the reducer for a given word receives the list of all the 1's emitted for it, and it sums them. (A student noted you could also just take the <em>length</em> of the list, since every value is <code>1</code> — but summing is more general, because it still works if mappers pre-aggregate and emit counts larger than 1.)</p>
+
+<p>Let's trace two tiny files through the whole pipeline:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Input.</strong> File <code>bar</code> contains <code>"foo bar"</code>; file <code>2</code> contains <code>"foo buzz world"</code>. They already live on separate machines, so no repartitioning is needed.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Map.</strong> Machine 1 emits <code>(foo,1) (bar,1)</code>. Machine 2 emits <code>(foo,1) (buzz,1) (world,1)</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Coalesce.</strong> Regroup by key: <code>foo → [1, 1]</code>, <code>bar → [1]</code>, <code>buzz → [1]</code>, <code>world → [1]</code>. Note the two <code>foo</code> tuples came from different machines and were brought together.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Reduce.</strong> Sum each list: <code>foo → 2</code>, <code>bar → 1</code>, <code>buzz → 1</code>, <code>world → 1</code>. Done.</p>
+</div>
+
+<h3 id="page-rank">Worked example: PageRank (and chaining stages)</h3>
+
+<p>PageRank computes a page's rank as the <em>average rank of the pages that link to it</em>. Assume every page starts with some initial rank from a prior pass.</p>
+
+<pre><code><span class="cm">// key = page W, value = (W's links, W's current rank)</span>
+<span class="kw">function</span> <span class="fn">map</span>(W, contents_and_rank):
+    <span class="kw">for</span> P <span class="kw">in</span> <span class="fn">links_of</span>(W):    <span class="cm">// every page P that W links to</span>
+        <span class="fn">emit</span>(P, W.rank)        <span class="cm">// "page P, here's the rank of a page pointing to you"</span>
+
+<span class="cm">// key = page P, values = ranks of all pages linking to P</span>
+<span class="kw">function</span> <span class="fn">reduce</span>(P, incoming_ranks):
+    <span class="fn">emit</span>(P, <span class="fn">average</span>(incoming_ranks))</code></pre>
+
+<p>The mapper "pushes" each page's rank out along its links. After coalescing by destination page <code>P</code>, the reducer for <code>P</code> has the ranks of every page linking to it, and averages them. That's one round of PageRank.</p>
+
+<div class="callout insight">
+  <div class="callout-title">You Can Chain MapReduce Stages</div>
+  <p>One pass isn't enough — you repeat the map→reduce cycle, feeding each round's output into the next, <strong>until the ranks stop changing (converge)</strong>. This reveals a general pattern: MapReduce jobs are often <em>pipelines</em> of map and reduce stages, run again and again. A single computation may be many MapReduce rounds glued end to end.</p>
+</div>
+
+<h3 id="join">Worked example: joining two tables</h3>
+
+<p>Now suppose we have two tables keyed by student ID: one mapping ID → name, another mapping ID → grades on two assignments. We want to find students who improved (grade 2 &gt; grade 1) and produce their names. How do you express a <em>join</em> in MapReduce?</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Map = identity (almost).</strong> The mapper barely transforms anything: it reads a row and emits it <em>keyed by user ID</em>. Row <code>(0001, "Nancy")</code> comes out as <code>(0001, "Nancy")</code>; a grades row comes out keyed by its ID too. The mapper's whole job is to set the key so the shuffle can do the real work.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Coalesce does the join.</strong> Because both tables are keyed by ID, the coalesce step naturally groups each student's name-row and grades-row together under the same key. <em>The shuffle performs the join for you.</em></p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Reduce decides.</strong> For each ID the reducer now has two values — the name and the grades. It checks whether grade 2 &gt; grade 1, and if so emits the student's name.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">A Subtle Optimization: Filter Early</div>
+  <p>You can do the grade comparison either in the reducer or push some filtering into the mapper over the grades table. If the mapper drops students who didn't improve, you emit <strong>fewer intermediate values</strong> into the expensive coalesce step. The clever trick: after filtering, a reducer that sees only <em>one</em> tuple for an ID knows that student didn't improve (their grades row was dropped) and stays silent; a reducer that sees <em>two</em> tuples knows they improved and prints the name. Since the coalesce/shuffle is the costliest stage, <strong>getting rid of data before it is almost always a win.</strong></p>
+</div>
+
+<details>
+<summary>Expand: Can I chain extra "map-only" computation between map and reduce?</summary>
+<div class="details-body">
+<p>A student asked whether you can insert extra functional (side-effect-free) computation after the map but before the reduce. The answer: there is no magic "in-between" stage — there's only <code>map</code> and <code>reduce</code>. But you don't need one, because you can <strong>chain stages</strong>: do map, then another map, then reduce — i.e. <code>map → map → reduce</code>. As long as the data isn't moving between partitions (no shuffle), you can chain as many maps together as you like, either fused into one map function or kept separate. The shuffle is the only thing that forces a boundary.</p>
+</div>
+</details>
+
+<div class="quiz" id="quiz-model">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In the table-join example, which stage actually performs the join of the two tables?</div>
+  <div class="quiz-options" data-quiz="qmodel">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>The map function, which merges both rows before emitting.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>The coalesce (shuffle) step, which groups both tables' rows under the shared user-ID key.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>The output stage, after the reducer runs.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>The master node, which joins rows before assigning tasks.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('qmodel','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="qmodel">
+    <strong>Correct — B.</strong> The mapper is nearly an identity function — it only sets the key to the user ID. The <em>coalesce</em> step then regroups by key, automatically gathering each student's name-row and grades-row together, which <em>is</em> the join. The reducer merely inspects the grouped values. A is wrong because the mapper sees one row at a time and can't merge across tables; D is wrong because the master schedules tasks, it doesn't touch row data.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>Execution &amp; Architecture</h2>
+</div>
+
+<p>We've seen the <em>functions</em>. Now: how does the framework actually run them across a cluster, and what constraints does the model impose on the order of execution?</p>
+
+<h3 id="barrier">When can a reduce task start? The synchronization barrier</h3>
+
+<p>Tempting answer: as soon as all the <code>A</code> keys are gathered, start reducing <code>A</code> — don't wait for <code>C</code> and <code>W</code>. That's a nice instinct, but there's a catch.</p>
+
+<div class="callout warning">
+  <div class="callout-title">You Can't Reduce Until Every Mapper Is Done</div>
+  <p>How do you know you've collected <em>all</em> the values for key <code>A</code>? The very last tuple from the slowest, straggling mapper could be an <code>A</code> tuple you still need. So a reducer for <code>A</code> cannot safely begin until <strong>every map task has finished</strong> — otherwise it might compute on an incomplete list and produce a wrong answer.</p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Key Term — Synchronization Barrier</div>
+  <p>A point in a parallel computation that <em>all</em> participants must reach before <em>any</em> may proceed past it. In MapReduce, the barrier sits between the map phase and the reduce phase: no reduce can start until the last mapper completes. It guarantees correctness at the cost of being held hostage by the slowest worker.</p>
+</div>
+
+<details>
+<summary>Expand: Can we ever break the barrier? (Stream processing &amp; reduction trees)</summary>
+<div class="details-body">
+<p>Yes — but only by changing the programming model. If your reducer must receive a complete list, the barrier is unavoidable. But <strong>stream processing systems</strong> let data flow through incrementally: you rewrite <code>reduce</code> so it accepts new values one chunk at a time and updates its result as they arrive. Alternatively, you can use <strong>reduction trees</strong> — combine values pairwise (binary or n-ary) rather than all at once. Both approaches lift the barrier and improve performance, but they make the programming model harder, and not every task (e.g. a global sort) decomposes cleanly into a tree without redundant work. The standard MapReduce assumption in this course is the simple one: the reducer takes the whole list, so the barrier stays.</p>
+</div>
+</details>
+
+<h3 id="master">The master node</h3>
+
+<p>Who coordinates all of this? A single <strong>master node</strong>. (You'll implement one in Assignment 1.) Its responsibilities:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Assign tasks.</strong> Given the program and knowledge of where the initial data lives, the master hands map and reduce tasks to workers.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Track status.</strong> It records which tasks are done and which are still running, so it knows when the barrier is satisfied and the computation can advance.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Detect &amp; handle failures.</strong> If a worker crashes, the master notices and reruns that worker's task elsewhere to recover the missing result.</p>
+</div>
+
+<p>Checking off our four goals against this design: <strong>scalable</strong> ✓ (run mappers and reducers in parallel on more machines for more throughput), <strong>simple</strong> ✓ (you only write map and reduce), <strong>widely applicable</strong> ✓ (no assumptions beyond expressing work in the stateless map/reduce form). That leaves <strong>fault tolerance</strong>, which we tackle in Part V — but first we need vocabulary for reasoning about system diagrams.</p>
+
+<h3 id="control-data">Two kinds of arrows: the control plane vs. the data plane</h3>
+
+<p>Architecture diagrams in this course use two arrow styles — dashed and solid — and they mean genuinely different things. This distinction recurs all term, so it's worth nailing down.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Term — Control Plane vs. Data Plane</div>
+  <p><strong>Control arrows</strong> carry commands and coordination: "wake up and do this task," "stop," "I'm done." They <em>must</em> flow between computational components — there has to be a process or thread on each end sending and receiving. <strong>Data arrows</strong> carry the actual payload data being processed. Crucially, a data arrow need <em>not</em> connect two compute components — it can run between a compute component and <em>storage</em> (you pull data from disk or push results to it).</p>
+</div>
+
+<table class="compare-table">
+  <tr><th>Control plane</th><th>Data plane</th></tr>
+  <tr><td>Coordination, commands, status</td><td>Movement of the actual data</td></tr>
+  <tr><td>Always between two compute components</td><td>Can involve storage on one end</td></tr>
+  <tr><td>"Run task 3", "I'm done", "stop"</td><td>Reading a partition, writing intermediate output</td></tr>
+</table>
+
+<div class="callout tip">
+  <div class="callout-title">Why This Vocabulary Matters Later</div>
+  <p>The next topic — the client–server model — is described as "a key abstraction <em>for the control plane</em>." And in Part V, MapReduce's fault tolerance works by routing intermediate results through the <em>data plane</em> (to storage) rather than sending them directly compute-to-compute. Keeping control and data separate in your head is how you'll reason about every protocol in this course.</p>
+</div>
+
+<div class="quiz" id="quiz-exec">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Why must <em>all</em> map tasks finish before <em>any</em> reduce task begins?</div>
+  <div class="quiz-options" data-quiz="qexec">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Because reducers and mappers can't run on the same machine.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Because the master can only assign one phase of tasks at a time.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Because the last tuple from a still-running mapper might belong to a key a reducer is about to process, so starting early risks an incomplete value list.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Because data arrows are slower than control arrows.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('qexec','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="qexec">
+    <strong>Correct — C.</strong> The reducer must receive the <em>complete</em> set of values for its key to compute correctly, and any unfinished mapper could still emit a value for that key. Until the slowest mapper finishes, you can't be sure the list is complete — that's the synchronization barrier. A is false (mappers and reducers happily share machines), and the constraint is about correctness, not about scheduling limits or arrow speed.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>The Client–Server Model &amp; RPC</h2>
+</div>
+
+<p>We just named the control plane as where components coordinate. The fundamental abstraction for that coordination — used throughout distributed systems and throughout this course's assignments — is the <strong>client–server model</strong>.</p>
+
+<h3 id="cs-model">Clients, servers, and requests</h3>
+
+<div class="callout concept">
+  <div class="callout-title">Key Term — Client–Server Model</div>
+  <p>Two roles. A <strong>client</strong> sends a <em>request</em> asking the server to do something — perform a stateful action, return a result, etc. A <strong>server</strong> sits in a loop <em>listening</em> for requests; when one arrives it processes it and returns a <em>response</em>. A web backend is the canonical example: the browser (client) says "give me the HTML of this page," and the server replies with it.</p>
+</div>
+
+<p>This is primarily a <em>control-plane</em> abstraction — it's about asking another component to act. Secondarily it touches the data plane too, since requests and responses can carry data.</p>
+
+<h3 id="rpc">Remote Procedure Calls (RPC)</h3>
+
+<p>A particularly clean way to use client–server is the <strong>Remote Procedure Call</strong>. The server publishes an API of methods with specific signatures; the client invokes those methods remotely, passing arguments and waiting for the response.</p>
+
+<div class="callout insight">
+  <div class="callout-title">RPC Makes the Network Look Like a Function Call</div>
+  <p>From the programmer's side, calling a remote method <em>looks just like calling a local function</em> — you call it with arguments and get a return value. Under the hood, the call travels from client to server, the server runs the code, and the result travels back. RPC hides the network so you can write client code that assumes nothing about the server except its method signatures. Real frameworks like <strong>gRPC</strong> and <strong>Thrift</strong> provide this.</p>
+</div>
+
+<p>Here's a minimal RPC interface — a <code>Greeter</code> service offering one method, <code>SayHello</code>:</p>
+
+<pre><code><span class="kw">service</span> <span class="tp">Greeter</span> {
+    <span class="cm">// takes a HelloRequest, returns a HelloReply</span>
+    <span class="fn">SayHello</span>(<span class="tp">HelloRequest</span>) <span class="op">-&gt;</span> <span class="tp">HelloReply</span>
+}
+
+<span class="kw">message</span> <span class="tp">HelloRequest</span> { name: <span class="tp">string</span> }
+<span class="kw">message</span> <span class="tp">HelloReply</span>   { greeting: <span class="tp">string</span> }</code></pre>
+
+<p>A client just sends its name and gets back <code>"hello, &lt;name&gt;"</code>. That signature is the <em>entire contract</em>: the client can be written against it without knowing anything else about the server's internals.</p>
+
+<h3 id="threading">The performance trap: blocking servers</h3>
+
+<p>Now the lecture asked a sharp question: would you build Facebook's front end with a server that processes one request fully before touching the next? Let's see what goes wrong.</p>
+
+<div class="callout warning">
+  <div class="callout-title">A Single-Threaded Server Blocks Everyone Behind</div>
+  <p>If the server handles requests one at a time, every new request must wait in line for <em>all</em> the requests ahead of it to finish. As load grows, this queue grows, and <strong>every</strong> request suffers a latency hit purely from queuing. The server cannot scale.</p>
+</div>
+
+<p>The fix is <strong>threads</strong>. The lecture walked through three designs, each fixing the previous one's flaw:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Thread-per-request.</strong> A listener thread accepts requests and spawns a fresh thread to handle each one. Now requests run concurrently instead of queuing.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>The flaw: unbounded threads.</strong> Under heavy load you might spawn 100,000 threads for 100,000 requests. They all contend for the same finite CPU and memory, so the machine is overwhelmed and <em>everyone</em> takes the latency hit anyway. (There can also be race conditions if the server holds shared state, though here we assume it's stateless.)</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>The standard fix: a thread pool.</strong> A listener thread puts incoming requests into a <em>queue</em>, and a <strong>fixed-size pool</strong> of worker threads pulls from that queue. The number of threads is bounded, so the machine never gets overwhelmed by thread explosion. (We assume listening is much cheaper than processing, so the listener itself isn't the bottleneck.)</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="400" height="170" viewBox="0 0 400 170" style="display:block; margin:0 auto;">
+      <!-- requests -->
+      <text x="40" y="20" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#6b6560">REQUESTS</text>
+      <circle cx="25" cy="45" r="8" fill="#fff" stroke="#d9d0c4"/>
+      <circle cx="45" cy="70" r="8" fill="#fff" stroke="#d9d0c4"/>
+      <circle cx="25" cy="95" r="8" fill="#fff" stroke="#d9d0c4"/>
+      <!-- listener -->
+      <rect x="80" y="55" width="70" height="40" rx="8" fill="#eff4ff" stroke="#2563eb"/>
+      <text x="115" y="72" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#2563eb">Listener</text>
+      <text x="115" y="86" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#2563eb">thread</text>
+      <line x1="55" y1="70" x2="78" y2="72" stroke="#d9d0c4" stroke-width="2"/>
+      <!-- queue -->
+      <text x="200" y="20" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#6b6560">QUEUE</text>
+      <rect x="170" y="55" width="60" height="40" rx="6" fill="#fff" stroke="#d9d0c4"/>
+      <line x1="184" y1="60" x2="184" y2="90" stroke="#d9d0c4"/>
+      <line x1="198" y1="60" x2="198" y2="90" stroke="#d9d0c4"/>
+      <line x1="212" y1="60" x2="212" y2="90" stroke="#d9d0c4"/>
+      <line x1="150" y1="75" x2="168" y2="75" stroke="#d9d0c4" stroke-width="2"/>
+      <!-- pool -->
+      <text x="320" y="20" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#c0510a">FIXED POOL</text>
+      <rect x="280" y="35" width="75" height="26" rx="6" fill="#fef3eb" stroke="#c0510a"/>
+      <text x="317" y="52" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#c0510a">worker 1</text>
+      <rect x="280" y="68" width="75" height="26" rx="6" fill="#fef3eb" stroke="#c0510a"/>
+      <text x="317" y="85" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#c0510a">worker 2</text>
+      <rect x="280" y="101" width="75" height="26" rx="6" fill="#fef3eb" stroke="#c0510a"/>
+      <text x="317" y="118" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#c0510a">worker 3</text>
+      <line x1="230" y1="75" x2="278" y2="48" stroke="#e8833a" stroke-width="1.5"/>
+      <line x1="230" y1="75" x2="278" y2="81" stroke="#e8833a" stroke-width="1.5"/>
+      <line x1="230" y1="75" x2="278" y2="114" stroke="#e8833a" stroke-width="1.5"/>
+    </svg>
+  </div>
+  <div class="figure-caption">Thread-pool server: a cheap listener queues requests; a <em>bounded</em> set of workers drains the queue, preventing thread explosion.</div>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">The Question Left Open</div>
+  <p>Even a thread pool doesn't answer one fundamental question: <em>what happens when requests arrive faster than the pool can drain them?</em> That deeper problem — backpressure and overload — is left for later in the course. For now, the lesson is just the trade-off space of threading: more concurrency helps, but unbounded concurrency can destroy you.</p>
+</div>
+
+<div class="quiz" id="quiz-rpc">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">What is the main problem with a "thread-per-request" server under heavy load?</div>
+  <div class="quiz-options" data-quiz="qrpc">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Threads can't run concurrently, so requests still queue one behind another.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Spawning unbounded threads means they all contend for finite CPU and memory, overwhelming the machine so everyone still takes a latency hit.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>The listener thread becomes the bottleneck because listening is more expensive than processing.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>RPC interfaces don't support multiple threads.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('qrpc','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="qrpc">
+    <strong>Correct — B.</strong> Thread-per-request does run requests concurrently (so A is wrong), but with nothing bounding the count, 100,000 requests spawn 100,000 threads that all fight over the same limited resources — the machine chokes and latency suffers anyway. The fix is a fixed-size thread pool fed by a queue. C inverts the stated assumption (listening is <em>cheaper</em> than processing), and D is unrelated to RPC.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>Fault Tolerance</h2>
+</div>
+
+<p>We've checked off three of our four goals. The last and hardest is <strong>fault tolerance</strong>: machines crash, and the computation must survive. This is where the course's signature mindset begins.</p>
+
+<h3 id="checkpointing">Tolerating worker failures: checkpoint to disk</h3>
+
+<p>Suppose a worker crashes mid-job. Because every downstream stage depends on its output, the whole pipeline stalls. Hadoop's fix is a "very, very simple trick":</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Term — Checkpointing</div>
+  <p>Saving the intermediate output of each stage to durable <strong>storage (disk)</strong> as the computation proceeds. If a task's worker then crashes, you don't lose progress: a replacement worker reads the saved data back from disk and simply <em>reruns that one task</em>. Because every intermediate result lives somewhere persistent, any single failed task can be recovered and the computation continues.</p>
+</div>
+
+<p>Notice this is the control/data-plane distinction in action: MapReduce routes intermediate results through the <em>data plane</em> into storage, rather than passing them compute-to-compute, precisely so a crash can't destroy them.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Cost: Checkpointing Is Slow</div>
+  <p>There's no free lunch. Writing all your data to disk after <em>every</em> computation step is expensive — disk is orders of magnitude slower than memory. So fault tolerance here is bought with performance. And it interacts badly with the synchronization barrier: if a map task fails, the reduce phase can't proceed until that task is re-run and re-checkpointed, so <em>any</em> single map failure blocks <em>everyone</em>. Later systems like <strong>Spark</strong> reduce this cost (with a lineage system for recovery instead of constant disk writes), but they still trade away something else — no system escapes the rule.</p>
+</div>
+
+<h3 id="master-fail">The bigger threat: what if the master fails?</h3>
+
+<p>Checkpointing handles <em>worker</em> failures. But the master is a single point of coordination — if <em>it</em> crashes, can we just start a new master and resume?</p>
+
+<p>Only if the new master can recover the old one's <strong>state</strong>: which tasks were assigned, which finished. One option is to checkpoint the master's state to disk after every step — but that's a lot of overhead. The better approach, and a centerpiece of this course, is to <strong>replicate</strong> the master's state across several machines so that if one dies, another already has the state and takes over.</p>
+
+<h3 id="rsm">Replicated state machines</h3>
+
+<p>Replication sounds easy ("just keep two copies"), but naive replication is subtly broken. The lecture illustrated with a bank account replicated in New York and LA:</p>
+
+<div class="callout warning">
+  <div class="callout-title">Out-of-Order Updates Diverge Forever</div>
+  <p>A client in Seattle deposits $100. Around the same time, a bank admin adds end-of-year interest. If the two replicas apply these two operations in <em>different orders</em>, they compute different balances — and they will <strong>never reconcile</strong>. The replicas are permanently inconsistent. (The same bug hides in the two-master scheme: if master&nbsp;2 learns about task&nbsp;3 too late, it might re-assign task&nbsp;3 to another worker — double work.)</p>
+</div>
+
+<p>The cure is a precise discipline:</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Replicated State Machine (RSM)</div>
+  <p>Model each replica as a <strong>state machine</strong>. If every replica (1) starts from the <em>same initial state</em> and (2) applies the <em>same updates in the same order</em>, then every replica is guaranteed to reach the <em>same final state</em>. Deterministic machine + identical ordered input = identical output. This is <em>the</em> foundational technique for fault-tolerant distributed systems, and much of this course is about how to agree on that one shared order efficiently.</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="380" height="150" viewBox="0 0 380 150" style="display:block; margin:0 auto;">
+      <!-- replica 1 -->
+      <text x="30" y="30" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#6b6560">R1</text>
+      <circle cx="30" cy="55" r="14" fill="#fff" stroke="#c0510a" stroke-width="2"/>
+      <text x="30" y="60" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">s0</text>
+      <circle cx="120" cy="55" r="14" fill="#fff" stroke="#d9d0c4"/>
+      <text x="120" y="60" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">s1</text>
+      <circle cx="210" cy="55" r="14" fill="#fff" stroke="#d9d0c4"/>
+      <text x="210" y="60" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">s2</text>
+      <circle cx="300" cy="55" r="14" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="300" y="60" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#c0510a">sF</text>
+      <line x1="44" y1="55" x2="106" y2="55" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="134" y1="55" x2="196" y2="55" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="224" y1="55" x2="286" y2="55" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="75" y="48" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c0510a">+A</text>
+      <text x="165" y="48" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c0510a">+B</text>
+      <text x="255" y="48" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c0510a">+C</text>
+      <!-- replica 2 -->
+      <text x="30" y="105" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#6b6560">R2</text>
+      <circle cx="30" cy="125" r="14" fill="#fff" stroke="#c0510a" stroke-width="2"/>
+      <text x="30" y="130" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">s0</text>
+      <circle cx="120" cy="125" r="14" fill="#fff" stroke="#d9d0c4"/>
+      <text x="120" y="130" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">s1</text>
+      <circle cx="210" cy="125" r="14" fill="#fff" stroke="#d9d0c4"/>
+      <text x="210" y="130" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">s2</text>
+      <circle cx="300" cy="125" r="14" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="300" y="130" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#c0510a">sF</text>
+      <line x1="44" y1="125" x2="106" y2="125" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="134" y1="125" x2="196" y2="125" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="224" y1="125" x2="286" y2="125" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="75" y="118" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c0510a">+A</text>
+      <text x="165" y="118" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c0510a">+B</text>
+      <text x="255" y="118" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c0510a">+C</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Same start state <code>s0</code> + same update sequence <code>+A, +B, +C</code> in the same order ⇒ both replicas land on the identical final state <code>sF</code>.</div>
+</div>
+
+<h3 id="state-vs-events">State vs. events — a distinction that recurs all term</h3>
+
+<p>An RSM replicates a <em>sequence of transitions</em> (events), not just the current state. Why prefer the more expensive thing?</p>
+
+<table class="compare-table">
+  <tr><th>Keeping the state</th><th>Keeping the events (transition sequence)</th></tr>
+  <tr><td>Just the current snapshot</td><td>The full ordered history of updates</td></tr>
+  <tr><td>Cheaper to store</td><td>More expensive — history can grow without bound</td></tr>
+  <tr><td>Can't tell <em>how</em> you got here</td><td>Can replay, roll back, audit; can reconstruct any state exactly</td></tr>
+</table>
+
+<div class="callout insight">
+  <div class="callout-title">Why Events Are More Expressive</div>
+  <p>Many different histories can lead to the <em>same</em> final state — so a snapshot loses information about <em>how</em> the system arrived there. The event sequence keeps that information: from the exact sequence of transitions you can always reconstruct the exact state, replay it, or roll back to any earlier point. It costs more (the history can grow large), but it's strictly more expressive — and sometimes that history is exactly what a protocol needs to be correct.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">The Mindset This Course Is Teaching You</div>
+  <p>The professor's stated key outcome: whenever you see code, instinctively ask <em>"what if?"</em> — <strong>What if a process crashes? A message is dropped? Delivered twice? Corrupted? Some external service fails?</strong> The method for building reliable systems is to enumerate every fault that could occur, reason through what your system does in each case, and confirm you tolerate them all. We'll do this over and over.</p>
+</div>
+
+<div class="quiz" id="quiz-fault">
+  <div class="quiz-question">In a replicated state machine, what guarantees that two replicas end up in the same state?</div>
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-options" data-quiz="qfault">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Each replica timestamps updates by when it received them and sorts accordingly.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>They start from the same initial state and apply the same updates in the same order.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>They periodically copy their full memory contents to each other.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>They only ever process one update total, so order can't matter.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('qfault','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="qfault">
+    <strong>Correct — B.</strong> A deterministic state machine starting from an identical initial state and fed the identical sequence of updates <em>in identical order</em> must reach the identical final state — that's the whole point of the RSM. A is exactly the broken approach the lecture warns against (receipt-order can differ across machines, causing divergence, like the bank account), C is wasteful and still doesn't fix ordering, and D ignores that real systems process many updates.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART VI ═══════════════════════ -->
+<section id="part6" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part VI</div>
+  <h2>Clock Synchronization</h2>
+</div>
+
+<p>The RSM left us one urgent problem: how do all replicas agree on the <em>same order</em> of updates? The intuitive answer — use timestamps — is harder than it looks, and chasing it down leads to clock synchronization.</p>
+
+<h3 id="why-clocks">Why ordering needs clocks (and why it's hard)</h3>
+
+<p>Let's try the obvious implementation and watch it fail in stages:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Attempt: order by time of receipt.</strong> Each replica timestamps updates as they arrive and orders by that. <em>Problem:</em> updates can arrive at different replicas in different orders, so receipt-time produces different orderings on different machines — the exact divergence we're trying to avoid.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Attempt: order by time of sending.</strong> Let the <em>client</em> timestamp each update before sending it, and have all replicas order by that client timestamp. Better — now every replica uses the same number for a given update. <em>Problem:</em> different clients have <strong>unsynchronized clocks</strong>, so their timestamps aren't comparable.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">The Core Challenge — Clocks Aren't In Sync</div>
+  <p>Clocks on different machines drift apart. If client A's clock reads 10:00:05 while client B's reads 10:00:02 for events that truly happened at the same instant, ordering by their raw timestamps gives a meaningless, machine-dependent result. To order events by physical time, we'd first have to make all those clocks agree — which is itself a hard problem.</p>
+</div>
+
+<h3 id="cristian">Synchronizing clocks: Cristian's algorithm (the heart of NTP)</h3>
+
+<p>How do you set one machine's clock from a reference time server? Two naive ideas and their flaws:</p>
+
+<ul style="margin: 0 0 18px 20px;">
+  <li><strong>GPS broadcast.</strong> Accurate to the microsecond — but power-hungry and doesn't work indoors.</li>
+  <li><strong>Just ask a server for the time.</strong> The server replies with its time — but by the time the reply reaches you, <em>unknown network latency</em> has elapsed, so its timestamp is already stale. You don't know how much time passed in transit.</li>
+</ul>
+
+<p>The fix, which underpins the <strong>NTP</strong> protocol, is to measure the round trip with <em>four</em> timestamps and estimate the latency. The client records when it sends and receives; the server records when it receives and replies:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>T1</strong> — client timestamps the moment it <em>sends</em> the request.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>T2</strong> — server timestamps the moment it <em>receives</em> the request.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>T3</strong> — server timestamps the moment it <em>sends</em> its response.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>T4</strong> — client timestamps the moment it <em>receives</em> the response.</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="360" height="180" viewBox="0 0 360 180" style="display:block; margin:0 auto;">
+      <!-- timelines -->
+      <text x="50" y="20" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#6b6560">CLIENT</text>
+      <text x="310" y="20" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#6b6560">SERVER</text>
+      <line x1="50" y1="30" x2="50" y2="165" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="310" y1="30" x2="310" y2="165" stroke="#d9d0c4" stroke-width="2"/>
+      <!-- request arrow -->
+      <line x1="50" y1="45" x2="310" y2="80" stroke="#c0510a" stroke-width="2"/>
+      <polygon points="310,80 300,74 301,84" fill="#c0510a"/>
+      <!-- response arrow -->
+      <line x1="310" y1="110" x2="50" y2="150" stroke="#2563eb" stroke-width="2"/>
+      <polygon points="50,150 60,144 59,154" fill="#2563eb"/>
+      <!-- labels -->
+      <circle cx="50" cy="45" r="4" fill="#c0510a"/>
+      <text x="42" y="42" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">T1</text>
+      <circle cx="310" cy="80" r="4" fill="#c0510a"/>
+      <text x="318" y="78" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">T2</text>
+      <circle cx="310" cy="110" r="4" fill="#2563eb"/>
+      <text x="318" y="114" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">T3</text>
+      <circle cx="50" cy="150" r="4" fill="#2563eb"/>
+      <text x="42" y="154" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">T4</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Four timestamps. Round-trip network time = (T4 − T1) − (T3 − T2); assume each one-way leg is half of that.</div>
+</div>
+
+<p>Now reason about what these numbers tell us:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Total elapsed at the client:</strong> <code>T4 − T1</code> — the whole round trip as the client experienced it.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Time the server spent working:</strong> <code>T3 − T2</code> — subtract this out, since it's not network travel.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Total network travel time:</strong> <code>δ = (T4 − T1) − (T3 − T2)</code> — both legs combined.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Estimate one-way latency.</strong> <em>Assuming the network is symmetric</em> (each direction takes the same time), one leg ≈ <code>δ / 2</code>. So when the client receives the response, the true reference time is <code>T3 + δ/2</code> — the server's send-time plus one more leg of travel.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">The Critical Assumption — Symmetric Latency</div>
+  <p>This whole derivation rests on one assumption: <strong>the two network legs take roughly the same time.</strong> A student spotted this immediately — "if the latency is different in each direction, this isn't possible." If one direction is, say, 10× slower than the other, the <code>δ/2</code> estimate is off and your synced clock carries that error. We can measure the <em>total</em> round trip precisely; splitting it in half is the leap of faith.</p>
+</div>
+
+<h3 id="monotonic">The deeper limits: drift, precision, and monotonicity</h3>
+
+<p>Even with Cristian's algorithm, physical clocks have stubborn problems. A student asked: at nanosecond precision, can you even synchronize at all? Essentially no — below some resolution the latency estimate's error swamps the signal. And there's a nastier issue:</p>
+
+<div class="callout warning">
+  <div class="callout-title">Physical Clocks Can Run Backwards</div>
+  <p>Because of latency variation and corrections, a synchronized physical clock can sometimes <em>jump backward</em> — it doesn't only move forward. For ordering, that's catastrophic: an event could appear to happen "before" one that truly preceded it. What we really need is a <strong>monotonic</strong> clock — one guaranteed never to go backward.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Monotonic Is Often Enough — You Don't Need Real Time</div>
+  <p>Here's the key realization that sets up the next lecture: for <em>ordering</em>, you usually don't need each machine's clock to match real-world time at all. As long as each client's timestamps are <strong>monotonic</strong> (always increasing), the servers can process that client's requests in a consistent order. A lagging client just makes its requests look uniformly "later," but the relative order stays intact. We don't care about the exact physical instant — only about a stable order.</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Maybe We Don't Need Physical Time at All</div>
+  <p>Physical clocks are power-hungry, imprecise, asymmetric, and can run backward. So the punchline of this lecture, and the doorway to the next, is: throughout this course we will mostly <em>abandon physical clocks</em> and use <strong>logical clocks</strong> to order events instead — getting a consistent ordering without ever trusting a wall clock.</p>
+</div>
+
+<div class="quiz" id="quiz-clocks">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In Cristian's algorithm, why is the result only an <em>estimate</em> of the reference time rather than exact?</div>
+  <div class="quiz-options" data-quiz="qclocks">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Because the server's clock is always wrong by exactly δ/2.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Because we can measure the total round-trip time precisely but must <em>assume</em> the two one-way legs are equal — if latency is asymmetric, the δ/2 split introduces error.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Because GPS interferes with the network timestamps.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Because the client cannot record T1 and T4 on the same clock.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('qclocks','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="qclocks">
+    <strong>Correct — B.</strong> The four timestamps let us compute the round-trip network time <code>(T4 − T1) − (T3 − T2)</code> exactly, but to find <em>one-way</em> latency we split it in half — which is only correct if both directions are equally fast. Asymmetric latency makes that split wrong, and the error flows straight into the synced clock. A misstates the math, C is unrelated (GPS is a separate alternative), and D is false — T1 and T4 are both on the client's clock, which is precisely why their difference is reliable.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SYNTHESIS ═══════════════════════ -->
+<section id="synthesis" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This lecture looks like four separate topics — MapReduce, RPC, fault tolerance, clocks — but they're a single chain of reasoning, each link forced by the previous one.</p>
+
+<p>We started because <strong>one machine can't hold the world's data</strong>, which forced distributed storage and processing. The properties we wanted (scalable, fault-tolerant, simple, general) immediately ran into the lecture's recurring law: <strong>you can't have everything</strong> — MapReduce gave up latency to win the rest. The map/reduce model delivered simplicity and generality; word count, PageRank, and table joins showed the same five-stage skeleton solving wildly different problems, with the expensive <strong>coalesce/shuffle</strong> doing the heavy lifting (and even performing joins for free).</p>
+
+<p>Running that model surfaced the <strong>synchronization barrier</strong> (reduce waits for every mapper) and the <strong>master node</strong> that schedules and monitors — which is exactly the <strong>client–server</strong> control-plane abstraction, refined into <strong>RPC</strong>. Asking how a server scales took us through blocking, thread-per-request, and the bounded <strong>thread pool</strong> — another instance of "more concurrency helps until unbounded concurrency destroys you."</p>
+
+<p>Then came the hard goal, <strong>fault tolerance</strong>. Worker crashes are handled by <strong>checkpointing to disk</strong> (buying reliability with slowness — no free lunch again). Master crashes demand <strong>replication</strong>, and replication done naively diverges forever, which forced the <strong>replicated state machine</strong>: same start, same ordered updates, same result. That single requirement — <em>same order</em> — is what dragged us into <strong>clock synchronization</strong>, where we found that physical clocks are imprecise, asymmetric, and can even run backward, so what we truly need is merely a <strong>monotonic</strong> order, not real time.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Through-Line</div>
+  <p>Two ideas thread through everything and will recur all term: <strong>(1) every design trades one property for another — name what you're sacrificing</strong>, and <strong>(2) to build reliable systems, enumerate every fault ("what if it crashes / drops / duplicates / corrupts?") and prove you tolerate each one.</strong></p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">What's Next</div>
+  <p>We ended on the realization that physical time is too fragile to order distributed events — and that for ordering we don't actually need real time, only a consistent, monotonic order. <strong>Next lecture introduces logical clocks</strong>: a way to order events across machines <em>without any physical clock at all</em>, sidestepping drift, asymmetry, and backward jumps entirely. That ordering is the missing ingredient that makes replicated state machines — and therefore fault-tolerant masters — actually work. (Also: Assignment 1 builds exactly this arc — sequential MapReduce, then distributed, then fault-tolerant — so the master node and checkpointing from Parts III and V are your starting points.)</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

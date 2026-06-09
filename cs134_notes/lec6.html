@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 6 — Consistency Models &amp; Linearizability</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 6</div>
+  <a href="#part1">Part I — Where We Are &amp; Why Ordering</a>
+  <a href="#recap-pb" class="sub">Primary-Backup Recap</a>
+  <a href="#no-queues" class="sub">Why No Input Queues</a>
+  <a href="#what-ordering" class="sub">What Ordering Do We Want?</a>
+  <a href="#three-props" class="sub">Three Properties</a>
+  <a href="#quiz-1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Linearizability</a>
+  <a href="#lin-defn" class="sub">The Strongest Model</a>
+  <a href="#single-copy" class="sub">Single-Copy Semantics</a>
+  <a href="#quiz-2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — Traces &amp; the Formal Machinery</a>
+  <a href="#traces" class="sub">Executions &amp; Traces</a>
+  <a href="#sequential-trace" class="sub">Sequential Traces</a>
+  <a href="#linearization" class="sub">Linearizations</a>
+  <a href="#spec" class="sub">Specifications (FIFO Queue)</a>
+  <a href="#lin-formal" class="sub">The Formal Definition</a>
+  <a href="#checking" class="sub">Checking Linearizability</a>
+  <a href="#register-ex" class="sub">Register Examples</a>
+  <a href="#quiz-3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — Sequential Consistency</a>
+  <a href="#seq-idea" class="sub">Reordering Across Clients</a>
+  <a href="#seq-examples" class="sub">Worked Examples</a>
+  <a href="#composability" class="sub">Not Compositional</a>
+  <a href="#seq-impl" class="sub">Implementing It</a>
+  <a href="#quiz-4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Causal Consistency</a>
+  <a href="#causal-idea" class="sub">Preserve Happens-Before</a>
+  <a href="#causal-examples" class="sub">Worked Examples</a>
+  <a href="#the-spectrum" class="sub">The Whole Spectrum</a>
+  <a href="#quiz-5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#together">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">CS134 · Distributed Systems</div>
+  <h1>Consistency Models &amp; Linearizability</h1>
+  <p class="hero-sub">An interactive guide to Lecture 6 — what it means for a replicated service to behave "correctly," and the ladder of guarantees from linearizable down to causal.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>Where We Are &amp; Why We Care About Ordering</h2>
+</div>
+
+<p>Up to now this course has been building two parallel tracks. There is the <strong>systems</strong> track — messy, real-world machinery like MapReduce — and the <strong>foundations</strong> track — the clean theory underneath, like logical time and snapshots. The last lecture introduced <strong>primary-backup replication</strong>, a practical way to keep a service running even when a machine dies. Today we cross fully into foundations and ask a deceptively hard question: when we run many copies of a service, what does it even <em>mean</em> for them to behave correctly?</p>
+
+<div class="callout tip">
+  <div class="callout-title">Where This Sits In The Course</div>
+  <p>This lecture builds directly on primary-backup (last time) and on the happens-before / logical-clock ideas from the time-and-snapshots lectures. It sets up the next two lectures on <strong>consensus</strong>, and later ones on <strong>weak consistency</strong> and <strong>distributed transactions</strong>. Consistency models are the vocabulary the rest of the foundations half will speak in.</p>
+</div>
+
+<h3 id="recap-pb">A Quick Recap: Primary-Backup</h3>
+<p>In primary-backup replication, one replica is the <strong>primary</strong> and the others are <strong>backups</strong>. The backups stay in sync with the primary and are ready to take over the instant it crashes. A separate <strong>view service</strong> tracks the current configuration — who is primary, who is backup — so clients know where to send requests.</p>
+
+<p>The view service only advances to a new "view" after the primary has <em>acknowledged</em> the current view, and the primary only acknowledges after confirming it can sync with all its backups. Two details from last time matter today: clients <em>cache</em> the view (so they don't ask the view service on every request), and crucially, to avoid <strong>split brain</strong> the primary must check with its backups before serving <em>any</em> client request — including reads.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Correction From Last Lecture</div>
+  <p>A clarification the professor opened with: in <em>this</em> service's architecture, the primary must <strong>always</strong> contact the backup before responding — even for reads. An earlier slide suggested reads could skip the backup as an optimization; in our setting that optimization causes split brain and is wrong. When in doubt: contact the backup.</p>
+</div>
+
+<h3 id="no-queues">Why We Don't Actually Need Input Queues</h3>
+<p>Last lecture, while replicating a MapReduce master, the professor claimed we'd have to replicate the master's <em>input queues</em> alongside its state. He corrected that here, and the reasoning is worth internalizing because it reveals how this whole request model works.</p>
+
+<p>A <strong>queue</strong> is appropriate when a component fires a message into a one-way channel and then forgets about it — fire-and-forget. But our clients don't do that. A client sends an RPC to the primary and then <em>blocks</em>, waiting for a response. The request lives in the client's hands until it completes.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>A client sends a request to the primary and waits — it does <em>not</em> move on.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>The primary picks up <em>one</em> request, parses it, does the work.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>If the primary crashes mid-request (or the network drops it), the client simply sees an error.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p>The client is responsible for <em>retrying</em>. Nothing was ever "parked" in a queue, so there is no queue to replicate.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">The Mental Model Shift</div>
+  <p>There is no expectation that "because I made the request, the primary now owns it and will eventually tell me." The client stays on the hook until it sees a completion. This synchronous, blocking, at-the-client model is exactly why we can reason about correctness in terms of <em>when a request started and when its response arrived</em> — the foundation of everything in this lecture.</p>
+</div>
+
+<h3 id="what-ordering">What Ordering Do We Actually Want?</h3>
+<p>Picture a classic example from earlier in the course: a bank account replicated across two machines, with clients in different cities issuing <code>deposit</code>, <code>pay_interest</code>, and <code>get_balance</code> operations. With multiple replicas processing concurrent requests, which <em>orderings</em> of operations should the system be allowed to produce? The class brainstormed, and three themes emerged.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Some relationship to real-world time.</strong> If I deposit money and that finishes, a later request should reflect it — the system shouldn't pretend my completed deposit never happened.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>A "happens-before" between my own operations.</strong> If I deposit $500 and <em>then</em> try to withdraw $1,200, the withdrawal should see the deposit. Operations I issue in sequence should be seen in that sequence — but, a student noted, only <em>per account</em>. Two users touching different accounts never interact, so their operations needn't be ordered relative to each other.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Atomicity.</strong> A deposit that does read-modify-write (<code>read account → add amount → write account</code>) must not interleave with another deposit, or money gets lost.</p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Scope For Today</div>
+  <p>Today's lecture touches all three, but we <strong>assume atomicity is handled for us</strong> by the system. Our focus is purely on <em>ordering</em>: which sequences of completed operations a replicated service is allowed to expose to clients.</p>
+</div>
+
+<h3 id="three-props">Three Properties Worth Wanting</h3>
+<p>Generalizing the brainstorm, here are three properties that, together, describe an ideal-feeling service. Each one exists to make life easier for the application programmer sitting on top.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Total order of writes.</strong> All writes are placed in one global order — there's a fact of the matter about which write was first, second, third. From the client's view, it's as if a single thread processed every request in order. That's the easiest possible thing to program against: deposit money, then buy coffee, and the coffee purchase <em>will</em> see the money.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Reads never go backward.</strong> Once a read returns a value, every later read returns that value <em>or</em> a newer one. The service can never take back something it has already shown you.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Reads see the freshest completed write.</strong> Once a write completes, every later read returns that write's value (or a newer one). If your deposit completed, you can immediately spend the money.</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea Behind All Of This</div>
+  <p>Stronger consistency exists to make applications <strong>easier to write</strong>. If your service promises these properties, you never have to write defensive code like "maybe my write hasn't landed yet, so let me re-check." You get to pretend there's a single, in-order machine behind the curtain. The entire rest of the lecture is about how much of this guarantee you can keep — and what it costs.</p>
+</div>
+
+<div class="quiz" id="quiz-1">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In our request model, why don't we need to replicate input queues when replicating a server like the MapReduce master?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Queues are too large to replicate efficiently across machines.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Clients block on a synchronous RPC and retry on failure, so requests are never "parked" in a queue the server owns.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>The backup automatically rebuilds any queue from the primary's logs.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>The view service stores all pending requests on the clients' behalf.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct — B.</strong> The client sends an RPC and <em>waits</em>; if the primary crashes mid-request, the client just sees an error and reissues it. Because the request never leaves the client's responsibility, there is no fire-and-forget queue to replicate. Option C is tempting but backwards — there's no queue to rebuild in the first place; the whole premise of a server-owned queue doesn't match this synchronous, at-the-client model.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>Linearizability — The Strongest Guarantee</h2>
+</div>
+
+<p>We listed three desirable properties. Now we name the consistency model that delivers <em>all</em> of them at full strength. That model is <strong>linearizability</strong>, introduced by Herlihy and Wing. Before the formal machinery (Part III), let's nail the intuition.</p>
+
+<h3 id="lin-defn">What Linearizability Promises</h3>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Linearizability</div>
+  <p><strong>Linearizability</strong> is the strongest consistency condition. It guarantees a <em>total order</em> of writes, and it guarantees that every operation observes the latest completed write. Equivalently, it gives <strong>single-copy semantics</strong>: all the visible effects look exactly as if there were a single, non-replicated copy of the data processing operations one at a time, in an order consistent with real time.</p>
+</div>
+
+<p>Let's ground this with the bank example the professor walked through. Start with a balance of $1,000. Client 1 issues a <code>deposit</code> of $100, and before it finishes also issues <code>pay_interest</code> (which means "add 1% interest"). Meanwhile Client 2 issues a <code>get_balance</code>. What value may that <code>get_balance</code> return?</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>The deposit's response has already been sent to Client 1 — the primary <em>told</em> the client the deposit is done. So the result <strong>must</strong> include the $100. Balance is at least $1,100.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>The interest request has <em>arrived</em>, but no response has been sent. Has it "happened"? <strong>Either answer is acceptable.</strong> Until the system confirms completion, it's free to have done it or not.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>So <code>get_balance</code> may return $1,100 (deposit only) or $1,100 + interest. Both are linearizable. What it may <strong>never</strong> return is anything below $1,100 — that would erase a completed write.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">"Done" Means Responded, Not Sent</div>
+  <p>The moment that matters is not when a request is <em>sent</em> into the system — it's when the system <em>responds</em> that it's done. Think of tapping Apple Pay: until the screen says "Approved," the payment hasn't truly gone through, even though you've already tapped. If two people race to overdraft the same account, exactly one response comes back first, and that's the one that "happened first."</p>
+</div>
+
+<p>One more constraint from the example: if a second <code>get_balance</code> comes <em>after</em> the first one returned, it must see everything the first one saw — never less. Reads never travel backward in time.</p>
+
+<h3 id="single-copy">Single-Copy Semantics: Why It's Worth Paying For</h3>
+<p>The payoff of linearizability is that <strong>users are completely oblivious to replication</strong>. From the outside, a linearizable system and a real single-machine system are indistinguishable — and this is provable, not just intuitive (the original paper proves the equivalence to a sequential single copy).</p>
+
+<div class="callout tip">
+  <div class="callout-title">Why This Matters For The Application Developer</div>
+  <p>If your service is linearizable, you never write code like "I just did a write, but maybe my read won't reflect it yet, so let me add a retry loop." That defensive mental gymnastics disappears. You program as if there's one machine doing one thing at a time. This is exactly the "easier to program" payoff from Part I's big idea — made concrete.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">A Tempting But Wrong Fix</div>
+  <p>A student asked: could we just <em>delay</em> the acknowledgement so the client never notices a stale-looking order? You could — but only by <strong>increasing latency</strong> for no benefit. The client already can't tell which of two overlapping operations finished first, so there is nothing to hide. Adding delay just makes the system slower while fixing a "problem" that was never observable. (More on <em>why</em> overlap gives this freedom in Part III.)</p>
+</div>
+
+<div class="quiz" id="quiz-2">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Client 1's <code>deposit</code> of $100 has returned. The interest request is in-flight but unacknowledged. Starting from $1,000, which value may a concurrent <code>get_balance</code> legally return under linearizability?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>$1,000 — it may ignore the in-flight deposit.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>$1,100, but never $1,100 + interest.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Either $1,100 or $1,100 + interest, but never less than $1,100.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Any value at all, since the operations overlap.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct — C.</strong> The deposit <em>completed</em> (its response was sent), so it must be reflected: the floor is $1,100. The interest is in-flight and unacknowledged, so the system may or may not have applied it — both outcomes are legal. Option A is wrong because erasing a completed write violates linearizability; option D is wrong because overlap gives freedom only over the <em>unacknowledged</em> operation, not the completed one.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>Traces, Specifications &amp; the Formal Definition</h2>
+</div>
+
+<p>The intuition in Part II — "looks like a single copy" — is exactly right, but to <em>check</em> whether a real, messy, concurrent execution is linearizable we need a precise vocabulary. This part builds that vocabulary one term at a time. It's a little pedantic, which the professor admitted, so we'll go slowly and define every word.</p>
+
+<h3 id="traces">Executions and Traces</h3>
+<p>We model a system as multiple clients sending requests. An <strong>execution</strong> (or <strong>trace</strong>) is a sequence of two kinds of events: <strong>request</strong> events (with arguments) and <strong>response</strong> events (with return values).</p>
+
+<pre><code><span class="cm">// a trace as a raw event sequence</span>
+<span class="fn">request</span>  deposit(<span class="nb">100</span>)
+<span class="fn">response</span> ok
+<span class="fn">request</span>  balance()
+<span class="fn">response</span> <span class="nb">1100</span></code></pre>
+
+<p>That linear text is hard to reason about, so we draw traces. Each <strong>client gets its own horizontal line</strong>, and each operation is a <strong>box</strong>: the left edge is the request, the right edge is the response. The box's width is real time, so the picture shows directly which operations overlap and which are cleanly separated.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="120" viewBox="0 0 420 120" style="display:block; margin:0 auto;">
+      <!-- client lines -->
+      <line x1="60" y1="40" x2="400" y2="40" stroke="#d9d0c4" stroke-width="1"/>
+      <line x1="60" y1="90" x2="400" y2="90" stroke="#d9d0c4" stroke-width="1"/>
+      <text x="50" y="44" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="12" fill="#6b6560">C1</text>
+      <text x="50" y="94" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="12" fill="#6b6560">C2</text>
+      <!-- box op1 -->
+      <rect x="90" y="28" width="120" height="24" rx="4" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="150" y="44" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">deposit(100)</text>
+      <!-- box op2 -->
+      <rect x="250" y="78" width="100" height="24" rx="4" fill="#eff4ff" stroke="#2563eb" stroke-width="1.5"/>
+      <text x="300" y="94" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">balance()</text>
+    </svg>
+  </div>
+  <div class="figure-caption">A trace drawn as boxes. The left edge of each box is the request; the right edge is the response. Here C1's deposit finishes before C2's balance even starts.</div>
+</div>
+
+<h3 id="sequential-trace">Sequential Traces</h3>
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Sequential Trace</div>
+  <p>A trace is <strong>sequential</strong> if <em>no two operation boxes overlap</em> — every request finishes before the next one starts. We also assume each individual client is sequential: it has at most one pending request at a time.</p>
+</div>
+
+<p>The professor stressed how pedantic this definition is, with a sharp example. Consider one client doing <code>enqueue(x)</code> and another doing <code>dequeue() → x</code> on a FIFO queue, where the two boxes <em>overlap</em>. Is this a valid FIFO behavior? Yes — x went in and x came out. But is it <strong>sequential</strong>? <strong>No</strong> — the boxes overlap. "Valid for the data structure" and "sequential" are two completely separate questions. Slide the dequeue box to the right so they no longer overlap, and only <em>then</em> is it sequential.</p>
+
+<h3 id="linearization">Linearizations</h3>
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Linearization</div>
+  <p>A trace <code>T1</code> is a <strong>linearization</strong> of a trace <code>T2</code> if it is obtained by making the <em>overlapping</em> operations non-overlapping in some chosen order, while <strong>preserving</strong> the order of any operations that were already non-overlapping.</p>
+</div>
+
+<p>The intuition: each operation really "takes effect" at some single instant inside its box. If two boxes overlap, we genuinely <em>cannot know</em> which instant came first, so we're free to pick either order. If two boxes <em>don't</em> overlap, the earlier one definitely took effect first, and that order is locked.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="440" height="190" viewBox="0 0 440 190" style="display:block; margin:0 auto;">
+      <!-- original overlapping trace -->
+      <text x="10" y="20" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">Overlapping trace:</text>
+      <rect x="60" y="30" width="150" height="22" rx="4" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="135" y="45" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">op A</text>
+      <rect x="150" y="58" width="150" height="22" rx="4" fill="#eff4ff" stroke="#2563eb" stroke-width="1.5"/>
+      <text x="225" y="73" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">op B</text>
+      <!-- arrow down -->
+      <text x="60" y="115" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">linearizes to either:</text>
+      <!-- option 1: A then B -->
+      <rect x="60" y="128" width="80" height="20" rx="4" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="100" y="142" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#2a2520">A</text>
+      <rect x="145" y="128" width="80" height="20" rx="4" fill="#eff4ff" stroke="#2563eb" stroke-width="1.5"/>
+      <text x="185" y="142" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#2a2520">B</text>
+      <!-- option 2: B then A -->
+      <rect x="250" y="128" width="80" height="20" rx="4" fill="#eff4ff" stroke="#2563eb" stroke-width="1.5"/>
+      <text x="290" y="142" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#2a2520">B</text>
+      <rect x="335" y="128" width="80" height="20" rx="4" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="375" y="142" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#2a2520">A</text>
+      <text x="135" y="170" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">A before B</text>
+      <text x="332" y="170" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">B before A</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Two overlapping operations can be linearized two ways. Because they overlap, either order is a legitimate reading of "what really happened."</div>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Linearization Adds No New Behavior</div>
+  <p>A student worried: doesn't picking an order "invent" something? No. At the end of the day, A and B each really took effect in some order — we just couldn't observe which. Choosing one is allowed precisely because the overlap made both orders externally possible. Linearization never introduces behavior the system couldn't already have exhibited.</p>
+</div>
+
+<h3 id="spec">Specifications: What "Correct" Even Means (FIFO Queue)</h3>
+<p>We can now describe a system's whole observable behavior as a <strong>set of traces</strong>. The <strong>specification</strong> of an object is the set of <em>sequential</em> traces that count as correct for it. A specification is sequential when all its traces are sequential — important because we reason about correctness "one request at a time."</p>
+
+<p>Take a real FIFO queue with <code>enqueue(x)</code> and <code>dequeue() → x</code> (dequeue removes and returns the oldest item). Which sequential traces belong to its specification?</p>
+
+<table class="compare-table">
+  <tr><th>Sequential trace</th><th>In the FIFO spec?</th></tr>
+  <tr><td><code>enq(x)</code>; <code>deq()→x</code></td><td>Yes — oldest item out is x. Valid.</td></tr>
+  <tr><td><code>enq(x)</code>; <code>enq(y)</code>; <code>deq()→z</code></td><td>No — z was never enqueued. Not a FIFO trace.</td></tr>
+  <tr><td><code>enq(x)</code>; <code>enq(y)</code>; <code>deq()→y</code></td><td>No — oldest is x, not y. Not FIFO.</td></tr>
+</table>
+
+<p>The specification is simply the collection of <em>all</em> the sequential traces that respect FIFO order. To ask "is this object a FIFO queue?" we ask: is this execution one of the traces in the set? Note both bad rows above are perfectly <em>sequential</em> (nothing overlaps) — they just aren't <em>FIFO</em>. Sequential is about timing; the spec is about meaning.</p>
+
+<h3 id="lin-formal">The Formal Definition</h3>
+<p>Everything assembles into one clean statement.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Linearizable Implementation</div>
+  <p>Given a sequential specification <code>spec</code> (a set of sequential traces), an implementation (also a set of traces, mostly <em>non</em>-sequential) is <strong>linearizable</strong> if: for every trace <code>T</code> the implementation can produce, there exists a linearization <code>T'</code> of <code>T</code> such that <code>T' ∈ spec</code>.</p>
+</div>
+
+<p>In words: our real distributed replicas emit all sorts of messy, overlapping executions. The implementation is linearizable if <em>every one of them</em> can be untangled (by reordering only overlapping operations) into a clean sequential trace that the specification already approves. We don't care how the system works internally — only whether its observable traces can always be explained this way.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Linearizability Is Always Relative To A Spec</div>
+  <p>Online discussions often say a system "is linearizable" with no qualifier — but there is always an <em>implicit</em> specification underneath. You can only define linearizability <em>against</em> some notion of how the object is supposed to behave (a register, a queue, a counter). No spec, no meaning.</p>
+</div>
+
+<h3 id="checking">How To Check Linearizability</h3>
+<p>Given a single observed execution, here's the recipe — it's essentially a search problem.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>Fix the specification you're checking against (e.g. "register" or "FIFO queue").</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>Keep the order of all <strong>non-overlapping</strong> operations fixed — you're not allowed to touch those.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>Try every possible ordering of the <strong>overlapping</strong> operations.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p>If <em>any</em> such ordering yields a sequential trace in the spec, the execution is linearizable. To prove it's <strong>not</strong> linearizable, you must exhaustively show that <em>none</em> of the orderings work.</p>
+</div>
+
+<p>To show an entire <em>distributed system</em> is linearizable, you check that <em>all</em> its possible executions are. In practice that's done two ways: by <strong>proof</strong> (mathematically characterize every execution and show each is linearizable), or by a <strong>dynamic monitor</strong> that watches runtime executions and raises an alarm the moment a non-linearizable one appears.</p>
+
+<h3 id="register-ex">Worked Examples: A Register</h3>
+<p>Let's apply the recipe to a <strong>sequential register</strong> (one cell, operations <code>set</code> and <code>get</code>, initial value 0). For each trace below, ask: is it linearizable?</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="440" height="230" viewBox="0 0 440 230" style="display:block; margin:0 auto;">
+      <!-- Example 1 -->
+      <text x="10" y="22" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#c53030">① NOT linearizable</text>
+      <rect x="60" y="30" width="90" height="20" rx="4" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="105" y="44" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#2a2520">set(1)</text>
+      <rect x="200" y="30" width="100" height="20" rx="4" fill="#eff4ff" stroke="#2563eb" stroke-width="1.5"/>
+      <text x="250" y="44" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#2a2520">get → 0</text>
+      <!-- Example 2 -->
+      <text x="10" y="92" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#2d8a4e">② Linearizable</text>
+      <rect x="60" y="100" width="120" height="20" rx="4" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="120" y="114" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#2a2520">set(1)</text>
+      <rect x="130" y="124" width="120" height="20" rx="4" fill="#eff4ff" stroke="#2563eb" stroke-width="1.5"/>
+      <text x="190" y="138" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#2a2520">get → 0</text>
+      <!-- Example 3 -->
+      <text x="10" y="182" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#c53030">③ NOT linearizable</text>
+      <rect x="60" y="190" width="90" height="20" rx="4" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="105" y="204" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#2a2520">set(1)</text>
+      <rect x="120" y="190" width="90" height="20" rx="4" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="165" y="204" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#2a2520">set(2)</text>
+      <rect x="230" y="190" width="80" height="20" rx="4" fill="#eff4ff" stroke="#2563eb" stroke-width="1.5"/>
+      <text x="270" y="204" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#2a2520">get→1</text>
+      <rect x="320" y="190" width="80" height="20" rx="4" fill="#eff4ff" stroke="#2563eb" stroke-width="1.5"/>
+      <text x="360" y="204" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#2a2520">get→2</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Three register executions (initial value 0). ① and ③ fail; ② passes thanks to overlap.</div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>set(1) then get → 0</strong>, non-overlapping. <span style="color:#c53030;font-weight:600;">Not linearizable.</span> The set <em>finishes before</em> the get starts, so their order is locked: the get must see 1, not 0. No reordering is even allowed.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>set(1) overlapping get → 0</strong>. <span style="color:#2d8a4e;font-weight:600;">Linearizable.</span> Because they overlap, we may place the get <em>first</em>: it reads the initial 0, then the set lands. Valid register behavior.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>set(1) and set(2) overlapping, then get → 1 and get → 2</strong>. <span style="color:#c53030;font-weight:600;">Not linearizable.</span> A single register can settle on either 1 or 2, but not both. We can reorder the two sets to explain one get, but never both at once. One client seeing 1 and another seeing 2 cannot be a single register.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">A Useful Contrast</div>
+  <p>A student asked: what if example ③ were <code>set(x,1)</code> and <code>set(y,2)</code> — two <em>different</em> variables? Then it <em>would</em> be linearizable, because the gets touch independent cells and can each be explained on its own. The conflict in ③ exists only because both sets and both gets are fighting over the <em>same</em> register.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Why You Can't Just Delay To Fake It (Revisited)</div>
+  <p>Recall the Part II "tempting fix." This is the deeper reason: an operation's true effect is a single point inside its box. With non-overlapping boxes that point order is fixed by real time, so no delay can change which one was first. You can only exploit reordering freedom where boxes <em>overlap</em>. If your friend's request <em>started after yours finished</em> and they see a state older than yours, that's a genuine violation. If their request merely <em>overlapped</em> yours, network lag explains everything and nothing is broken.</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">Linearizability Is Compositional</div>
+  <p>A standout property, proven in the paper: if every object in your system is individually linearizable, then the whole system is linearizable. You can build linearizable components and freely compose them — the guarantee survives. Keep this in mind; the very next model we meet does <strong>not</strong> have this property, and that contrast is one of the most important takeaways of the lecture.</p>
+</div>
+
+<div class="quiz" id="quiz-3">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">On a register (initial 0): <code>set(1)</code> completes, and only <em>after</em> it returns does a non-overlapping <code>get</code> begin and return 0. Why is this not linearizable?</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Registers can't be linearizable at all.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Because the operations don't overlap, their order is fixed by real time — so the get must see 1, and no reordering is permitted.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Because get and set can never appear in the same trace.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Because the initial value should have been 1, not 0.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct — B.</strong> Linearization may only reorder <em>overlapping</em> operations. Here the set finishes before the get starts, so the real-time order is locked: the get is obligated to observe the value 1. Returning 0 erases a completed write, which no linearization can fix. Compare with the overlapping version, where placing the get first <em>is</em> allowed and the trace becomes valid.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>Sequential Consistency — Dropping Real Time</h2>
+</div>
+
+<p>Linearizability is wonderful to program against, but it has a price we'll quantify here. So why would anyone want anything weaker? Because <strong>enforcing linearizability is expensive</strong>, and weaker models can buy serious performance with acceptable trade-offs. The first step down the ladder is <strong>sequential consistency</strong>, introduced by Leslie Lamport in his paper "How to Make a Multiprocessor Computer That Correctly Executes Multiprocess Programs."</p>
+
+<h3 id="seq-idea">The Idea: A Global Order, But Ignore Real Time</h3>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Sequential Consistency</div>
+  <p>An execution is <strong>sequentially consistent</strong> if there exists <em>some</em> single sequential order of all events that explains it — <strong>and each client's own operations appear in that order in the sequence they issued them</strong>. The crucial relaxation from linearizability: we may <strong>reorder operations across different clients arbitrarily</strong>, ignoring real-world time.</p>
+</div>
+
+<p>Linearizability says "the global order must respect real time." Sequential consistency says "there must be <em>a</em> global order, but it need not match real time across clients." Why is dropping real time defensible? Because if clients only ever talk to the system through requests, how could one client even <em>know</em> that another client's operation finished before its own began? Without an outside channel, they can't — so from their perspective any consistent global order is fine.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Catch — A Hidden Side Channel</div>
+  <p>That argument breaks if two clients have an <em>external</em> communication channel (a phone call, a shared whiteboard). Then real-time ordering <em>does</em> become observable, and sequential consistency can produce surprising results. Hold this thought — it returns when we discover sequential consistency is not compositional.</p>
+</div>
+
+<p>Here's the canonical contrast. Under <em>linearizability</em>, if <code>set(x,1)</code> finishes and then <code>get(x)</code> starts (non-overlapping), the get <em>must</em> return 1. If the writer is in New York and the reader in Los Angeles, the replicas must coordinate within microseconds — wildly expensive. Under <em>sequential consistency</em>, an execution where the LA read returns the <em>old</em> value 0 (even though the NY write finished first in real time) is perfectly legal, as long as a single global order exists.</p>
+
+<h3 id="seq-examples">Worked Examples</h3>
+<p>For each register execution (initial 0), classify it: linearizable, only sequentially consistent, or neither?</p>
+
+<table class="compare-table">
+  <tr><th>Execution</th><th>Verdict &amp; reasoning</th></tr>
+  <tr>
+    <td><code>set(x,1)</code> ‖ <code>get(x)→0</code> (overlapping)</td>
+    <td><strong>Linearizable.</strong> Overlap lets us put the get first (reads 0), then the set. The strongest model already accepts it.</td>
+  </tr>
+  <tr>
+    <td>C3: <code>set(x,1)</code> then sees order 1,2; C4: <code>set(x,2)</code> then sees order 2,1</td>
+    <td><strong>Neither.</strong> Two clients disagree on the order of the same two sets. No single global order can place set(1) before set(2) <em>and</em> after it. Same-client order is locked, so no reordering rescues it.</td>
+  </tr>
+  <tr>
+    <td>C1: <code>set(x,1)</code>; C2: <code>get→2</code> then <code>get→1</code> (with a set(2) somewhere)</td>
+    <td><strong>Neither.</strong> Forcing the first get to see 2 pushes set(2) late, but then the later get→1 can't see set(1). The constraints form an impossible cycle.</td>
+  </tr>
+  <tr>
+    <td>A trace already in program order, no overlaps, but real time violated only across clients</td>
+    <td><strong>Only sequentially consistent.</strong> No overlap means it's not a valid linearization (can't reorder anything), but we can still build a legal global order by interleaving across clients — e.g. slot a get between two sets.</td>
+  </tr>
+</table>
+
+<div class="callout tip">
+  <div class="callout-title">The Two-Part Argument You Must Give</div>
+  <p>To show an execution is "<em>only</em> sequentially consistent," you owe <strong>two</strong> claims: (1) it <em>is</em> sequentially consistent — exhibit a legal global order, e.g. <code>set1, get1, set2, get2</code>; and (2) it is <em>not</em> linearizable — show no valid real-time-respecting reordering exists (often because nothing overlaps, so it isn't even a valid linearization to begin with).</p>
+</div>
+
+<h3 id="composability">The Surprise: Sequential Consistency Is Not Compositional</h3>
+<p>Now the deep result. Consider two registers, X and Y, each individually sequentially consistent. Combine them in one system. Is the combination sequentially consistent? <strong>Not necessarily.</strong></p>
+
+<p>The professor sketched the construction (and noted in class that an earlier version of the slide had a bug he later fixed): take an execution where, to make X's part work, you must move a <code>get(x)</code> before its <code>set(x)</code>; and simultaneously, to make Y's part work, you must move a <code>get(y)</code> before its <code>set(y)</code>. Each fix is fine <em>alone</em>. But the two required reorderings <strong>conflict</strong> — satisfying one forces the other to fail. There is no single global order that satisfies both, so the combined system is <em>not</em> sequentially consistent even though each object is.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">Compositionality: The Sharpest Distinction</div>
+  <p>This is the lecture's most important structural insight. <strong>Linearizability composes</strong> — linearizable parts make a linearizable whole. <strong>Sequential consistency does not</strong> — sequentially-consistent parts can combine into something that is <em>not</em> sequentially consistent. That single difference is a major reason linearizability, despite its cost, is so valued: you can reason about components independently.</p>
+</div>
+
+<h3 id="seq-impl">Implementing Sequential Consistency</h3>
+<p>We want one global order of all events, but we're freed from matching real time. How do we get a total order? With tools already in this course.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>Use <strong>Lamport clocks</strong> to impose a total order on events — exactly the logical-time machinery from earlier lectures.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>Or force a <strong>single primary</strong> to perform all writes, so the write order is unambiguous.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>Because real time across clients no longer matters, you can serve reads from <strong>stale read-replicas or caches</strong>. A read might see an old value — fine, as long as a single global order over all events still exists.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Still Not Cheap</div>
+  <p>Read-replicas and caches help, but sequential consistency still <strong>blocks all writes to maintain the global order</strong>. Writes must serialize and synchronize. You save on reads, not on writes. That residual cost is the motivation for going even weaker — which is where causal consistency comes in.</p>
+</div>
+
+<div class="quiz" id="quiz-4">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">What is the single most important structural difference between linearizability and sequential consistency highlighted in this lecture?</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Linearizability is compositional; sequential consistency is not.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Sequential consistency forbids any global order of events.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Linearizability allows reordering across clients; sequential consistency forbids it.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Sequential consistency requires real-time ordering; linearizability ignores it.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','a')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct — A.</strong> Both models give a single global order, but linearizability additionally respects real time and <em>composes</em> — linearizable parts make a linearizable whole. Sequential consistency relaxes the real-time constraint and loses compositionality: two sequentially-consistent objects can combine into a non-sequentially-consistent system. Option C and D invert the real-time rule (it's linearizability that respects real time, and it's sequential consistency that reorders <em>across</em> clients).
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>Causal Consistency &amp; the Whole Spectrum</h2>
+</div>
+
+<p>Sequential consistency still forces a total order on <em>all</em> writes — and that ordering blocks writes globally. The next step down keeps only the orderings we genuinely need and drops the rest, buying much cheaper synchronization. This is <strong>causal consistency</strong>, introduced in 1995.</p>
+
+<h3 id="causal-idea">The Idea: Preserve Only Happens-Before</h3>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Causal Consistency</div>
+  <p><strong>Causal consistency</strong> requires that the order of <em>causally related</em> writes be preserved in what reads observe. Formally, if <code>W1</code> happened-before <code>W2</code> (using the happens-before relation from the Lamport-clock / vector-clock lectures), then any read that sees the effect of <code>W2</code> must also see the effect of <code>W1</code>. There is <strong>no requirement on a total order</strong> for unrelated writes.</p>
+</div>
+
+<p>Recall happens-before has exactly two sources: (1) two events on the <em>same client</em> are ordered by program order, and (2) a message from one process to another orders the send before the receive. If two writes share <em>neither</em> relationship, causal consistency lets reads see them in any order — even different orders for different clients.</p>
+
+<div class="callout tip">
+  <div class="callout-title">The Intuition: A Social Media Feed</div>
+  <p>It's fine if you don't see every post in the world. But if you see a <em>comment</em>, you must also see the <em>post</em> it replies to; if you see a <em>retweet</em>, you must see the <em>original tweet</em>. The comment causally depends on the post, so that one ordering is sacred. Everything causally unrelated can arrive in any order. The payoff: replicas can synchronize <strong>far more lazily</strong>, because they only need to respect dependencies, not a global clock.</p>
+</div>
+
+<h3 id="causal-examples">Worked Examples</h3>
+<p>Reusing the register executions, now ask: are they <em>causal</em>? (We already know whether each is linearizable or sequentially consistent.)</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Two clients each write, a third reads them in one order, a fourth reads them in the opposite order.</strong> <span style="color:#2d8a4e;font-weight:600;">Causal.</span> The two writes are on different clients with no message between them — so neither happens-before the other. With <em>no</em> causal link to preserve, readers may disagree on their order freely. (This same execution was <em>neither</em> linearizable nor sequentially consistent — causal is strictly weaker.)</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>A client reads <code>set(x,1)</code>, and based on that issues <code>set(x,2)</code>; later a read sees 2 but not 1.</strong> <span style="color:#c53030;font-weight:600;">Not causal.</span> Here <code>set(1)</code> happens-before <code>set(2)</code> (same client, program order, the second even depends on having read the first). A read that sees 2 is obligated to also see 1. Seeing 2 but not 1 is a causality violation — it's "turning back in time" to a state before the one you already knew about.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>The previously "only sequentially consistent" execution.</strong> <span style="color:#2d8a4e;font-weight:600;">Causal.</span> Sequential consistency demands a <em>total</em> order, which is strictly stronger than respecting only causal order. So anything sequentially consistent is automatically causal.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Why "Turning Back Time" Is The Real Violation</div>
+  <p>In example 2, one client saw 1, then caused 2, then saw 2 — from its viewpoint the system has reached state "2," which is built on top of "1." If a read then surfaces 2 <em>without</em> 1, that client is forced to witness a <em>past</em> state of a system it already saw move forward. That's the precise harm causal consistency forbids. Crucially, if those two reads are on <em>different</em> clients with no shared history, each can legitimately have its own "final state," and there's no violation.</p>
+</div>
+
+<h3 id="the-spectrum">The Whole Spectrum at a Glance</h3>
+<p>We now have a ladder. Every step down is weaker (allows more executions, harder to reason about) but cheaper to implement.</p>
+
+<table class="compare-table">
+  <tr><th>Model</th><th>Order guaranteed</th><th>Cost / notes</th></tr>
+  <tr><td><strong>Linearizable</strong></td><td>Total order of all ops, respecting real time</td><td>Most expensive; single-copy semantics; <em>compositional</em></td></tr>
+  <tr><td><strong>Sequential</strong></td><td>Total order of all writes; same-client order kept; ignores cross-client real time</td><td>Cheaper reads (caches/replicas), but writes still serialize; <em>not</em> compositional</td></tr>
+  <tr><td><strong>Causal</strong></td><td>Only causally-related (happens-before) writes ordered</td><td>Lazy synchronization between replicas; unrelated writes free</td></tr>
+  <tr><td><strong>Eventual</strong></td><td>Almost nothing — replicas just converge "eventually"</td><td>Cheapest; covered in a later lecture</td></tr>
+</table>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="440" height="120" viewBox="0 0 440 120" style="display:block; margin:0 auto;">
+      <line x1="40" y1="60" x2="400" y2="60" stroke="#d9d0c4" stroke-width="2"/>
+      <!-- markers -->
+      <circle cx="70" cy="60" r="6" fill="#c0510a"/>
+      <text x="70" y="44" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#2a2520">Linearizable</text>
+      <circle cx="190" cy="60" r="6" fill="#c0510a"/>
+      <text x="190" y="44" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#2a2520">Sequential</text>
+      <circle cx="300" cy="60" r="6" fill="#c0510a"/>
+      <text x="300" y="44" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#2a2520">Causal</text>
+      <circle cx="390" cy="60" r="6" fill="#c0510a"/>
+      <text x="390" y="44" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#2a2520">Eventual</text>
+      <text x="70" y="90" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">strongest</text>
+      <text x="390" y="90" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">weakest</text>
+      <text x="220" y="110" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#c0510a">→ easier to program · ← cheaper to implement</text>
+    </svg>
+  </div>
+  <div class="figure-caption">The consistency ladder. Left = stronger guarantees, easier to program, more expensive. Right = weaker, cheaper. Many more conditions live between these — a 2016 survey maps dozens, some not even comparable to each other.</div>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Consistency Models Don't Fully Describe Your System</div>
+  <p>A subtle point the professor stressed: a consistency condition is a <em>property</em>, not a complete description of correctness. The set of executions allowed by "causal" includes many your real system would never produce — even nonsensical ones. A condition is a lens: it rules out <em>some</em> bad behaviors (like turning back time) while staying agnostic about everything else. To pin down a real system you intersect several such properties, gradually carving out something that resembles — but never exactly equals — your actual system.</p>
+</div>
+
+<div class="quiz" id="quiz-5">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A client reads <code>set(x,1)</code>, then issues <code>set(x,2)</code>. Later, some read returns 2 but not 1. Under causal consistency, what's the verdict?</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Causal — unrelated writes may be seen in any order.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Not causal — set(1) happens-before set(2), so any read seeing 2 must also see 1.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Causal, but not sequentially consistent.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It depends on whether the reads overlap in real time.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct — B.</strong> The two sets are on the same client in program order — and set(2) was even issued <em>after reading</em> set(1)'s value — so set(1) happens-before set(2). Causal consistency demands that any read observing the effect of set(2) also observe set(1). Returning 2-without-1 forces a client to witness a state older than one already established: a causality violation. Option A would only apply if the writes were causally <em>unrelated</em>.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SUMMARY ═══════════════════════ -->
+<section id="together" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This lecture answered the question we opened with: what does it mean for a replicated service to be "correct"? The answer isn't a single yes/no — it's a <strong>ladder of consistency models</strong>, each a different bargain between how easy a service is to program against and how expensive it is to build.</p>
+
+<p>We started from the synchronous, at-the-client request model (the reason there are no input queues to replicate) and from the three properties an ideal service would have: a total order of writes, reads that never go backward, and reads that see the freshest completed write. <strong>Linearizability</strong> delivers all three by promising single-copy semantics that respect real time — and, uniquely, it <em>composes</em>. To check it precisely, we built the formal machinery of <strong>traces, sequential traces, linearizations, and specifications</strong>: an execution is linearizable if every messy concurrent trace can be untangled — reordering only overlapping operations — into a sequential trace the spec already blesses.</p>
+
+<p>Then we walked down the ladder. <strong>Sequential consistency</strong> keeps a total order but abandons real-time ordering across clients — cheaper (caches and read-replicas become legal) but it loses compositionality, the single sharpest contrast with linearizability. <strong>Causal consistency</strong> goes further, preserving only happens-before relationships, which lets replicas synchronize lazily; the social-media feed is the mental model — see the comment, you must see the post. Each step trades a guarantee for performance, and each guarantee maps directly onto how much defensive logic the application programmer is spared.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The One Sentence To Remember</div>
+  <p>Stronger consistency makes applications easier to write but costs more to implement — and the art of distributed systems is choosing the <em>weakest</em> model your application can tolerate, so you pay only for the guarantees you actually need.</p>
+</div>
+
+<div class="callout tip" style="margin-top: 32px;">
+  <div class="callout-title">What's Next</div>
+  <p>We now know <em>what</em> we want (a total order of writes for the stronger models) but not yet <em>how</em> a set of replicas can agree on one despite crashes and network failures. That's <strong>consensus</strong> — the next lecture, and the engine that makes linearizable and sequentially-consistent systems actually buildable. After that the foundations track continues into <strong>weaker consistency and distributed transactions</strong>, before the course turns toward real systems that mix all these techniques. The professor also promised to return with a clean worked example of the sequential-consistency compositionality counterexample and a fuller causal-consistency walkthrough — keep an eye out for those at the start of the next session.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

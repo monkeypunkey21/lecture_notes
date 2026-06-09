@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 8 — Consensus &amp; Paxos · CS134</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 8 · Consensus</div>
+  <a href="#part1">Part I — Causal Consistency, Precisely</a>
+  <a href="#happens-before" class="sub">Two Happens-Before Relations</a>
+  <a href="#cc-definition" class="sub">The Definition</a>
+  <a href="#why-weaker" class="sub">Why SC Implies Causal</a>
+  <a href="#cc-hierarchy" class="sub">The Consistency Hierarchy</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — The Consensus Problem</a>
+  <a href="#pb-limits" class="sub">Where Primary-Backup Breaks</a>
+  <a href="#trip-analogy" class="sub">The Group-Trip Analogy</a>
+  <a href="#consensus-def" class="sub">Defining Consensus</a>
+  <a href="#consensus-uses" class="sub">What It Buys Us</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — Safety &amp; Liveness</a>
+  <a href="#traces" class="sub">Systems as Sets of Traces</a>
+  <a href="#safety" class="sub">Safety Properties</a>
+  <a href="#liveness" class="sub">Liveness Properties</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — What We Want From Consensus</a>
+  <a href="#three-props" class="sub">Agreement, Termination, Validity</a>
+  <a href="#trivial-fails" class="sub">Why the Trivial Answers Fail</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Paxos: The Protocol</a>
+  <a href="#paxos-roles" class="sub">Three Roles</a>
+  <a href="#prepare-phase" class="sub">Phase 1 — Prepare</a>
+  <a href="#accept-phase" class="sub">Phase 2 — Accept</a>
+  <a href="#learn-phase" class="sub">Phase 3 — Learn</a>
+  <a href="#milestones" class="sub">The Three Milestones</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part6">Part VI — Competing Proposers</a>
+  <a href="#the-asterisk" class="sub">Filling In the Asterisk</a>
+  <a href="#adopt-value" class="sub">Adopting Accepted Values</a>
+  <a href="#why-continue" class="sub">Why Not Just Stop?</a>
+  <a href="#quiz6" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#synthesis">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">CS134 · Distributed Systems</div>
+  <h1>Consensus &amp; the Paxos Protocol</h1>
+  <p class="hero-sub">How a group of unreliable machines — some crashed, some partitioned, some asleep — can still agree on a single value that can never be taken back.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>Causal Consistency, Made Precise</h2>
+</div>
+
+<p>Before we reach the heart of today's lecture — consensus — we owe a debt from last time. The professor admitted the definition of <strong>causal consistency</strong> was "a little bit hand-waved." Distributed-systems definitions are notoriously unintuitive, so the right way to learn them is not to expect them to click immediately, but to nail down the precise definition and then test it against concrete executions. Let's do exactly that.</p>
+
+<p>First, some grounding vocabulary, since we'll lean on it all lecture. A <strong>client</strong> is an actor (a process, a node, a person) issuing operations. A <strong>set</strong> writes a value into the system; a <strong>get</strong> reads one back. An <strong>execution</strong> (or <strong>trace</strong>) is the recorded sequence of all these operations as they actually happened across all clients. A <strong>consistency model</strong> is a rule that says which executions are "allowed" — which ones a correct system is permitted to produce.</p>
+
+<h3 id="happens-before">Two Kinds of "Happens-Before"</h3>
+
+<p>Causal consistency, defined in a 1995 paper, is built on a single relation called <strong>happens-before</strong>. The subtlety is that this relation is generated by <em>two</em> distinct rules, and you have to track both:</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The Happens-Before Relation</div>
+  <p>Operation <code>A</code> <strong>happens-before</strong> operation <code>B</code> if either of these holds:</p>
+  <p><strong>(1) Program order.</strong> <code>A</code> and <code>B</code> are issued by the <em>same client</em> and <code>A</code> comes first. The client did <code>A</code>, then <code>B</code>.</p>
+  <p><strong>(2) Reads-from.</strong> <code>B</code> is a <code>get</code> that returns the value written by <code>A</code> (a <code>set</code>). Reading a value means you must have come "after" the write that produced it.</p>
+  <p>Happens-before is the <em>transitive closure</em> of these two: chain them together and the relation flows through.</p>
+</div>
+
+<p>A crucial fact about the reads-from edge: <strong>a get reads from exactly one set</strong> (or from the system's initial value). There's no ambiguity about which write a read observed — it saw precisely one write's value.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="380" height="170" viewBox="0 0 380 170" style="display:block; margin:0 auto;">
+      <!-- client 1 lane -->
+      <text x="14" y="48" font-family="DM Sans, sans-serif" font-size="12" fill="#6b6560">Client 1</text>
+      <rect x="78" y="30" width="92" height="34" rx="6" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="124" y="52" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">set x=2</text>
+      <rect x="210" y="30" width="92" height="34" rx="6" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="256" y="52" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">get y</text>
+      <!-- program-order red arrow -->
+      <line x1="170" y1="47" x2="206" y2="47" stroke="#c53030" stroke-width="2" marker-end="url(#ah)"/>
+      <text x="188" y="22" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#c53030">program</text>
+      <!-- client 2 lane -->
+      <text x="14" y="133" font-family="DM Sans, sans-serif" font-size="12" fill="#6b6560">Client 2</text>
+      <rect x="78" y="115" width="92" height="34" rx="6" fill="#eff4ff" stroke="#2563eb" stroke-width="1.5"/>
+      <text x="124" y="137" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">get x → 2</text>
+      <!-- reads-from edge from set x=2 to get x -->
+      <line x1="110" y1="64" x2="118" y2="113" stroke="#2d8a4e" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#ag)"/>
+      <text x="40" y="92" font-family="DM Sans, sans-serif" font-size="10" fill="#2d8a4e">reads-from</text>
+      <defs>
+        <marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#c53030"/></marker>
+        <marker id="ag" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#2d8a4e"/></marker>
+      </defs>
+    </svg>
+  </div>
+  <div class="figure-caption">Two happens-before edges. The red <em>program-order</em> edge links one client's own operations; the green <em>reads-from</em> edge crosses clients, linking a write to the read that observed it.</div>
+</div>
+
+<h3 id="cc-definition">The Definition Itself</h3>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Causal Consistency</div>
+  <p>An execution is <strong>causally consistent</strong> if, <em>for every client</em>, there exists a linearization (a single total order) of that client's own operations <em>plus all writes in the trace</em>, such that the order preserves the happens-before relation.</p>
+</div>
+
+<p>Read that twice, because the placement of "for every client" is the whole game. There is <strong>no single global order</strong> that all clients agree on. Instead, each client independently gets to build its own consistent timeline. Client 1 may order events one way; Client 2 may order them another way. Both can be valid. The only thing each client's private order must respect is happens-before.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Why "Plus All Writes"?</div>
+  <p>When we build Client 1's private timeline, we don't only include Client 1's operations — we fold in <em>every write from every client</em>. Reads stay local to the client, but writes are shared facts the whole system must account for. This is what lets one client "see" another client's writes while still ignoring the other client's read ordering.</p>
+</div>
+
+<h3 id="why-weaker">Why Sequential Consistency Implies Causal</h3>
+
+<p>The lecture spent real time on a claim worth understanding deeply: <strong>causal consistency is weaker than sequential consistency</strong>. "Weaker" means <em>more permissive</em> — it allows strictly more executions. Equivalently, the implication runs the other way: <em>if an execution is sequentially consistent, it is automatically causally consistent.</em> Let's first define the stronger model.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Sequential Consistency (SC)</div>
+  <p>An execution is <strong>sequentially consistent</strong> if there exists a <em>single global total order</em> of all operations — one timeline everyone shares — that (a) respects each client's program order, and (b) is explainable under the object's sequential specification (a read returns the value of the most recent write in that order).</p>
+</div>
+
+<p>There are two reasons SC is stronger. The obvious one: SC demands one <em>global</em> order, whereas causal lets each client have its own. A single global order can always be "projected down" to give each client an order, but per-client orders can't always be stitched into one global order. So global ⇒ per-client, but not the reverse.</p>
+
+<p>The subtle reason — the one the class wrestled with — is this: <strong>does SC's global order automatically preserve the reads-from edge?</strong> If it does, then everything causal consistency requires is already guaranteed by SC, which proves the implication. The answer is yes, and here is exactly why:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>Suppose Client 2's <code>get x</code> returns <code>2</code>, the value written by Client 1's <code>set x=2</code>. That's a reads-from edge.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>SC's global order isn't <em>any</em> order — it must satisfy the <strong>sequential specification</strong>. A read must return the value of the latest preceding write in that order.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>Now try to place <code>get x</code> <em>before</em> <code>set x=2</code> in the global order. Then the latest write before the read would be some earlier value (say the initial <code>0</code>), so the read would have to return <code>0</code> — not <code>2</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p>That contradicts what actually happened: the read returned <code>2</code>. So <em>any</em> valid SC order is forced to put the write before the read. The reads-from edge is preserved automatically — it's not an extra rule, it falls out of the sequential specification.</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>You never preserve reads-from "by hand" in sequential consistency. It comes for free, because a global order that <em>explains the values actually read</em> cannot possibly put a read ahead of the write it read from. This is why every SC execution is also causal: causal asks for exactly the edge that SC already cannot violate.</p>
+</div>
+
+<h3 id="cc-hierarchy">The Consistency Hierarchy</h3>
+
+<p>Putting last lecture's models in a line, from strongest (most restrictive) to weakest (most permissive):</p>
+
+<table class="compare-table">
+  <tr><th>Model</th><th>Guarantees</th><th>Real-time order?</th></tr>
+  <tr><td><strong>Linearizability</strong></td><td>Global total order + real-time order</td><td>Yes — if A finishes before B starts in wall-clock time, B sees A</td></tr>
+  <tr><td><strong>Sequential consistency</strong></td><td>Global total order, program order respected</td><td>No</td></tr>
+  <tr><td><strong>Causal consistency</strong></td><td>Per-client orders, happens-before preserved</td><td>No</td></tr>
+</table>
+
+<p>The arrows of implication point downward: <em>linearizable ⇒ sequentially consistent ⇒ causally consistent</em>. If a system satisfies a stronger model, it automatically satisfies every weaker one. A linearizable system is also SC and also causal; an SC system is also causal.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Only Linearizability Respects Real Time</div>
+  <p>Consider a <code>set</code> that completes, and then a <code>get</code> that starts <em>after</em> it finished in wall-clock time. Only <strong>linearizability</strong> forces that later <code>get</code> to see the <code>set</code>'s value. Under SC and causal consistency you're allowed to reorder them — that "later" <code>get</code> could legally return the <em>old</em> value (e.g. <code>0</code>), because those models have no notion of real-time ordering at all.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">How to Actually Answer These Questions</div>
+  <p>The professor's repeated advice: <em>don't trust intuition, follow the definition mechanically.</em> To check causal consistency, gather each client's operations plus all writes, draw the happens-before edges, and ask "can I find an order with no cycle?" If the required edges form a cycle, no valid order exists and the property fails. We'll use exactly this cycle-hunting technique on consensus too.</p>
+</div>
+
+<div class="quiz" id="quiz-1">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">An execution is sequentially consistent. What can you conclude about whether it is causally consistent?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>It might be causal or might not — they're unrelated models.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>It is definitely causally consistent, because SC is strictly stronger and its global order already preserves happens-before.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>It is definitely <em>not</em> causal, since causal requires per-client orders and SC has a global one.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Only if it is also linearizable.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct — B.</strong> Sequential consistency is strictly stronger, so every SC execution is automatically causal. The single global order required by SC already respects program order, and because it must explain the values actually read, it cannot violate any reads-from edge — exactly the edges causal consistency cares about. Option C confuses "has a global order" with "forbids per-client orders": a global order can always be projected into a valid per-client order, so having a stronger global order is no obstacle.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>The Consensus Problem</h2>
+</div>
+
+<p>Consistency models told us what guarantees a replicated system <em>offers readers and writers</em>. Consensus is the deeper machinery that lets a set of unreliable machines <em>agree on a value in the first place</em>. The professor flagged this upfront: it's harder than consistency, and the protocol we'll meet is "kind of hard to understand, and even harder to understand why it's correct." So let's build the motivation carefully before touching any mechanism.</p>
+
+<h3 id="pb-limits">Where Primary-Backup Replication Breaks</h3>
+
+<p>Recall the story so far in the course. We learned to use <strong>logical clocks</strong> to order events, then <strong>primary-backup replication</strong> to tolerate failures: one node is the <em>primary</em> handling requests, others are <em>backups</em>, and a <em>view service</em> decides who's primary. When the primary dies, the view service installs a new view promoting a backup, and the system limps onward.</p>
+
+<p>But ask the sharp question: <strong>when can a primary-backup system <em>not</em> serve requests?</strong> The class enumerated the failure modes, and they're all instances of one disease:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>A new backup hasn't finished <strong>syncing</strong> — it switched into the view but hasn't caught up on state, so it can't safely serve.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Both primary and backup fail</strong> at the same time. Nothing left to serve.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>A <strong>network partition</strong> splits the nodes: the backup can reach the view service but the primary can't, or vice versa.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p>The <strong>view service itself goes down</strong> — and it's a single point of authority, so no one can change views.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">The Root Cause: Hierarchy</div>
+  <p>Every one of those failures traces to the same flaw: <strong>there is a hierarchy among the nodes.</strong> One node (the view service) is the boss; one node (the primary) is privileged. Lose the boss, and the whole system stalls — even when a perfectly healthy majority of machines is still alive and connected. We want to dissolve that hierarchy.</p>
+</div>
+
+<p>The goal, stated precisely: make replication <strong>tolerant to network partitions</strong> so that operations don't block even when some machines are unavailable. Concretely, with 5 nodes, if 2 fail but a <strong>majority (3) stays alive</strong>, the system should keep responding — and keep being correct. No single privileged node whose death freezes everything.</p>
+
+<h3 id="trip-analogy">The Group-Trip Analogy</h3>
+
+<p>Here's the mental picture the professor used. You and a group of friends need to decide where to travel. You coordinate over a group chat — but, realistically, not everyone is looking at the chat at any given moment. Some have it muted, some are offline, some are asleep. This is <em>exactly</em> a distributed system: at any instant, some nodes are crashed, partitioned, or simply not paying attention.</p>
+
+<p>The thing you want to guarantee: <strong>once a destination is chosen, it cannot be overwritten.</strong> The friends who muted the chat can't show up one day before the trip and re-litigate the decision. If the protocol completes and picks Paris, Paris is final — even for the people who weren't watching.</p>
+
+<h3 id="consensus-def">Defining Consensus</h3>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Consensus</div>
+  <p><strong>Consensus</strong> is a protocol run among a set of nodes that, despite failures, lets them all agree on a single value — and once that value is chosen, it cannot be changed. Each node starts with a <em>proposal</em>; the protocol drives them to a single <em>decided</em> value that every node returns.</p>
+</div>
+
+<p>To keep the mechanics clean, this lecture restricts attention to <strong>binary consensus</strong>: every node proposes either <code>0</code> or <code>1</code>, and we want them all to end up returning the same one — all <code>0</code>, or all <code>1</code> — despite failures along the way. Each circle in our diagrams is a node: a machine, an actor, a person.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="360" height="150" viewBox="0 0 360 150" style="display:block; margin:0 auto;">
+      <!-- left: proposals -->
+      <circle cx="40" cy="35" r="18" fill="#fff" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="40" y="40" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">1</text>
+      <circle cx="40" cy="85" r="18" fill="#fff" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="40" y="90" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">0</text>
+      <circle cx="40" cy="135" r="18" fill="#fff" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="40" y="140" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">1</text>
+      <text x="40" y="14" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">propose</text>
+      <!-- middle box -->
+      <rect x="120" y="50" width="120" height="50" rx="10" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="180" y="80" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="600" fill="#c0510a">consensus</text>
+      <line x1="62" y1="45" x2="118" y2="68" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="62" y1="85" x2="118" y2="75" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="62" y1="125" x2="118" y2="82" stroke="#d9d0c4" stroke-width="1.5"/>
+      <!-- right: agreed -->
+      <circle cx="320" cy="35" r="18" fill="#edf7f0" stroke="#2d8a4e" stroke-width="1.5"/>
+      <text x="320" y="40" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">0</text>
+      <circle cx="320" cy="85" r="18" fill="#edf7f0" stroke="#2d8a4e" stroke-width="1.5"/>
+      <text x="320" y="90" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">0</text>
+      <circle cx="320" cy="135" r="18" fill="#edf7f0" stroke="#2d8a4e" stroke-width="1.5"/>
+      <text x="320" y="140" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">0</text>
+      <text x="320" y="14" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">agree</text>
+      <line x1="242" y1="68" x2="298" y2="45" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="242" y1="75" x2="298" y2="85" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="242" y1="82" x2="298" y2="125" stroke="#d9d0c4" stroke-width="1.5"/>
+    </svg>
+  </div>
+  <div class="figure-caption">Nodes enter with conflicting proposals (1, 0, 1). The consensus protocol funnels them to a single agreed value (here, all <code>0</code>) — despite failures in the middle.</div>
+</div>
+
+<h3 id="consensus-uses">What Consensus Buys Us</h3>
+
+<p>Why care so much about this one primitive? Because consensus is a <strong>foundational building block</strong> — once you can reliably agree on a single value despite failures, an enormous amount of distributed infrastructure becomes possible:</p>
+
+<table class="compare-table">
+  <tr><th>You can agree on...</th><th>...which gives you</th></tr>
+  <tr><td>Who is the next primary</td><td>Leader election without a fragile single view-service</td></tr>
+  <tr><td>The next request to execute</td><td>A replicated state machine — every replica runs the same operations in the same order</td></tr>
+  <tr><td>Who holds a lock right now</td><td>Distributed locking / mutual exclusion</td></tr>
+  <tr><td>Which nodes are alive and reachable</td><td>Reliable membership / failure detection</td></tr>
+  <tr><td>What financial transactions occurred</td><td>Blockchain and cryptocurrencies (built directly on consensus)</td></tr>
+</table>
+
+<div class="callout tip">
+  <div class="callout-title">Where This Lecture Is Heading</div>
+  <p>Our target use is the <strong>replicated state machine</strong>: a set of replicas continuously receiving client requests, using consensus to agree on <em>the next operation to execute</em>. Today we build the agreement block in isolation. <em>Next lecture</em> we plug it into a full request-processing system — and you'll build exactly this in Assignment 3.</p>
+</div>
+
+<div class="quiz" id="quiz-2">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">What is the fundamental flaw in primary-backup replication that consensus is designed to overcome?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>It uses logical clocks, which drift over time.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>It has a hierarchy — privileged nodes (primary, view service) whose failure or partition can stall the whole system even when a majority is healthy.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>It cannot store more than one value at a time.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It requires all nodes to be online simultaneously to make progress.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct — B.</strong> The professor identified the root cause as <em>hierarchy among the nodes</em>: there is a special view service and a special primary. Lose or partition the privileged node and the system blocks — even though a healthy majority of machines is still up. Consensus dissolves this hierarchy: it makes progress as long as any majority is alive and reachable, with no single node whose death is fatal. Option D describes the opposite of what we want — consensus is specifically built to progress <em>without</em> everyone being online.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>A Side Quest: Safety &amp; Liveness</h2>
+</div>
+
+<p>Before we can say <em>what we want</em> from a consensus algorithm, we need vocabulary for talking about correctness properties in general. This short detour pays off immediately: the requirements of consensus turn out to be one of each kind.</p>
+
+<h3 id="traces">Systems as Sets of Traces</h3>
+
+<p>Recall how we model a system formally. You sit at the boundary, issue operations, and observe what comes back. Each complete observation is an <strong>execution trace</strong>. The <em>specification</em> of a system is simply the set of <em>all</em> traces it can possibly produce.</p>
+
+<p>A <strong>property</strong> <code>P</code> is also just a set of traces — the "good" ones. We say the system <em>satisfies</em> <code>P</code> when every trace the system can produce lies inside <code>P</code>'s set. In set language: the system's traces are a <em>subset</em> of the property's traces.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Proving vs. Disproving a Property</div>
+  <p>To <strong>disprove</strong> that a system satisfies <code>P</code>, you only need <em>one</em> counterexample: a single trace the system can produce that's outside <code>P</code>. To <strong>prove</strong> it, you must show <em>all</em> traces are inside <code>P</code> — a far heavier burden.</p>
+</div>
+
+<h3 id="safety">Safety Properties — "Nothing Bad Happens"</h3>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Safety</div>
+  <p>A <strong>safety property</strong> says the system <em>never reaches an undesirable state</em>. Nothing bad ever happens.</p>
+</div>
+
+<p>How do you disprove a safety property? You exhibit a <strong>finite trace</strong> in which the bad thing has already occurred. The instant the system enters the forbidden state, you've got your counterexample — you don't need to watch any longer. Examples of safety in consensus: "two nodes never decide different values," "a decided value is never un-decided."</p>
+
+<h3 id="liveness">Liveness Properties — "Something Good Eventually Happens"</h3>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Liveness</div>
+  <p>A <strong>liveness property</strong> says something good <em>eventually</em> happens — the system makes progress, a request eventually gets answered, the protocol eventually terminates.</p>
+</div>
+
+<p>Disproving liveness is fundamentally harder, and the reason is beautiful. A finite trace can <em>never</em> disprove liveness — because someone can always object, "but what if you ran it ten steps longer? Maybe the good thing happens then." To genuinely violate liveness you need an <strong>infinite trace</strong> in which the good thing never happens. Typically you find this as a <em>loop</em>: the system enters a cycle of states and never escapes.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Deadlock Is Only a Special Case</div>
+  <p>A <strong>deadlock</strong> (the system frozen, unable to move) is one way to violate liveness — but it's not the only way. A <strong>livelock</strong> is worse and sneakier: the system keeps taking steps, keeps looking busy, but loops forever without ever making real progress. That's why "find an infinite trace" — not just "find a stuck state" — is the correct counterexample for liveness.</p>
+</div>
+
+<table class="compare-table">
+  <tr><th></th><th>Safety</th><th>Liveness</th></tr>
+  <tr><td>Slogan</td><td>"Nothing bad happens"</td><td>"Something good eventually happens"</td></tr>
+  <tr><td>Counterexample</td><td>A finite trace reaching a bad state</td><td>An infinite trace where the good thing never occurs</td></tr>
+  <tr><td>Difficulty</td><td>Easier to prove &amp; check</td><td>Very hard — active research frontier</td></tr>
+</table>
+
+<div class="callout insight">
+  <div class="callout-title">Why This Asymmetry Matters</div>
+  <p>Because safety is checkable with finite reasoning, most verification and formal-methods work on distributed systems targets <em>safety</em>. Liveness needs reasoning about infinite executions, fairness, and progress — it's genuinely state-of-the-art to prove rigorously. Keep this asymmetry in mind: throughout distributed systems, "is it safe?" is the tractable question and "is it live?" is the hard one.</p>
+</div>
+
+<div class="quiz" id="quiz-3">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">To disprove a <em>liveness</em> property, what must your counterexample be?</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>A finite trace where the system reaches a bad state.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>An infinite trace (typically a loop) in which the good thing never happens.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Any single deadlocked state.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>A proof that all traces are inside the property set.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct — B.</strong> Liveness says something good happens <em>eventually</em>, so no finite trace can refute it — you could always extend it further and the good thing might happen. You need an <em>infinite</em> trace, usually a loop the system can't escape, demonstrating the good thing never arrives. Option A is the recipe for disproving <em>safety</em>. Option C is too narrow: a deadlock is one liveness violation, but a livelock — looping forever while still taking steps — also violates liveness without any deadlocked state.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>What We Actually Want From Consensus</h2>
+</div>
+
+<p>Now we can state the requirements precisely — and, instructively, by trying naive answers and watching them fail. Three properties together pin down "correct consensus."</p>
+
+<h3 id="three-props">Agreement, Termination, Validity</h3>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The Three Consensus Properties</div>
+  <p><strong>Agreement (safety):</strong> All nodes that decide, decide the <em>same</em> value. No two nodes pick differently.</p>
+  <p><strong>Termination (liveness):</strong> The protocol <em>eventually</em> finishes — every (correct) node eventually decides.</p>
+  <p><strong>Validity (safety):</strong> The decided value must be one that was actually <em>proposed</em> by some node. You can't agree on a value nobody suggested.</p>
+</div>
+
+<p>Notice the side-quest paying off: <strong>termination is a liveness property</strong> ("good thing eventually happens — everyone decides"), while <strong>agreement and validity are safety properties</strong> ("bad thing never happens — disagreement, or a fabricated value"). And recall the lesson: the liveness piece (termination) will be the hard part to guarantee.</p>
+
+<h3 id="trivial-fails">Why the Trivial Answers Fail</h3>
+
+<p>The professor invited the class to find the <em>simplest</em> protocol satisfying agreement and termination — simpler even than majority voting. The winning trick is almost a cheat:</p>
+
+<div class="callout warning">
+  <div class="callout-title">The "Always Output 0" Cheat</div>
+  <p>Protocol: <em>every node ignores all proposals and always decides <code>0</code>.</em> This trivially satisfies <strong>agreement</strong> (everyone picks 0, so they all match) and <strong>termination</strong> (no messages needed; everyone decides instantly). But it's useless — it decides <code>0</code> even when <em>every single node proposed <code>1</code></em>. The "decision" reflects nothing about what anyone wanted.</p>
+</div>
+
+<p>This is precisely why <strong>validity</strong> exists. Validity outlaws the cheat: the agreed value must be one of the proposed values. You cannot pick an arbitrary constant and call it a day. With all three properties — agreement, termination, validity — the trivial protocols are dead, and we genuinely have to <em>do work</em> to reach agreement.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>Consensus = <strong>Agreement</strong> + <strong>Termination</strong> + <strong>Validity</strong>. Drop any one and the problem becomes trivial or meaningless: without validity you cheat with a constant; without agreement you don't have consensus at all; without termination you can stall forever. All three together are what make consensus genuinely hard — and what Paxos is built to satisfy.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">What We're Deliberately Ignoring</div>
+  <p>One might also want <em>fairness</em> (a principled, non-arbitrary reason for which value wins) or <em>fast real-time</em> performance. Classic consensus protocols like Paxos don't promise fairness — proposals are treated as arbitrary, like picking a paint color. For this lecture we set fairness and performance aside and focus purely on the three core properties.</p>
+</div>
+
+<div class="quiz" id="quiz-4">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A "protocol" hard-codes every node to always decide <code>0</code>. Which consensus property does it violate?</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Agreement — the nodes disagree.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Termination — it never finishes.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Validity — it can decide <code>0</code> even when no node proposed <code>0</code>.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>None — it's a perfectly good consensus protocol.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct — C.</strong> Always-decide-<code>0</code> actually satisfies agreement (all nodes match) and termination (everyone decides instantly), which is exactly why it's a tempting cheat. What it violates is <strong>validity</strong>: if every node proposed <code>1</code>, the decided value <code>0</code> was never proposed by anyone. Validity is the property that forces the decision to mean something — it must be one of the actually-proposed values.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>Paxos: The Protocol</h2>
+</div>
+
+<p>Now the main event. <strong>Paxos</strong>, introduced by Leslie Lamport, is <em>the</em> foundational consensus protocol. Lamport framed it as a myth about legislators on the Greek island of Paxos passing laws while constantly travelling — a parable for nodes that keep going offline. Despite the whimsy, Paxos (and its descendants Raft, Zookeeper's Zab, and others) underpins essentially all consensus deployed in industry today. It's hard, but, as the professor put it, "actually pretty fun of an algorithm."</p>
+
+<h3 id="paxos-roles">Three Roles</h3>
+
+<p>Paxos splits responsibility across three role types. In a real deployment <em>every node plays all three roles at once</em>, but to learn the protocol we pretend they're separate nodes:</p>
+
+<table class="compare-table">
+  <tr><th>Role</th><th>Job</th></tr>
+  <tr><td><strong>Proposer</strong></td><td>Proposes values and drives rounds of the protocol forward.</td></tr>
+  <tr><td><strong>Acceptor</strong></td><td>The voters. They promise and accept; a majority of them choosing a value <em>is</em> the decision.</td></tr>
+  <tr><td><strong>Learner</strong></td><td>Pure observers. They watch for a majority acceptance and announce "consensus reached."</td></tr>
+</table>
+
+<div class="callout concept">
+  <div class="callout-title">Two Foundational Assumptions</div>
+  <p><strong>(1)</strong> Every process knows the <em>number of acceptors</em> in advance. This is essential — it's how anyone can compute what counts as a <strong>majority</strong>. <strong>(2)</strong> Acceptors can <em>persist</em> a little state to disk: the proposal number they've promised, and the value they've accepted. Paxos is, at heart, a careful majority vote.</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>The single most important guarantee: <strong>once a majority of acceptors has accepted a value, no different value can ever be accepted in any later round.</strong> The decision is locked. No matter what messages fly afterward, no matter who crashes, the system cannot change its mind. Everything subtle in Paxos exists to preserve this one property.</p>
+</div>
+
+<p>One more crucial distinction before we trace the protocol — the difference between a <em>number</em> and a <em>value</em>:</p>
+
+<table class="compare-table">
+  <tr><th>Proposal number (<code>N</code>)</th><th>Value (<code>val</code>)</th></tr>
+  <tr><td>A unique, ever-increasing tag used to decide <em>who wins</em> a round.</td><td>The actual thing being agreed on (a request, a transaction, <code>0</code>/<code>1</code>).</td></tr>
+  <tr><td>Internal bookkeeping; clients don't care about it.</td><td>The only thing clients ultimately care about.</td></tr>
+</table>
+
+<h3 id="prepare-phase">Phase 1 — Prepare</h3>
+
+<p>A proposer kicks off a round by choosing a proposal number <code>N</code> and broadcasting <code>prepare(N)</code> to all acceptors. <strong>Note: it sends the number only — not the value yet.</strong> Two requirements on <code>N</code>:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Higher than any <code>N</code> this proposer has used before.</strong> Each new attempt uses a strictly larger number.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Globally unique across proposers.</strong> Achieved by partitioning the number space: proposer 1 uses <code>1, 3, 5, 7, …</code>; proposer 2 uses <code>2, 4, 6, …</code>. No two proposers can ever pick the same <code>N</code>.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Why "Higher Than <em>This Proposer's</em> Previous N" — Not Globally Highest?</div>
+  <p>It's tempting to demand "higher than any <code>N</code> ever used by <em>anyone</em>." But computing the global maximum would require the proposers to <strong>agree</strong> on a number first — and agreeing is <em>consensus itself</em>. You'd need to run consensus to run consensus: hopeless circularity. So each proposer only tracks <em>its own</em> last number, and uniqueness is handled cheaply by the disjoint number pools. No global coordination required.</p>
+</div>
+
+<h4>What an acceptor does on receiving <code>prepare(N)</code></h4>
+
+<p>Each acceptor keeps a local variable <code>NP</code> = the highest proposal number it has promised so far. On receiving <code>prepare(N)</code>:</p>
+
+<pre><code><span class="kw">if</span> N <span class="op">&lt;=</span> NP:           <span class="cm"># already promised something at least this high</span>
+    reply <span class="str">"prepare failed"</span>
+<span class="kw">else</span>:               <span class="cm"># N is the highest we've seen</span>
+    NP <span class="op">=</span> N            <span class="cm"># remember this promise (persist it)</span>
+    reply <span class="str">"promise(N)"</span>  <span class="cm"># * there's an asterisk here — Part VI</span></code></pre>
+
+<p>A <strong>promise</strong> is a commitment: "I will not accept any proposal numbered lower than <code>N</code> from now on." Let's trace it. Proposer 1 sends <code>prepare(5)</code> to acceptors A1, A2, A3. Suppose A1 and A2 had previously promised <code>4</code>:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>A1 asks: "have I promised something <code>&gt;= 5</code>?" Its <code>NP = 4 &lt; 5</code>, so no. It sets <code>NP = 5</code> and replies <code>promise(5)</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>A2 does the same: <code>4 &lt; 5</code>, so it promises <code>5</code> too.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>Two of three acceptors have promised — that's a <strong>majority</strong>. <strong>Milestone 1</strong> reached.</p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Milestone 1 — Majority Promised</div>
+  <p>A majority of acceptors have promised on the proposal <em>number</em> (not a value yet!). They will now refuse any proposal with a smaller number. The proposer can safely move to Phase 2.</p>
+</div>
+
+<h3 id="accept-phase">Phase 2 — Accept</h3>
+
+<p>Having collected promises from a majority, the proposer now reveals its <em>value</em>. It broadcasts <code>accept(N, val)</code> to the acceptors — same <code>N</code> as before, plus its proposed value.</p>
+
+<h4>What an acceptor does on receiving <code>accept(N, val)</code></h4>
+
+<pre><code><span class="kw">if</span> N <span class="op">&lt;</span> NP:            <span class="cm"># someone promised a higher number meanwhile</span>
+    reply <span class="str">"accept failed"</span>
+<span class="kw">else</span>:               <span class="cm"># N &gt;= NP: still the leader of this round</span>
+    NA <span class="op">=</span> N            <span class="cm"># remember accepted number</span>
+    VA <span class="op">=</span> val          <span class="cm"># remember accepted value (persist both)</span>
+    reply <span class="str">"accepted"</span>
+    broadcast <span class="str">"accepted(N, val)"</span> <span class="kw">to</span> learners</code></pre>
+
+<div class="callout warning">
+  <div class="callout-title">A Subtle <code>&lt;</code> vs <code>&lt;=</code></div>
+  <p>In <em>prepare</em>, the failure test is <code>N &lt;= NP</code>. In <em>accept</em>, it's <code>N &lt; NP</code> — strict. Why the difference? If <code>N == NP</code> at accept time, this is precisely the proposal we already promised, so we should accept it. Equivalently: accept whenever <code>N &gt;= NP</code>. Getting these comparisons exactly right is one of the things you have to sit down and convince yourself of.</p>
+</div>
+
+<p>Continuing the trace: P1 sends <code>accept(5, X)</code> to A1 and A2. Neither has promised anything higher than 5, so:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>A1 checks: promised higher than 5? No. It sets <code>NA=5, VA=X</code> and replies "accepted X."</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>A2 does the same: accepts <code>X</code> with number 5.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>A <strong>majority</strong> of acceptors have now accepted the <em>same value</em> <code>X</code>. <strong>Milestone 2 — consensus is reached.</strong></p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">Milestone 2 — Consensus Reached</div>
+  <p>The moment a <em>majority of acceptors accept the same value</em>, the decision is final. <strong>There is no going back.</strong> Even if every subsequent message is dropped and every node crashes, the system can never decide a different value. This is the heart of Paxos. (Note: a mere <em>promise</em> from a majority is <strong>not</strong> consensus — only a majority <em>acceptance</em> is.)</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">A Majority Is Enough — You Don't Need Everyone</div>
+  <p>In the trace, A3 never received any message — maybe it was partitioned, maybe every message to it was dropped. <em>It doesn't matter.</em> A1 and A2 alone form a majority of three, so consensus still holds. In practice you'd broadcast to everyone, but the protocol's correctness only requires a majority to participate. This is exactly the partition-tolerance we set out to achieve in Part II.</p>
+</div>
+
+<h3 id="learn-phase">Phase 3 — Learn</h3>
+
+<p>When an acceptor accepts a value, it also broadcasts <code>accepted(N, val)</code> to all the <strong>learners</strong>. A learner waits until it hears "accepted" for the same value from a <em>majority</em> of acceptors. At that point it knows consensus has been reached.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Milestone 3 — A Learner Knows</div>
+  <p>This is a <em>local, per-learner</em> milestone: each learner independently reaches it once it has heard a majority of matching acceptances. The learner is effectively the <strong>client</strong> of the consensus block — the entity that wanted the decision in the first place. The instant a learner hits Milestone 3, the system can safely act on the value: run the request, commit the transaction, install the new primary. In Assignment 3, this is exactly when you execute the agreed-upon operation.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">One Acceptor Accepting ≠ Consensus</div>
+  <p>What if only A1 accepts and its message to A2 is lost? A1 still broadcasts "accepted" to the learners. Does a learner reach Milestone 3? <strong>No.</strong> A single acceptance proves nothing — that acceptor might be in the minority while the majority accepts a <em>different</em> value. A learner reaches Milestone 3 only on hearing from a <em>majority</em>. "I accepted X" is not "the system chose X."</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="400" height="200" viewBox="0 0 400 200" style="display:block; margin:0 auto;">
+      <!-- proposer -->
+      <circle cx="50" cy="100" r="22" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="50" y="98" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="600" fill="#c0510a">P1</text>
+      <text x="50" y="138" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">proposer</text>
+      <!-- acceptors -->
+      <circle cx="200" cy="40" r="20" fill="#eff4ff" stroke="#2563eb" stroke-width="1.5"/>
+      <text x="200" y="45" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#2a2520">A1</text>
+      <circle cx="200" cy="100" r="20" fill="#eff4ff" stroke="#2563eb" stroke-width="1.5"/>
+      <text x="200" y="105" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#2a2520">A2</text>
+      <circle cx="200" cy="160" r="20" fill="#f5f0e8" stroke="#d9d0c4" stroke-width="1.5"/>
+      <text x="200" y="165" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">A3</text>
+      <text x="200" y="192" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">acceptors</text>
+      <!-- learners -->
+      <circle cx="350" cy="70" r="20" fill="#edf7f0" stroke="#2d8a4e" stroke-width="1.5"/>
+      <text x="350" y="75" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#2a2520">L1</text>
+      <circle cx="350" cy="130" r="20" fill="#edf7f0" stroke="#2d8a4e" stroke-width="1.5"/>
+      <text x="350" y="135" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#2a2520">L2</text>
+      <text x="350" y="162" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">learners</text>
+      <!-- proposer to acceptors -->
+      <line x1="72" y1="92" x2="180" y2="48" stroke="#c0510a" stroke-width="1.5" marker-end="url(#a2)"/>
+      <line x1="72" y1="100" x2="180" y2="100" stroke="#c0510a" stroke-width="1.5" marker-end="url(#a2)"/>
+      <!-- acceptors to learners -->
+      <line x1="220" y1="45" x2="330" y2="68" stroke="#2d8a4e" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#a3)"/>
+      <line x1="220" y1="95" x2="330" y2="128" stroke="#2d8a4e" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#a3)"/>
+      <line x1="220" y1="105" x2="330" y2="75" stroke="#2d8a4e" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#a3)"/>
+      <line x1="220" y1="48" x2="330" y2="122" stroke="#2d8a4e" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#a3)"/>
+      <defs>
+        <marker id="a2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#c0510a"/></marker>
+        <marker id="a3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#2d8a4e"/></marker>
+      </defs>
+    </svg>
+  </div>
+  <div class="figure-caption">Message flow. P1 sends prepare/accept to acceptors (solid orange); A1 and A2 broadcast "accepted" to all learners (dashed green). A3 is unreachable but a majority still decides. Each learner reaches Milestone 3 on hearing a majority.</div>
+</div>
+
+<h3 id="milestones">The Three Milestones at a Glance</h3>
+
+<table class="compare-table">
+  <tr><th>Milestone</th><th>Condition</th><th>Meaning</th></tr>
+  <tr><td>1</td><td>Majority of acceptors <em>promised</em> on number <code>N</code></td><td>Proposer may proceed to send a value. <em>Not</em> consensus yet.</td></tr>
+  <tr><td>2</td><td>Majority of acceptors <em>accepted</em> the same value</td><td><strong>Consensus.</strong> Irrevocable. The value is locked forever.</td></tr>
+  <tr><td>3</td><td>A learner hears a majority of matching acceptances</td><td>That learner <em>knows</em> consensus happened and may act on the value.</td></tr>
+</table>
+
+<div class="quiz" id="quiz-5">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">At exactly which point is consensus irrevocably reached in Paxos?</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>When a majority of acceptors send a <em>promise</em> for the proposal number (Milestone 1).</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>When a majority of acceptors <em>accept</em> the same value (Milestone 2).</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>When a single acceptor accepts a value and tells the learners.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>When all three acceptors have accepted the value.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct — B.</strong> Consensus is reached precisely at Milestone 2: a <em>majority</em> of acceptors accepting the same value. From that instant the decision is irrevocable, regardless of crashes or dropped messages. Option A confuses promise with acceptance — a promise is only about the number and is not consensus. Option C is wrong because a lone acceptor might be in the minority. Option D is too strong: you only need a majority, never unanimity — that's the whole point of tolerating partitions.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART VI ═══════════════════════ -->
+<section id="part6" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part VI</div>
+  <h2>Competing Proposers — Filling In the Asterisk</h2>
+</div>
+
+<p>We've been carrying two asterisks — one in the prepare logic, one in the accept logic — and now we discharge them. Everything so far assumed a single, well-behaved proposer. Real systems have <em>multiple</em> proposers racing, and incomplete rounds left behind by crashes. This part is what makes Paxos correct, and it's the part that makes Paxos famously hard.</p>
+
+<h3 id="the-asterisk">The Scenario</h3>
+
+<p>Suppose Proposer 1 is mid-round: it sent <code>prepare(5)</code>, got promises, and even got A1 and A2 to accept value <code>X</code> with number 5. Now Proposer 2 enters and sends <code>prepare(6)</code> to A2 and A3. What should A2 — which has already <em>accepted</em> <code>5, X</code> — reply?</p>
+
+<p>Our original prepare logic only checked "have I promised higher?" It said nothing about the case where the acceptor has already <em>accepted</em> a value. That's the gap the asterisk marks. Here is the full prepare logic:</p>
+
+<pre><code><span class="cm"># Acceptor handling prepare(N) — the complete version</span>
+<span class="kw">if</span> N <span class="op">&lt;=</span> NP:
+    reply <span class="str">"prepare failed"</span>
+<span class="kw">elif</span> already_accepted:           <span class="cm"># I have some NA, VA on record</span>
+    NP <span class="op">=</span> N
+    reply <span class="str">"promise(N, NA, VA)"</span>      <span class="cm"># promise — AND report what I accepted</span>
+<span class="kw">else</span>:
+    NP <span class="op">=</span> N
+    reply <span class="str">"promise(N)"</span>              <span class="cm"># plain promise, no prior value</span></code></pre>
+
+<div class="callout concept">
+  <div class="callout-title">The Key Move — Promises Carry Accepted Values</div>
+  <p>If an acceptor has already accepted some <code>(NA, VA)</code>, its promise to a <em>higher</em> number isn't empty. It says: "Yes, I promise you with your bigger number 6 — <strong>but be aware I already accepted value <code>X</code> at number 5.</strong>" The promise piggybacks the previously-accepted value so the new proposer learns about it.</p>
+</div>
+
+<p>So A2 replies <code>promise(6, 5, X)</code>: it promises P2's number 6 (legal, since 6 &gt; 5), but discloses that it already accepted <code>X</code> at 5. A3, which accepted nothing, replies a plain <code>promise(6)</code>.</p>
+
+<h3 id="adopt-value">The Proposer Must Adopt the Accepted Value</h3>
+
+<p>Now the second asterisk, in Phase 2. When a proposer collects its majority of promises, it checks: <strong>did any promise carry a previously-accepted value?</strong></p>
+
+<pre><code><span class="cm"># Proposer, after receiving promises from a majority</span>
+<span class="kw">if</span> any promise contained a (NA, VA):
+    val <span class="op">=</span> VA of the promise with the <span class="kw">highest</span> NA   <span class="cm"># adopt it!</span>
+<span class="kw">else</span>:
+    val <span class="op">=</span> my_own_proposed_value                  <span class="cm"># free to use my value</span>
+send <span class="str">"accept(my_N, val)"</span> <span class="kw">to</span> a majority</code></pre>
+
+<div class="callout warning">
+  <div class="callout-title">It Uses Its Own Number, But Someone Else's Value</div>
+  <p>This is the trickiest line in Paxos. P2 wanted to propose <code>Y</code>. But because A2's promise revealed that <code>X</code> was already accepted, P2 must <strong>abandon <code>Y</code> and propose <code>X</code> instead</strong>. So P2 sends <code>accept(6, X)</code> — its <em>own</em> number 6, but the <em>previously-accepted</em> value <code>X</code>. If multiple accepted values came back, it picks the one with the <em>highest</em> <code>NA</code>. Number = mine; value = the existing one.</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Why Adoption Preserves Safety</div>
+  <p>This adoption rule is <em>exactly</em> why "once a majority accepts <code>X</code>, no other value can ever be accepted." Any future proposer, to assemble a majority of promises, must overlap with at least one acceptor from the majority that accepted <code>X</code> (two majorities always intersect). That acceptor reports <code>X</code>, forcing the new proposer to re-propose <code>X</code>. The decided value propagates forward unchanged, round after round.</p>
+</div>
+
+<h3 id="why-continue">Why Continue At All? Why Not Just Stop?</h3>
+
+<p>A natural objection: if P2 discovers <code>X</code> was already accepted, why bother sending <code>accept(6, X)</code>? Why not give up — "someone already chose, forget it"? The answer reveals the deepest purpose of Paxos:</p>
+
+<div class="callout insight">
+  <div class="callout-title">Completing an Abandoned Decision</div>
+  <p>Imagine the original round was <em>incomplete</em>: P1 got A1 to accept <code>X</code>, but the message to A2 was <strong>dropped</strong>, and then P1 <strong>crashed</strong>. Now exactly one acceptor holds <code>X</code> — that's not a majority, so there's no consensus, and the system is stuck. We <em>need</em> another proposer to come along, send <code>prepare(6)</code>, learn that <code>X</code> was accepted, and <strong>drive <code>X</code> to a full majority</strong>. By re-proposing <code>X</code>, P2 forces A3 to also accept <code>X</code> — completing the half-finished decision rather than abandoning it.</p>
+</div>
+
+<p>So continuing isn't optional politeness — it's the mechanism that rescues the system from incomplete states. Without it, a single dropped message plus a crashed proposer would freeze consensus forever. Proposers therefore keep retrying with ever-higher numbers (P1 escalates to 7, P2 to 8, …) until the protocol completes. That relentless retrying is the <strong>liveness</strong> engine — and recall, liveness is the hard part.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Clients Only Care About the Value, Not the Number</div>
+  <p>A learner might see <code>X</code> accepted at number 5 by some acceptors and at number 6 by others. Does that conflict? No — <em>the number is internal bookkeeping</em>. The client only cares <em>which value</em> won: run request <code>X</code> or request <code>Y</code>? As long as a majority accepted <code>X</code> (whatever the numbers), consensus is on <code>X</code>. Mixed numbers, same value — totally fine.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Acceptors Never "Finish"</div>
+  <p>An acceptor never knows the global protocol is done. It only knows its own state ("I accepted <code>X</code> at 5"). It stays forever ready to answer new prepares and accepts — replying to prepares with its accepted value if it has one, or a plain promise if not. The protocol simply <em>quiesces</em>: once everyone knows the decision, no one bothers sending more messages, but nodes never formally stop running.</p>
+</div>
+
+<details>
+<summary>Deep-dive: walking through the full incomplete-round recovery</summary>
+<div class="details-body">
+<p>Start: P1 sends <code>prepare(5)</code>, gets promises, sends <code>accept(5, X)</code>. The message to A1 lands — A1 accepts <code>X</code> — but the message to A2 is dropped, and P1 crashes immediately after. State of the world: A1 has <code>(5, X)</code>; A2 and A3 have nothing accepted. No majority ⇒ no consensus ⇒ system stuck.</p>
+<pre><code><span class="cm"># Recovery by Proposer 2</span>
+<span class="nb">1.</span> P2 sends prepare(6) <span class="kw">to</span> all acceptors
+<span class="nb">2.</span> A1 replies promise(6, 5, X)   <span class="cm"># discloses its accepted value</span>
+   A3 replies promise(6)         <span class="cm"># nothing accepted</span>
+<span class="nb">3.</span> P2 has a majority of promises; one carried (5, X)
+   <span class="op">=&gt;</span> P2 adopts val = X (highest NA among reported)
+<span class="nb">4.</span> P2 sends accept(6, X) <span class="kw">to</span> A1, A3
+<span class="nb">5.</span> A1, A3 accept (6, X)  <span class="op">=&gt;</span> majority accepts X
+   <span class="op">=&gt;</span> Milestone 2: consensus on X, finally complete</code></pre>
+<p>The half-finished decision <code>X</code> was driven to a full majority by a brand-new proposer that never wanted <code>X</code> in the first place. That is Paxos completing an incomplete consensus — exactly what "why continue?" was about.</p>
+</div>
+</details>
+
+<div class="quiz" id="quiz-6">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Proposer 2 wants to propose <code>Y</code>. During its prepare phase, an acceptor's promise reports that value <code>X</code> was previously accepted (at number 5). What value does P2 send in its <code>accept</code> message, and with what number?</div>
+  <div class="quiz-options" data-quiz="q6">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div><code>accept(5, X)</code> — it reuses both the old number and the old value.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div><code>accept(6, Y)</code> — it ignores the old value and pushes its own.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div><code>accept(6, X)</code> — its own higher number, but the previously-accepted value.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It stops entirely, since a value was already accepted.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q6','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q6">
+    <strong>Correct — C.</strong> P2 must <em>adopt</em> the previously-accepted value <code>X</code> (the one with the highest reported <code>NA</code>) but uses its <em>own</em> proposal number 6 — so it sends <code>accept(6, X)</code>. This is the rule that guarantees an already-accepted value can never be displaced. Option B (pushing <code>Y</code>) would violate safety. Option D is wrong because <em>not</em> continuing is exactly the bug: a dropped message plus a crash could leave the decision stuck at one acceptor, and only by continuing does P2 drive <code>X</code> to a full majority and complete consensus.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SYNTHESIS ═══════════════════════ -->
+<section id="synthesis" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This lecture moved from <em>describing</em> agreement to <em>engineering</em> it. We opened by sharpening <strong>causal consistency</strong> — building it from the two happens-before edges (program order and reads-from), proving that sequential consistency automatically implies it, and slotting it into the hierarchy <em>linearizable ⇒ sequential ⇒ causal</em>. That hierarchy is about <em>what readers observe</em>; the rest of the lecture asked the harder question underneath it: how do unreliable nodes <em>decide</em> anything at all?</p>
+
+<p>The answer began with a problem. <strong>Primary-backup replication</strong> stalls whenever a privileged node — the primary or the view service — fails or is partitioned, because it has a <em>hierarchy</em>. <strong>Consensus</strong> dissolves that hierarchy: agree on one value, despite failures, as long as a majority survives, and never take it back. We saw it's the building block under leader election, distributed locks, membership, blockchains, and — our real target — the replicated state machine.</p>
+
+<p>To say <em>what</em> we wanted, we took the <strong>safety/liveness</strong> detour, and it organized everything: consensus needs <strong>agreement</strong> (safety), <strong>validity</strong> (safety), and <strong>termination</strong> (liveness). Validity kills the "always output 0" cheat; termination is the liveness obligation that, true to form, turns out to be the hard one to guarantee.</p>
+
+<p>Finally, <strong>Paxos</strong> delivered all three. Its three phases — <em>prepare</em> (lock in a number via a majority of promises), <em>accept</em> (drive a value to a majority), <em>learn</em> (observe the majority acceptance) — hit three milestones, of which only <strong>Milestone 2, majority acceptance, is irrevocable consensus</strong>. And the two asterisks we deferred carry the whole correctness argument: because promises report previously-accepted values, and because new proposers must <em>adopt</em> those values, an accepted value propagates forward unchanged across every future round. That is why a majority acceptance can never be undone — and why a stuck, half-finished decision can always be completed by a fresh proposer rather than abandoned.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The One Sentence to Remember</div>
+  <p>Paxos lets any majority of nodes agree on a single value that, once a majority has <em>accepted</em> it, can never be changed — achieved with no privileged node, by having every new proposer first learn and then re-propose whatever value might already have been accepted.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">What's Next</div>
+  <p>The professor was upfront that Paxos is hard and that <em>why</em> it's correct deserves its own deep treatment — so <strong>next lecture</strong> we'll argue rigorously about its correctness (the safety proof you'll want to convince yourself of by hand) and then plug consensus into a full <strong>replicated state machine</strong>: replicas continuously agreeing on the next request to execute. That machinery is exactly what you'll build in <strong>Assignment 3</strong> — where Milestone 3 (a learner hearing a majority) is the precise moment you're allowed to execute the agreed request. And a closing reminder from the lecture itself: <em>start Assignment 2 now</em> — it took the instructor four times as long as the first, so go to discussion early.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

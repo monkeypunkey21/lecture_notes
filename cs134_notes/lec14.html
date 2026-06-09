@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 14 — Interactive Textbook</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 14</div>
+  <a href="#part1">Part I — Temporary Failures</a>
+  <a href="#dynamo-recap" class="sub">Where Dynamo Stands</a>
+  <a href="#hinted-handoff" class="sub">Hinted Handoff</a>
+  <a href="#durability-tuning" class="sub">Availability vs Durability</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Permanent Failures &amp; Merkle Trees</a>
+  <a href="#anti-entropy" class="sub">Replica Synchronization</a>
+  <a href="#merkle" class="sub">Merkle Trees</a>
+  <a href="#merkle-trace" class="sub">Walking the Tree</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — Dynamo in Practice</a>
+  <a href="#gossip-lookup" class="sub">Gossip-Based Lookup</a>
+  <a href="#perf-plot" class="sub">The Latency Plot</a>
+  <a href="#write-buffer" class="sub">Write Buffering</a>
+  <a href="#static-partition" class="sub">Static Partitioning</a>
+  <a href="#theory-practice" class="sub">Theory vs Practice</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — Transactions &amp; Serializability</a>
+  <a href="#why-transactions" class="sub">When State Spans Partitions</a>
+  <a href="#atomicity" class="sub">Atomicity &amp; Transactions</a>
+  <a href="#serializability" class="sub">Defining Serializability</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Locking &amp; Isolation Levels</a>
+  <a href="#two-phase" class="sub">Two-Phase Locking</a>
+  <a href="#snapshot" class="sub">Snapshot Isolation</a>
+  <a href="#fault-tolerance" class="sub">Fault Tolerance</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#synthesis">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">CS134 · Distributed Systems</div>
+  <h1>Dynamo Under Failure &amp; the Birth of Transactions</h1>
+  <p class="hero-sub">An interactive guide to Lecture 14 — how Dynamo survives crashes with hinted handoff and Merkle trees, the gap between theory and practice, and how distributed transactions give us atomic operations across partitions.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>Temporary Failures &amp; Hinted Handoff</h2>
+</div>
+
+<h3 id="dynamo-recap">Where Dynamo Stands So Far</h3>
+<p>Before we add anything new, let's catch ourselves up on what <strong>Dynamo</strong> is and why it exists. Dynamo is Amazon's key-value store — think of it as a giant distributed dictionary that maps a key (like a shopping-cart ID) to a value (the cart's contents). Its entire design philosophy is summed up in one sentence: <em>accept weaker consistency in exchange for better availability and performance.</em> Amazon would rather let you keep adding items to your cart during a partial outage and reconcile any conflicts later than refuse your write because a server is down.</p>
+
+<p>To make this real, Dynamo has assembled a toolkit over the previous lectures. Here is the running scorecard of which problem each tool solves:</p>
+
+<table class="compare-table">
+  <tr><th>Problem</th><th>Dynamo's Tool</th></tr>
+  <tr><td>How do we split keys across machines? (<em>partitioning</em>)</td><td>Consistent hashing</td></tr>
+  <tr><td>How do we stay available for writes?</td><td>Vector clocks (let conflicting writes coexist)</td></tr>
+  <tr><td>How do we tune consistency?</td><td>Sloppy quorums with tunable <code>R</code> and <code>W</code></td></tr>
+  <tr><td>How do we survive crashes? (<em>today</em>)</td><td>Hinted handoff &amp; Merkle-tree sync</td></tr>
+</table>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Consistent Hashing &amp; the Coordinator</div>
+  <p><strong>Consistent hashing</strong> places both keys and nodes on a ring by hashing them. A key is stored on the first node clockwise from its position, plus the next <code>N-1</code> nodes after that (its <strong>successors</strong>) for replication. The first node responsible for a key is called its <strong>coordinator</strong> — it drives reads and writes for that key, exactly like the coordinator role we saw in Chord.</p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Sloppy Quorum (R and W)</div>
+  <p>Every key is replicated across <code>N</code> nodes. A read returns once <code>R</code> nodes agree; a write succeeds once <code>W</code> nodes acknowledge. If you set <code>R + W &gt; N</code>, every read overlaps every write, giving strong consistency. Applications can <em>lower</em> these values to trade a small risk of inconsistency for higher availability and speed. The "sloppy" part means we don't insist on a strict majority of the <em>designated</em> nodes — a theme that becomes central below.</p>
+</div>
+
+<h3 id="hinted-handoff">The Problem: A Node Is Temporarily Down</h3>
+<p>Why are we learning about failures at all? Because in a data center, machines and networks fail constantly. Dynamo's authors carefully split failures into two kinds, because they demand <em>different</em> responses:</p>
+
+<ul style="margin: 0 0 20px 24px;">
+<li style="margin-bottom: 8px;"><strong>Temporary failures</strong> — a node is briefly unreachable. The machine is fine; a network switch hiccuped, or there's a transient partition. It will come back.</li>
+<li style="margin-bottom: 8px;"><strong>Permanent failures</strong> — a disk dies, a rack catches fire. The data on that node is gone for good.</li>
+</ul>
+
+<p>Let's start with temporary failures. Picture the ring with nodes A, B, C, D, E, F, G. Node B is the coordinator for key K, and the replicas live on B, C, D. We want to write with <code>N = 3</code> and <code>W = 3</code> — meaning all three replicas must acknowledge before we report success.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="320" height="200" viewBox="0 0 320 200" style="display:block; margin:0 auto;">
+      <!-- ring -->
+      <circle cx="160" cy="100" r="72" fill="none" stroke="#d9d0c4" stroke-width="2"/>
+      <!-- nodes -->
+      <circle cx="160" cy="28" r="15" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="160" y="33" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" font-weight="600" fill="#c0510a">B</text>
+      <circle cx="222" cy="64" r="15" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="222" y="69" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#c53030">C</text>
+      <circle cx="222" cy="136" r="15" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="222" y="141" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">D</text>
+      <circle cx="160" cy="172" r="15" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="160" y="177" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">E</text>
+      <circle cx="98" cy="136" r="15" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="98" y="141" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">F</text>
+      <circle cx="98" cy="64" r="15" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="98" y="69" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">G</text>
+      <!-- C marked down -->
+      <line x1="212" y1="54" x2="232" y2="74" stroke="#c53030" stroke-width="2"/>
+      <line x1="232" y1="54" x2="212" y2="74" stroke="#c53030" stroke-width="2"/>
+    </svg>
+  </div>
+  <div class="figure-caption">Replicas for key K live on B, C, D. With <code>W = 3</code>, all three must ack — but C is temporarily down (red ✕).</div>
+</div>
+
+<p>Here is the conundrum. If C is down, we will never collect three acknowledgements. We are stuck choosing between two bad options:</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Durability / Availability Bind</div>
+  <p><strong>Option A:</strong> Keep waiting for C to recover so we still have three copies — but then we block the write <em>indefinitely</em>, killing availability. <strong>Option B:</strong> Give up and report success with only two copies — but then we've lost the durability guarantee the application asked for. The whole point of Dynamo is to escape this false dilemma.</p>
+</div>
+
+<h4>The Fix: Hinted Handoff</h4>
+<p>The insight is simple: if the intended node is unreachable, <em>borrow a stand-in</em>. Instead of writing to C, the coordinator writes to the next available node past the usual successors — say E. But E records a small note in its metadata: <em>"this key isn't really mine; it belongs to C."</em> That note is the <strong>hint</strong>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Hinted Handoff</div>
+  <p><strong>Hinted handoff</strong> lets a write succeed even when a designated replica is down, by temporarily storing the data on a substitute node that holds a <em>hint</em> about the true owner. Periodically, the substitute checks whether the intended recipient is back; once it is, the substitute forwards the data and then deletes its copy, since the key is now properly replicated again.</p>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>Coordinator B tries to write key K to B, C, D. B and D succeed, but C is unreachable.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>B writes the third copy to E instead. E stores K <em>plus a hint</em>: "hold this for C."</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>The write returns success — we genuinely have three durable copies (B, D, E), so <code>W = 3</code> is satisfied.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p>E periodically pings C. As soon as C is back, E forwards the data to C, then deletes its own copy. The system is back to its intended layout (B, C, D).</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">In-Band vs Out-of-Band Communication</div>
+  <p>Notice how E's repeated checking of C happens <em>off the critical path</em>. The original write didn't wait on it. Dynamo leans on this pattern constantly: <strong>periodic, out-of-band, best-effort communication</strong>. Out-of-band means it runs in the background on its own schedule rather than being bolted onto a user request. Because it never blocks a client, it's allowed to be slow — and that freedom is exactly why it scales.</p>
+</div>
+
+<h3 id="durability-tuning">Tuning W: When "Durable" Isn't Durable</h3>
+<p>Because <code>W</code> is a knob, it's worth asking what extreme settings actually buy you. What does <code>W = 1</code> mean? It means a write returns as soon as a <em>single</em> node accepts it — the highest possible availability. But there's a catch: if that one node fails before the value spreads, the data is gone. So there is essentially <em>no real durability</em>. In practice almost everyone uses <code>W &gt; 1</code>.</p>
+
+<p>Here's the subtler question the professor pushed on: can you have <code>W &gt; 1</code> and <em>still</em> have terrible durability? Yes — if all your replicas sit in the <strong>same data center</strong> and that data center loses power, every copy vanishes at once. This is a <strong>correlated failure</strong>: the replicas aren't independent, so counting them overstates your safety.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Connection — Echoes of Chord's Successor Lists</div>
+  <p>Recall how in Chord a successor list had to contain <code>N</code> <em>real</em> nodes, not virtual ones, so a single physical machine couldn't masquerade as several replicas. The same idea returns here at a coarser grain: Dynamo can require the successor list to span at least two data centers, so that a key's replicas are genuinely independent failure-wise. Same principle — "make your replicas truly independent" — applied one level up.</p>
+</div>
+
+<div class="quiz" id="quiz1box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A write to key K with <code>N = 3, W = 3</code> can't reach node C because C is temporarily down. What does hinted handoff do?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Blocks the write until C recovers, guaranteeing C always gets its copy first.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Returns success with only 2 copies and permanently accepts lower durability.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Writes the third copy to a substitute node (e.g. E) that holds a hint, then forwards it to C once C is back.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Drops the write entirely and asks the client to retry later.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct — C.</strong> Hinted handoff escapes the durability/availability bind: it satisfies <code>W = 3</code> immediately by storing the third copy on a stand-in node that tags it with a hint about C, then hands it off when C recovers. Option A describes the "block forever" trap and B describes the "lose durability" trap — the two bad options hinted handoff is specifically designed to avoid. D throws away the write needlessly.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>Permanent Failures &amp; Merkle Trees</h2>
+</div>
+
+<p>Hinted handoff handles temporary blips beautifully — but what if the stand-in node <em>itself</em> dies permanently before it can hand off the data? Say E was holding C's copy and E's disk fails for good. Now that copy is gone, and the system is permanently stuck at two replicas (<code>N = 2</code>) for that key. If this keeps happening across many keys, eventually some key loses <em>all</em> its copies. We need a way to notice and repair shortfalls.</p>
+
+<h3 id="anti-entropy">Replica Synchronization (Anti-Entropy)</h3>
+<p>The fix is <strong>replica synchronization</strong>: nodes that are neighbors on the ring periodically <em>gossip</em> with each other to compare their data and copy over anything one of them is missing. For key K, the relevant replicas B, C, and D occasionally ask each other, "do we hold the same set of keys and values?" Any key one node is missing gets copied over.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Anti-Entropy via Gossip</div>
+  <p><strong>Replica synchronization</strong> (also called anti-entropy) is a periodic, out-of-band background process where neighboring replicas compare their stored data and reconcile differences. It is the safety net beneath hinted handoff: even when a hinted copy is lost, neighbors will eventually re-replicate the key back up to <code>N</code> copies.</p>
+</div>
+
+<p>Because this runs in the background (out-of-band again!), it never blocks a client request, so taking a while is fine. But there <em>is</em> a real cost hiding here, and it's worth pinning down precisely.</p>
+
+<h3 id="merkle">The Efficiency Problem &amp; Merkle Trees</h3>
+<p>The naïve way to compare two nodes is to walk through <em>every single key-value pair</em> and check whether the other node has it. If each node stores millions of keys, that's millions of comparisons every sync cycle — and most of the time the two nodes are nearly identical, so almost all that work finds nothing. We want to detect that "these two nodes agree" with one cheap check, and only dig in where they actually differ.</p>
+
+<p>The class brainstormed ideas — tracking changes since the last gossip (amortizes the cost but still scales with the number of writes) — but the winning answer is <strong>hashing</strong>, organized into a <strong>Merkle tree</strong>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Merkle Tree</div>
+  <p>A <strong>Merkle tree</strong> hierarchically summarizes a set of key-value pairs using hashes. Each <strong>leaf</strong> is the hash of one range of keys. Each <strong>internal node</strong> is the hash of the concatenation of its children's hashes. The <strong>root</strong> therefore is a single hash that summarizes <em>everything</em>. If two nodes' roots match, their entire datasets match — verified with one comparison.</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="340" height="200" viewBox="0 0 340 200" style="display:block; margin:0 auto;">
+      <!-- root -->
+      <rect x="148" y="10" width="44" height="26" rx="5" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="170" y="28" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" font-weight="600" fill="#c0510a">H₀</text>
+      <!-- level 1 -->
+      <line x1="160" y1="36" x2="95" y2="78" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="180" y1="36" x2="245" y2="78" stroke="#d9d0c4" stroke-width="2"/>
+      <rect x="70" y="78" width="50" height="26" rx="5" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="95" y="96" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">H 0–63</text>
+      <rect x="220" y="78" width="50" height="26" rx="5" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="245" y="96" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">H 64–127</text>
+      <!-- leaves -->
+      <line x1="85" y1="104" x2="55" y2="150" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="105" y1="104" x2="135" y2="150" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="235" y1="104" x2="205" y2="150" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="255" y1="104" x2="285" y2="150" stroke="#d9d0c4" stroke-width="2"/>
+      <rect x="32" y="150" width="46" height="24" rx="5" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="55" y="166" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#2a2520">0–31</text>
+      <rect x="112" y="150" width="46" height="24" rx="5" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="135" y="166" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#2a2520">32–63</text>
+      <rect x="182" y="150" width="46" height="24" rx="5" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="205" y="166" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#2a2520">64–95</text>
+      <rect x="262" y="150" width="46" height="24" rx="5" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="285" y="166" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#2a2520">96–127</text>
+    </svg>
+  </div>
+  <div class="figure-caption">A Merkle tree over the key range 0–127. Leaves hash sub-ranges; each parent hashes its children. The root <code>H₀</code> summarizes the whole dataset in one hash.</div>
+</div>
+
+<h3 id="merkle-trace">Walking the Tree to Find a Difference</h3>
+<p>The payoff is in the search. Suppose node A is missing a "green" key that B has, while B is missing an "orange" key that A has. To find these differences, the two nodes compare hashes <em>top-down</em>, pruning any branch where the hashes already match:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>Compare the roots. They differ → the datasets differ somewhere. Descend.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>Compare the two children. Suppose the left child's hash <em>matches</em> on both nodes. Prune it — everything under it is provably identical, so we never look at those keys again.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>The right child differs, so descend only into it. Repeat: compare, prune matches, follow mismatches.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p>Continue until you reach the specific leaf ranges that disagree. Only those few key ranges get fetched and reconciled — not the whole dataset.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Why This Is a Win</div>
+  <p>If two nodes are identical, you do exactly <strong>one</strong> comparison (the roots match, done). If they differ in just a few places, the cost is proportional to the <em>number of differences</em> and the tree's depth — roughly <code>O(d · log n)</code> instead of <code>O(n)</code>. You pay for the disagreements, not for the agreement. That's the whole reason Merkle trees show up everywhere from Git to blockchains to Dynamo.</p>
+</div>
+
+<p>One honest caveat the professor flagged: once you reach a differing leaf, the Merkle tree tells you <em>where</em> data differs, not <em>which version is fresher</em>. To resolve that, Dynamo falls back on the metadata it already keeps — the <strong>vector clocks</strong> from earlier lectures — which encode causal ordering. At worst the nodes can <em>union</em> the values and let the conflict-resolution machinery sort it out at read time.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Common Confusion — Numbers in the Tree Are Key Ranges</div>
+  <p>The labels on the tree (0–63, 64–127, …) are <em>ranges of the hash key-space</em>, not individual keys. Consistent hashing already gave us a finite range of key positions (say 0 to 1000) that this group of nodes is responsible for; the Merkle tree just recursively splits <em>that range</em> in half down to the leaves. Don't read them as "key number 63."</p>
+</div>
+
+<div class="quiz" id="quiz2box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Two neighboring replicas store millions of keys and happen to be completely identical. How much work does a Merkle-tree comparison do to confirm this?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>It must still hash and compare all millions of key-value pairs — O(n).</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>A single comparison: the roots match, so the entire datasets are known to be equal.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>One comparison per leaf, since leaves must always be checked individually.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It depends on the vector clocks, which must be compared key by key.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct — B.</strong> The root hash summarizes every key-value pair beneath it, so equal roots prove the whole datasets are equal in one step — the entire point of the structure. A is the naïve approach Merkle trees replace; C misunderstands the top-down pruning (you only descend when a hash <em>differs</em>); D confuses the "where do they differ?" question (Merkle trees) with the later "which version wins?" question (vector clocks).
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>Dynamo in Practice</h2>
+</div>
+
+<p>Now we shift from "how Dynamo achieves correctness" to "how Dynamo actually performs in a real Amazon data center." This part is where the textbook protocols meet the messy realities of December shopping peaks — and where Dynamo repeatedly chooses a <em>simpler protocol with worse worst-case guarantees</em> that nonetheless works well in practice.</p>
+
+<h3 id="gossip-lookup">Finding Data: Gossip Instead of Finger Tables</h3>
+<p>When any node receives a <code>GET</code> request for a key, it needs to know <em>which node actually holds that key</em>. In Chord, this was solved elegantly with <strong>finger tables</strong> — routing tables that let any node reach the target in <code>O(log n)</code> hops. Dynamo looks at finger tables and says: too slow, too complex. Instead it uses <strong>gossip</strong>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Gossip-Based Membership</div>
+  <p>Roughly once per second, each server contacts a <em>randomly chosen</em> peer and exchanges what it knows: which servers exist and which key ranges each one holds. Over time this knowledge spreads to everyone. After gossip converges, a lookup is <strong>constant time</strong> — a node just knows who has the key. The worst case is worse than finger tables (your info might be stale, forcing extra hops), but in steady state it's a single hop.</p>
+</div>
+
+<p>Why does Dynamo get away with this when Chord couldn't? It comes down to <em>workload assumptions</em>:</p>
+
+<table class="compare-table">
+  <tr><th>Chord's World</th><th>Dynamo's World</th></tr>
+  <tr><td>Open peer-to-peer network; nodes join and leave <em>constantly</em>.</td><td>Tightly controlled data center; membership is stable.</td></tr>
+  <tr><td>High churn demands provable <code>O(log n)</code> routing.</td><td>Low churn means gossip converges and stays converged.</td></tr>
+  <tr><td>Could scale to millions of nodes.</td><td>Hundreds to thousands of nodes in reality.</td></tr>
+</table>
+
+<div class="callout insight">
+  <div class="callout-title">The Right Tool Depends on the Workload</div>
+  <p>Chord wasn't <em>wrong</em> — it was designed for the early-2000s dream of massive, churning, decentralized networks. Dynamo runs inside one company's data center where nodes rarely join or leave. Because failures and membership changes are rare, the gossip "best case" is the common case. The lesson: a protocol's quality is inseparable from the deployment it targets. And the lookup table each node keeps (say 1000 entries of range→server) is tiny next to the actual key-value data it stores, so the memory cost is a non-issue.</p>
+</div>
+
+<h3 id="perf-plot">Reading the Latency Plot</h3>
+<p>The professor walked through one plot from the Dynamo paper, taken from Amazon's <strong>peak season in December 2006</strong>. The y-axis is latency on a <em>logarithmic</em> scale (10 ms, 100 ms, 1000 ms = 1 second); the x-axis is the timeline. There are four lines: the <strong>average</strong> and the <strong>99.9th-percentile tail</strong> latency, each for <em>reads</em> and for <em>writes</em>. Three takeaways are worth memorizing:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>The tail dwarfs the average.</strong> The 99.9th percentile sits a full order of magnitude above the average — roughly 100+ ms vs ~10 ms. This is exactly why engineers obsess over tail latency, not just the mean: a small fraction of very slow requests defines the user experience.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Real workloads have patterns.</strong> There's a clear <em>diurnal</em> (day/night) cycle: more requests during the day overload the system, pushing latency up; fewer requests at night bring it down. Because all four lines track the same load, they rise and fall together.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Writes cost more than reads.</strong> Writes sit a bit higher because they must actually touch the disk and satisfy durability. But notably, Dynamo keeps the write tail <em>close</em> to the read tail (~2× apart) rather than letting it explode — taming the worst writes is precisely what Dynamo is engineered for.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Connection — The Tail-Latency Theme Returns</div>
+  <p>Remember the fan-out service from last lecture, where 90th-percentile backend latencies compounded into a much worse top-level percentile? That was a warning about tails. Here we see the tail problem measured in the wild, and Dynamo's whole performance story is about keeping that tail bounded even for the hardest case — writes.</p>
+</div>
+
+<h3 id="write-buffer">Squeezing More: Write Buffering</h3>
+<p>Some applications demand even lower 99.9th-percentile <em>write</em> latency. Dynamo offers an opt-in trick: a per-node <strong>in-memory buffer</strong>. Writes land in RAM immediately and return; periodically a "writer thread" flushes the whole buffer to disk in one batch. Batching amortizes disk cost, and individual writes no longer wait on the disk.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Cost — Durability Again</div>
+  <p>If a node crashes while its buffer is still in RAM, those buffered writes are <em>lost</em> — they never hit disk. So write buffering is offered only to applications that explicitly accept this risk. It's the same recurring bargain: push performance harder, give up a sliver of durability, and bet that crashes are rare enough that the data is "almost always" there.</p>
+</div>
+
+<h3 id="static-partition">Decoupling Partitioning from Placement</h3>
+<p>One last practical headache: <strong>bootstrapping a new node</strong>. When a node joins, it finds its successors and copies the data it should now own. But this scan is so I/O-intensive that it must run at <em>low priority</em> — and during busy seasons, copying a node's data can take <strong>up to a full day</strong>. Worse, every join/leave also forces neighbors to <em>recompute their Merkle trees</em> and update lookup tables.</p>
+
+<p>The root cause: in plain consistent hashing, a node's position on the ring determines <em>both</em> how data is partitioned <em>and</em> where each partition lives. Change membership and you disturb both at once. Dynamo's fix is to <strong>separate these two concerns</strong>:</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Static Partitioning</div>
+  <p>Dynamo pre-divides the hash space into a <em>fixed</em> number of equally sized <strong>shards</strong>, independent of how many nodes exist. Each shard (not each individual key) is placed on the first <code>N</code> virtual nodes after it. When a node joins, you only decide <em>which whole shards to hand off</em> — no linear scan over individual keys. Crucially, Merkle trees are maintained <em>per shard</em>, so they don't need recomputing on every membership change.</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="320" height="120" viewBox="0 0 320 120" style="display:block; margin:0 auto;">
+      <line x1="20" y1="60" x2="300" y2="60" stroke="#d9d0c4" stroke-width="2"/>
+      <!-- shard ticks -->
+      <g font-family="JetBrains Mono, monospace" font-size="10" fill="#6b6560">
+        <line x1="50" y1="52" x2="50" y2="68" stroke="#c0510a" stroke-width="2"/>
+        <line x1="100" y1="52" x2="100" y2="68" stroke="#c0510a" stroke-width="2"/>
+        <line x1="150" y1="52" x2="150" y2="68" stroke="#c0510a" stroke-width="2"/>
+        <line x1="200" y1="52" x2="200" y2="68" stroke="#c0510a" stroke-width="2"/>
+        <line x1="250" y1="52" x2="250" y2="68" stroke="#c0510a" stroke-width="2"/>
+        <text x="75" y="85" text-anchor="middle">shard 1</text>
+        <text x="125" y="85" text-anchor="middle">shard 2</text>
+        <text x="175" y="85" text-anchor="middle">shard 3</text>
+        <text x="225" y="85" text-anchor="middle">shard 4</text>
+      </g>
+      <!-- node arrows -->
+      <text x="100" y="40" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">▼ A</text>
+      <text x="200" y="40" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">▼ B</text>
+    </svg>
+  </div>
+  <div class="figure-caption">The hash space is statically chopped into fixed shards. Nodes (arrows) own whole shards. Adding a node moves entire shards — no per-key scan, no Merkle recomputation.</div>
+</div>
+
+<p>This doesn't <em>eliminate</em> bootstrapping cost — copying still takes time — but it drops the overhead dramatically by working in shard-sized batches and reusing per-shard Merkle trees.</p>
+
+<h3 id="theory-practice">Theory vs Practice &amp; Dynamo's Impact</h3>
+<p>Stepping back: after all these modifications — sloppy quorums, hinted handoff, gossip lookup, static partitioning — is this even "consistent hashing" anymore? Do the original guarantees still hold? Honestly, not strictly. And that's the deeper lesson of the lecture.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Theory Meets Reality</div>
+  <p>In theory we love protocols we can prove things about. In practice, you take such a protocol, bend it in a dozen pragmatic ways, and end up with something that "works <em>well enough</em>" most of the time. Industry's real decision rule isn't "is this provably correct?" — it's closer to "will this cost us money, clients, or a lawsuit?" Dynamo is the canonical case study of trading provable guarantees for systems that actually ship and scale.</p>
+</div>
+
+<p>Dynamo's legacy is enormous: it <strong>popularized eventually-consistent NoSQL stores</strong>, which scale far better than the strongly-consistent SQL systems that came before. But that scalability came with a price — <em>application complexity</em>. Developers now had to reason about stale reads, lost writes, and reconciliation themselves. So the pendulum has begun swinging back toward strong consistency (we'll meet Google Spanner in a few lectures), exploiting new data-center and networking advances. Neither end "wins" permanently; the field oscillates between performance and programmability depending on what applications can tolerate.</p>
+
+<div class="quiz" id="quiz3box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Why does Dynamo replace Chord-style finger tables with random gossip for data lookup, and why is that acceptable?</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Gossip gives a better worst-case bound than finger tables in all deployments.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Finger tables are too slow/complex; gossip is simpler and, because data-center membership rarely changes, lookups are usually a single hop.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Gossip is required to compute Merkle trees, which finger tables cannot support.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Dynamo has millions of nodes, so only gossip can scale to that size.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct — B.</strong> This is the "simpler protocol, worse worst case, works in practice" pattern. Gossip's worst case is actually <em>worse</em> than finger tables (so A is false), but in a stable data center where nodes rarely join or leave, the converged best case — a single-hop lookup — is the common case. C invents a false dependency; D is backwards — real Dynamo deployments have hundreds-to-thousands of nodes, not millions.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>Transactions &amp; Serializability</h2>
+</div>
+
+<p>We now leave Dynamo and open a new chapter: <strong>distributed transactions</strong>. The motivation flows directly from sharding, so let's reconnect to that first.</p>
+
+<h3 id="why-transactions">When State Spans Multiple Partitions</h3>
+<p><strong>Sharding</strong> (which we met a few lectures ago) splits state across machines. Its beauty is locality: if a request only touches state on <em>one</em> machine — read X, write X — no other machine needs to be involved. That gives us load balancing and lets us store data too big for any single server.</p>
+
+<p>But what if a single logical operation touches <em>multiple</em> partitions at once? Real examples are everywhere:</p>
+
+<ul style="margin: 0 0 20px 24px;">
+<li style="margin-bottom: 8px;"><strong>Transferring money</strong> from one account to another — debit one shard, credit another.</li>
+<li style="margin-bottom: 8px;"><strong>Adding a meeting</strong> to the calendars of multiple participants at once.</li>
+<li style="margin-bottom: 8px;"><strong>Aggregating</strong> across many rows (summing values that live on different partitions).</li>
+<li style="margin-bottom: 8px;"><strong>Training ML</strong> on a distributed dataset where you need all the data from a consistent point in time.</li>
+</ul>
+
+<p>For some of these (like money transfer) we need an <strong>atomicity</strong> guarantee. What does that mean precisely?</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Atomicity</div>
+  <p><strong>Atomicity</strong> means a group of operations either <em>all complete</em> or <em>all fail together</em> — never a partial result. A money transfer must not debit your account and then fail to credit the recipient's. Critically, atomicity is about <em>sequences</em> of operations, which makes it different from consistency (which we defined for a single operation at a time).</p>
+</div>
+
+<h3 id="atomicity">What Goes Wrong Without It</h3>
+<p>Consider a tiny client routine that reads a value, adds one, and writes it back — an increment. Now run two clients concurrently against the same key:</p>
+
+<pre><code><span class="cm">// Each client runs increment() on key x</span>
+<span class="kw">function</span> <span class="fn">increment</span>(x) {
+  <span class="kw">let</span> v = <span class="fn">get</span>(x);   <span class="cm">// read</span>
+  <span class="fn">set</span>(x, v <span class="op">+</span> <span class="nb">1</span>); <span class="cm">// write</span>
+}</code></pre>
+
+<p>If these aren't atomic, the operations can interleave disastrously:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>Client 1 does <code>get(x)</code> and reads 1.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>Client 2 does <code>get(x)</code> and <em>also</em> reads 1 (Client 1 hasn't written yet).</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>Client 1 does <code>set(x, 2)</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p>Client 2 does <code>set(x, 2)</code> — overwriting with the same value. We expected 3 but got 2. <strong>One increment vanished entirely.</strong></p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Lost Update — an Atomicity Violation</div>
+  <p>This is the classic <em>lost update</em>. Each individual <code>get</code> and <code>set</code> succeeded, yet the combined effect is wrong because the two-step sequence wasn't treated as one indivisible unit. No single-operation consistency model catches this, because the bug lives in how the <em>sequences</em> interleave.</p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Transaction</div>
+  <p>A <strong>transaction</strong> is a sequence of operations that must execute atomically — as one indivisible unit. A transaction may legitimately <em>succeed</em> or <em>fail</em>: a conditional transfer ("move $10 only if the balance is sufficient") can abort, and that's a valid outcome, not a system crash. The requirement is only that its operations happen all-together or not-at-all.</p>
+</div>
+
+<h3 id="serializability">Defining the Guarantee: Serializability</h3>
+<p>How do we formally state what atomic execution of transactions means? The professor deliberately mirrored how we defined consistency models like linearizability earlier: take a real, possibly-interleaved execution, and ask whether we can <em>reorder operations across clients</em> to reach an equivalent "clean" execution.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Serializability</div>
+  <p>An execution is <strong>serializable</strong> if there exists an <em>equivalent</em> execution (obtained by reordering operations across clients) that is fully <strong>serial</strong> — meaning all operations of each transaction run consecutively, in some total order, with no other transaction interleaved between them. If <em>every</em> execution of a system is serializable, the system is serializable.</p>
+</div>
+
+<table class="compare-table">
+  <tr><th>Sequential Consistency</th><th>Serializability</th></tr>
+  <tr><td>About <em>single</em> operations.</td><td>About <em>transactions</em> (sequences of operations).</td></tr>
+  <tr><td>Requires a total order of operations.</td><td>Requires a total order <em>and</em> that each transaction's operations are consecutive within it.</td></tr>
+  <tr><td>No notion of "operations belonging to a transaction."</td><td>Adds exactly that extra constraint on top.</td></tr>
+</table>
+
+<p>Let's make it concrete. Suppose the observed execution is messy — <code>get→1</code>, then someone's <code>set 2</code>, then <code>get→2</code>, then <code>set 3</code> — interleaved across clients. Is there a serial ordering that explains it? Yes: <code>get 1, set 2, get 2, set 3</code>, where each transaction's two operations sit together. Because we can produce such an equivalent serial order, the execution is serializable.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Why "Permissible Outputs" Are Limited</div>
+  <p>Take T1 = "transfer $10 from my account to Bob's" and T2 = "read both balances," both starting at $100/$100. Under serializability, T2 may only return <strong>(100, 100)</strong> — if T2 ran first — or <strong>(90, 110)</strong> — if T1 ran first. Anything else, like (90, 100) or (100, 110), is <em>forbidden</em>, because it would reflect T2 reading a half-finished transfer. Serializability lets us pick which transaction goes first, but never lets a transaction observe another's partial state.</p>
+</div>
+
+<div class="quiz" id="quiz4box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">What makes serializability a <em>stronger</em> requirement than sequential consistency?</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>It allows operations to be reordered, which sequential consistency forbids.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>It additionally requires that all operations of each transaction execute consecutively in the equivalent order, with nothing interleaved between them.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>It guarantees the latest write is always visible immediately, like linearizability.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It only applies to single operations, whereas sequential consistency applies to groups.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct — B.</strong> Both models require a total order; serializability adds the extra constraint that a transaction's operations must stay together (non-interleaved) in the equivalent execution — sequential consistency doesn't even have the concept of a transaction. A is wrong because both allow cross-client reordering; C describes real-time recency (linearizability), which serializability does not require; D reverses the two definitions.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>Two-Phase Locking &amp; Isolation Levels</h2>
+</div>
+
+<p>Serializability tells us <em>what</em> we want. This part covers <em>how</em> to get it — the classic protocol — and then a weaker, cheaper alternative for when full serializability is overkill.</p>
+
+<h3 id="two-phase">Two-Phase Locking (2PL)</h3>
+<p>The most classic way to achieve serializability is <strong>two-phase locking</strong>. Clients submit transactions to a <strong>transaction coordinator</strong>. The coordinator acquires locks on <em>every</em> partition the transaction will touch, and only once it holds <em>all</em> of them does it run the transaction, then release the locks.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Two-Phase Locking</div>
+  <p><strong>2PL</strong> has a growing phase (acquire all needed locks) and a shrinking phase (release them after the transaction runs). Because the coordinator holds all locks simultaneously while executing, no other transaction can interleave on those partitions — which is exactly what serializability demands. The two "phases" are <em>acquire-everything-first</em>, then <em>release</em>.</p>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>The coordinator requests locks on every partition the transaction touches (say partitions P1, P2, P3).</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>Each partition either grants the lock or replies <strong>no</strong> — perhaps it already lent the lock to someone else, or it can predict the transaction will fail here (e.g. insufficient balance), in which case it aborts immediately without even running it.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>Once <em>all</em> locks are held, the coordinator executes the transaction and commits.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p>The coordinator releases the locks, freeing those partitions for other transactions.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Disjoint Transactions Run in Parallel</div>
+  <p>The win: transactions touching <em>different</em> partitions never contend, so they execute concurrently. Only transactions that share a partition must wait on each other. This is the same insight as detecting independent operations and running them in parallel — there's a huge research literature on doing this aggressively, but 2PL is the foundational, "naïve" version.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Two Real Dangers — Deadlock &amp; the Single Point of Failure</div>
+  <p><strong>Deadlock:</strong> if transaction A grabs lock 1 then waits for lock 2, while B grabs lock 2 then waits for lock 1, both hang forever. The standard fix is to impose a <em>global ordering</em> on locks and always acquire them in that order — then a cycle can never form. <strong>Single point of failure:</strong> the transaction coordinator is now a central bottleneck; if it dies mid-transaction, things stall. (We'll repair this at the end with replication.)</p>
+</div>
+
+<h3 id="snapshot">A Weaker Alternative: Snapshot Isolation</h3>
+<p>Just as consistency had a spectrum (linearizability, sequential, eventual), transactions have a spectrum of <strong>isolation levels</strong> — different strengths of guarantee. Full serializability is the strongest and most expensive. A very common weaker level is <strong>snapshot isolation</strong>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Snapshot Isolation</div>
+  <p>Under <strong>snapshot isolation</strong>, each transaction operates on a single consistent <em>snapshot</em> of the database — a real state the database was in at one point in time. It will never read half of one committed transaction's effects mixed with half of another's. It's weaker than serializability because it makes <em>no</em> promise that everything ran atomically; it only promises you read from one coherent point-in-time view.</p>
+</div>
+
+<p>Why settle for less? <strong>Performance.</strong> Serializability forces you to actually serialize conflicting transactions, paying that cost on every conflict. Snapshot isolation only needs to find a valid snapshot — it can let more run concurrently. It's supported by systems like Firebase, Oracle, and MySQL (which offers several isolation levels).</p>
+
+<div class="callout insight">
+  <div class="callout-title">The Color-Flip Example — Where SI and Serializability Diverge</div>
+  <p>Start with a table holding one <span style="color:#2563eb;font-weight:600;">blue</span> and one <span style="color:#2d8a4e;font-weight:600;">green</span> value. Run T1 = "flip all blue → green" and T2 = "flip all green → blue" concurrently. <strong>Under serializability</strong>, one runs fully before the other, so you end up all-green or all-blue. <strong>Under snapshot isolation</strong>, both transactions read the <em>same original snapshot</em>, so T1 sees the original blue and turns it green while T2 sees the original green and turns it blue — yielding a <em>swapped</em> result (green, blue) that serializability could never produce. That extra outcome is the price of the weaker guarantee.</p>
+</div>
+
+<table class="compare-table">
+  <tr><th>Serializability</th><th>Snapshot Isolation</th></tr>
+  <tr><td>Strongest; transactions appear fully ordered &amp; atomic.</td><td>Weaker; each transaction reads one consistent snapshot.</td></tr>
+  <tr><td>Pays the cost of actually serializing conflicts.</td><td>Cheaper — more concurrency, akin to eventual consistency in spirit.</td></tr>
+  <tr><td>Color-flip → all-blue or all-green only.</td><td>Color-flip → also permits the swapped (green, blue) outcome.</td></tr>
+</table>
+
+<h3 id="fault-tolerance">Fault Tolerance: Replicate the Partitions</h3>
+<p>We flagged that both an unavailable partition and a dead coordinator break 2PL. The remedy ties this whole course together: implement <em>every partition as a replicated state machine</em>. Then combine the two big techniques we've studied — <strong>sharding</strong> to split state across machines, and <strong>replication</strong> to make each shard fault-tolerant.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="320" height="170" viewBox="0 0 320 170" style="display:block; margin:0 auto;">
+      <!-- shard columns -->
+      <g font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">
+        <text x="60" y="20" text-anchor="middle">Shard 1</text>
+        <text x="160" y="20" text-anchor="middle">Shard 2</text>
+        <text x="260" y="20" text-anchor="middle">Shard 3</text>
+      </g>
+      <!-- replicas, 3 per shard -->
+      <g>
+        <rect x="35" y="35" width="50" height="28" rx="6" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+        <rect x="35" y="73" width="50" height="28" rx="6" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+        <rect x="35" y="111" width="50" height="28" rx="6" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+        <rect x="135" y="35" width="50" height="28" rx="6" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+        <rect x="135" y="73" width="50" height="28" rx="6" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+        <rect x="135" y="111" width="50" height="28" rx="6" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+        <rect x="235" y="35" width="50" height="28" rx="6" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+        <rect x="235" y="73" width="50" height="28" rx="6" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+        <rect x="235" y="111" width="50" height="28" rx="6" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      </g>
+      <text x="160" y="160" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">↕ sharding across · replication down ↕</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Combine both axes: shard horizontally to split state, then replicate each shard vertically (e.g. via Paxos/Zookeeper) so no single machine's failure stalls a transaction.</div>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Connection — Sharding × Replication, Together at Last</div>
+  <p>Way back in the first sharding lecture, the course planted the idea that you ultimately need <em>both</em> sharding (for scale) and replication (for fault tolerance). Two-phase locking made the need urgent by introducing a single point of failure. Now the two techniques snap together: each shard becomes a replicated state machine, giving us scalable <em>and</em> fault-tolerant transactions.</p>
+</div>
+
+<div class="quiz" id="quiz5box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Two transactions concurrently swap colors in a one-blue, one-green table: T1 = "blue→green", T2 = "green→blue". Which outcome is allowed under snapshot isolation but <em>not</em> under serializability?</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>All green (T2 then T1).</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>All blue (T1 then T2).</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Swapped — the original blue is now green and the original green is now blue.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>The transactions deadlock and produce no result.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct — C.</strong> Under snapshot isolation both transactions read the same original snapshot, so each flips its own color independently, producing the swapped (green, blue) result — impossible under serializability, where one transaction must fully precede the other (giving all-green or all-blue). A and B are the serializable outcomes (allowed under both models); D is unrelated — snapshot isolation doesn't deadlock here.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SUMMARY ═══════════════════════ -->
+<section id="synthesis" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This lecture had two halves, and the thread connecting them is the central tension of the whole course: <strong>how much guarantee can we afford, and what do we trade to get it?</strong></p>
+
+<p>The <em>first half</em> finished the Dynamo story. We saw how Dynamo survives <strong>temporary failures</strong> with hinted handoff (borrow a stand-in node, hand the data back later) and <strong>permanent failures</strong> with Merkle-tree replica synchronization (compare datasets in <code>O(d·log n)</code>, not <code>O(n)</code>). Both rely on Dynamo's favorite trick — <em>periodic, out-of-band, best-effort communication</em> that never blocks a client. Then we watched Dynamo make pragmatic concession after concession: gossip instead of finger tables, write buffering that risks durability, static partitioning to tame bootstrapping. The takeaway crystallized in the theory-vs-practice discussion: a simpler protocol with worse worst-case guarantees can be the <em>right</em> engineering choice when it works well enough and ships.</p>
+
+<p>The <em>second half</em> opened the door to <strong>transactions</strong> — the tool for operations that span multiple shards, like money transfers. We defined <strong>atomicity</strong> (all-or-nothing) and saw the lost-update bug that motivates it. We formalized <strong>serializability</strong> by mirroring linearizability: find an equivalent execution where each transaction's operations stay together. We achieved it with <strong>two-phase locking</strong>, met its dangers (deadlock, single point of failure), and softened it with <strong>snapshot isolation</strong> when full serializability is too costly. Finally, replicating each shard as a state machine married <strong>sharding and replication</strong> — the two pillars the course has been building toward.</p>
+
+<p>Notice how the <em>same trade-off curve</em> reappears in both halves. Dynamo lowers <code>W</code> or buffers writes to gain speed at the cost of durability; transactions drop from serializability to snapshot isolation to gain concurrency at the cost of guarantees. Strong guarantees cost performance; weak guarantees cost programmer sanity. There is no free lunch — only an informed choice of where to sit on the spectrum.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — One Spectrum, Two Stories</div>
+  <p>Whether you're tuning a key-value store's quorum or picking an isolation level for transactions, you are choosing a point on a single trade-off spectrum between <em>strength of guarantee</em> and <em>performance/availability/simplicity</em>. The art of distributed systems is matching that point to what your application can actually tolerate.</p>
+</div>
+
+<div class="callout tip" style="margin-top: 32px;">
+  <div class="callout-title">What's Next</div>
+  <p>From here the course turns to <strong>real systems</strong>. Snapshot isolation and serializability set up <strong>Google Spanner</strong> — the marquee example of the pendulum swinging <em>back</em> toward strong consistency, using clever data-center clocks and networking to make globally-consistent transactions affordable. Keep two-phase locking, the single-point-of-failure problem, and the sharding-plus-replication picture fresh; Spanner is essentially the industrial-strength answer to the questions this lecture left open.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

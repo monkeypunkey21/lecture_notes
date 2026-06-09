@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 11 — Weak Consistency · CS134 Interactive Textbook</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 11 · Weak Consistency</div>
+  <a href="#part1">Part I — Why Weaken Consistency?</a>
+  <a href="#strong-recap" class="sub">What Strong Consistency Buys</a>
+  <a href="#ordering-problem" class="sub">The Ordering Problem</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — The CAP Theorem</a>
+  <a href="#cap-three" class="sub">Three Conflicting Properties</a>
+  <a href="#cap-proof" class="sub">The Proof Sketch</a>
+  <a href="#cap-examples" class="sub">CAP in Systems We Know</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — PACELC</a>
+  <a href="#pacelc-idea" class="sub">Beyond Partitions</a>
+  <a href="#pacelc-quadrants" class="sub">Four Kinds of System</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — Eventual Consistency</a>
+  <a href="#order-independent" class="sub">When Order Doesn't Matter</a>
+  <a href="#sec-def" class="sub">Strong Eventual Consistency</a>
+  <a href="#s3-example" class="sub">The S3 Photo App</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Checking Correctness</a>
+  <a href="#correctness-spectrum" class="sub">Four Ways to Check</a>
+  <a href="#tao-study" class="sub">The Facebook TAO Study</a>
+  <a href="#clock-skew" class="sub">The Clock-Skew Problem</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part6">Part VI — CRDTs</a>
+  <a href="#convergence-gap" class="sub">Convergence Isn't Enough</a>
+  <a href="#crdt-def" class="sub">What a CRDT Is</a>
+  <a href="#crdt-counter" class="sub">The Counter, Done Right</a>
+  <a href="#quiz6" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#together">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">CS134 · Distributed Systems</div>
+  <h1>Weak Consistency: CAP, Eventual Consistency &amp; CRDTs</h1>
+  <p class="hero-sub">An interactive guide to Lecture 11 — why strong consistency is sometimes too expensive, what we trade for availability, and how to build systems that still behave correctly.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>Why Would We Ever Weaken Consistency?</h2>
+</div>
+
+<p>Everything in this course up to now has chased a single ideal: make a distributed system behave as if it were a single, reliable machine. We built primary–backup replication, Paxos, and ZooKeeper precisely so that no client could ever observe a stale or contradictory value. That ideal is called <strong>strong consistency</strong>. This lecture asks a heretical question: what if we deliberately give some of that up — and why on earth would we?</p>
+
+<p>The short answer is <em>cost</em>. Strong consistency is slow, and in the real world of data centers spread across continents, "slow" can mean "unusable." To see why, we first need to be precise about what strong consistency gives us, and what it demands in return.</p>
+
+<h3 id="strong-recap">What Strong Consistency Buys — and Costs</h3>
+
+<p>Throughout the course we have met several flavors of strong consistency. It helps to name them before we trade them away.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Strong Consistency</div>
+  <p><strong>Strong consistency</strong> means every client sees a single, agreed-upon, up-to-date view of the data, as if all operations happened one at a time in some global order. The strongest form is <strong>linearizability</strong> (every operation appears to take effect instantaneously at some point between its start and end). Weaker-but-still-"strong" forms include <strong>sequential consistency</strong> and <strong>causal consistency</strong>, which fix an order on operations even if it isn't exactly real time.</p>
+</div>
+
+<p>We saw linearizability inside primary–backup replication, Paxos, and Raft, and a near-linearizable form in ZooKeeper. The catch is that all of these guarantees have to be paid for, and the bill has three line items:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>It needs consensus.</strong> If you want strong consistency <em>and</em> fault tolerance, replicas must agree on an order of updates — and agreement requires a consensus protocol like Paxos.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Consensus means blocking.</strong> A replica often cannot answer until it has heard from a majority of its peers. If those peers are slow or unreachable, the replica waits.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Order is expensive.</strong> Forcing every update through a single agreed sequence serializes work that could otherwise have run in parallel.</p>
+</div>
+
+<p>Add these up and the conclusion is blunt: strong consistency is <em>very expensive</em>. The rest of the lecture is about deciding when that price is worth paying — and what we can do when it isn't.</p>
+
+<h3 id="ordering-problem">The Problem That Forces the Issue</h3>
+
+<p>Here is the concrete scenario the professor uses to set everything up. Picture two replicas and two clients. Each client fires off updates, and — because the network delivers messages at different speeds — those updates arrive at the two replicas <em>in different orders</em>.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="380" height="180" viewBox="0 0 380 180" style="display:block; margin:0 auto;">
+      <!-- clients -->
+      <circle cx="40" cy="40" r="18" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="40" y="45" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">C1</text>
+      <circle cx="40" cy="140" r="18" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="40" y="145" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">C2</text>
+      <!-- replicas -->
+      <rect x="300" y="22" width="56" height="36" rx="6" fill="#fff" stroke="#2563eb" stroke-width="2"/>
+      <text x="328" y="45" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">R1</text>
+      <rect x="300" y="122" width="56" height="36" rx="6" fill="#fff" stroke="#2563eb" stroke-width="2"/>
+      <text x="328" y="145" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">R2</text>
+      <!-- arrows from C1 -->
+      <line x1="58" y1="36" x2="298" y2="36" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="58" y1="44" x2="298" y2="132" stroke="#d9d0c4" stroke-width="2"/>
+      <!-- arrows from C2 -->
+      <line x1="58" y1="136" x2="298" y2="44" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="58" y1="144" x2="298" y2="144" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="170" y="18" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">updates arrive in different orders</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Two clients, two replicas. R1 may see C1's update first; R2 may see C2's first. Which update should each replica commit first?</div>
+</div>
+
+<p>The professor asks: <em>which update should the replicas commit first?</em> To keep them consistent, they must agree — and agreeing is exactly the expensive consensus we just described. Hold onto this picture. In Part IV we will turn the question on its head and ask something far more productive: <em>what if the order doesn't matter at all?</em></p>
+
+<div class="callout tip">
+  <div class="callout-title">Where This Is Headed</div>
+  <p>This part is the "why." The CAP theorem (Part II) will prove that under network partitions you literally <em>cannot</em> keep strong consistency without sacrificing availability. PACELC (Part III) shows the tradeoff persists even without partitions. Those two results justify everything after them: eventual consistency, the Facebook study, and CRDTs.</p>
+</div>
+
+<div class="quiz" id="quiz1-box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">According to the lecture, why is strong consistency "very expensive"?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>It requires more disk storage than weak consistency</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Fault-tolerant strong consistency needs consensus, which means blocking and forcing a global order</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>It only works on a single machine, so you can never replicate</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It requires clients to retry every request several times</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct — B.</strong> The lecture pins the cost on three things: strong consistency with fault tolerance <em>needs consensus</em>, consensus <em>means blocking</em> (waiting on a majority), and ordering serializes work. A is wrong because the expense is latency/availability, not storage; C is false — replication is exactly what we are trying to make consistent; D describes a symptom, not the root cause.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>The CAP Theorem</h2>
+</div>
+
+<p>Before we can decide what to give up, we need to know whether we even have a choice. The CAP theorem, introduced by Eric Brewer in 2000, is the foundational result that tells us: no, you can't have it all. It is the distributed-systems analog of "you can't have your cake and eat it too" — but made precise.</p>
+
+<h3 id="cap-three">Three Properties, Pick Two</h3>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The CAP Theorem</div>
+  <p>In a distributed system you cannot simultaneously guarantee all three of:</p>
+  <p><strong>Consistency (C)</strong> — every read returns the correct, up-to-date result. This is a <em>safety</em> property ("nothing bad happens").</p>
+  <p><strong>Availability (A)</strong> — every request gets a (non-error) response. This is a <em>liveness</em> property ("something good eventually happens").</p>
+  <p><strong>Partition tolerance (P)</strong> — the system keeps working even when the network drops messages between groups of replicas (unreliability).</p>
+  <p>You may guarantee at most <strong>two of the three</strong> at the same time.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">It's the Same Safety-vs-Liveness Story</div>
+  <p>CAP isn't a brand-new idea — it <em>crystallizes</em> the safety-versus-liveness tension we already met in the FLP impossibility result (consensus can't be both safe and guaranteed-to-terminate in an asynchronous network) and in primary–backup. CAP just focuses that tension specifically on consistency in an unreliable system. Seeing the recurring pattern is the whole point: distributed systems keep forcing the same fundamental trade.</p>
+</div>
+
+<p>Why is partition tolerance always in the picture? Because partitions are <em>real</em>. Imagine a hyperscaler with data centers across the world: for some stretch of time, two of them genuinely cannot exchange a single message. Worse, think of mobile and IoT devices — a phone going through a tunnel has intermittent connectivity, and such devices are far more failure-prone. Partitions are transient and shift over time, but in a real system you must <em>assume they will happen</em>.</p>
+
+<h3 id="cap-proof">The Proof Sketch — Two Indistinguishable Worlds</h3>
+
+<p>The argument is beautifully short. Let's walk it step by step.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Set the stage.</strong> Replicas R1, R2, …, Rn all implement a single register <code>X</code>. The network splits into two partitions: partition 1 holds only R1; partition 2 holds everyone else. Every message between R1 and the others is lost.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>A client reads.</strong> A client asks R2 (in partition 2) to <code>get X</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Two worlds exist.</strong> In one world, some client already told R1 to <code>set X = v1</code>. In another world, a client told R1 to <code>set X = v2</code>. R2 has heard about <em>neither</em>, because R1 is cut off.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>The trap.</strong> R2 cannot distinguish these two worlds — <em>no matter how long it waits</em>. So it must either respond <em>immediately</em> with a possibly-wrong value (sacrificing consistency) or <em>wait arbitrarily long</em> for the partition to heal (sacrificing availability). There is no third option.</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="380" height="170" viewBox="0 0 380 170" style="display:block; margin:0 auto;">
+      <!-- partition divider -->
+      <line x1="150" y1="10" x2="150" y2="160" stroke="#c53030" stroke-width="2" stroke-dasharray="6 5"/>
+      <text x="150" y="172" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#c53030">network partition</text>
+      <!-- partition 1: R1 -->
+      <rect x="40" y="60" width="56" height="40" rx="6" fill="#fef0f0" stroke="#c53030" stroke-width="2"/>
+      <text x="68" y="78" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">R1</text>
+      <text x="68" y="93" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#c53030">set v?</text>
+      <text x="68" y="48" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">partition 1</text>
+      <!-- partition 2: R2..Rn -->
+      <rect x="210" y="40" width="56" height="34" rx="6" fill="#fff" stroke="#2563eb" stroke-width="2"/>
+      <text x="238" y="62" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">R2</text>
+      <rect x="288" y="40" width="56" height="34" rx="6" fill="#fff" stroke="#2563eb" stroke-width="2"/>
+      <text x="316" y="62" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">Rn</text>
+      <text x="277" y="28" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">partition 2</text>
+      <!-- client read -->
+      <circle cx="238" cy="130" r="16" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="238" y="134" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">C</text>
+      <line x1="238" y1="114" x2="238" y2="76" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="290" y="110" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#6b6560">get X?</text>
+    </svg>
+  </div>
+  <div class="figure-caption">R2 is asked to read X, but R1 (which holds the latest write) is partitioned away. R2 cannot tell whether X was set to v1 or v2 — so it must choose: answer fast and maybe wrong (drop C), or wait forever (drop A).</div>
+</div>
+
+<h3 id="cap-examples">CAP in Systems We've Already Seen</h3>
+
+<p>The most useful way to internalize CAP is to ask, for each system we've studied, <em>which two did it pick?</em></p>
+
+<table class="compare-table">
+  <tr><th>System</th><th>Picks</th><th>What it gives up</th></tr>
+  <tr><td>Paxos</td><td>C + P</td><td>Liveness — it can't respond outside a majority partition</td></tr>
+  <tr><td>FLP (consensus)</td><td>C + P</td><td>Termination is not guaranteed in an async network</td></tr>
+  <tr><td>Primary–backup (split brain)</td><td>C + P</td><td>A partitioned client may get no response, but never a wrong one</td></tr>
+</table>
+
+<p>Notice the pattern: the systems we've built so far almost all chose <strong>CP</strong> — they sacrifice liveness (availability) to keep consistency and tolerate partitions. The "split brain" example is the sharpest: the view service and backup advance to View 3 while the client and primary still believe they're in View 2. The partitioned primary refuses to violate correctness even though it may stall — that's CP in action.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Don't Drop Partition Tolerance</div>
+  <p>In practice, systems choose between <strong>CP</strong> (slow, consensus-based, sacrifices availability) and <strong>AP</strong> (drops consistency to always answer). What they almost <em>never</em> drop is <strong>P</strong>. Giving up partition tolerance means your system simply stops working whenever the network partitions — and partitions are common in the real world. A "CA" system is mostly a theoretical curiosity, not a real distributed system.</p>
+</div>
+
+<p>This leaves us with two crisp design rules the lecture states explicitly:</p>
+
+<ul style="margin: 0 0 24px 24px;">
+  <li style="margin-bottom: 8px;"><strong>When can a replica answer a read/write without violating linearizability?</strong> Only if it is in a <em>majority partition</em> (this is exactly Paxos's rule).</li>
+  <li><strong>How can a replica <em>always</em> serve clients?</strong> Only by <em>dropping consistency</em> — the AP choice we explore in Part IV.</li>
+</ul>
+
+<div class="quiz" id="quiz2-box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In the CAP proof, why can replica R2 not safely answer the client's read during a partition?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>R2 has crashed and cannot respond at all</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>R2 cannot distinguish between two possible worlds (X set to v1 vs v2), no matter how long it waits</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>R2 does not have permission to read the register X</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>The client sent the request to the wrong replica</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct — B.</strong> The heart of the proof is <em>indistinguishability</em>: because R1's writes are cut off, R2 sees identical local state whether X was last set to v1 or v2. Waiting doesn't help — the partition could last arbitrarily long. So R2 must either answer fast and risk being wrong (drop C) or wait forever (drop A). A and D describe unrelated failures; C invents a permissions issue that isn't in the model.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>PACELC — The Tradeoff That Survives Even Without Partitions</h2>
+</div>
+
+<p>CAP has a subtle blind spot: it only talks about what happens <em>during a partition</em>. But partitions are the rare case — most of the time the network is fine. Does that mean strong consistency is free when there's no partition? No. PACELC, introduced by Daniel Abadi in 2012, extends CAP to capture the cost that persists in normal operation.</p>
+
+<h3 id="pacelc-idea">If Partition, then A vs C — Else, L vs C</h3>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — PACELC</div>
+  <p>Read it as a two-branch rule:</p>
+  <p><strong>If</strong> there is a <strong>P</strong>artition, choose between <strong>A</strong>vailability and <strong>C</strong>onsistency (this is just CAP).</p>
+  <p><strong>E</strong>lse (no partition), choose between <strong>L</strong>atency and <strong>C</strong>onsistency.</p>
+  <p>The pronunciation: "PAC-ELC." The new insight lives entirely in the second branch.</p>
+</div>
+
+<p>Why split the world into "partition" and "no partition"? Because one describes the <em>rare</em> case of execution and the other describes the <em>common</em> case. This is a recurring principle in systems design: build for the common case to perform optimally, and make sure the rare case merely degrades gracefully rather than collapsing. Partitions happen — but they are not the common case. The common case is "no partition," and even there, strong consistency still costs you latency, because keeping replicas in lockstep means round-trips.</p>
+
+<div class="callout insight">
+  <div class="callout-title">The Real Takeaway of PACELC</div>
+  <p>CAP makes it sound like the consistency tradeoff only bites during failures. PACELC corrects that: <strong>strong consistency means sacrificing latency even outside of partitions.</strong> You can have low latency <em>or</em> consistency, but not both — partition or no partition. That's why so many high-scale systems weaken consistency: they're not afraid of partitions so much as everyday round-trip latency.</p>
+</div>
+
+<h3 id="pacelc-quadrants">The Four Kinds of System</h3>
+
+<p>Crossing the two branches gives four categories. The naming convention lists the partition choice (PA or PC) and the else-choice (EL or EC).</p>
+
+<table class="compare-table">
+  <tr><th>Class</th><th>Partition → / Else →</th><th>Real systems</th></tr>
+  <tr><td><strong>PA / EL</strong></td><td>Availability / Latency — never blocks for consistency</td><td>Early Dynamo, Cassandra, Riak</td></tr>
+  <tr><td><strong>PC / EC</strong></td><td>Consistency / Consistency — always strong</td><td>MySQL, Postgres, Bigtable</td></tr>
+  <tr><td><strong>PA / EC</strong></td><td>Available during partition, but consistent otherwise</td><td>MongoDB</td></tr>
+  <tr><td><strong>PC / EL</strong></td><td>Consistent during partition, fast otherwise (rare)</td><td>(uncommon in practice)</td></tr>
+</table>
+
+<p>The two extremes are the most common: <strong>PA/EL</strong> systems (like Cassandra) prioritize availability and low latency over consistency at all times, while <strong>PC/EC</strong> systems (like Postgres) are strongly consistent no matter what. The middle rows are the interesting hybrids that adapt their behavior to whether a partition is present.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>Consistency is not free — and not just during failures. CAP shows you must sacrifice consistency or availability to tolerate partitions; PACELC adds that even in the happy path, strong consistency costs you latency. Every distributed database you'll ever use sits somewhere on this map, and its position is a deliberate engineering choice — not an accident.</p>
+</div>
+
+<div class="quiz" id="quiz3-box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">What does PACELC add to the CAP theorem?</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>A fourth property, "durability," that must also be traded off</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>That even when there is no partition, you still trade latency against consistency</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>A proof that partition tolerance can be dropped safely</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>That availability and consistency are actually the same property</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct — B.</strong> CAP only describes the partition case. PACELC's "ELC" branch makes the point that in the <em>common</em> (no-partition) case there is still a latency-vs-consistency tradeoff — strong consistency costs round-trips. A invents a property PACELC doesn't add; C contradicts the lecture's rule that you never drop P; D conflates two genuinely distinct (safety vs liveness) properties.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>Eventual Consistency &amp; the Strong Eventual Refinement</h2>
+</div>
+
+<p>We've established that to stay available under partitions, we must drop consistency. But what does "drop consistency" actually mean? It can't mean "the application returns garbage and we shrug" — that's useless. We need a disciplined, weaker guarantee. The key, the professor stresses, is <strong>order</strong>.</p>
+
+<h3 id="order-independent">The Reframe: When Does Order Not Matter?</h3>
+
+<p>Back in Part I we asked "which update should the replicas commit first?" That question assumed order matters. The more productive question is: <em>what if the order of updates doesn't matter at all?</em> If two updates commute — produce the same result regardless of which goes first — then there's nothing to agree on, and no expensive consensus is needed.</p>
+
+<p>A clean example: split the set of registers across replicas. Put register <code>X</code> on one replica and register <code>Y</code> on another. Now updates to <code>X</code> only ever land on one replica and updates to <code>Y</code> on the other, so across replicas there is never a conflicting global order to resolve. The updates are <em>order-independent by construction</em>.</p>
+
+<h3 id="sec-def">From Eventual to <em>Strong</em> Eventual Consistency</h3>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Eventual Consistency</div>
+  <p><strong>Eventual consistency:</strong> if no new updates arrive, all replicas will <em>eventually</em> converge to the same state. This is a <strong>liveness</strong> property — it promises something good eventually happens, and it can never be violated by a finite execution trace (you can always say "convergence just hasn't happened yet").</p>
+</div>
+
+<p>But eventual consistency alone is too weak to <em>distinguish good systems from bad ones</em>. Consider two executions: one where we cleanly split the register state (order-independent), and one with arbitrary conflicting updates. Both can eventually converge, so both satisfy eventual consistency — yet they clearly behave differently. What separates them?</p>
+
+<p>The distinguishing property is about <em>finite</em> traces: replicas that have delivered <em>the same set of updates</em> must have <em>equivalent state</em>. That's a <strong>safety</strong> property — it can be violated at a finite point. The lecture gives it a name.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Strong Eventual Consistency (SEC)</div>
+  <p><strong>SEC = Strong Convergence (safety) + Eventual Consistency (liveness).</strong></p>
+  <p><strong>Strong convergence:</strong> any two replicas that have delivered the same set of updates have equivalent state — immediately, not just eventually.</p>
+  <p><strong>Eventual consistency:</strong> absent new updates, all replicas eventually deliver the same set of updates and converge.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Why Industry Cares</div>
+  <p>Over the last ~15 years SEC has been heavily researched, and many industry systems adopt it instead of strong consistency — especially in the <em>geo-replicated</em> setting, where partitions are frequent and cross-data-center latency is brutally expensive. SEC is the disciplined version of "AP" that Part II said we'd need. CRDTs (Part VI) are the tool that makes SEC implementable.</p>
+</div>
+
+<h3 id="s3-example">A Concrete Hazard: The S3 Photo App</h3>
+
+<p>SEC sounds great, but it is <strong>heavily application-dependent</strong>: the application must be able to <em>tolerate disorder</em>. The lecture screens candidates:</p>
+
+<table class="compare-table">
+  <tr><th>Application</th><th>Tolerates disorder?</th><th>Why</th></tr>
+  <tr><td>Bank (transfer + interest)</td><td>No</td><td>Reordering could let you spend a balance you don't actually have</td></tr>
+  <tr><td>Social network (post + get-friends)</td><td>Yes</td><td>Seeing a friend before their posts is harmless</td></tr>
+</table>
+
+<p>Now make it concrete. You build a photo-sharing service on AWS using an <em>eventually consistent</em> Amazon S3 (a key–value store with just <code>get</code> and <code>set</code>). You store three kinds of data:</p>
+
+<pre><code><span class="cm">// three key-value mappings in S3</span>
+photoURL   <span class="op">-&gt;</span> image binary
+albumName  <span class="op">-&gt;</span> [photoURL, photoURL, ...]
+userName   <span class="op">-&gt;</span> { numPhotos, [albumName, ...] }</code></pre>
+
+<p>Because the store is only <em>eventually</em> consistent, your application must defend against two classes of bug:</p>
+
+<div class="callout warning">
+  <div class="callout-title">Hazard 1 — Lack of Referential Integrity</div>
+  <p>A user's stored <code>numPhotos</code> may not equal the actual photo count across their albums. If you update the album then the user record, and a reader observes them in between (or out of order), they'll temporarily see an inconsistent total. The two pieces of data reference each other but aren't updated atomically.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Hazard 2 — Updates Appear Lost</div>
+  <p>Suppose two clients concurrently do "read album, append a photo, write album." Client A reads <code>[photo1]</code>, appends <code>photo2</code>. Client B also reads <code>[photo1]</code>, appends <code>photo2′</code>. Both write back — and one append <em>silently overwrites</em> the other. The album ends up with only <code>photo1</code> plus one of the two new photos. An update vanished.</p>
+</div>
+
+<p>So why is S3 wildly successful despite this? Two reasons the lecture highlights:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Read-after-write for the initial put.</strong> The <em>first</em> time you write a key, you get strong consistency for that data forever after — everyone will read it.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Write-once workloads.</strong> Most S3 data is written once and then read many times, almost never edited. For "write once, read often," eventual consistency's hazards rarely fire, so the cheap, available store is exactly what you want.</p>
+</div>
+
+<div class="quiz" id="quiz4-box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">What does "strong convergence," the safety half of strong eventual consistency, require?</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Every replica must process updates in exactly the same real-time order</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Replicas that have delivered the same set of updates have equivalent state</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>All replicas eventually converge if no new updates arrive</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Every write must be acknowledged by a majority before it commits</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct — B.</strong> Strong convergence is the safety property that distinguishes good SEC systems on <em>finite</em> traces: same set of delivered updates ⟹ equivalent state, immediately. A is too strong (it would require ordering — the very thing we're avoiding); C is the <em>liveness</em> half (eventual consistency), not strong convergence; D is a consensus/quorum rule that SEC specifically avoids.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>Checking Correctness — and What Facebook Found</h2>
+</div>
+
+<p>We've argued that eventual consistency is cheaper but riskier. A natural question follows: in <em>practice</em>, how often does an eventually-consistent system actually return a wrong (non-linearizable) result? Facebook (now Meta) answered this empirically in a 2015 SOSP paper studying <strong>TAO</strong>, their eventually-consistent social-graph database (nodes are people/pages/groups; edges are "friend of," "authored by," "tagged," etc.). But to understand <em>how</em> they checked it, we need a side quest into system correctness in general.</p>
+
+<h3 id="correctness-spectrum">Four Ways to Check a System Is Correct</h3>
+
+<p>The oldest method is simply: run the system on some inputs and inspect the outputs — like tasting a bit of everything in a chemistry lab and going "seems fine." We've come a long way since. The four methods below form a spectrum from <em>automatic &amp; black-box &amp; weak-guarantee</em> to <em>manual &amp; white-box &amp; strong-guarantee</em>.</p>
+
+<table class="compare-table">
+  <tr><th>Method</th><th>How it works</th><th>Pros</th><th>Cons</th></tr>
+  <tr><td><strong>Testing</strong></td><td>Define checks, generate inputs/configs, run, see if checks pass</td><td>Lightweight, black-box, fully automatic</td><td>Limited guarantees; inputs are synthetic, not production</td></tr>
+  <tr><td><strong>Monitoring</strong> (runtime verification)</td><td>A monitor reads logs/traces of the running system in production and checks a property</td><td>Black-box, automatic, uses <em>real production data</em></td><td>Limited guarantees; production overhead</td></tr>
+  <tr><td><strong>Model checking</strong></td><td>Model the system as a state machine; exhaustively explore transitions vs. properties</td><td>Real (systematic, exhaustive) guarantees; automatic</td><td>White-box; expensive; guarantees are <em>finite</em> (bounded)</td></tr>
+  <tr><td><strong>Deductive verification</strong></td><td>Build a model + properties, construct a manual proof the model satisfies them</td><td>Very strong guarantees</td><td>Heavy manual effort; deeply white-box</td></tr>
+</table>
+
+<div class="callout insight">
+  <div class="callout-title">The Spectrum Has a Shape</div>
+  <p>As you move from testing toward deductive verification, the methods become more <em>manual</em>, more <em>white-box</em>, and more <em>expensive</em> — but the guarantees get <em>stronger</em>. Testing says "every test I ran passed." Model checking says "no reachable state in 100,000 rounds violates the property." Deductive verification says "no execution <em>ever</em> violates it." You pay for certainty with effort.</p>
+</div>
+
+<p>Real tools sit along this line: <strong>TLA+</strong> and <strong>P</strong> for modeling/checking distributed systems, and <strong>Dafny</strong>, <strong>Coq</strong>, and <strong>Lean</strong> for (semi-)deductive verification. The professor notes that LLMs are lowering the bar for deductive verification, so expect to see more of it in distributed systems going forward.</p>
+
+<h3 id="tao-study">How Facebook Checked TAO: Monitoring</h3>
+
+<p>Which method did Facebook pick? <strong>Monitoring</strong> — because it runs on <em>real-world executions</em>, not synthetic inputs. The mechanics:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>For each processed request, log its <strong>start time, end time, arguments, and result</strong>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>Knowing start/end times tells you which operations <em>overlap</em> in real time and which don't — and therefore which you're allowed to reorder.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>Search for a <strong>linearization</strong>: a sequential ordering of operations that (a) respects non-overlapping real-time order and (b) explains every observed result. If one exists, the execution was linearizable.</p>
+</div>
+
+<p>The cost of logging <em>everything</em> for 12 days would be crushing for both storage and performance. So they <strong>sampled</strong> — roughly 1 in a million events — and still counted <strong>2.7 billion requests</strong> (≈900M about vertices, ≈1.8B about edges; mostly reads).</p>
+
+<h3 id="clock-skew">The Catch: You Can't Trust the Clocks</h3>
+
+<div class="callout warning">
+  <div class="callout-title">Footgun — Clock Synchronization</div>
+  <p>The start/end timestamps come from <em>different machines</em>, and it is known to be impossible to perfectly synchronize physical clocks across machines. So when the monitor compares "did op A finish before op B started?", it might be comparing two skewed clocks and reach the wrong conclusion.</p>
+</div>
+
+<p>Facebook's fix: they measured the 99.9th-percentile clock skew across replicas at <strong>35 ms</strong> and used that as a near-worst-case bound. They then over-approximated by treating comparisons as uncertain within ±35 ms on each side. This produces a careful asymmetry:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Lower bound (expand by 35 ms).</strong> Stretch each request's interval outward by 35 ms. This <em>creates more overlaps</em>, making it <em>easier</em> to find a linearization — so any violation that <em>survives</em> is certainly real. (They might miss some real violations, but every violation they report is true.)</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Upper bound (shrink by 35 ms).</strong> Squeeze intervals inward, as if all clocks were skewed the <em>opposite</em> way. This removes overlaps and asks "what is the <em>worst</em> possible violation count if clocks were maximally adversarial?"</p>
+</div>
+
+<p>One more subtlety mattered for the results: only objects with <em>both</em> reads and writes can possibly exhibit a violation. An object that is only written but never read can't reveal a stale read — there's no read to observe it. (In the data, ~75% of objects had no writes, and ~30% had no reads, so a large fraction simply couldn't show a violation.)</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>The punchline: even though TAO is <em>eventually</em> consistent, only <strong>0.0004%</strong> of reads violated linearizability (lower bound), and even the pessimistic upper bound — assuming every clock is maximally skewed the wrong way every time — was just <strong>0.003%</strong>. An eventually-consistent system is, in practice, <em>almost always</em> strongly consistent. Weak consistency is a worst-case label, not an everyday experience.</p>
+</div>
+
+<p>Is 0.003% "good enough"? It depends on the application — the same lesson as SEC. For a social network, perfectly fine (we never even <em>needed</em> linearizability). For a bank, unacceptable — a single wrongly-allowed transaction is one too many.</p>
+
+<div class="quiz" id="quiz5-box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Why did Facebook <em>expand</em> each request's interval by 35 ms when computing the lower bound on linearizability violations?</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>To make their servers respond faster during the study</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>So that any violation that still appears is guaranteed real, despite clock skew</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>To synchronize the clocks across all machines exactly</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>To count read-only objects that cannot show violations</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct — B.</strong> Expanding intervals by the 99.9th-percentile skew (35 ms) creates extra overlaps, making linearizations <em>easier</em> to find. So any violation that survives this generous treatment must be genuine — that's why it's a sound <em>lower</em> bound (it may undercount, but never reports a false violation). A and D are unrelated; C is impossible — the whole point is that clocks <em>can't</em> be perfectly synchronized.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART VI ═══════════════════════ -->
+<section id="part6" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part VI</div>
+  <h2>CRDTs — Making Strong Eventual Consistency Practical</h2>
+</div>
+
+<p>We now know <em>what</em> we want (strong eventual consistency) and that it's <em>worth</em> wanting (the Facebook study shows it's usually as good as strong consistency). The last piece is <em>how</em> to build it. The answer is a family of data structures called CRDTs — but first we have to see why strong convergence alone isn't enough.</p>
+
+<h3 id="convergence-gap">Why Strong Convergence Isn't the Whole Story</h3>
+
+<p>Recall strong convergence: replicas with the same set of updates have equivalent state. The gap is that <em>it says nothing about what that state should be</em>. A degenerate "solution" could order all updates by, say, the hash of their contents, and apply them in hash order. That technically converges — every replica computes the same hash order — but the resulting value is meaningless. We need genuine <strong>conflict resolution</strong>, not just any deterministic agreement.</p>
+
+<p>Two example data types make the distinction vivid.</p>
+
+<h4>A counter: operations that commute</h4>
+<p>A counter supports <code>increment(x)</code>, <code>decrement(x)</code>, and <code>get</code>. (From here on we care only about writes and omit reads.) These operations <strong>commute fully</strong>: incrementing then decrementing yields the same value as decrementing then incrementing. So the state can simply be the integer, and each replica just applies operations as they arrive. Same set of operations ⟹ same value — strong convergence for free.</p>
+
+<h4>A register: operations that don't commute</h4>
+<p>A register supports <code>set(v)</code> and <code>get</code>. Now <code>set(1)</code> and <code>set(2)</code> <em>do not</em> commute — the final value depends on order. What does "converge" even mean? One clean answer: a <strong>multi-value register</strong> whose state is the <em>set of all concurrent writes</em>. Both <code>set(1)</code> and <code>set(2)</code> are stored as <code>{1, 2}</code>. Every replica that saw both writes holds the same set, so strong convergence holds — and the <em>client</em> applies a custom resolution policy (e.g. "largest write wins") to pick a final value.</p>
+
+<h3 id="crdt-def">What a CRDT Is</h3>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Conflict-Free Replicated Data Type (CRDT)</div>
+  <p>A <strong>CRDT</strong> is a data type engineered so that concurrent updates always merge into a consistent state <em>without coordination</em> — generalizing the multi-value register into a reusable framework that provides strong eventual consistency. You can use off-the-shelf CRDTs (registers, counters, sets, lists) or design your own following CRDT principles. They're popular at Apple, Facebook, SoundCloud, and beyond; the original motivating use case was <strong>collaborative text editing</strong> (a document many people type into at once).</p>
+</div>
+
+<p>CRDTs come in two equivalent implementation styles — same behavior, different ergonomics:</p>
+
+<table class="compare-table">
+  <tr><th>Style</th><th>How replicas sync</th><th>The one rule you must satisfy</th></tr>
+  <tr><td><strong>Operation-based</strong></td><td>Broadcast every update to all replicas; each applies them</td><td>Updates must <strong>commute</strong></td></tr>
+  <tr><td><strong>State-based</strong></td><td>Periodically broadcast your whole state <code>S</code>; replicas <code>merge</code> states</td><td>The <strong>merge</strong> function must combine two states correctly</td></tr>
+</table>
+
+<p>For a state-based CRDT, <code>merge</code> runs every time a replica receives another replica's state. What's the merge for the multi-value register? <strong>Set union.</strong> Simple. The counter is where it gets subtle.</p>
+
+<h3 id="crdt-counter">The Increment-Only Counter, Done Right</h3>
+
+<div class="callout warning">
+  <div class="callout-title">Naïve Merge = Wrong Count</div>
+  <p>For a state-based counter, you might guess <code>merge = addition</code>. <strong>It doesn't work</strong> — it double counts. If replica 1 holds 1 and merges into replica 2 (now 1), then replica 1 merges <em>again</em>, replica 2 jumps to 3. Re-merging the same state keeps re-adding replica 1's contribution. Addition is not <em>idempotent</em>, so repeated merges inflate the count.</p>
+</div>
+
+<p>The fix borrows the intuition from <strong>vector clocks</strong>: instead of one shared integer, keep <em>one counter per replica</em>.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>State:</strong> a vector of counters, one slot per replica. Replica <code>i</code> only ever increments its own slot.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>get:</strong> return the <em>sum</em> of all slots.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>merge:</strong> take the element-wise <em>max</em> of the two vectors.</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="380" height="150" viewBox="0 0 380 150" style="display:block; margin:0 auto;">
+      <!-- R1 state -->
+      <text x="40" y="34" font-family="DM Sans, sans-serif" font-size="12" fill="#6b6560">R1</text>
+      <rect x="40" y="44" width="36" height="30" fill="#fff" stroke="#c0510a" stroke-width="2"/>
+      <text x="58" y="64" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" fill="#2a2520">3</text>
+      <rect x="76" y="44" width="36" height="30" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="94" y="64" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" fill="#2a2520">1</text>
+      <!-- R2 state -->
+      <text x="160" y="34" font-family="DM Sans, sans-serif" font-size="12" fill="#6b6560">R2</text>
+      <rect x="160" y="44" width="36" height="30" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="178" y="64" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" fill="#2a2520">2</text>
+      <rect x="196" y="44" width="36" height="30" fill="#fff" stroke="#c0510a" stroke-width="2"/>
+      <text x="214" y="64" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" fill="#2a2520">4</text>
+      <!-- merge arrow -->
+      <text x="265" y="64" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="16" fill="#2d8a4e">max</text>
+      <line x1="240" y1="59" x2="300" y2="59" stroke="#d9d0c4" stroke-width="2"/>
+      <!-- merged -->
+      <rect x="304" y="44" width="32" height="30" fill="#edf7f0" stroke="#2d8a4e" stroke-width="2"/>
+      <text x="320" y="64" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" fill="#2a2520">3</text>
+      <rect x="336" y="44" width="32" height="30" fill="#edf7f0" stroke="#2d8a4e" stroke-width="2"/>
+      <text x="352" y="64" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" fill="#2a2520">4</text>
+      <text x="190" y="110" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#6b6560">element-wise max → get() = 3 + 4 = 7</text>
+      <text x="190" y="130" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">re-merging the same vector changes nothing (max is idempotent)</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Increment-only counter as a per-replica vector. Merge takes the max of each slot; get() sums the slots. Because max is idempotent, re-merging never double counts — the bug that plagued naïve addition.</div>
+</div>
+
+<p>Why does max fix double-counting? Each slot records the <em>true, monotonically growing</em> count contributed by one replica. Merging by max just adopts the larger known value per replica — re-merging the same state is a no-op, so nothing is ever counted twice. (The full increment-<em>and</em>-decrement counter is more involved and the lecture points to a blog post rather than covering it; the increment-only version is enough to grasp the principle.)</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>CRDTs deliver strong eventual consistency <em>without consensus</em> by demanding one of two algebraic properties: operations that <strong>commute</strong> (op-based) or a <strong>merge</strong> that is commutative, associative, and idempotent (state-based, like element-wise max). Get the algebra right, and replicas converge automatically — no coordination, no blocking, no Paxos. That is precisely the cheap-but-correct AP system Part II told us we'd need.</p>
+</div>
+
+<div class="quiz" id="quiz6-box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">For a state-based increment-only counter, why is the merge function "element-wise max over per-replica counters" instead of plain addition?</div>
+  <div class="quiz-options" data-quiz="q6">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Max is faster to compute than addition</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Addition isn't idempotent, so re-merging the same state double counts; per-replica max is idempotent and avoids this</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Max guarantees the counter only ever increases, which addition cannot do</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Addition requires a consensus protocol but max does not</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q6','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q6">
+    <strong>Correct — B.</strong> State-based merges may be applied repeatedly and in any order, so merge must be idempotent. Plain addition re-adds a replica's contribution on every re-merge (replica 1's value gets counted again and again), inflating the total. Keeping one slot per replica and merging by max means re-merging the same vector is a no-op. A is irrelevant; C is a side effect, not the reason; D is false — neither merge needs consensus, which is the entire appeal of CRDTs.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SUMMARY ═══════════════════════ -->
+<section id="together" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This lecture is a single argument, told in six moves. It starts from a cost and ends with a cure.</p>
+
+<p>We began (Part I) by naming the bill for <strong>strong consistency</strong>: consensus, blocking, and forced ordering make it expensive. The <strong>CAP theorem</strong> (Part II) then proved this isn't just an engineering inconvenience but a fundamental limit — under a partition, two replicas become genuinely indistinguishable, so you must drop either consistency or availability. Crucially, you essentially never drop partition tolerance, because partitions are real. <strong>PACELC</strong> (Part III) sharpened the knife: even with no partition, strong consistency still costs latency, which is why high-scale, geo-replicated systems so often weaken it.</p>
+
+<p>Having justified weakening consistency, we made it disciplined. <strong>Eventual consistency</strong> (Part IV) is the liveness promise that replicas converge; <strong>strong convergence</strong> adds the safety promise that the same updates yield the same state; together they form <strong>strong eventual consistency</strong>. But SEC is application-dependent — a bank can't tolerate disorder, a social feed can — and the S3 photo app showed the real bugs (lost updates, broken referential integrity) you must defend against.</p>
+
+<p>Then we got empirical. The detour into <strong>correctness checking</strong> (Part V) — testing, monitoring, model checking, deductive verification — gave us the vocabulary to read Facebook's TAO study, which used <em>monitoring</em> to discover that an eventually-consistent system violates linearizability only ~0.0004% of the time. Weak consistency is a worst-case label, not an everyday reality. Finally, <strong>CRDTs</strong> (Part VI) gave us the construction: pick operations that commute or a merge that's idempotent (per-replica max for counters, union for registers), and replicas converge with no consensus at all — exactly the cheap, available, <em>correct</em> AP system CAP told us to build.</p>
+
+<p>The throughline connecting all six parts is <strong>order</strong>. Strong consistency is expensive precisely because it forces a global order; weak consistency becomes safe precisely when we engineer updates whose order doesn't matter.</p>
+
+<div class="callout tip">
+  <div class="callout-title">What's Next</div>
+  <p>The next lecture turns to <strong>scalability</strong> and the various solutions for it — how to grow a system to handle more load, which is the natural counterpart to today's consistency tradeoffs. Keep one more thread in mind too: the professor flagged a recent <em>reversal</em>. As networks get faster and more reliable, the critical path shrinks to a single machine/data center, and strong consistency is coming back into favor (S3 itself is now strongly consistent) — because developers found reasoning about inconsistency simply too error-prone. The pendulum between strong and weak consistency is still swinging; this lecture gives you the framework to understand <em>why</em> it moves.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

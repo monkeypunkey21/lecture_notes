@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 4 — Fault Tolerance &amp; the Chandy–Lamport Snapshot</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 4 · Fault Tolerance</div>
+  <a href="#part1">Part I — Where We Are</a>
+  <a href="#recap-clocks" class="sub">Recap: What Clocks Gave Us</a>
+  <a href="#whats-missing" class="sub">What's Still Missing</a>
+  <a href="#vc-uniqueness" class="sub">Bonus: Vector Clock Uniqueness</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Faults &amp; Fault Tolerance</a>
+  <a href="#what-is-ft" class="sub">What Fault Tolerance Means</a>
+  <a href="#first-question" class="sub">The First Question to Ask</a>
+  <a href="#three-faults" class="sub">Three Classes of Faults</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — Recovering from Crashes</a>
+  <a href="#replicas-checkpoints" class="sub">Replicas &amp; Checkpoints</a>
+  <a href="#nondeterminism" class="sub">The Non-Determinism Problem</a>
+  <a href="#logging" class="sub">The Fix: Logging &amp; Replay</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — The Snapshot Problem</a>
+  <a href="#global-snapshot" class="sub">Why Coordinate at All?</a>
+  <a href="#two-approaches" class="sub">Uncoordinated vs Coordinated</a>
+  <a href="#channel-state" class="sub">Channels Are State Too</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Chandy–Lamport</a>
+  <a href="#cl-model" class="sub">System Model &amp; Markers</a>
+  <a href="#cl-algorithm" class="sub">The Algorithm</a>
+  <a href="#cl-trace" class="sub">Worked Example</a>
+  <a href="#cl-count" class="sub">Counting Markers</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#together">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">CS134 · Distributed Systems</div>
+  <h1>Fault Tolerance &amp; the Chandy–Lamport Snapshot</h1>
+  <p class="hero-sub">An interactive guide to Lecture 4 — what can break in a distributed system, how to recover from crashes, and how to photograph a running system without ever stopping it.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>Where We Are — and What Clocks Can't Do</h2>
+</div>
+
+<p>Before this lecture, the course had spent its time on one big question: in a system of separate computers with no shared clock, <em>how do we agree on the order in which things happened?</em> The answer was <strong>logical clocks</strong>. This lecture is the pivot point where we admit that ordering, by itself, doesn't keep a system alive. To see why, we first need to be crisp about what the earlier machinery actually bought us.</p>
+
+<h3 id="recap-clocks">Recap: What Logical Clocks Gave Us</h3>
+<p>A <strong>distributed system</strong> is a collection of independent processes (think: separate machines or programs) that coordinate only by sending each other messages over a network. There is no global "now" they can all read. So instead of real time, we use <em>logical</em> time.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Happens-Before</div>
+  <p>We say event <code>A</code> <strong>happened-before</strong> event <code>B</code> (written <code>A → B</code>) if at least one of these holds: (1) they are in the <strong>same process</strong> and <code>A</code> occurs first; (2) <code>A</code> is the <strong>sending</strong> of a message and <code>B</code> is its <strong>receipt</strong>; or (3) it follows <strong>transitively</strong> — there is some <code>C</code> with <code>A → C</code> and <code>C → B</code>. This is the only notion of "order" a distributed system can actually justify.</p>
+</div>
+
+<p>From that single relation, the course built three tools, each strictly more precise than the last:</p>
+
+<ul style="margin: 0 0 18px 22px;">
+  <li><strong>Lamport clocks</strong> — a single integer per event. If <code>A → B</code> then <code>C(A) &lt; C(B)</code>. The catch: the reverse is <em>not</em> guaranteed.</li>
+  <li><strong>Vector clocks</strong> — one integer <em>per process</em>, so a clock is a tuple like <code>[1, 1, 2]</code>. These capture happens-before <em>exactly</em>: the clocks order iff the events do.</li>
+  <li><strong>Replicated state machines</strong> — using logical clocks to keep multiple copies of a service in lock-step agreement about the order of operations.</li>
+</ul>
+
+<div class="callout warning">
+  <div class="callout-title">The One-Way Street That Trips People Up</div>
+  <p>Lamport clocks only flow one direction. <code>A → B</code> implies <code>C(A) &lt; C(B)</code>, but <code>C(A) &lt; C(B)</code> does <strong>not</strong> imply <code>A → B</code>. Two completely independent events — say, handling two unrelated external requests — can have comparable clock values purely by coincidence. The same one-way logic applies to causation: <code>A</code> <em>caused</em> <code>B</code> implies <code>A → B</code>, but <code>A → B</code> does not mean <code>A</code> caused <code>B</code> (<code>B</code> could just be later and unrelated).</p>
+</div>
+
+<h3 id="whats-missing">So Are We Done? What's Still Missing</h3>
+<p>We can now order events, replicate a service, and keep replicas consistent. It is tempting to declare victory. But ask the question the professor asked the room: <em>are we done?</em></p>
+
+<p>No. Every tool so far quietly assumed that <strong>nothing ever breaks</strong>. Logical clocks give zero guarantees when a machine crashes, when the network drops a packet, or when a process simply disappears. They order the events that <em>do</em> happen; they say nothing about what to do when the events <em>stop</em> happening.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Pivot of the Course</div>
+  <p>Ordering is necessary but not sufficient. The hard, multi-lecture problem in distributed systems is <strong>fault tolerance</strong>: building a system that still meets its specification even when parts of it fail. Everything from this lecture onward is about faults and how to survive them.</p>
+</div>
+
+<h3 id="vc-uniqueness">A Loose End: Can Two Events Share a Vector Clock?</h3>
+<p>A student had asked: could two genuinely distinct events ever end up with <em>identical</em> vector clocks? The answer is <strong>no</strong>, and the informal proof is a nice warm-up in reasoning about these systems. First, recall the two update rules for a vector clock:</p>
+
+<pre><code><span class="cm">// every clock starts at [0, 0, 0]</span>
+<span class="cm">// Rule 1 — local event (incl. a send):</span>
+V[self] <span class="op">=</span> V[self] <span class="op">+</span> <span class="nb">1</span>
+
+<span class="cm">// Rule 2 — receiving message with clock M:</span>
+<span class="kw">for</span> <span class="kw">each</span> i: V[i] <span class="op">=</span> max(V[i], M[i])
+V[self] <span class="op">=</span> V[self] <span class="op">+</span> <span class="nb">1</span></code></pre>
+
+<p>Now suppose two events <code>A</code> and <code>B</code> had the same vector clock. The argument rules that out in two moves:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>They can't be in the same process.</strong> Every event a process handles increments that process's own entry in the vector. So no two events in one process share that entry — their clocks must differ. Therefore <code>A</code> and <code>B</code> would have to live in <em>different</em> processes, say <code>P1</code> and <code>P2</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>But then a contradiction appears.</strong> For <code>P2</code> to have <code>P1</code>'s entry equal to <code>A</code>'s value, <code>P2</code> must have received a message originating from that exact send. Yet by the receive rule, <em>any</em> event in <code>P2</code> after that receipt has a strictly larger value in its <em>own</em> entry than <code>A</code> does — because that entry only ever grows. So the two clocks can't be equal after all. Contradiction.</p>
+</div>
+
+<p>Two distinct events always have distinct vector clocks. This isn't busywork: it's exactly the kind of short, informal argument you might be asked to reproduce.</p>
+
+<div class="quiz" id="quiz1-box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">You observe two events with Lamport clocks <code>C(A) = 1</code> and <code>C(B) = 3</code>. What can you safely conclude?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div><code>A</code> happened-before <code>B</code>.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div><code>A</code> caused <code>B</code>.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Nothing about the ordering of <code>A</code> and <code>B</code> for certain.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div><code>A</code> and <code>B</code> are in the same process.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct — it's C.</strong> Lamport clocks are one-directional: <code>A → B</code> guarantees <code>C(A) &lt; C(B)</code>, but the converse fails. Smaller clock values can occur between two completely independent events that have no happens-before relationship at all, so you cannot conclude ordering (A), causation (B, which is even stronger than ordering), or co-location (D). Only <strong>vector</strong> clocks would let you read ordering off the numbers directly.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>Faults — Naming the Enemy</h2>
+</div>
+
+<p>You cannot tolerate a fault you haven't defined. This part nails down what "fault tolerance" precisely means and then catalogs the kinds of things that actually go wrong, because the right defense depends entirely on the threat.</p>
+
+<h3 id="what-is-ft">What "Fault Tolerance" Actually Means</h3>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Fault Tolerance</div>
+  <p>A system <code>S</code> is <strong>fault-tolerant</strong> if it continues to satisfy its <strong>specification</strong> (the guarantees it promises to its users) <em>given that</em> some defined class of faults can occur. The phrase "some defined class" is load-bearing — tolerance is always relative to a specific set of failures you've decided to handle.</p>
+</div>
+
+<h3 id="first-question">The First Question You Must Ask</h3>
+<p>When someone asks you to "make the system fault-tolerant," the correct first response is not to start coding. It is to ask: <strong>which faults?</strong> A defense against a dropped packet looks nothing like a defense against a malicious adversary. Until the fault model is pinned down, "fault-tolerant" is meaningless.</p>
+
+<div class="callout tip">
+  <div class="callout-title">A Habit Worth Forming</div>
+  <p>Every protocol in this course will open by stating its <strong>fault model</strong> and its <strong>system model</strong> (assumptions about the network, timing, and failures). When you read a new algorithm — including Chandy–Lamport later in this very lecture — find those assumptions first. They tell you exactly what the algorithm is and isn't allowed to promise.</p>
+</div>
+
+<h3 id="three-faults">Three Classes of Faults</h3>
+<p>Distributed-systems failures sort into three buckets, in roughly increasing order of nastiness.</p>
+
+<h4>1. Crash Failures</h4>
+<p>A component <strong>crashes</strong>: it stops, loses all of its <em>ephemeral</em> (in-memory) state, becomes unreachable, and never comes back. Other processes that try to contact it simply get nothing — their messages go unanswered. Often the system responds by spinning up a fresh process to take over the dead one's role. This is the failure type the course will focus on most.</p>
+
+<h4>2. Network Failures</h4>
+<p>The network misbehaves in two ways: messages get <strong>dropped</strong> (lost entirely) or <strong>reordered</strong> (arrive in a different order than sent).</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Cruel Ambiguity</div>
+  <p>When an expected message doesn't arrive, you <strong>cannot tell which of three things happened</strong>: the message was dropped, the message is merely very slow, or the sender crashed. From the receiver's point of view these are indistinguishable. This single ambiguity is the source of an enormous fraction of the difficulty in distributed systems.</p>
+</div>
+
+<p>The common mitigation is <strong>retry and deduplicate</strong>: resend the message repeatedly, and discard duplicates on arrival. This doesn't truly <em>solve</em> the failure — it relies on the network not being broken forever — but if delivery is at all possible, persistent retrying eventually gets the message through.</p>
+
+<p>And no, TCP is not a free pass: TCP gives reliable delivery <em>over a working wire</em>, but if the physical cable is literally cut, no protocol can paper over that. There is no total delivery guarantee.</p>
+
+<h4>3. Byzantine Failures</h4>
+<p><strong>Byzantine</strong> failures are the worst: a component doesn't just stop — it actively <em>lies</em>. Messages or processes get corrupted or maliciously modified. The classic illustration: <code>P1</code> sends "do you want tomato pizza?" and an adversary rewrites it in flight to "we want <em>terrible</em> pizza." Because the fault can produce arbitrary, adversarial behavior, Byzantine failures are strictly harder to tolerate than crash or network failures, and live in the realm of advanced distributed systems and cryptography.</p>
+
+<table class="compare-table">
+  <tr><th>Fault Type</th><th>What Breaks</th><th>This Course?</th></tr>
+  <tr><td>Crash</td><td>Component stops, loses memory, never returns</td><td>Main focus</td></tr>
+  <tr><td>Network</td><td>Messages dropped or reordered</td><td>In the assignments</td></tr>
+  <tr><td>Byzantine</td><td>Messages/processes corrupted or lie</td><td>Out of scope</td></tr>
+</table>
+
+<div class="callout tip">
+  <div class="callout-title">Where This Course Spends Its Effort</div>
+  <p>The lectures concentrate on <strong>crash failures</strong>. You'll wrestle with <strong>network failures</strong> in the programming assignments. <strong>Byzantine failures</strong> are acknowledged but left to other courses. Keep this scoping in mind — it explains why later algorithms are allowed to assume, for example, that messages aren't maliciously altered.</p>
+</div>
+
+<div class="quiz" id="quiz2-box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A process sends a request and never gets a reply. Based on this observation alone, what does it know?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>The receiver has definitely crashed.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>The message was definitely dropped by the network.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>It cannot distinguish a crash, a dropped message, or a merely slow message.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>A Byzantine adversary has corrupted the message.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct — it's C.</strong> Silence is fundamentally ambiguous: a crashed receiver, a dropped message, and a very slow message all look identical from the sender's side. Options A and B each pick just one of these indistinguishable cases as if it were certain, and D invents a fault type with no evidence. This ambiguity is precisely why retry-and-deduplicate is a workaround rather than a true fix.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>Recovering from a Crash — and the Non-Determinism Trap</h2>
+</div>
+
+<p>Now that crash failures are our target, the obvious question is: when a process dies and loses its memory, how do we bring it back? Two strategies dominate — and one of them hides a subtle trap that motivates the rest of the lecture.</p>
+
+<h3 id="replicas-checkpoints">Two Strategies: Replicas and Checkpoints</h3>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Replication vs. Checkpointing</div>
+  <p><strong>Replication</strong> keeps multiple live copies of a component running, so if one crashes another already holds the state. <strong>Checkpointing</strong> (used interchangeably here with <strong>snapshotting</strong>) periodically saves a component's state to persistent storage like a disk; after a crash, the component reloads the latest checkpoint and resumes from there. These are the two big recovery families this course explores.</p>
+</div>
+
+<p>Checkpointing is the focus of this lecture. The idea is simple: every so often, write your state to disk; after a crash, retrieve the most recent saved state and continue execution from that point. For now we'll assume the disk is a trustworthy, synchronous store (write something, it's safely saved) — a clean abstraction we'll revisit much later when we study a real Azure system that worries about storage failures.</p>
+
+<h3 id="nondeterminism">Why Naïve Checkpointing Goes Wrong</h3>
+<p>Picture a process that takes a checkpoint, then performs some action, then crashes. On recovery it reloads the checkpoint and <em>re-runs</em> that action. Is that safe? Two things can break.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Problem 1 — Actions Aren't Idempotent</div>
+  <p>Re-running an action repeats its <strong>side effects</strong>. If the action was "send a text message" or "send an email," recovery sends it <em>twice</em>. An operation is <strong>idempotent</strong> if doing it multiple times has the same effect as doing it once — and side-effecting actions on the outside world usually are <em>not</em> idempotent.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Problem 2 — The Action Is Non-Deterministic</div>
+  <p>Even worse, the replayed action might not do the same thing the second time. If "do something" is <strong>non-deterministic</strong>, recovery might not just resend a text — it might send it to a <em>different person</em>. The system diverges from its original behavior, and now recovery has made things actively wrong rather than merely repeated.</p>
+</div>
+
+<h4>What Is Non-Determinism, and Where Does It Come From?</h4>
+<p>An operation is <strong>non-deterministic</strong> when running it again under "the same" conditions can produce a different result. In a distributed system the sources are everywhere:</p>
+
+<ul style="margin: 0 0 18px 22px;">
+  <li><strong>Randomness</strong> — random number generators, and things like LLM output.</li>
+  <li><strong>User input</strong> — whatever a human types is outside your control.</li>
+  <li><strong>Network delays</strong> — messages between machines arrive in timing that varies run to run.</li>
+  <li><strong>Process scheduling</strong> — which thread or process the OS runs when.</li>
+  <li><strong>OS interrupts</strong> — asynchronous events the OS injects.</li>
+</ul>
+
+<div class="callout insight">
+  <div class="callout-title">Why Distributed Systems Are Especially Hard to Test</div>
+  <p>Ordinary software already has randomness, user input, and interrupts. Distributed systems pile on <strong>network delays</strong> and <strong>process scheduling across machines</strong>. Each new source multiplies the possible executions, so a distributed program can have <em>exponentially many</em> distinct runs from the same starting point. That combinatorial explosion is exactly why testing — and recovery — is so painful here.</p>
+</div>
+
+<h3 id="logging">The Fix: Log Everything, Then Replay</h3>
+<p>You might hope to approximate away non-determinism the way you might for testing. But for <em>recovery</em> you can't approximate — if messages arrived in a particular order, you need that <em>exact</em> order back, not a plausible-looking one. The real solution is to remove the non-determinism by recording it:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>During normal operation, log every non-deterministic input.</strong> Every message received, every random number generated, every external input — write it to persistent storage as it happens.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>During recovery, consult the log instead of the world.</strong> When it's time to "receive a message," don't actually receive — look up the logged message. When code wants a random number, pull the logged one instead of rolling a fresh one.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Replay deterministically.</strong> Because every previously non-deterministic choice now comes from the log, the recovered process re-traces its original execution <em>exactly</em>, side effects and all — turning a non-deterministic program into a reproducible one.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Keep This in Your Back Pocket</div>
+  <p>We won't implement non-determinism logging for the rest of this lecture or in the assignments — but it is a genuinely important, frequently hand-waved problem. Almost every recovery scheme in distributed systems quietly faces it. Knowing that "log it and replay it" is the standard answer will help you spot what real designs are sweeping under the rug.</p>
+</div>
+
+<div class="quiz" id="quiz3-box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Why is logging-and-replay preferred over "just re-running the code" when recovering a crashed process?</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Re-running is faster but uses more memory.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Re-running can repeat side effects and take different non-deterministic paths; the log forces an exact deterministic replay.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Logging eliminates the need to ever take a checkpoint.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Re-running only works if the network never reorders messages.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct — it's B.</strong> Naïve re-execution can re-fire non-idempotent side effects (send the email twice) and, because of non-determinism, can take an entirely different path the second time (send it to someone else). Replaying from a log of received messages and random values pins down every choice, so the recovered run reproduces the original exactly. C is wrong because logging complements checkpointing rather than replacing it, and D mischaracterizes the problem — reordering is one source of non-determinism, not the whole story.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>From One Node to Many — The Snapshot Problem</h2>
+</div>
+
+<p>Checkpointing a single node is easy. But a distributed system is <em>many</em> nodes, and we sometimes need to capture all of them at once — to recover the whole system after a failure, or to relocate every node to a different cluster. The instant we try to photograph many processes together, deep problems appear. This part shows exactly what goes wrong and frames the trade-off that Chandy–Lamport will resolve.</p>
+
+<h3 id="global-snapshot">Why Coordinate at All?</h3>
+<p>The goal is a <strong>global snapshot</strong>: a single saved state covering every process, such that recovering from it leaves the whole system in a sensible state. The naïve plan is to let each process checkpoint itself whenever it likes and call the collection of latest checkpoints our snapshot. Why isn't that enough?</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="170" viewBox="0 0 420 170" style="display:block; margin:0 auto;">
+      <!-- timelines -->
+      <text x="14" y="48" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">P1</text>
+      <text x="14" y="128" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">P2</text>
+      <line x1="40" y1="44" x2="400" y2="44" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="40" y1="124" x2="400" y2="124" stroke="#d9d0c4" stroke-width="2"/>
+      <!-- checkpoints -->
+      <line x1="120" y1="28" x2="120" y2="60" stroke="#c0510a" stroke-width="3"/>
+      <line x1="300" y1="108" x2="300" y2="140" stroke="#c0510a" stroke-width="3"/>
+      <text x="120" y="20" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#c0510a">checkpoint</text>
+      <text x="300" y="160" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#c0510a">checkpoint</text>
+      <!-- message M6 sent after P1 cp, received before P2 cp -->
+      <line x1="200" y1="44" x2="280" y2="124" stroke="#2563eb" stroke-width="2" marker-end="url(#arrowb)"/>
+      <text x="248" y="86" font-family="JetBrains Mono, monospace" font-size="12" fill="#2563eb">M</text>
+      <defs>
+        <marker id="arrowb" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#2563eb"/>
+        </marker>
+      </defs>
+    </svg>
+  </div>
+  <div class="figure-caption">P1 checkpoints <em>before</em> sending <code>M</code>; P2 checkpoints <em>after</em> receiving it. The recovered state records the receipt but not the send.</div>
+</div>
+
+<p>In the figure, <code>P1</code>'s checkpoint is taken before it sends message <code>M</code>, and <code>P2</code>'s checkpoint is taken after it has received <code>M</code>. Recover both from these checkpoints and you get an <strong>impossible state</strong>: <code>P2</code> believes it received a message that, according to <code>P1</code>'s saved state, was never sent.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Core Danger of Uncoordinated Checkpoints</div>
+  <p>The combined global state can be one that the real system <strong>could never have reached</strong> on its own. After recovery the system finds itself in an <em>illegal</em> state it has no idea how to handle — like a ledger that records a payment received with no matching payment sent. Recovery has manufactured an impossibility.</p>
+</div>
+
+<h3 id="two-approaches">Uncoordinated vs. Coordinated — and the Cost</h3>
+<p>So we need <strong>coordination</strong>. A first attempt: a "stop-the-world" protocol. One process announces "prepare for a snapshot," waits for everyone to confirm, then tells everyone "snapshot now," and all checkpoint together.</p>
+
+<p>This is consistent — but the cost is brutal. Every process must <strong>halt its real work</strong> while the round of prepare/confirm/snapshot messages flies around. With <code>n</code> processes you exchange on the order of <code>n²</code> coordination messages, and crucially the entire system stalls.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Why "Stop the World" Hurts So Much</div>
+  <p>For a <strong>latency-critical</strong> service like a web backend, <strong>tail latency</strong> (the slowest few percent of requests) is what users feel. If a snapshot freezes everyone, every request unlucky enough to land during the freeze waits far longer — blowing the latency budget, and potentially costing real revenue. The cardinal rule: <strong>don't put snapshot work on the critical path.</strong></p>
+</div>
+
+<table class="compare-table">
+  <tr><th>Approach</th><th>Cost</th><th>Consistency</th></tr>
+  <tr><td>Uncoordinated</td><td>Essentially free — just checkpoint</td><td>Inconsistent (illegal states)</td></tr>
+  <tr><td>Coordinated (stop-the-world)</td><td>Very high — n² messages, system stalls</td><td>Consistent</td></tr>
+  <tr><td><strong>Chandy–Lamport</strong></td><td><strong>Low — no stalling</strong></td><td><strong>Consistent</strong></td></tr>
+</table>
+
+<p>Do we have to pick? The whole point of this lecture is that the answer is <strong>no</strong> — Chandy–Lamport gives a consistent, coordinated snapshot with low overhead and <em>without stopping the world</em>. But before we get there, one more crucial idea.</p>
+
+<h3 id="channel-state">A Distributed System's State Includes the Network</h3>
+<p>Consider an application where <code>n</code> processes pass a single <strong>lock</strong> around a ring: <code>P1 → P2 → P3 → P1</code>, and whoever holds the lock may act. Now suppose we draw a snapshot "cut" across all three timelines at carelessly chosen points.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="440" height="220" viewBox="0 0 440 220" style="display:block; margin:0 auto;">
+      <!-- three timelines -->
+      <text x="12" y="44" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">P1</text>
+      <text x="12" y="114" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">P2</text>
+      <text x="12" y="184" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">P3</text>
+      <line x1="40" y1="40" x2="420" y2="40" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="40" y1="110" x2="420" y2="110" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="40" y1="180" x2="420" y2="180" stroke="#d9d0c4" stroke-width="2"/>
+      <!-- in-flight lock messages -->
+      <line x1="150" y1="40" x2="240" y2="110" stroke="#2563eb" stroke-width="2" marker-end="url(#arr2)"/>
+      <line x1="280" y1="110" x2="370" y2="180" stroke="#2563eb" stroke-width="2" marker-end="url(#arr2)"/>
+      <text x="186" y="80" font-family="JetBrains Mono, monospace" font-size="11" fill="#2563eb">lock</text>
+      <text x="316" y="150" font-family="JetBrains Mono, monospace" font-size="11" fill="#2563eb">lock</text>
+      <!-- the cut -->
+      <line x1="200" y1="20" x2="200" y2="200" stroke="#c0510a" stroke-width="2" stroke-dasharray="6 4"/>
+      <text x="200" y="214" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#c0510a">snapshot cut</text>
+      <defs>
+        <marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#2563eb"/>
+        </marker>
+      </defs>
+    </svg>
+  </div>
+  <div class="figure-caption">A "lock" message is <em>in flight</em> across the cut — sent before the line, not yet received. If we ignore it, the lock vanishes from the snapshot entirely.</div>
+</div>
+
+<p>Two opposite disasters are possible. Cut the timelines one way and every process records that it holds the lock — <strong>three locks exist</strong>, violating mutual exclusion. This is the same happens-before violation as before: a message receipt is captured without its send.</p>
+
+<p>Cut them the other way and <em>no</em> process holds the lock — the lock is <strong>lost</strong>, and the system can never make progress. Here the problem is different and more subtle: the lock message was <strong>in flight</strong> — already sent, not yet received — at the moment of the cut. Neither process's state captures it, so it simply disappears.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Channels Are State</div>
+  <p>The state of a distributed system is <strong>not just the state of its processes.</strong> It is the process states <em>plus the state of every communication channel</em> — every message currently in transit. A message that's been sent has already committed to causing an effect, so it is genuinely part of the system. <strong>Any correct global snapshot must capture in-flight messages.</strong> This single insight is what makes the snapshot problem hard, and it is exactly the thing Chandy–Lamport handles so elegantly.</p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Two Requirements for a Good Snapshot</div>
+  <p>(1) <strong>Respect happens-before:</strong> if event <code>B</code> is in the snapshot and <code>A → B</code>, then <code>A</code> must be in it too. In practice this means a captured message <em>receipt</em> must come with its <em>send</em>. (2) <strong>Capture in-flight messages:</strong> messages sent before the cut but not yet received are part of the channel state and must be recorded.</p>
+</div>
+
+<div class="quiz" id="quiz4-box">
+  <div class="quiz-question">In the ring-of-locks example, a snapshot is taken in which no process holds the lock and the lock seems to have disappeared. What went wrong?</div>
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>A message receipt was captured without its matching send (happens-before violation).</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>An in-flight message — sent but not yet received — was not recorded as channel state.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Two processes both recorded holding the lock.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>The disk failed while writing the checkpoint.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct — it's B.</strong> The lock was traveling between processes — sent by one, not yet received by the next — at the instant of the cut. Because neither process's state holds it and the channel's contents weren't recorded, the lock vanishes. Option A and C describe the <em>opposite</em> failure (capturing a receipt without a send, yielding too <em>many</em> locks), and D is a storage issue unrelated to snapshot consistency. This is why a snapshot must include channel state, not just process state.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>The Chandy–Lamport Algorithm</h2>
+</div>
+
+<p>We want a snapshot that is consistent (respects happens-before, captures in-flight messages) and coordinated, yet cheap and non-blocking. The Chandy–Lamport algorithm delivers exactly this. It was originally designed to evaluate <em>stable properties</em> of a system — but its lasting fame is as the way to snapshot a distributed system for fault tolerance.</p>
+
+<details>
+<summary>Aside: what's a "stable property," and why was the algorithm invented?</summary>
+<div class="details-body">
+<p>A <strong>stable property</strong> is one that, once true, stays true forever. Two classic examples: <strong>deadlock</strong> (take a global snapshot, look for a cycle of processes each waiting on the next — if found, the system is deadlocked) and <strong>distributed garbage collection</strong> (confirm no process anywhere still holds a handle to an object). The original paper aimed at evaluating any such property. In this course, though, the headline use is snapshotting for fault tolerance.</p>
+</div>
+</details>
+
+<h3 id="cl-model">System Model and the Marker Trick</h3>
+<p>Every protocol states its assumptions; here are Chandy–Lamport's.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — System Model</div>
+  <p>(1) There are <code>n</code> processes, and <strong>no process fails while the snapshot is being taken.</strong> (2) <strong>Any</strong> process may initiate a snapshot — there's no special coordinator. (3) Every directed pair of processes has a <strong>FIFO unidirectional channel</strong> (a separate send-channel and receive-channel each way). (4) Channels never <strong>duplicate or lose</strong> messages.</p>
+</div>
+
+<p>The <strong>FIFO</strong> assumption is the secret weapon. FIFO ("first in, first out") means a channel between two processes delivers messages in the exact order they were sent — no overtaking. If <code>M1</code> is sent before <code>M2</code> on a channel, <code>M2</code> can never arrive before <code>M1</code>. (Note: FIFO only holds <em>per pair</em> of processes, not globally across the whole system.)</p>
+
+<div class="callout insight">
+  <div class="callout-title">The Key Insight</div>
+  <p>After a process takes its checkpoint, it sends a special <strong>marker</strong> message down every outgoing channel. Because channels are FIFO, that marker arrives at the other end <em>before any application message the sender produces afterward</em>. The marker therefore acts as a clean <strong>barrier</strong> on each channel: everything before it belongs in the snapshot, everything after it does not. FIFO turns a single marker into a perfect dividing line.</p>
+</div>
+
+<p>Markers are <strong>distinct from application messages</strong> — they're consumed by the snapshot algorithm itself and cause no work for the application. They serve two jobs at once: (1) they <em>tell</em> a process that a snapshot is underway, and (2) they act as the per-channel barrier just described, guaranteeing each captured channel includes exactly the messages received before the marker and none after.</p>
+
+<h3 id="cl-algorithm">The Algorithm, Step by Step</h3>
+
+<h4>The initiator</h4>
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>Some process spontaneously decides to start. It <strong>records its own local state</strong> (takes a checkpoint).</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>It <strong>sends a marker on every outgoing channel.</strong></p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>It <strong>starts recording</strong> every message that arrives on each of its incoming channels.</p>
+</div>
+
+<h4>When any process <code>Pi</code> receives a marker</h4>
+<p>Say the marker arrives from <code>Pk</code> on channel <code>C(k,i)</code>. (Notation: <code>C(k,i)</code> is the channel where <code>Pk</code> is the sender and <code>Pi</code> the receiver.) There are two cases.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Case A — first marker this process has ever seen</div>
+  <p>Then <code>Pi</code> (1) <strong>records its own state</strong> — this is its checkpoint; (2) <strong>marks channel <code>C(k,i)</code> as empty</strong>; (3) <strong>sends a marker out on every outgoing channel</strong> <code>C(i,j)</code>; and (4) <strong>starts recording</strong> incoming messages on <em>all other</em> channels (every channel except the one it just marked empty).</p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Case B — it has already seen a marker before</div>
+  <p>Then it does <strong>not</strong> re-checkpoint. Instead it <strong>stops recording on <code>C(k,i)</code></strong> and fixes that channel's final state as <em>all the messages it recorded on <code>C(k,i)</code> between when recording started and this marker arrived</em>.</p>
+</div>
+
+<h4>Why empty in Case A?</h4>
+<p>On the channel the very first marker arrived on, recording would start and immediately end at the same instant — the first marker is also, in effect, the last word that matters on that channel. So there are zero messages to capture: the channel is recorded as <strong>empty</strong>. On every <em>other</em> channel, the process will eventually receive a <em>second</em> marker, and everything that arrived in between is the channel's contents.</p>
+
+<h4>Why does everyone re-broadcast markers?</h4>
+<p>A natural objection: if the initiator already sent a marker to everyone, why must each receiver <em>also</em> blast markers to everyone? Isn't that duplicate work? No — the point is that <strong>every channel must receive a marker to be closed.</strong> Each channel needs a marker traveling along <em>it</em> to fix its contents. The initiator's markers only cover the initiator's own outgoing channels; the channels <em>between other processes</em> still need their own markers to be flushed and sealed.</p>
+
+<div class="callout tip">
+  <div class="callout-title">When Is the Snapshot Done?</div>
+  <p>The global snapshot is complete when <strong>every process has received a marker on every one of its incoming channels.</strong> The intuition: the marker on a channel acts as a "flush" — once it arrives, all messages that were ever in flight on that channel have been received and recorded, so the channel can be safely closed. We wait until every channel has been flushed and sealed by its marker; only then is the whole snapshot finished.</p>
+</div>
+
+<h3 id="cl-trace">A Worked Example</h3>
+<p>Let's trace three processes. <code>P3</code> initiates. Watch how each process's "first marker" determines its checkpoint, and which application messages end up recorded as channel state.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="460" height="240" viewBox="0 0 460 240" style="display:block; margin:0 auto;">
+      <text x="12" y="48" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">P1</text>
+      <text x="12" y="128" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">P2</text>
+      <text x="12" y="208" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">P3</text>
+      <line x1="40" y1="44" x2="440" y2="44" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="40" y1="124" x2="440" y2="124" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="40" y1="204" x2="440" y2="204" stroke="#d9d0c4" stroke-width="2"/>
+      <!-- checkpoints -->
+      <circle cx="320" cy="204" r="6" fill="#c0510a"/>
+      <text x="320" y="226" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#c0510a">P3 starts</text>
+      <circle cx="250" cy="124" r="6" fill="#c0510a"/>
+      <circle cx="150" cy="44" r="6" fill="#c0510a"/>
+      <!-- application messages M1, M2 from P1 (sent before its checkpoint) -->
+      <line x1="90" y1="44" x2="190" y2="124" stroke="#2563eb" stroke-width="2" marker-end="url(#arr3)"/>
+      <text x="120" y="80" font-family="JetBrains Mono, monospace" font-size="11" fill="#2563eb">M1</text>
+      <line x1="110" y1="44" x2="300" y2="204" stroke="#2563eb" stroke-width="2" marker-end="url(#arr3)"/>
+      <text x="225" y="120" font-family="JetBrains Mono, monospace" font-size="11" fill="#2563eb">M2</text>
+      <!-- markers (green) -->
+      <line x1="320" y1="204" x2="270" y2="124" stroke="#2d8a4e" stroke-width="2" stroke-dasharray="5 3" marker-end="url(#arrg)"/>
+      <line x1="250" y1="124" x2="170" y2="44" stroke="#2d8a4e" stroke-width="2" stroke-dasharray="5 3" marker-end="url(#arrg)"/>
+      <text x="360" y="120" font-family="DM Sans, sans-serif" font-size="10" fill="#2d8a4e">green = markers</text>
+      <defs>
+        <marker id="arr3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#2563eb"/>
+        </marker>
+        <marker id="arrg" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#2d8a4e"/>
+        </marker>
+      </defs>
+    </svg>
+  </div>
+  <div class="figure-caption">P3 initiates and checkpoints; markers (green) propagate to P2 then P1, each checkpointing on its first marker. Only <code>M1</code> and <code>M2</code> — sent by P1 before its checkpoint — end up recorded as channel state.</div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><code>P3</code> initiates: records its state, sends markers out, and begins recording its incoming channels.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><code>P2</code> receives <code>P3</code>'s marker — its first. It checkpoints, marks the <code>P3→P2</code> channel empty, sends its own markers out, and starts recording its other incoming channels.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><code>P1</code> receives <code>P2</code>'s marker first (even though <code>P3</code> "started" earlier, ordering across channels can differ). That first marker is <em>P1's</em> moment to checkpoint. Crucially, <code>P1</code> had sent application messages <code>M1</code> and <code>M2</code> <strong>before</strong> this checkpoint.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p>Because <code>M1</code> and <code>M2</code> were sent before <code>P1</code>'s checkpoint but their channels get closed by later markers, they are exactly the in-flight messages recorded as channel state. Every <em>other</em> application message in this run was exchanged after the relevant checkpoints, so none of those are recorded.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Two Pieces of Saved Information — Don't Conflate Them</div>
+  <p>Each process saves <strong>two distinct things</strong>. (1) <strong>Process state</strong> — captured <em>instantaneously</em> when it sees its first marker. (2) <strong>Channel recordings</strong> — captured <em>incrementally</em> as messages arrive, and finalized when the closing marker for that channel arrives. Both together form the global snapshot. Whether you store them in the same place doesn't matter; what matters is that you keep <em>both</em>.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Crucially — Normal Work Never Stops</div>
+  <p>Throughout all of this, <strong>the system keeps running exactly as before.</strong> A process applies incoming messages to its real state as usual; the only additions are taking a checkpoint, emitting markers, and logging the relevant messages to the side. Nothing blocks, nothing stalls. That's the entire payoff: a consistent, coordinated snapshot with no work on the critical path.</p>
+</div>
+
+<details>
+<summary>Subtlety: recorded messages vs. checkpoint state — and why we keep them separate</summary>
+<div class="details-body">
+<p>A message that had <em>already been received</em> before a process's checkpoint is baked into that process's saved state — the process already acted on it, so its effect is captured. A message still <em>in flight</em> at checkpoint time isn't in any process's state, so it must be recorded separately as channel state and replayed on recovery.</p>
+<p>Why keep "state" and "recorded messages" as two separate things instead of applying the messages to produce one final state? They are <strong>equivalent in correctness</strong> — you <em>could</em> replay the recorded messages into the state and resave a single combined state. The reason the algorithm records them separately is that channels are closed <strong>incrementally</strong> (each channel finalizes when its own marker arrives, not all at once), so it's cleaner to accumulate messages as they come and finalize per channel. Storing state plus messages, versus storing one merged final state, recovers to the same place.</p>
+</div>
+</details>
+
+<h3 id="cl-count">How Many Markers? And a Special-Case Escape Hatch</h3>
+<p>With <code>n</code> processes, every process sends a marker to every <em>other</em> process — to everyone except itself. That's <code>n × (n − 1) = n² − n</code> markers total.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Connection — n² Messages, but Off the Critical Path</div>
+  <p>The stop-the-world protocol from Part IV also cost on the order of <code>n²</code> messages — but it <em>blocked</em> the whole system while sending them. Chandy–Lamport sends a comparable number of marker messages, yet <strong>no one ever stops working.</strong> The markers are just extra traffic riding alongside normal messages. Same message count, completely different cost, because the work isn't on the critical path.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">The Frontier</div>
+  <p>The collection of all the checkpoint points across processes is often called the <strong>frontier</strong> of the snapshot. Every message sent from <em>inside</em> the frontier must end up captured in the snapshot — either already absorbed into some process's state, or recorded as channel state. The frontier is the visual boundary marking where the global snapshot "ends."</p>
+</div>
+
+<p>Finally, a lesson that recurs throughout the course. Return to the ring-of-locks application. There exist snapshots that <em>technically violate</em> happens-before — recording a lock received without its send — yet are <strong>still perfectly correct for that specific application</strong>, because all that matters is that exactly one process ends up holding the lock and the system can progress. Chandy–Lamport is <em>a</em> way to get a correct snapshot, not the <em>only</em> way.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Lesson — General Is Hard, Specific Is Easier</div>
+  <p>A protocol that must work for <em>every</em> application has to be very careful and very general. But if you can lean on assumptions about <em>your specific</em> application — like "the lock just needs to live somewhere in the ring" — you can often get away with something simpler. This is how much of distributed-systems research and design actually works: find the special structure in your problem, then exploit it.</p>
+</div>
+
+<div class="quiz" id="quiz5-box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">When a process receives the <strong>first</strong> marker of its life on channel <code>C(k,i)</code>, why does it record that particular channel's state as <em>empty</em>?</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Because FIFO guarantees the marker is the only message ever sent on that channel.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Because recording on that channel begins and ends at the same instant — the first marker is both the start and the cutoff, so nothing falls in between.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Because the channel had already been closed by an earlier snapshot.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Because empty channels don't need markers at all.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct — it's B.</strong> The process takes its checkpoint at the very moment the first marker arrives, so on <em>that</em> channel the recording window opens and closes simultaneously — there's no gap in which any application message could have been recorded. On <em>every other</em> channel, by contrast, recording runs from the checkpoint until a <em>second</em> marker arrives, and the messages in that gap are the channel's contents. Option A is false (plenty of application messages travel that channel; FIFO just ensures the marker isn't overtaken), and C/D misstate the protocol.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SUMMARY ═══════════════════════ -->
+<section id="together" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This lecture was the course's turn from <em>ordering</em> to <em>survival</em>. Here's the spine that connects every part.</p>
+
+<p>We opened by acknowledging that logical clocks (Part I) — Lamport clocks, vector clocks, replicated state machines — solve ordering but say nothing about <strong>failure</strong>. That gap defined the new mission: <strong>fault tolerance</strong> (Part II), which is always relative to a declared fault model. Among crash, network, and Byzantine faults, the course commits to <strong>crash failures</strong> as its main quarry.</p>
+
+<p>To survive a crash you recover, and the cheapest recovery tool is <strong>checkpointing</strong> (Part III). But naïve replay collides with <strong>non-determinism</strong> — re-running can repeat side effects and diverge — so we log non-deterministic inputs and replay them deterministically. The moment we scaled checkpointing from one node to <strong>many</strong> (Part IV), two new failure modes appeared: inconsistent global states that violate happens-before, and <strong>lost in-flight messages</strong>, because a distributed system's true state includes its <em>channels</em>. That left us trapped between cheap-but-inconsistent uncoordinated snapshots and consistent-but-world-stopping coordinated ones.</p>
+
+<p><strong>Chandy–Lamport</strong> (Part V) escaped the trap. By riding on <strong>FIFO channels</strong> and a single clever idea — a <strong>marker</strong> that acts as a per-channel barrier — it captures both process state and in-flight channel state, producing a consistent, coordinated snapshot for about <code>n² − n</code> marker messages, all <em>without</em> ever stopping the system's real work. Watch how vector-clock intuition (preserving causal order) quietly underwrites the marker barrier, and how the course's recurring lesson — exploit your application's specific structure — let even the ring-of-locks tolerate a "technically wrong" snapshot.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Through-Line</div>
+  <p>The hardest thing to save in a distributed snapshot is the <strong>in-flight messages</strong> — the system state living inside the network, not inside any process. Chandy–Lamport's entire cleverness is a mechanism to capture exactly those, cheaply and without pausing the world.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">What's Next</div>
+  <p>Chandy–Lamport assumes <strong>no process fails during the snapshot</strong> — a strong assumption (if a node dies before closing its channels, the snapshot is invalid). The next lectures relax exactly these assumptions, asking: <strong>how do we tolerate crash failures <em>without</em> relying on checkpoints?</strong> That's where replication returns in force and the course builds toward consensus. Keep the marker/barrier idea handy — the discipline of "flush the channel, then seal it" reappears whenever distributed processes must agree on a clean cut through time.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

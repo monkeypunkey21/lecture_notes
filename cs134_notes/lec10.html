@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 10 — Consensus in Practice: Chubby &amp; ZooKeeper</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 10</div>
+  <a href="#part1">Part I — Theory vs. Practice</a>
+  <a href="#two-mindsets" class="sub">Two Mindsets</a>
+  <a href="#where-we-are" class="sub">Where We Are</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Chubby's Contract</a>
+  <a href="#lock-service" class="sub">A Lock Service</a>
+  <a href="#filesystem" class="sub">File System Abstraction</a>
+  <a href="#leader-election" class="sub">Leader Election Example</a>
+  <a href="#service-vs-library" class="sub">Service vs. Library</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — Sessions &amp; Leases</a>
+  <a href="#client-failure" class="sub">The Client Failure Problem</a>
+  <a href="#leases" class="sub">Leases &amp; Keep-Alives</a>
+  <a href="#clock-problem" class="sub">Living With Clock Drift</a>
+  <a href="#lock-id" class="sub">The Delayed-Write Problem</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — Chubby Under the Hood</a>
+  <a href="#paxos-cell" class="sub">The Paxos Cell</a>
+  <a href="#granularity" class="sub">Coarse vs. Fine Locks</a>
+  <a href="#leader-reads" class="sub">Linearizable Reads</a>
+  <a href="#caching" class="sub">Caching &amp; Invalidation</a>
+  <a href="#proxies" class="sub">Scaling Keep-Alives</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — ZooKeeper</a>
+  <a href="#zk-motivation" class="sub">Why a Lower-Level API</a>
+  <a href="#almost-linear" class="sub">Almost-Linearizable</a>
+  <a href="#watch-locks" class="sub">Locks From Watches</a>
+  <a href="#sequencer" class="sub">The Herd Effect</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#together">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">CS134 · Distributed Systems</div>
+  <h1>Consensus in Practice: Chubby &amp; ZooKeeper</h1>
+  <p class="hero-sub">Where the clean theory of Paxos meets the messy real world — how Google and the open-source community turned consensus into coordination services that thousands of applications actually use.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>From Theory to Practice — Two Mindsets</h2>
+</div>
+
+<p>For the last two lectures, this course lived in the world of <strong>foundations</strong>: replicated state machines, logical clocks, consistency models, and the <strong>Paxos</strong> protocol that lets a group of machines agree on a single value even when some of them fail. Those were beautiful, provable objects. Today the class crosses a line that the professor explicitly marked — we are now officially in the <em>second half</em> of the course, the half about <strong>real systems</strong>. From here on, the running question is not "can we prove this is correct?" but "what did engineers actually build, and why did they make the trade-offs they made?"</p>
+
+<p>Before touching any real system, it is worth pausing on <em>why the goalposts move</em>. The reason we are learning this is that the skills you need to evaluate a real system are genuinely different from the skills you need to design a protocol — and confusing the two is a classic mistake.</p>
+
+<h3 id="two-mindsets">Why the Goals Change</h3>
+
+<p>When you study a <strong>foundation or protocol</strong> (like Paxos), your job is to take a messy real problem and <em>abstract it away</em> until what remains is clean and elegant. You want a protocol that is explainable, easy to understand, and — crucially — <strong>provably correct</strong>. The entire payoff is intuition: a crisp mental model of the problem and its solution.</p>
+
+<p>When you study a <strong>real system</strong> (like the ones today), the job inverts. Now the most important and hardest work is figuring out <em>what assumptions actually hold in the real world</em> — how often do machines fail, how skewed are the clocks, what does the workload look like? Given those assumptions, you might deliberately <em>strengthen or weaken</em> a textbook protocol so it fits reality better. You are thinking like a system architect deciding on a <strong>contract</strong>: what guarantees will I promise my users, and what will I demand from them in return?</p>
+
+<table class="compare-table">
+  <tr><th>Foundations &amp; Protocols</th><th>Real Systems</th></tr>
+  <tr><td>Abstract and simplify the problem</td><td>Discover the real-world assumptions</td></tr>
+  <tr><td>Goal: clean, elegant, provable</td><td>Goal: useful contract for actual users</td></tr>
+  <tr><td>"Is it correct?"</td><td>"What workload, what failures, what guarantees?"</td></tr>
+  <tr><td>Implementation follows obviously</td><td>Agreeing on the <em>specification</em> is the hard part</td></tr>
+</table>
+
+<div class="callout insight">
+  <div class="callout-title">The Real Insight of Systems Work</div>
+  <p>In practice, the biggest difficulty in building a system is rarely the code. It is <strong>agreeing on the contract</strong> — deciding precisely what your service promises and what it expects from its users. Once the specification is nailed down, the implementation usually "just follows." That is why so many of today's questions are open-ended judgement calls, not theorems.</p>
+</div>
+
+<h3 id="where-we-are">Where We Are in the Course</h3>
+
+<p>Here is the map of everything covered so far, so today's material has somewhere to attach. The course has built up, in order: <strong>replicated state machines</strong> (run the same operations in the same order on many machines so they stay identical); <strong>ordering with logical clocks</strong> (deciding "what happened before what" without synchronized time); <strong>data consistency</strong> models (linearizability, sequential, causal — different promises about what reads can see); and <strong>fault tolerance</strong> via primary-backup replication and the Paxos consensus protocol.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Term — Coordination Service</div>
+  <p>A <strong>coordination service</strong> is a small, highly reliable distributed system whose entire job is to help <em>other</em> distributed systems coordinate — electing a leader, taking turns writing to shared storage, agreeing on configuration. It does not store your application's bulk data; it stores tiny amounts of metadata and hands out locks. Today's two systems, <strong>Chubby</strong> (Google's internal service) and <strong>ZooKeeper</strong> (open source), are both coordination services.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">This Builds On Paxos</div>
+  <p>Everything today sits on top of Paxos from the previous lectures. Chubby and ZooKeeper both run a leader-based consensus protocol internally to keep their replicas identical. The new material is the <em>packaging</em> around that core: what interface to expose, how to handle client failures, and how to make it fast. Keep Paxos in your back pocket — it is the engine inside both systems.</p>
+</div>
+
+<div class="quiz" id="quiz1">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">When evaluating a <em>real system</em> like Chubby, the lecture says the hardest and most valuable work is usually:</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Proving the consensus protocol is mathematically correct</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Agreeing on the contract — the assumptions, workload, and guarantees the system offers</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Writing the lowest-level networking code by hand</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Minimizing the number of lines of code in the implementation</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct — B.</strong> The lecture's central framing is that for real systems, the "biggest insight" is agreeing on the specification: what assumptions hold, what workload you expect, and what guarantees you promise. Implementation then tends to follow. Option A is the goal for <em>foundations</em>, not real systems — and reaching for it explains why students were tempted by it.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>Chubby — The Client's Contract</h2>
+</div>
+
+<p>Chubby is an internal service at Google built to be a <strong>highly available coordination service</strong>. One quote from the Chubby paper sets the tone for the whole lecture: building Chubby was <em>not</em> meant to be a novel, research-worthy contribution. It was a real thing built for very real reasons, and the paper's job is to explain <em>why</em> the design decisions were made. That humility is the point — real systems are about good engineering judgement, not new theorems.</p>
+
+<p>We will look at Chubby from two angles, in order. First, the <strong>client perspective</strong>: the contract, what a user can assume. Then, later, the <strong>implementation</strong>: how that contract is actually delivered. Always understand the promise before the mechanism.</p>
+
+<h3 id="lock-service">Chubby Is a Lock Service</h3>
+
+<p>From the client's point of view, Chubby makes exactly two promises:</p>
+
+<div class="callout concept">
+  <div class="callout-title">Chubby's Contract to Clients</div>
+  <p><strong>1. Availability.</strong> As long as some replica is alive, the service does not fail — it will always be there to answer your requests.<br>
+  <strong>2. Locking.</strong> At most <strong>one client can hold a given lock at any point in time</strong>. This is the mutual-exclusion guarantee that lets clients take turns.</p>
+</div>
+
+<p>That second promise — mutual exclusion — is the whole reason Chubby exists. If you can guarantee that only one machine holds "the lock" at a time, you can use that machine as <em>the leader</em>, the single writer, the one allowed to touch some shared resource. Everyone else waits.</p>
+
+<h3 id="filesystem">The File System Abstraction</h3>
+
+<p>Here is a design decision that looks almost cosmetic but is deeply practical. Chubby does not invent a strange new API. Instead, it presents itself as a tiny <strong>Unix-like file system</strong>. There are files arranged in directories, with paths like <code>/ls/cell/myapp/leader</code>. And the trick: <em>each file is associated with a lock</em>. You acquire the lock by "acquiring" the file; you communicate by writing the file's contents.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Why a File System?</div>
+  <p>Every developer already understands files, paths, and directories. By dressing the lock service up as a file system, Chubby makes itself instantly familiar — you "open" a path, "acquire" it, "write" to it. This lowers the barrier to adoption enormously. The familiar shape <em>is</em> a feature.</p>
+</div>
+
+<h3 id="leader-election">Worked Example: Electing a Leader</h3>
+
+<p>Let's make this concrete with the prototypical use case from lecture. Suppose you have a database and a pool of <strong>worker processes</strong>, and you want only <em>one</em> worker at a time to write to the database — so the workers do not clobber each other's data. This is exactly what Chubby is for. Every worker runs the same snippet:</p>
+
+<pre><code><span class="cm">// every worker runs this same code</span>
+<span class="fn">open</span>(<span class="str">"/ls/cell/myapp/leader"</span>)        <span class="cm">// open the lock file in Chubby</span>
+
+<span class="kw">if</span> <span class="fn">acquire</span>(<span class="str">"/ls/cell/myapp/leader"</span>) {   <span class="cm">// try to grab the lock</span>
+    <span class="cm">// SUCCESS — we are the leader</span>
+    <span class="fn">setContents</span>(<span class="str">"/ls/cell/myapp/leader"</span>, myName)  <span class="cm">// announce ourselves</span>
+    <span class="fn">writeToDatabase</span>(...)                <span class="cm">// do the leader's work</span>
+    <span class="fn">release</span>(<span class="str">"/ls/cell/myapp/leader"</span>)      <span class="cm">// give up the lock</span>
+} <span class="kw">else</span> {
+    <span class="cm">// FAILED — we are NOT the leader</span>
+    leader <span class="op">=</span> <span class="fn">readContents</span>(<span class="str">"/ls/cell/myapp/leader"</span>)  <span class="cm">// find out who is</span>
+}</code></pre>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>Every worker <strong>opens</strong> the same lock file — a path inside Chubby that looks just like a file system path.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>Every worker tries to <strong>acquire</strong> the lock on that file. Because of Chubby's mutual-exclusion guarantee, <em>exactly one</em> of them succeeds.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>The winner now knows it is the leader. It <strong>writes its own name into the file's contents</strong>, both to announce itself and to record who is in charge.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p>The winner does the actual work — writing to the database — then <strong>releases</strong> the lock when done.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <p>Every loser takes the <code>else</code> branch. It can discover <strong>who the current leader is</strong> simply by reading the lock file's contents. No central registry needed — the lock file <em>is</em> the registry.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">The Lock and the Bulletin Board Are the Same File</div>
+  <p>Notice the elegance: a single Chubby file does double duty. Acquiring it provides <strong>mutual exclusion</strong> (only the leader can hold it), and its <em>contents</em> provide a <strong>shared bulletin board</strong> (everyone can read "who is the leader right now"). One primitive, two jobs.</p>
+</div>
+
+<h3 id="service-vs-library">Why a Lock <em>Service</em>, Not a Paxos <em>Library</em>?</h3>
+
+<p>This is the lecture's first big design question, and it has two independent axes worth separating carefully:</p>
+
+<ul style="margin: 0 0 18px 24px;">
+  <li><strong>Lock vs. Paxos</strong> — do you hand the user a high-level <em>lock</em>, or the raw <em>consensus</em> primitive?</li>
+  <li><strong>Service vs. Library</strong> — does it run as a separate <em>service</em> on its own machines, or as a <em>library</em> linked into the client's own program?</li>
+</ul>
+
+<div class="callout concept">
+  <div class="callout-title">Key Distinction — Service vs. Library</div>
+  <p>A <strong>library</strong> is code you import directly into your program; it runs on <em>your</em> machine, in <em>your</em> process, and <em>you</em> are responsible for deploying and operating it. A <strong>service</strong> runs <em>elsewhere</em> — on different machines, deployed and operated by a different team — and you reach it over the network via requests and responses. The client and service do not share code or a deployment.</p>
+</div>
+
+<p>Chubby chose a <em>lock service</em>. Here is why, consolidated from the class discussion:</p>
+
+<table class="compare-table">
+  <tr><th>Benefit</th><th>Why It Matters</th></tr>
+  <tr><td>Easier to adopt</td><td>Apps start small, then realize they need availability. Adding a <em>service</em> is a few network calls; threading a <em>library</em> through your codebase means invasive changes everywhere.</td></tr>
+  <tr><td>Deployment offloaded</td><td>The whole burden of running replicas, checking they're alive, keeping them networked — all handed to the Chubby team. The client just talks to "one server."</td></tr>
+  <tr><td>Locks are easier than Paxos</td><td>Telling a developer "whoever grabs the lock may proceed" is far simpler than "here's a protocol that decides on a value." Locks match the developer's intent directly.</td></tr>
+  <tr><td>Language-agnostic</td><td>A service is reached over the network, so it doesn't matter what language it's written in. A library is tied to a specific language.</td></tr>
+  <tr><td>Feels centralized</td><td>From the client's view, Chubby is a single entity — even though it's secretly many replicas. The replication is hidden.</td></tr>
+</table>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Hide the Hard Part Behind a Simple Abstraction</div>
+  <p>Without Chubby, <em>every</em> team at Google needing leader election would have to build their own fault-tolerant locking on top of Paxos. Chubby's core value is that it <strong>hides all of the fault tolerance</strong> and just says: "the lock is alive for you, always." A genuinely hard distributed-systems problem becomes a one-line <code>acquire()</code> call. That packaging — not a new algorithm — is the contribution.</p>
+</div>
+
+<p>The professor noted that the first two benefits (easier adoption, deployment offloaded) are really benefits of the <em>service architecture in general</em>, not anything specific to Chubby. They apply any time you turn a library into a service.</p>
+
+<div class="quiz" id="quiz2">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A team builds a small app, then later needs leader election. Why is reaching for Chubby (a lock <em>service</em>) easier than linking in a Paxos <em>library</em>?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>The library would run faster, so the service is the only correct option</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>A service is reached with a few network calls and is operated by another team, while a library must be threaded through your code and deployed by you</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>A library cannot provide mutual exclusion at all</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Services never fail, whereas libraries always crash the host program</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct — B.</strong> The service's deployment, replication, and operation are offloaded to the Chubby team, and adopting it means a few network calls rather than invasive code changes. Option A inverts reality — locks via a service do not give Chubby a big performance edge over Paxos; the win is operational and developer ergonomics, not raw speed.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>Sessions, Leases &amp; the Lost-Lock Problem</h2>
+</div>
+
+<p>Chubby's contract has a dangerous gap, and finding it is the motivation for this whole part. Chubby promises that <em>it</em> (the service) never dies. But it promises <strong>nothing about the client</strong>. So a frightening question arises:</p>
+
+<h3 id="client-failure">What If the Lock-Holder Dies?</h3>
+
+<p>Imagine a client acquires a lock — it is now the leader — and then it <strong>crashes</strong> without ever calling <code>release()</code>. The lock was supposed to be handed back. But the client that held it is gone. Is the lock now stuck forever? Is the whole system doomed, with every other worker waiting eternally for a lock that will never be released?</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Footgun — A Crashed Client Holding a Lock</div>
+  <p>A naive lock implementation deadlocks here. If holding a lock requires the holder to release it, but the holder can crash, then a single crash can freeze the entire application. Any real locking service <em>must</em> have a way to reclaim locks from dead clients.</p>
+</div>
+
+<h3 id="leases">The Fix: Sessions and Leases</h3>
+
+<p>Chubby solves this with <strong>sessions</strong> backed by <strong>leases</strong>. The idea is that a lock is not held forever by default — it is held only as long as the client keeps proving it is still alive.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Term — Lease</div>
+  <p>A <strong>lease</strong> is a lock granted for a bounded window of time. During that window, the service guarantees the lease is valid (the holder keeps the lock). To keep the lease, the client must periodically send <strong>keep-alive</strong> messages before it expires. If the lease window passes with no keep-alive — because the client crashed, or the network broke — the session is declared dead and the lock is <strong>released automatically</strong> by the service.</p>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>The client library opens a <strong>session</strong> with Chubby and acquires a lock. The lease has a fixed duration — say, 10 seconds.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>Well before the 10 seconds expire — say at the 9-second mark — the client sends a <strong>keep-alive</strong>. Chubby extends the lease by another 10 seconds.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>This repeats indefinitely while the client is healthy: keep-alive, extend, keep-alive, extend.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p>If the client <strong>crashes</strong>, the keep-alives stop. The lease runs out. Chubby sees no keep-alive arrived, declares the session invalid, and <strong>automatically releases the lock</strong> so other clients can grab it.</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="170" viewBox="0 0 420 170" style="display:block; margin:0 auto;">
+      <!-- timeline -->
+      <line x1="20" y1="60" x2="400" y2="60" stroke="#d9d0c4" stroke-width="2"/>
+      <!-- lease segments -->
+      <rect x="20" y="48" width="120" height="24" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5" rx="4"/>
+      <rect x="140" y="48" width="120" height="24" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5" rx="4"/>
+      <rect x="260" y="48" width="120" height="24" fill="#fef0f0" stroke="#c53030" stroke-width="1.5" rx="4"/>
+      <text x="80" y="65" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">lease 1</text>
+      <text x="200" y="65" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">lease 2</text>
+      <text x="320" y="65" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c53030">expires</text>
+      <!-- keep-alive arrows -->
+      <line x1="128" y1="100" x2="128" y2="74" stroke="#2d8a4e" stroke-width="2"/>
+      <polygon points="128,72 124,80 132,80" fill="#2d8a4e"/>
+      <line x1="248" y1="100" x2="248" y2="74" stroke="#2d8a4e" stroke-width="2"/>
+      <polygon points="248,72 244,80 252,80" fill="#2d8a4e"/>
+      <text x="128" y="116" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#2d8a4e">keep-alive</text>
+      <text x="248" y="116" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#2d8a4e">keep-alive</text>
+      <!-- crash marker -->
+      <text x="320" y="100" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#c53030">client crashes</text>
+      <text x="320" y="116" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#c53030">(no keep-alive)</text>
+      <text x="320" y="148" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#c53030">→ lock auto-released</text>
+      <text x="20" y="40" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">time →</text>
+    </svg>
+  </div>
+  <div class="figure-caption">A healthy client refreshes its lease before each expiry. When it crashes, the next lease expires with no keep-alive, and Chubby reclaims the lock.</div>
+</div>
+
+<h3 id="clock-problem">But Clocks Are Unsynchronized — How Does This Even Work?</h3>
+
+<p>An alarm bell should be ringing. Earlier lectures hammered home that <strong>clock synchronization is hard</strong> — different machines' clocks drift apart and you cannot trust them to agree. So how can a client and the server possibly agree on when a lease "expires"?</p>
+
+<p>The answer is a beautifully pragmatic trick: <strong>make the lease so long that clock drift becomes irrelevant.</strong> Leases last seconds or tens of seconds. Clock drift between two machines, even when bad, is on the order of <em>milliseconds</em> — it is not going to exceed a second. So the client uses a <em>conservative under-approximation</em>: with a 10-second lease, it might start sending keep-alives at the 9-second mark, leaving a huge safety margin. The error from clock drift is tiny compared to that margin.</p>
+
+<div class="callout insight">
+  <div class="callout-title">"Foundations Clean, Systems Dirty — But They Work"</div>
+  <p>This is the lecture's recurring motto. You can never get a hard timing <em>guarantee</em> out of a lease — if time stretched arbitrarily, or clocks drifted catastrophically, you could still be wrong. But in practice, real systems measure their clock skew (e.g. "the 99.9999th percentile of skew is 35 ms"), pick a conservative bound well above it (e.g. 100 ms), and move on with their lives. It is not provably perfect. It works.</p>
+</div>
+
+<h3 id="lock-id">A Subtler Bug: The Delayed Write</h3>
+
+<p>There is one more problem, and it is the deepest one in the Chubby section. Picture the sequence: a client grabs the lock, then issues a write to the database. But the database is across a network. The write message gets <strong>arbitrarily delayed</strong> in flight. While it is delayed, the client's lease <em>expires</em>, the lock is released, and a <em>different</em> client grabs it and starts writing. Now the original, delayed write finally arrives — applied by a client that <strong>no longer holds the lock</strong>. Two writers have effectively collided.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Core Problem — Effect Without the Lock</div>
+  <p>The lock was meant to make writes mutually exclusive. But the <em>effect</em> of a write (it landing in the database) can happen well after the <em>request</em> was sent. So an effect can land on the database at a moment when the sender no longer holds the lock. The lock was held when you <em>asked</em>, but not when the write <em>happened</em>.</p>
+</div>
+
+<p>Chubby's proposed fix is a <strong>lock ID</strong> (sometimes called a sequencer). When you hold the lock, you get an ID. You pass this ID along with any operation that depends on holding the lock. The resource being protected — or the actor doing the effect — then <em>re-checks with Chubby</em>: "I'm carrying lock ID X; do I actually still hold this lock right now?" Only if Chubby confirms the ID is current does the operation proceed.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>Client acquires the lock and receives a <strong>lock ID</strong> — a token proving it was the holder.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>The client passes this lock ID along with the write request to whoever performs the effect.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>Before the effect is actually applied, the actor asks Chubby: <em>"Is lock ID X still valid?"</em></p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p>If yes, the write proceeds. If the lease had expired and someone else took the lock, the ID is stale, Chubby says no, and the dangerous delayed write is <strong>rejected</strong>.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">A Note on What's Really Guaranteed</div>
+  <p>Even with lock IDs, there is no perfect guarantee that "the effect happened strictly inside the lock period" — there is always a network in between and some estimation involved. The practical defense is to <em>check how much lease time is left</em> before starting: if only 100 ms remain, maybe don't start a risky write; if 5 seconds remain, you can probably finish. As always: conservative over-approximations, not certainty.</p>
+</div>
+
+<div class="quiz" id="quiz3">
+  <div class="quiz-question">A Chubby client grabs a lock, sends a database write, then its lease expires (the write is delayed in the network). What danger does the <strong>lock ID</strong> mechanism prevent?</div>
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>It prevents the Chubby service itself from ever crashing</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>It lets the delayed write be applied even though no one holds the lock</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>It lets the actor re-check with Chubby that the lock ID is still valid, so a stale delayed write is rejected</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It eliminates the need for keep-alive messages entirely</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct — C.</strong> The lock ID travels with the operation; before the effect lands, the actor asks Chubby whether that ID is still the current lock-holder. If the lease expired and another client took over, the ID is stale and the write is rejected — closing the "effect without the lock" gap. Option B describes exactly the bug we are trying to <em>prevent</em>, which is why it's a tempting trap.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>Chubby Under the Hood — Implementation</h2>
+</div>
+
+<p>We now flip from the contract to the machinery. The client saw Chubby as a single, immortal lock service. Underneath, that illusion is delivered by replication and consensus. Before any code, the engineers wrote down the <strong>requirements</strong> — because, as Part I argued, agreeing on the spec is where the real work is.</p>
+
+<h3 id="paxos-cell">Requirements and the Paxos Cell</h3>
+
+<div class="callout concept">
+  <div class="callout-title">Chubby's System Requirements</div>
+  <p><strong>Scale:</strong> thousands of clients interacting with a very small number of very small files (the files mostly hold locks, not data). <strong>High availability:</strong> the service must essentially never go down. <strong>Scalability:</strong> Chubby cannot become the bottleneck of the applications that depend on it. <strong>Event notification:</strong> a way to notify clients of changes to reduce wasteful polling.</p>
+</div>
+
+<p>A Chubby deployment is called a <strong>cell</strong>, and a cell is typically <strong>five replicas</strong>. The replicas run a leader-based Paxos protocol so that the file system's contents are identical across all of them — a replicated state machine offering strong consistency, tolerating up to <strong>two faults</strong> (recall: 2F+1 replicas tolerate F failures, so 5 replicas tolerate 2). On top of that, Chubby ships a thin client library that merely wraps the RPC calls to the service, so developers call a function instead of hand-rolling network requests.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="180" viewBox="0 0 420 180" style="display:block; margin:0 auto;">
+      <!-- client -->
+      <rect x="20" y="70" width="80" height="40" fill="#eff4ff" stroke="#2563eb" stroke-width="1.5" rx="6"/>
+      <text x="60" y="88" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#2563eb">client</text>
+      <text x="60" y="102" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" fill="#6b6560">+ lib</text>
+      <!-- arrow to cell -->
+      <line x1="100" y1="90" x2="160" y2="90" stroke="#c0510a" stroke-width="2"/>
+      <polygon points="162,90 154,86 154,94" fill="#c0510a"/>
+      <text x="130" y="82" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" fill="#6b6560">RPC</text>
+      <!-- cell box -->
+      <rect x="170" y="20" width="230" height="140" fill="none" stroke="#d9d0c4" stroke-width="1.5" rx="10" stroke-dasharray="4 3"/>
+      <text x="285" y="38" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">Chubby cell — 5 replicas (Paxos)</text>
+      <!-- leader -->
+      <rect x="250" y="50" width="70" height="34" fill="#fef3eb" stroke="#c0510a" stroke-width="2" rx="6"/>
+      <text x="285" y="71" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#c0510a" font-weight="700">LEADER</text>
+      <!-- followers -->
+      <rect x="185" y="108" width="55" height="30" fill="#f5f0e8" stroke="#d9d0c4" stroke-width="1.5" rx="6"/>
+      <rect x="258" y="108" width="55" height="30" fill="#f5f0e8" stroke="#d9d0c4" stroke-width="1.5" rx="6"/>
+      <rect x="331" y="108" width="55" height="30" fill="#f5f0e8" stroke="#d9d0c4" stroke-width="1.5" rx="6"/>
+      <rect x="331" y="50" width="55" height="34" fill="#f5f0e8" stroke="#d9d0c4" stroke-width="1.5" rx="6"/>
+      <text x="212" y="127" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" fill="#6b6560">replica</text>
+      <text x="285" y="127" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" fill="#6b6560">replica</text>
+      <text x="358" y="127" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" fill="#6b6560">replica</text>
+      <text x="358" y="70" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" fill="#6b6560">replica</text>
+      <!-- consensus lines -->
+      <line x1="285" y1="84" x2="212" y2="108" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="285" y1="84" x2="285" y2="108" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="285" y1="84" x2="358" y2="108" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="320" y1="67" x2="331" y2="67" stroke="#d9d0c4" stroke-width="1.5"/>
+    </svg>
+  </div>
+  <div class="figure-caption">A Chubby cell: five replicas run leader-based Paxos. The client talks through a thin library; the leader coordinates consensus to keep all replicas' files identical.</div>
+</div>
+
+<h3 id="granularity">Coarse-Grained vs. Fine-Grained Locks</h3>
+
+<p>A pivotal design choice: should Chubby's locks be <strong>fine-grained</strong> (grab a lock per tiny action and immediately drop it) or <strong>coarse-grained</strong> (grab a lock once and hold it for a long stretch of work)? This choice ripples through performance, availability, and how hard Chubby is to build. Weigh both sides from the client's and the implementer's view:</p>
+
+<table class="compare-table">
+  <tr><th>Fine-Grained Locks</th><th>Coarse-Grained Locks</th></tr>
+  <tr><td>Lots of acquire/release overhead — you pay more for locking relative to real work</td><td>Grab once, do all your work, release once — overhead amortized</td></tr>
+  <tr><td>Demands very high availability from Chubby; a brief outage strands thousands of frequent lock requests</td><td>A few-second Chubby outage is survivable — most clients already hold their lock and keep working</td></tr>
+  <tr><td>Implementer's burden: huge scalability pressure (Chubby must handle massive lock traffic)</td><td>Scaling responsibility shifts to clients; Chubby relaxes</td></tr>
+  <tr><td>Locks lost frequently → apps need aggressive defensive programming</td><td>Lost locks are rare; only worry near lease expiry</td></tr>
+  <tr><td>If an app replica crashes, little is stranded (short leases)</td><td>If an app replica crashes, the system can <em>stall</em> until the long (e.g. 10s) lease expires</td></tr>
+</table>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Chubby Chooses Coarse-Grained, On Purpose</div>
+  <p>Recall the top requirement: <em>Chubby must not be the bottleneck.</em> Fine-grained locks would put Chubby under relentless load and force near-perfect availability. <strong>Coarse-grained locks let Chubby relinquish scalability pressure to the clients</strong> — they hold their locks and keep working even if Chubby blinks offline for a few seconds. The cost is that a crashed app replica can stall the system until its long lease expires, but Chubby decides that trade is worth it. Every design choice is a trade-off; here the requirement <em>dictated</em> the choice.</p>
+</div>
+
+<h3 id="leader-reads">Serving Reads: Linearizability vs. Performance</h3>
+
+<p>Reads are an extremely common part of Chubby's workload, and we want two things at once: <strong>linearizability</strong> and <strong>good performance</strong>. These pull against each other.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Term — Linearizability (for a read)</div>
+  <p>A <strong>linearizable</strong> read must reflect the <em>last completed write</em>. If a write finished before your read started, your read has to see its effect (it may also see in-progress writes, but never miss a completed one). It's the strongest, most intuitive consistency: the system behaves as if there were a single copy and operations happened one at a time.</p>
+</div>
+
+<p><strong>The slow but obviously-correct way:</strong> put every read into the Paxos log, just like writes. Then reads and writes share one global order and linearizability is trivially satisfied. The problem? It is <em>really slow</em> — under a read-heavy workload the consensus log fills with reads that change nothing, paying full consensus cost just to enforce ordering.</p>
+
+<details>
+<summary>Expand: why "serve reads at all replicas" doesn't quite work</summary>
+<div class="details-body">
+<p>A tempting optimization: store a <code>(value, version)</code> per key on every replica, and to read, ask a majority of replicas and take the highest version among them. For key <code>foo</code> you might get versions <code>V1, V1, V2, V3, V2</code> — a majority gives you <code>V3</code>, so you return that.</p>
+<p>The catch: there is a <strong>gap between acceptance and learning</strong>. Different replicas can legitimately have different versions at the same instant, and two reads hitting different majorities can disagree about the latest value. So "read a majority of replicas" does <em>not</em> reliably give linearizability. That is precisely why Chubby falls back to the leader-only approach below.</p>
+</div>
+</details>
+
+<p><strong>Chubby's actual choice — leader reads.</strong> Designate one replica as the leader. All replicas hold the database, but <strong>only the leader serves reads</strong> (and all writes). Why is that linearizable? Because the leader is the single replica guaranteed to have the latest committed state — there is no stale-majority gap to worry about. Clients find the leader by asking any replica, then talk to the leader until it dies or steps down.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>A <strong>read</strong> needs no consensus — the leader already has the latest state, so it answers immediately. Fast.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>A <strong>write</strong> still runs full consensus: the leader gets it accepted by a majority and appended to the log. Correct.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>If the <strong>leader fails</strong>, the replicas run an election (using consensus) to pick a new one. During that election Chubby may be briefly unavailable — but that's fine: elections take seconds, and leases last much longer, so clients ride it out.</p>
+</div>
+
+<h3 id="caching">Caching With Invalidation</h3>
+
+<p>Routing every read through the single leader still concentrates load. So Chubby lets <strong>clients cache</strong> the data they read. But caching threatens linearizability: a cached copy might be stale, so a client could read an old value while the leader has a newer one.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Risk — Stale Cache Breaks Linearizability</div>
+  <p>If a client reads from its own cache first, the cache may not reflect the latest state at the leader. Returning that stale value violates linearizability — the client misses a completed write. A cache is useless if it can lie to you about completed writes.</p>
+</div>
+
+<p>The fix is <strong>leader-driven invalidation</strong>. The leader tracks, for each data item, which clients hold a cached copy. When that item is modified, the leader sends <strong>invalidations</strong> to exactly those clients, telling them to drop the stale entry. And critically — the leader must <strong>wait to hear back</strong> from the clients (confirming they invalidated) <em>before</em> it considers the write done.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Why This Is Acceptable Despite the Sync Cost</div>
+  <p>Waiting for every caching client to acknowledge before completing a write adds a synchronization step to every write — expensive! Chubby gets away with it for one reason: its traffic is <strong>overwhelmingly read-heavy</strong>, and there is no strict latency requirement on writes. Reads must be fast; writes are allowed to be slower. The workload assumption (Part I!) is what makes the design valid.</p>
+</div>
+
+<h3 id="proxies">Scaling the <em>Real</em> Bottleneck: Keep-Alives</h3>
+
+<p>Now a genuine surprise. What is the single most frequent request type in Chubby? Not writes. Not even reads. It is <strong>keep-alives</strong> — clients constantly refreshing their leases. From a real production trace: about <strong>93% of all requests are keep-alives</strong>. Reads are a distant second; writes are rare.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Optimize What's Actually Frequent</div>
+  <p>It would be natural to pour optimization effort into reads or writes. But the trace says the dominant cost is keep-alives. The lesson: <strong>measure your workload, then optimize the thing that's actually frequent</strong> — not the thing that feels important. This is Part I's "discover the real assumptions" in action.</p>
+</div>
+
+<p>Chubby scales keep-alives with <strong>proxies</strong>. A proxy sits between many clients and the Chubby cell. Clients send their keep-alives to the proxy; the proxy <strong>batches</strong> them and forwards a single combined keep-alive on behalf of, say, 10 clients at once — turning 100 keep-alives into 10, or even 1. Think of it like a Nagle-style server: gather requests for a moment, then send them together and fan out the responses. If the proxy hears from 9 of 10 clients, it keeps-alive those 9.</p>
+
+<div class="callout tip">
+  <div class="callout-title">The Trade-Off of Proxies</div>
+  <p>Proxies add a new potential failure point — if the proxy or the proxy↔client link fails, Chubby thinks a lock is alive while the client has actually lost it. The mitigation: run proxies on the <em>same network</em> as Chubby so they're no more failure-prone than a direct connection, and be a bit more conservative with timing to absorb the extra synchronization skew. Why not batch at the client instead? Because clients don't know about each other — only a proxy can see many clients and combine them.</p>
+</div>
+
+<div class="quiz" id="quiz4">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Production traces show ~93% of Chubby requests are keep-alives. How does Chubby scale them, and why does that design make sense?</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>It puts every keep-alive into the Paxos log for a global order</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>It uses proxies that batch many clients' keep-alives into single combined messages, reducing load on the leader</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>It has each client batch its own keep-alives with other clients' before sending</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It eliminates keep-alives by making all leases infinite</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct — B.</strong> A proxy aggregates keep-alives from many clients into one batched message, so the leader sees far fewer requests. Option C is impossible — clients don't know about each other, so they <em>can't</em> batch across clients; only a shared proxy can. Option A would make the dominant request type pay full consensus cost, the opposite of scaling it.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>ZooKeeper — Weaker Guarantees, Better Performance</h2>
+</div>
+
+<p><strong>ZooKeeper</strong> is the open-source cousin of Chubby — one of the most popular coordination services in the world. It shares Chubby's DNA: a small hierarchical file system, a service rather than a library. But it deliberately differs in two ways, and those differences are the whole point of this part.</p>
+
+<h3 id="zk-motivation">Why Offer a Lower-Level API?</h3>
+
+<p>Chubby forces a specific abstraction on you: <em>locks</em>. ZooKeeper's bet is that this is too prescriptive. Instead of handing you locks, it hands you a <strong>lower-level primitive</strong> and lets <em>you</em> build whatever coordination pattern you need on top — locks, yes, but also configuration watches, process-group membership, double barriers (synchronize everyone before and after a computation), and more.</p>
+
+<p>And there's a performance motive. Recall the most expensive thing Chubby does: on every <strong>write</strong>, it must run consensus <em>and</em> invalidate every client's cache, waiting to hear back from all of them. That blocking is slow and can cause arbitrary delays. ZooKeeper's escape hatch is to offer a <strong>weaker consistency guarantee</strong> that avoids this blocking entirely.</p>
+
+<div class="callout tip">
+  <div class="callout-title">This Connects Back to Caching</div>
+  <p>The reason Chubby blocks on writes is the cache-invalidation handshake from Part IV — the leader must wait for every caching client to acknowledge. ZooKeeper sidesteps that by weakening consistency so it never needs the immediate, synchronous invalidation. The cost paid in Part IV is exactly the cost ZooKeeper is trying to avoid.</p>
+</div>
+
+<h3 id="almost-linear">"Almost" Linearizable</h3>
+
+<p>ZooKeeper offers what the professor calls <strong>almost-linearizability</strong>, defined by two rules:</p>
+
+<div class="callout concept">
+  <div class="callout-title">ZooKeeper's Consistency Guarantee</div>
+  <p><strong>1. Writes are linearizable.</strong> All writes are strongly consistent and globally ordered — everyone agrees on the single order in which writes happened.<br>
+  <strong>2. Per-client FIFO.</strong> All requests <em>from a single client</em> are processed in the order that client issued them (first-in, first-out). But requests from <em>different</em> clients have no ordering relationship beyond the global write order.</p>
+</div>
+
+<p>That second rule is what makes it weaker than full linearizability. Consider this execution (a sequence of operations on a register <code>X</code>):</p>
+
+<pre><code>set X = 1      <span class="cm">// write, finishes first</span>
+set X = 2      <span class="cm">// write, finishes second</span>
+get X  -> 1    <span class="cm">// a read returns 1</span>
+get X  -> 2    <span class="cm">// a read returns 2</span></code></pre>
+
+<p>Is this <strong>linearizable</strong>? No. Under linearizability you cannot reorder these events freely; <code>get X → 1</code> would have to come before <code>set X = 2</code> in real time, but it appears after it. A single-copy register can never return the old value <code>1</code> after a newer write <code>2</code> has completed. So this is <em>not</em> a valid linearizable execution.</p>
+
+<p>But is it a valid <strong>ZooKeeper</strong> execution? <strong>Yes.</strong> Here's why: ZooKeeper only guarantees that the two writes are globally ordered (<code>set 1</code> before <code>set 2</code> — everyone agrees) and that each <em>single client's</em> requests are FIFO. If <code>get X → 1</code> and <code>get X → 2</code> come from <em>different</em> clients, there is no required ordering between them. ZooKeeper is free to let one client still observe the older value <code>1</code> for a while. That extra freedom is precisely what lets it avoid the immediate cache invalidation — it doesn't have to make every client see the newest write instantly.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="150" viewBox="0 0 420 150" style="display:block; margin:0 auto;">
+      <!-- global write order -->
+      <text x="20" y="30" font-family="DM Sans, sans-serif" font-size="11" fill="#c0510a" font-weight="700">Global write order (all clients agree)</text>
+      <rect x="20" y="40" width="90" height="30" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5" rx="5"/>
+      <rect x="130" y="40" width="90" height="30" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5" rx="5"/>
+      <text x="65" y="59" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">set X=1</text>
+      <text x="175" y="59" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">set X=2</text>
+      <line x1="110" y1="55" x2="130" y2="55" stroke="#c0510a" stroke-width="2"/>
+      <polygon points="132,55 124,51 124,59" fill="#c0510a"/>
+      <!-- reads, unordered relative to each other -->
+      <text x="20" y="105" font-family="DM Sans, sans-serif" font-size="11" fill="#2563eb" font-weight="700">Reads from different clients (no required order)</text>
+      <rect x="20" y="112" width="110" height="28" fill="#eff4ff" stroke="#2563eb" stroke-width="1.5" rx="5"/>
+      <rect x="150" y="112" width="110" height="28" fill="#eff4ff" stroke="#2563eb" stroke-width="1.5" rx="5"/>
+      <text x="75" y="130" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">get X → 1</text>
+      <text x="205" y="130" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">get X → 2</text>
+      <text x="300" y="130" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">↔ free to swap</text>
+    </svg>
+  </div>
+  <div class="figure-caption">ZooKeeper fixes a single global order for writes, but reads from different clients carry no mutual ordering — so one client may still see the old value <code>1</code>. Allowed under ZooKeeper, forbidden under linearizability.</div>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Consistency Models Are Defined Ad-Hoc</div>
+  <p>The professor flags a real pitfall: there are dozens of named consistency conditions, each defined in its own ad-hoc way ("your reads see your writes, but writes don't conflict with other writes, and there's a FIFO order on your reads…"). They are genuinely <em>hard to compare</em>. ZooKeeper's guarantee is "almost" linearizable precisely because it's defined by these patchwork rules rather than one clean property — don't expect a neat lattice of strength.</p>
+</div>
+
+<h3 id="watch-locks">Building a Lock From Watches</h3>
+
+<p>So if ZooKeeper doesn't give you locks directly, how do you build one? The key realization — which ties back to Chubby's read story — is that <strong>you do not need full linearizability to implement a lock. You only need linearizable <em>writes</em>.</strong> ZooKeeper provides exactly that.</p>
+
+<p>The mechanism is a <strong>watch</strong>: a client can register a watch on a file, and ZooKeeper will notify it when that file is updated (it tells you <em>that</em> it changed, not the new data). A lock built on watches works like this:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Try to acquire</strong> the lock by creating a file (a write operation).</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>If the file <strong>already exists</strong>, someone else holds the lock. So <strong>set a watch</strong> on that file instead of busy-waiting.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>When the holder releases (the file changes/disappears), the watch <strong>fires a notification</strong>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p>On notification, <strong>try to re-acquire</strong> — attempt the create again.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Why Linearizable Writes Are Enough</div>
+  <p>What if two clients try to create the same file at the exact same moment — who wins? Because <strong>writes are strongly consistent and globally ordered</strong>, ZooKeeper imposes <em>some</em> order on them: one create genuinely succeeds first, the other comes after and fails. There's no ambiguity about who holds the lock. The reads (watches) can be a little stale and it still works — that's the deep payoff: locks need write-linearizability, not read-linearizability.</p>
+</div>
+
+<h3 id="sequencer">The Herd Effect and the Sequencer</h3>
+
+<p>The simple watch-based lock has a nasty flaw. When a lock is released, <em>every</em> client watching it wakes up simultaneously and stampedes to re-acquire — potentially a hundred clients hammering the service at once. This is the <strong>herd effect</strong>.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Herd Effect</div>
+  <p>If 100 clients all watch the same lock file, releasing it triggers 100 simultaneous notifications and 100 simultaneous re-acquire attempts — a thundering herd that can overload the service. Only one will win; the other 99 just generated load and go back to waiting.</p>
+</div>
+
+<p>The fix from the ZooKeeper paper is a <strong>sequencer</strong>: instead of everyone watching one file, build a small <em>lock tree</em>. Each waiting client creates a sequentially-numbered child node. Then:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>Create a child node under the lock's parent. ZooKeeper assigns it a sequence number — you become, say, node #2.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>Look at your siblings. If you have the <strong>lowest</strong> sequence number, you hold the lock — proceed.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>If someone is ahead of you (a smaller number), <strong>watch only the node immediately before you</strong> — not the whole lock.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p>When your predecessor releases, only <em>you</em> are notified. You become the new lowest, acquire the lock, and the chain continues one client at a time.</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="400" height="170" viewBox="0 0 400 170" style="display:block; margin:0 auto;">
+      <!-- parent -->
+      <rect x="160" y="15" width="80" height="30" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5" rx="6"/>
+      <text x="200" y="34" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c0510a">/lock</text>
+      <!-- children -->
+      <rect x="40" y="95" width="80" height="34" fill="#edf7f0" stroke="#2d8a4e" stroke-width="2" rx="6"/>
+      <rect x="160" y="95" width="80" height="34" fill="#fff" stroke="#d9d0c4" stroke-width="1.5" rx="6"/>
+      <rect x="280" y="95" width="80" height="34" fill="#fff" stroke="#d9d0c4" stroke-width="1.5" rx="6"/>
+      <text x="80" y="116" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">node-1</text>
+      <text x="200" y="116" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">node-2</text>
+      <text x="320" y="116" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">node-3</text>
+      <text x="80" y="150" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#2d8a4e" font-weight="700">holds lock</text>
+      <!-- tree lines -->
+      <line x1="190" y1="45" x2="80" y2="95" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="200" y1="45" x2="200" y2="95" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="210" y1="45" x2="320" y2="95" stroke="#d9d0c4" stroke-width="1.5"/>
+      <!-- watch arrows: each watches predecessor -->
+      <line x1="160" y1="112" x2="124" y2="112" stroke="#7c3aed" stroke-width="1.5" stroke-dasharray="3 2"/>
+      <polygon points="122,112 130,108 130,116" fill="#7c3aed"/>
+      <line x1="280" y1="112" x2="244" y2="112" stroke="#7c3aed" stroke-width="1.5" stroke-dasharray="3 2"/>
+      <polygon points="242,112 250,108 250,116" fill="#7c3aed"/>
+      <text x="200" y="166" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#7c3aed">each watches only its predecessor</text>
+    </svg>
+  </div>
+  <div class="figure-caption">The sequencer: waiting clients form a numbered queue. Each watches only the node ahead of it, so a release wakes exactly one client — no herd.</div>
+</div>
+
+<p>This turns the stampede into an orderly single-file queue, eliminating the herd effect. The professor noted this is essentially just a queue — but the point of the paper was to show that you can <em>build</em> such patterns yourself on top of ZooKeeper's minimal file-system primitive, including a better lock than the naive one.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Performance Tip — Pipelining</div>
+  <p>If a client must do 5,000 updates after grabbing a lock, doing them one-at-a-time (update → consensus → update → consensus…) at ~2ms each takes ~10 seconds. ZooKeeper lets the client <strong>pipeline</strong> them: fire all updates into a FIFO queue at once, and the service applies them in order. The per-client FIFO guarantee is exactly what makes this safe — and it slashes the wall-clock time dramatically.</p>
+</div>
+
+<details>
+<summary>Expand: ZooKeeper's implementation in one breath</summary>
+<div class="details-body">
+<p><strong>All replicas serve reads.</strong> This is allowed precisely because ZooKeeper offers weaker-than-linearizable consistency — a slightly stale read from any replica is acceptable, so no need to funnel reads through one leader.</p>
+<p><strong>All writes go to the leader.</strong> The leader runs a consensus protocol called <strong>ZAB</strong> (ZooKeeper Atomic Broadcast) — a leader-based, Paxos-like protocol internal to ZooKeeper with its own proofs. There is also a garbage/keep-alive mechanism analogous to Chubby's sessions.</p>
+<p><strong>Does ZooKeeper block?</strong> Reads: no (served from any replica). Writes: <em>yes</em>, because consensus for strongly-consistent ordered writes is unavoidable — but writes <em>do not</em> have to wait to invalidate caches (the savings vs. Chubby). So ZooKeeper blocks less overall, with a different performance profile.</p>
+</div>
+</details>
+
+<div class="quiz" id="quiz5">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">ZooKeeper can implement a correct lock even though its reads aren't linearizable. What property makes this possible?</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Reads are also fully linearizable, contrary to the claim</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Writes are strongly consistent and globally ordered, so two competing file-creates get a definite winner</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Locks don't actually need any consistency guarantee at all</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>ZooKeeper blocks every read through a single leader, just like Chubby</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct — B.</strong> A lock only requires that competing acquire-writes be unambiguously ordered. ZooKeeper guarantees writes are linearizable and globally ordered, so exactly one create "wins" — that's enough. Stale reads (via watches) are tolerable. Option D is false: ZooKeeper serves reads at <em>any</em> replica, which is exactly why it's faster but weaker than Chubby.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PUTTING IT ALL TOGETHER ═══════════════════════ -->
+<section id="together" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This lecture was the bridge between two halves of the course. Part I drew the line: <strong>foundations</strong> chase clean, provable protocols, while <strong>real systems</strong> chase the right contract for real assumptions. Everything after was that principle in motion.</p>
+
+<p>Chubby and ZooKeeper both wrap the <strong>Paxos</strong> engine from earlier lectures inside a friendly <strong>file-system, lock-flavored service</strong> — because, as Part II argued, a service hides deployment and a lock matches developer intent better than raw consensus. Part III exposed the hard reality that clients crash, so locks became <strong>leases</strong> with <strong>keep-alives</strong>, made workable by conservative timing despite unsynchronized clocks, and protected against delayed writes by <strong>lock IDs</strong>. Part IV pulled back the curtain: a five-replica Paxos cell, the deliberate choice of <strong>coarse-grained locks</strong>, <strong>leader-only reads</strong> for linearizability, <strong>cache invalidation</strong> made affordable by a read-heavy workload, and <strong>proxies</strong> to tame the surprising 93%-keep-alive traffic. Part V then showed the road not taken: ZooKeeper <strong>weakens consistency</strong> to "almost-linearizable," serves reads from any replica, and hands you a lower-level primitive so you can build <strong>watch-based locks</strong> and a <strong>herd-free sequencer</strong> yourself.</p>
+
+<table class="compare-table">
+  <tr><th>Dimension</th><th>Chubby</th><th>ZooKeeper</th></tr>
+  <tr><td>Consistency</td><td>Linearizable (strong)</td><td>"Almost" — linearizable writes, per-client FIFO reads</td></tr>
+  <tr><td>Reads served by</td><td>Leader only</td><td>Any replica</td></tr>
+  <tr><td>Abstraction given</td><td>Locks (high-level)</td><td>Lower-level primitive; build locks yourself</td></tr>
+  <tr><td>Lock granularity</td><td>Coarse-grained, by design</td><td>Flexible (e.g. sequencer queue)</td></tr>
+  <tr><td>Writes block on…</td><td>Consensus + cache invalidation</td><td>Consensus only (no cache-invalidation wait)</td></tr>
+  <tr><td>Key trade-off</td><td>Coarse locks: app crash → stall until lease ends, but Chubby may be briefly unavailable safely</td><td>Weaker consistency → reads at any replica, less blocking, but no linearizability</td></tr>
+</table>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — System Design Is Trade-Offs, All the Way Down</div>
+  <p>The single most important takeaway: <strong>you never get something that works perfectly in every dimension.</strong> Chubby trades the risk of post-crash stalls for the simplicity and resilience of coarse locks. ZooKeeper trades linearizability for read scalability and less blocking. Neither is "better" — each picked the trade-off that fit its assumptions. As you meet more systems this term, always ask: <em>what did this system give up, and what did it buy?</em></p>
+</div>
+
+<p>Zooming out, the lecture's closing recap on <em>consensus in practice</em> distills to a handful of patterns you'll see again and again: real systems implement consensus as a <strong>service, not a library</strong>; the <strong>file-system abstraction</strong> is popular because it's familiar; production systems use a <strong>leader</strong> for performance; and they lean on <strong>real physical time</strong> (leases, keep-alives) with conservative approximations, plus optimizations like <strong>caching, proxying, and pipelining</strong>.</p>
+
+<div class="callout tip">
+  <div class="callout-title">What's Next</div>
+  <p>ZooKeeper got away with serving reads everywhere by <em>weakening</em> consistency below linearizability. The next lecture leans fully into that idea: <strong>weaker consistency models</strong> and how they fit into the grand scheme of distributed systems — the spectrum running from linearizable, through sequential and causal, all the way to eventual consistency. Today you saw <em>why</em> a system would choose to be weaker; next you'll see the full menu of <em>how</em> weak it can safely go.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

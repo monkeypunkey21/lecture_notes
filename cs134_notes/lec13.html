@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 13 — Dynamo — Interactive Textbook</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 13 — Dynamo</div>
+  <a href="#part1">Part I — Finishing Chord</a>
+  <a href="#chord-recap" class="sub">What Chord Gave Us</a>
+  <a href="#crashes" class="sub">Crashes vs. Voluntary Leaves</a>
+  <a href="#successor-list" class="sub">The Successor List</a>
+  <a href="#chord-replication" class="sub">Replication on Successors</a>
+  <a href="#quiz-chord" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Dynamo's Goals</a>
+  <a href="#amazon-scale" class="sub">The Amazon Scenario</a>
+  <a href="#availability-first" class="sub">Availability First</a>
+  <a href="#cap" class="sub">CAP: Sacrificing Consistency</a>
+  <a href="#knobs" class="sub">Tunable Knobs</a>
+  <a href="#quiz-goals" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — SQL vs. NoSQL</a>
+  <a href="#kv-api" class="sub">The Key-Value API</a>
+  <a href="#tradeoffs" class="sub">The Trade-Offs</a>
+  <a href="#use-cases" class="sub">Picking the Right Tool</a>
+  <a href="#no-multikey" class="sub">No Multi-Key Ops</a>
+  <a href="#quiz-sql" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — SLAs &amp; Tail Latency</a>
+  <a href="#what-is-sla" class="sub">What Is an SLA?</a>
+  <a href="#tail" class="sub">Why the Tail Matters</a>
+  <a href="#fanout" class="sub">The Fan-Out Math</a>
+  <a href="#quiz-sla" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Partitioning &amp; Replication</a>
+  <a href="#node-symmetry" class="sub">Node Symmetry</a>
+  <a href="#consistent-hashing" class="sub">Consistent Hashing &amp; vnodes</a>
+  <a href="#replication" class="sub">Replicate to N Successors</a>
+  <a href="#quiz-part" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part6">Part VI — Quorums (N, R, W)</a>
+  <a href="#stale-reads" class="sub">The Stale Read Problem</a>
+  <a href="#sloppy-quorum" class="sub">Sloppy Quorums</a>
+  <a href="#rw-tuning" class="sub">Tuning R and W</a>
+  <a href="#quiz-quorum" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part7">Part VII — Conflict Resolution</a>
+  <a href="#when-who" class="sub">When &amp; Who Resolves</a>
+  <a href="#vector-clocks" class="sub">Vector Clocks</a>
+  <a href="#dynamic-list" class="sub">Dynamo's Trimmed Clocks</a>
+  <a href="#client-plumbing" class="sub">Client Plumbing</a>
+  <a href="#interface" class="sub">The get/put Interface</a>
+  <a href="#quiz-conflict" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#synthesis">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">CS134 · Distributed Systems</div>
+  <h1>Dynamo — Always-On at Amazon Scale</h1>
+  <p class="hero-sub">An interactive guide to Lecture 13 — finishing Chord, then building a key-value store that never says no to a write: availability over consistency, quorums, and vector clocks.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>Finishing Chord — Surviving Crashes</h2>
+</div>
+
+<p>Before we meet Dynamo, we owe the previous lecture one last piece. We had built up <strong>Chord</strong>, a way to spread data across many machines, but we stopped just short of asking the hardest question: <em>what happens when a machine simply dies?</em> That question is the bridge into today's topic, because Dynamo's entire design is an answer to it.</p>
+
+<h3 id="chord-recap">What Chord Gave Us (a Quick Catch-Up)</h3>
+<p>Let's catch ourselves up from zero. <strong>Sharding</strong> means splitting a large dataset across many machines (called <strong>nodes</strong>) so that no single machine has to store everything or handle all the traffic. The problem sharding solves is <em>scale</em> — it has nothing to do with surviving failures. That is worth saying out loud because it is a common point of confusion:</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Sharding ≠ Fault Tolerance</div>
+  <p><strong>Sharding</strong> (splitting data across nodes) is <em>orthogonal</em> to <strong>fault tolerance</strong> (surviving node failures). Sharding helps you scale compute and storage. It does nothing to protect you when a node crashes — that requires <em>replication</em>, a separate mechanism we add on top.</p>
+</div>
+
+<p>Once you shard, you need a way to answer "which node holds key <code>k</code>?" — this is <strong>data lookup</strong>. A naive approach hashes the key modulo the number of nodes (<strong>modular hashing</strong>). Lookup is essentially free: just compute <code>hash(k) % N</code> locally, no network calls. But it has a fatal flaw: when you add or remove a single node, <em>almost every key</em> has to move to a new node, because changing <code>N</code> changes every result of <code>% N</code>.</p>
+
+<p><strong>Chord</strong> fixes this with <strong>consistent hashing</strong>: keys and nodes are both hashed onto a circular ID space (a "ring"). A key is owned by the first node you reach going clockwise — its <strong>successor</strong>. Now adding or removing a node only disturbs the keys in one small arc of the ring, not everything. The price is that lookups are no longer free: to route from one node to the key's owner, Chord uses <strong>finger tables</strong> (shortcuts around the ring) so that lookups take <code>O(log N)</code> hops instead of <code>O(N)</code>.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Is O(log N) Actually Fast?</div>
+  <p>The lecture pushed on this. For a million nodes, <code>log N</code> ≈ 20 hops. At 10&nbsp;ms per hop that is 200&nbsp;ms — maybe fine. But each hop can be a network call to a node on a <em>different continent</em>, and consistent hashing gives no <strong>locality</strong> guarantee, so a hop might be 50&nbsp;ms+. This locality problem is fundamentally hard to escape in consistent hashing, and it is one reason Dynamo will make different trade-offs today.</p>
+</div>
+
+<h3 id="crashes">Crashes Are Worse Than Voluntary Leaves</h3>
+<p>So far we covered nodes <em>joining</em> and <em>gracefully leaving</em>. But what else can go wrong? A node can <strong>crash</strong> — vanish without warning. Why is that worse than a graceful departure?</p>
+
+<div class="callout warning">
+  <div class="callout-title">Why Crashes Hurt More</div>
+  <p>When a node <em>voluntarily</em> leaves, it can hand off its data to its successor first. When a node <strong>crashes</strong>, it is gone instantly — you may not even be able to retrieve the data it held, because the node that should pass it on is the dead one. A crash threatens both <em>lookup</em> (who is my successor now?) and <em>data</em> (is that data lost?).</p>
+</div>
+
+<h3 id="successor-list">The Successor List — Fixing Lookup</h3>
+<p>First, let's solve only the lookup problem and ignore data for a moment. If my immediate successor on the ring is dead, who do I route to next? The fix is simple: each node keeps not just its single successor, but a <strong>successor list</strong> — the next several nodes clockwise on the ring.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Successor List</div>
+  <p>A <strong>successor list</strong> is the sequence of the next several nodes clockwise from a given node. If the immediate successor fails, a node walks down its list to the next <em>alive</em> successor and uses that. A list of length <code>log N</code> works well in practice and is what the original Chord paper proposed.</p>
+</div>
+
+<h3 id="chord-replication">Replication — Fixing the Data</h3>
+<p>The successor list keeps <em>routing</em> alive, but the crashed node's <em>data</em> is still at risk. Where should we keep backup copies? The natural answer falls right out of the structure we already have: store each key not only on its owner, but also on its <strong>closest successors</strong> — the same nodes already in the successor list.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>Because sharding alone gives no fault tolerance, Chord (and later Dynamo) bolts on <strong>replication along the ring</strong>: copy every key to its next few successors. The very structure that organizes the data also organizes its backups — a single elegant idea doing double duty.</p>
+</div>
+
+<p>To summarize what consistent hashing with Chord buys us: minimal data movement when nodes join or leave, a fairly even spread of data (especially with virtual nodes, which we revisit in Part V), reasonably quick <code>O(log N)</code> lookups via finger tables, correctness even under high churn, and resilience to faults by replicating onto successors. That toolkit is exactly what Dynamo is about to build on.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Where This Sets Us Up</div>
+  <p>Hold onto three ideas — <strong>consistent hashing on a ring</strong>, the <strong>successor list</strong>, and <strong>replication to N successors</strong>. Dynamo reuses all three (Part V), then layers on quorums (Part VI) and conflict resolution (Part VII) to turn this academic protocol into a production store at Amazon.</p>
+</div>
+
+<div class="quiz" id="quiz-chord">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Why does Chord maintain a <em>successor list</em> rather than just a single successor pointer?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>To make lookups faster than <code>O(log N)</code></div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>So a node can still route correctly when its immediate successor crashes, by falling through to the next alive successor</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>To eliminate the need for finger tables entirely</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>To shard data more evenly across the ring</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct — B.</strong> A crash removes a node instantly, so a single successor pointer can suddenly point at a dead node. The successor list (typically length <code>log N</code>) lets a node skip past dead successors to the next live one, preserving lookup. It is <em>not</em> about speed (A) — finger tables handle hop count — and it does not replace finger tables (C) or change sharding balance (D); those are separate mechanisms.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>Dynamo's Goals — What Are We Even Building?</h2>
+</div>
+
+<p>Whenever this course meets a real system (ZooKeeper, Spanner, and now Dynamo), it starts the same way: <em>what is the contract?</em> What does this system promise its users, and <em>why</em>? Pinning down the goals first is what lets us judge every design choice that follows. So before any implementation, we ask: what does Amazon actually need?</p>
+
+<p><strong>Dynamo</strong> is a foundational paper published by Amazon engineers in 2007, later inducted into the SOSP Hall of Fame in 2017 (SOSP is a flagship systems conference). It earned that status by crisply answering one question for a brutal environment.</p>
+
+<h3 id="amazon-scale">The Amazon Scenario</h3>
+<p>Picture Amazon's infrastructure: tens of thousands of servers, countless network switches, spread across many data centers and regions worldwide. At that scale, failures are not exceptional — they are constant. Networks partition, individual nodes die permanently, whole data centers can be hit by, in the lecture's vivid example, a tornado. Any service built here must assume things are <em>always</em> breaking somewhere.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Dynamo's Core Problem</div>
+  <p>Dynamo implements a <strong>persistent key-value store</strong> that keeps working — staying available with low latency — <em>in the presence of constant, varied failures</em>: temporary network glitches, permanent node deaths, and even data-center-wide outages. The question it answers is: <em>how do you keep persistent state usable when something is always failing?</em></p>
+</div>
+
+<h3 id="availability-first">Availability First</h3>
+<p>The headline goal is an <strong>always-on experience</strong>: the user's request must (almost) never be turned away, and it must come back fast. The motivating story drives this home. A shopper is adding items to their cart while, simultaneously, a data center is failing. Amazon's stance: that shopper should <em>still</em> be able to add to their cart. A blocked "add to cart" is lost revenue and a lost customer. Availability is not a nice-to-have; it is the product.</p>
+
+<h3 id="cap">CAP — Why We Must Sacrifice Consistency</h3>
+<p>Here we collide with a fundamental limit this course returns to again and again. The <strong>CAP theorem</strong> says that when a <strong>network partition</strong> happens (nodes can't all talk to each other), a system must choose between <strong>consistency</strong> (every read sees the latest write) and <strong>availability</strong> (every request gets a non-error response). You cannot have both during a partition.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — CAP Forces a Choice</div>
+  <p><strong>Consistency</strong> = all replicas agree, every read sees the newest value. <strong>Availability</strong> = every request succeeds without blocking. <strong>Partition tolerance</strong> = the system keeps running when the network splits. When a partition occurs, you can keep <em>at most one</em> of C or A. Since partitions are unavoidable at Amazon scale, the real choice is C vs. A.</p>
+</div>
+
+<p>Dynamo, having declared availability sacred, makes the only consistent choice it can: it <strong>sacrifices consistency</strong>. It will sometimes return stale or even conflicting data rather than ever block a request. This single decision is the seed of nearly everything else in the lecture — weak consistency, quorums, and conflict resolution all exist to manage the fallout of this trade.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>Dynamo is an <strong>availability-first</strong> store. Forced by CAP to choose, it gives up strong consistency so that requests — especially writes — essentially never fail. Every later mechanism is a way to make "give up consistency" tolerable rather than chaotic.</p>
+</div>
+
+<h3 id="knobs">One More Goal: Tunable Knobs</h3>
+<p>Amazon runs many different applications on top of Dynamo, each with its own needs — some want maximum availability, others a bit more consistency or durability. Rather than pick one point on the spectrum for everyone, Dynamo exposes <strong>knobs</strong> that let each application slide along the availability-vs-consistency spectrum. We will meet the concrete knobs (<code>N</code>, <code>R</code>, <code>W</code>) in Part VI, but flag the design philosophy now.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Flexibility as a Design Principle</div>
+  <p>Dynamo does not believe in one universal answer. It deliberately pushes choices to the application: how durable? how consistent? how is a conflict resolved? This "let the developer decide" attitude recurs — it is also why Dynamo offers a <em>minimal</em> key-value API (Part III) and lets the application supply its own conflict-merge logic (Part VII).</p>
+</div>
+
+<div class="quiz" id="quiz-goals">
+  <div class="quiz-question">According to the CAP theorem as applied in the lecture, why must Dynamo give up strong consistency?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Because strong consistency is impossible in any distributed system</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Because network partitions are unavoidable at scale, and during a partition you cannot have both availability and consistency — and Dynamo chose availability</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Because key-value stores are technically incapable of being consistent</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Because consistency would make reads too slow to be useful</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct — B.</strong> CAP says that <em>during a partition</em> you can keep consistency or availability but not both. Strong consistency is perfectly achievable when there is no partition (A is wrong — ZooKeeper does it), and it has nothing to do with the data model (C). The driver is not raw read speed (D) but Amazon's non-negotiable commitment to availability, which forces consistency to be sacrificed when the network splits.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>SQL vs. NoSQL — Choosing the Interface</h2>
+</div>
+
+<p>Dynamo's <em>second</em> key insight is about the <strong>interface</strong> it offers. To appreciate why this was bold in 2007, we need context, because the choice of interface shapes everything an application can and cannot do.</p>
+
+<h3 id="kv-api">The Key-Value API</h3>
+<p>Until the mid-2000s, almost all data stores spoke <strong>SQL</strong>: structured tables, a rich query language with <code>JOIN</code>s and aggregation, fixed schemas, and transactional guarantees. Dynamo (and peers of its era) broke from this and offered a <strong>key-value store</strong> instead — a NoSQL design with just two operations and no schema.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Key-Value (NoSQL) API</div>
+  <p>A <strong>key-value store</strong> exposes only <code>get(key)</code> and <code>set(key, value)</code> (often called <code>put</code>). There is no query language, no <code>JOIN</code>, and no fixed <strong>schema</strong> (a schema is a declared structure for your data, like table columns and types). The value can be anything — text, JSON, a binary blob. This is the essence of <strong>NoSQL</strong>.</p>
+</div>
+
+<pre><code><span class="cm">// The entire Dynamo interface, conceptually</span>
+<span class="fn">get</span>(key)            <span class="cm">// fetch the value(s) for one key</span>
+<span class="fn">put</span>(key, value)     <span class="cm">// store a value for one key</span></code></pre>
+
+<h3 id="tradeoffs">The Trade-Offs — "To SQL or Not to SQL?"</h3>
+<p>Neither model is universally better; each pushes work to a different place. Here is the comparison the class built up together.</p>
+
+<table class="compare-table">
+  <tr><th>NoSQL (Key-Value)</th><th>SQL (Relational)</th></tr>
+  <tr><td>Trivial to start &amp; prototype — no SQL to learn, no schema to design</td><td>Steeper start — must learn SQL and design a schema up front</td></tr>
+  <tr><td>Easy to implement <em>efficiently</em>: fetch one key, no query compiler needed</td><td>Needs a sophisticated query compiler/optimizer (Postgres, Oracle)</td></tr>
+  <tr><td>Naturally stores any data type — multimedia, binary blobs</td><td>Highly optimized for standard operators like <code>JOIN</code> (40+ years of tuning)</td></tr>
+  <tr><td>Often offers only weak consistency</td><td>Strong, well-defined consistency &amp; transactions by design</td></tr>
+  <tr><td>Pushes work onto the <em>application</em> — app fetches data and processes it itself</td><td>Does more work for you — but locks you into its abstraction; more expensive</td></tr>
+</table>
+
+<div class="callout insight">
+  <div class="callout-title">The Real Punchline</div>
+  <p>With <strong>NoSQL you push work onto the application</strong>. SQL does more for you — optimized joins, transactions, strong guarantees — which is wonderful <em>if</em> that abstraction fits your data, but it locks you in. NoSQL says: "I'll give you a dead-simple, blazing-fast single-key <code>get</code>/<code>set</code>, and you figure out the rest." If your workload really is single-key access, you get outstanding performance.</p>
+</div>
+
+<details>
+<summary>Aside: SQL never died — these things go in circles</summary>
+<div class="details-body">
+<p>The lecture stressed that NoSQL's rise did <em>not</em> kill SQL. Popularity swings back and forth over the years (we are arguably in a SQL resurgence now). The takeaway is not "NoSQL won," but that there are genuine, lasting uses for both. A mature engineer reaches for whichever fits the workload — and may even use both in one system.</p>
+<p>Even "SQL injection" had a thoughtful unpacking: the vulnerability is not about SQL per se, but about offering a <em>programmable</em> interface where clients send arbitrary strings/programs. A NoSQL API that also lets you write arbitrary method calls can be attacked too. The data model is not the security boundary; the expressiveness of the interface is.</p>
+</div>
+</details>
+
+<h3 id="use-cases">Picking the Right Tool — Three Workloads</h3>
+<p>The class reasoned through three concrete Amazon workloads. The point is not memorizing "right answers" but learning to reason from the workload.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Shopping cart → NoSQL.</strong> A cart is small (1–10 items), changes fast, and is accessed on its own. You almost never want to <code>JOIN</code> across everyone's carts, so SQL's strengths are wasted. A single-key <code>get</code>/<code>put</code> fits perfectly.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Product catalog → it depends.</strong> If the catalog is rebuilt as a daily view, SQL is fine — analyze once, publish, done. But if you need fast, item-at-a-time reads and updates and don't much care about momentary inconsistency, NoSQL fits better. There is a real trade-off here.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Quarterly business reports → SQL.</strong> These run rarely and must aggregate millions of rows — products sold, catalogs, clients — with joins and analytics. Building that on NoSQL would mean re-implementing a query engine in your app: shooting yourself in the foot. SQL's compiled performance is exactly what you want.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">The Decision Rule</div>
+  <p>Use <strong>NoSQL</strong> when you want flexibility and each request touches a small set of keys. Use <strong>SQL</strong> when you need complex queries/joins and your schema is stable (a stable schema is required because the schema bakes in assumptions about your data's structure).</p>
+</div>
+
+<h3 id="no-multikey">A Crucial Restriction: No Multi-Key Operations</h3>
+<p>Dynamo goes further than "small API" — it <em>forbids</em> operations that span multiple keys. Every <code>get</code> and <code>put</code> touches exactly one key. Why impose this?</p>
+
+<div class="callout warning">
+  <div class="callout-title">Why Single-Key Only</div>
+  <p>Any multi-key operation would require <strong>coordination among partitions</strong>. Once data is sharded across nodes, those keys may live on different machines; touching several together with any consistency guarantee means the nodes must agree to act jointly. That is the <strong>distributed transactions</strong> problem — coordination, rollbacks on failure, blocking — exactly the cost Dynamo refuses to pay. By staying single-key, a failure only affects that one key: no cascading rollbacks.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">A Thread to a Future Lecture</div>
+  <p>The "coordinate across partitions to act jointly" problem is the heart of <strong>distributed transactions</strong>, coming a couple of lectures from now. Dynamo's whole strategy is to <em>sidestep</em> it by restricting the API — a recurring theme: the cheapest way to solve a hard problem is often to design it away.</p>
+</div>
+
+<div class="quiz" id="quiz-sql">
+  <div class="quiz-question">Dynamo forbids operations that span multiple keys. What is the primary reason?</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Multi-key operations are impossible to express in a key-value API</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Keys may live on different sharded nodes, so multi-key consistency would require cross-partition coordination — the distributed transactions problem Dynamo avoids</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Multi-key reads would violate the CAP theorem</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Amazon's hardware cannot physically store two keys at once</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct — B.</strong> Because data is sharded, two keys may sit on different nodes. Operating on them together with any guarantee forces those partitions to coordinate (agree, possibly roll back on failure) — the distributed transactions problem, which is expensive and can block. Staying single-key keeps each operation independent: a failure touches only that one key. It is a deliberate restriction, not a physical impossibility (A, D), and not a direct CAP consequence (C).
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>Service-Level Agreements &amp; the Tyranny of the Tail</h2>
+</div>
+
+<p>Dynamo promises to do <code>get</code>/<code>put</code> "very efficiently." But that phrase is hand-wavy — we need a way to talk about performance precisely. And once we do, we'll discover a counterintuitive trap that explains <em>why</em> Dynamo cares so obsessively about latency. This section is the "why fast matters" backbone of the whole system.</p>
+
+<h3 id="what-is-sla">What Is an SLA?</h3>
+<p>Real applications are graphs of services. A user's request hits a <strong>front-end</strong> service (renders the page), which calls <strong>aggregator</strong> services in the middle tier, which call <strong>back-end</strong> services holding data in Dynamo, S3, and elsewhere. Some services are <strong>stateless</strong> (no data store attached); others are <strong>stateful</strong>. The performance the user feels depends on the <em>entire graph</em>: every service it transitively calls does work before the response bubbles back up.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Service-Level Agreement (SLA)</div>
+  <p>A <strong>service-level agreement</strong> is a contract describing a service's performance — usually the <em>distribution</em> of response times under a given load. A naive SLA might state an average, median, and variance: "100&nbsp;ms on average at 10,000 requests/sec." As we'll see, average and median are dangerously incomplete.</p>
+</div>
+
+<h3 id="tail">Why the Tail Matters</h3>
+<p>What's missing from "average and median"? <strong>Tail latency</strong> — the slowest requests. Averages tell you <em>some</em> requests are fine; they say nothing about <em>all</em> requests. Distributed-systems practice insists that <em>everyone</em> gets a good experience, so SLAs are written about the tail.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Tail-Latency SLA</div>
+  <p>A proper SLA bounds a high percentile: "300&nbsp;ms end-to-end for <strong>99.9%</strong> of requests at 500 requests/sec." Bounding the <strong>tail</strong> (the worst 0.1%) guarantees that nearly every client — not just the lucky average one — has a good experience. (See Dean &amp; Barroso, "The Tail at Scale," CACM 2013.)</p>
+</div>
+
+<h3 id="fanout">The Fan-Out Math — Where Percentiles Go to Die</h3>
+<p>Here is the trap. Consider an aggregator that fires three requests <em>in parallel</em> to three back-ends, waits for <em>all three</em>, then does 10&nbsp;ms of its own work. Suppose each back-end returns within 90&nbsp;ms for 90% of requests (its 90th-percentile latency is 90&nbsp;ms). Question: for what fraction of requests does the <em>whole</em> application finish within 100&nbsp;ms?</p>
+
+<p>The tempting answer is "90%." But the aggregator must wait for the <em>slowest</em> of the three. The end-to-end request is fast only if <em>all three</em> back-ends are fast simultaneously:</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="360" height="170" viewBox="0 0 360 170" style="display:block; margin:0 auto;">
+      <!-- aggregator -->
+      <rect x="135" y="10" width="90" height="34" rx="8" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="180" y="32" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="600" fill="#2a2520">Aggregator</text>
+      <!-- lines -->
+      <line x1="150" y1="44" x2="60" y2="95" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="180" y1="44" x2="180" y2="95" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="210" y1="44" x2="300" y2="95" stroke="#d9d0c4" stroke-width="2"/>
+      <!-- backends -->
+      <rect x="22" y="98" width="76" height="32" rx="8" fill="#fff" stroke="#2563eb" stroke-width="2"/>
+      <text x="60" y="118" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#2a2520">backend</text>
+      <rect x="142" y="98" width="76" height="32" rx="8" fill="#fff" stroke="#2563eb" stroke-width="2"/>
+      <text x="180" y="118" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#2a2520">backend</text>
+      <rect x="262" y="98" width="76" height="32" rx="8" fill="#fff" stroke="#2563eb" stroke-width="2"/>
+      <text x="300" y="118" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#2a2520">backend</text>
+      <!-- p90 labels -->
+      <text x="60" y="148" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#6b6560">p90 = 0.9</text>
+      <text x="180" y="148" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#6b6560">p90 = 0.9</text>
+      <text x="300" y="148" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#6b6560">p90 = 0.9</text>
+      <text x="180" y="166" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" font-weight="600" fill="#c0510a">all fast: 0.9 × 0.9 × 0.9 = 0.729</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Parallel fan-out: the end-to-end request is "fast" only if every back-end is fast. The percentile multiplies.</div>
+</div>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>Each back-end independently finishes within budget 90% of the time → probability 0.9 each.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>The aggregator needs <em>all three</em> to be fast at once. For independent events, multiply: <code>0.9 × 0.9 × 0.9 ≈ 0.729</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>So only about <strong>73%</strong> of end-to-end requests hit 100&nbsp;ms — far below 90%. Adding the aggregator's constant 10&nbsp;ms to a 90&nbsp;ms back-end keeps each branch under 100&nbsp;ms, but the <em>combination</em> collapses the percentile.</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>The moment you <strong>fan out</strong> to many services and need them <em>all</em> to respond in time, your good-percentile <strong>plummets</strong>: percentiles multiply. With apps spread over hundreds of services, each individual service must hit an extremely tight tail SLA — often just a few milliseconds — so that the end-to-end 99.9th percentile still lands at 100&nbsp;ms. <em>This</em> is why Dynamo is fanatical about fast, predictable latency.</p>
+</div>
+
+<div class="quiz" id="quiz-sla">
+  <div class="quiz-question">An aggregator waits for 3 parallel back-ends, each with a 90% chance of finishing within budget. Roughly what fraction of end-to-end requests finish within budget?</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>90% — the back-ends run in parallel, so the slowest one alone determines it</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>About 73%, because all three must be fast at once: 0.9 × 0.9 × 0.9</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>About 97%, because parallelism improves the percentile</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>270%, by adding the three percentiles</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct — B.</strong> Because the aggregator blocks on the <em>slowest</em> of the three, the request is fast only when all three are fast simultaneously. For independent back-ends those probabilities multiply: <code>0.9³ ≈ 0.729</code>, so ~73%. Parallelism does <em>not</em> help the percentile (A, C) — it hurts it, since any one slow branch slows the whole thing. Probabilities multiply, they don't add (D).
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>Partitioning &amp; Replication — Dynamo's Skeleton</h2>
+</div>
+
+<p>Goals settled, we finally build. The Dynamo team faces the same checklist any consistent-hashing system does: how to <strong>partition</strong> data, keep <strong>consistency</strong> reasonable, resolve <strong>conflicts</strong>, handle <strong>failures</strong>, expose <strong>APIs</strong>, and track <strong>membership</strong>. Today's lecture tackles partitioning, consistency, and conflict resolution; failures and membership come next time. Before the mechanisms, one architectural commitment colors all of them.</p>
+
+<h3 id="node-symmetry">Node Symmetry — No Masters</h3>
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Node Symmetry</div>
+  <p><strong>Node symmetry</strong> means every node does the same work — there is <em>no</em> central master or coordinator. Any node can be replaced by any other.</p>
+</div>
+
+<p>Why insist on this? The paper gives four reasons: <strong>provisioning</strong> (use cheap commodity servers everywhere), <strong>maintenance</strong> (learn to replace one node, you can replace any), <strong>scalability</strong> (no central bottleneck), and <strong>reliability</strong> (no single point of failure). Symmetry is the structural expression of "availability first" — there is no special node whose death takes the system down.</p>
+
+<h3 id="consistent-hashing">Consistent Hashing &amp; Virtual Nodes</h3>
+<p>For partitioning, Dynamo reuses exactly the <strong>consistent hashing</strong> scheme from Chord (Part I): a key maps to its <strong>successor</strong> on the hash ring. It also reuses <strong>virtual nodes</strong> (vnodes) — letting one physical machine occupy <em>several</em> positions on the ring. Why two problems does this solve?</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Virtual Nodes Solve Two Problems</div>
+  <p>(1) <strong>Heterogeneity / scale-on-demand</strong>: a more powerful machine can be assigned <em>more</em> virtual nodes, so it owns a proportionally larger slice of the ring. (2) <strong>Load balance</strong>: spreading each machine across many ring positions distributes keys far more <em>uniformly</em> than one position per machine would.</p>
+</div>
+
+<h3 id="replication">Replication — Copy to N Successors</h3>
+<p>Just like Chord, Dynamo replicates each key onto the <code>N</code> clockwise <strong>successors</strong> of the key (where <code>N</code> is the replication factor). But virtual nodes introduce a subtle bug: walking clockwise, the next few ring positions might be <em>virtual nodes of the same physical machine</em>. Replicating "3 copies" onto 3 vnodes that all live on one box gives you no fault tolerance at all.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The vnode Replication Footgun</div>
+  <p>When replicating to successors with virtual nodes, you must <strong>skip duplicate physical nodes</strong>. A node tracks the actual <em>physical</em> successors on the ring and replicates only to distinct machines. Example: for nodes laid out as S11, S12, S13 (one machine) then S21 (another), the data for S13 is <em>not</em> stored on S12 (same physical machine) but jumps to S21 to get a genuinely independent copy.</p>
+</div>
+
+<p>The write path is simple and symmetric: the <strong>coordinator</strong> — the first node to receive the write — forwards it to the (distinct physical) successors, fanning the replica out across the ring.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="260" height="240" viewBox="0 0 260 240" style="display:block; margin:0 auto;">
+      <circle cx="130" cy="120" r="92" fill="none" stroke="#d9d0c4" stroke-width="2"/>
+      <!-- coordinator -->
+      <circle cx="130" cy="28" r="15" fill="#c0510a"/>
+      <text x="130" y="33" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" font-weight="600" fill="#fff">A</text>
+      <text x="130" y="12" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">coordinator</text>
+      <!-- successors -->
+      <circle cx="210" cy="92" r="15" fill="#2563eb"/>
+      <text x="210" y="97" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" font-weight="600" fill="#fff">B</text>
+      <circle cx="210" cy="178" r="15" fill="#2563eb"/>
+      <text x="210" y="183" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" font-weight="600" fill="#fff">C</text>
+      <!-- other nodes -->
+      <circle cx="50" cy="178" r="12" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <circle cx="50" cy="92" r="12" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <!-- replication arrows -->
+      <path d="M143 33 Q185 55 201 80" fill="none" stroke="#c0510a" stroke-width="2" marker-end="url(#ar)"/>
+      <path d="M210 107 L210 161" fill="none" stroke="#c0510a" stroke-width="2" marker-end="url(#ar)"/>
+      <defs>
+        <marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#c0510a"/>
+        </marker>
+      </defs>
+      <text x="130" y="128" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">N = 3</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Coordinator A receives a write and forwards it clockwise to the next distinct physical successors B and C (N = 3).</div>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Connecting Back &amp; Forward</div>
+  <p>Notice how much of Part V is <em>recycled Chord</em>: ring, successors, vnodes, replicate-to-successors (Part I). What's genuinely new starts now — having <code>N</code> replicas raises the question "which replica do I trust?" That question is Part VI's quorums, and "what if replicas disagree?" is Part VII's conflict resolution.</p>
+</div>
+
+<div class="quiz" id="quiz-part">
+  <div class="quiz-question">Why must Dynamo's replication "skip duplicate physical nodes" when copying to the next N successors?</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>To make lookups faster</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Because consecutive ring positions can be virtual nodes of the same physical machine, so naive replication could put all N copies on one box — defeating fault tolerance</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Because the coordinator is not allowed to hold any replica</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Because virtual nodes are never used for replication, only for lookup</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct — B.</strong> With virtual nodes, one physical machine occupies several ring positions, so the next few clockwise successors might all be the <em>same</em> box. Copying every replica there gives zero protection against that machine crashing. Dynamo therefore tracks distinct <em>physical</em> successors and skips duplicates. It is unrelated to lookup speed (A); the coordinator does hold a copy (C); and vnodes are very much used in replication (D).
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART VI ═══════════════════════ -->
+<section id="part6" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part VI</div>
+  <h2>Quorums — Tuning N, R, and W</h2>
+</div>
+
+<p>We now have <code>N</code> copies of every key. New problem: if a node fails, can we just read the key from another replica? Maybe — but maybe that replica is <strong>stale</strong>. This part is how Dynamo decides how many replicas to consult, and it is where the "knobs" from Part II become concrete.</p>
+
+<h3 id="stale-reads">The Stale Read Problem</h3>
+<p>Reading blindly from "the next successor" risks getting an old value that never received the latest write. The classic fix this course already taught is <strong>consensus</strong>: require a majority of replicas to agree before completing a request. But consensus means <strong>blocking</strong> until the majority responds — and blocking is precisely what Dynamo refuses to do, because it kills availability.</p>
+
+<h3 id="sloppy-quorum">Sloppy Quorums and the N / R / W Knobs</h3>
+<p>Dynamo's answer is the <strong>sloppy quorum</strong>: instead of a fixed majority, expose tunable parameters so each application picks its own point on the spectrum. There are three numbers.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — N, R, W</div>
+  <p><strong>N</strong> = the number of replicas per key (higher N = more durability, tolerate more failures). <strong>W</strong> = how many replicas must acknowledge a <em>write</em> before it counts as done. <strong>R</strong> = how many replicas must respond to a <em>read</em> before we answer. The coordinator forwards each request to the relevant successors and waits for W (or R) of them.</p>
+</div>
+
+<p>How do you tune these? Two instincts, then the real rule:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Maximize availability / minimize latency.</strong> Set <code>R = 1, W = 1</code>. The very first node that gets the request answers immediately — no waiting for a quorum. Lightning fast and always available... but you may read stale data, since the one node you asked might not have the latest write.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Guarantee you see the latest write.</strong> Setting <code>R = N</code> and <code>W = N</code> works (everyone agrees) but is needlessly strict and slow. Can we do better with smaller numbers?</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>The quorum-intersection rule.</strong> We don't tune R, W, and N separately — we relate them. As long as <code>R + W &gt; N</code>, every read set and every write set must <em>overlap in at least one node</em>. That shared node is guaranteed to have seen the latest write, so the read can't miss it.</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Quorum Intersection</div>
+  <p>If <code>R + W &gt; N</code>, then any read quorum and any write quorum share at least one node by the pigeonhole principle — so <strong>every read intersects every write</strong> and is guaranteed to observe the most recent committed value. Within that constraint you slide R and W to favor fast reads or fast writes. Example: <code>N = 3, W = 2, R = 2</code> (since 2 + 2 &gt; 3) guarantees intersection while staying fast.</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="300" height="150" viewBox="0 0 300 150" style="display:block; margin:0 auto;">
+      <text x="150" y="20" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" font-weight="600" fill="#c0510a">N = 3,  W = 2,  R = 2</text>
+      <!-- write set -->
+      <ellipse cx="110" cy="90" rx="62" ry="42" fill="rgba(192,81,10,0.10)" stroke="#c0510a" stroke-width="2"/>
+      <text x="80" y="55" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="600" fill="#c0510a">write (W=2)</text>
+      <!-- read set -->
+      <ellipse cx="190" cy="90" rx="62" ry="42" fill="rgba(37,99,235,0.10)" stroke="#2563eb" stroke-width="2"/>
+      <text x="220" y="55" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="600" fill="#2563eb">read (R=2)</text>
+      <!-- nodes -->
+      <circle cx="80" cy="95" r="13" fill="#c0510a"/><text x="80" y="100" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#fff">A</text>
+      <circle cx="150" cy="95" r="13" fill="#7c3aed"/><text x="150" y="100" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#fff">B</text>
+      <circle cx="220" cy="95" r="13" fill="#2563eb"/><text x="220" y="100" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#fff">C</text>
+      <text x="150" y="140" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#7c3aed">B is in both → read sees the write</text>
+    </svg>
+  </div>
+  <div class="figure-caption">With R + W &gt; N, the read and write quorums must overlap. Node B is the guaranteed intersection.</div>
+</div>
+
+<h3 id="rw-tuning">Two Concrete Configurations</h3>
+<p>The lecture traced two settings to feel the trade-off.</p>
+
+<table class="compare-table">
+  <tr><th>N = 3, W = 1, R = 1</th><th>N = 3, W = 2, R = 2</th></tr>
+  <tr><td>R + W = 2, <em>not</em> &gt; N → no guaranteed intersection</td><td>R + W = 4 &gt; N = 3 → guaranteed intersection</td></tr>
+  <tr><td>Write Y, then the coordinator crashes; a read of R = 1 can hit a node still holding old X → <strong>stale read</strong> returned</td><td>A read always touches a node that saw the write → no stale read</td></tr>
+  <tr><td>Maximum availability &amp; speed, weakest consistency</td><td>Slightly slower, but reads can't miss a committed write</td></tr>
+</table>
+
+<div class="callout insight">
+  <div class="callout-title">Intersection Isn't the Whole Story</div>
+  <p>Even with <code>R + W &gt; N</code>, a read can return <em>multiple</em> values: one replica has <code>K → Y</code>, another has <code>K → X</code>. Intersection guarantees the latest write is <em>somewhere</em> in what you read — but not <em>which</em> of the returned values is newest. Determining the winner is a different problem entirely. That is exactly the cliffhanger Part VII resolves.</p>
+</div>
+
+<div class="quiz" id="quiz-quorum">
+  <div class="quiz-question">With N = 3, which (R, W) setting guarantees every read observes the latest committed write?</div>
+  <div class="quiz-options" data-quiz="q6">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>R = 1, W = 1, because that maximizes availability</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>R = 2, W = 2, because R + W = 4 &gt; N = 3, forcing the read and write quorums to overlap</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>R = 1, W = 2, because writes always win</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Any setting works as long as N = 3</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q6','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q6">
+    <strong>Correct — B.</strong> The guarantee requires <code>R + W &gt; N</code> so that any read quorum and any write quorum share at least one node — that node has seen the newest write. With N = 3, R = 2, W = 2 gives 4 &gt; 3. R = 1, W = 1 (A) sums to 2 ≤ 3 and permits stale reads; R = 1, W = 2 (C) sums to 3, still not strictly greater than N; and not every setting works (D).
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART VII ═══════════════════════ -->
+<section id="part7" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part VII</div>
+  <h2>Conflict Resolution — Vector Clocks</h2>
+</div>
+
+<p>Quorums get us to "the latest write is somewhere in what I read." But under weak consistency, concurrent writes happen, and a read can surface several competing values. Now the hard question: <em>which write wins, and how do we even tell which came first?</em> This is the intellectual climax of the lecture.</p>
+
+<h3 id="when-who">When and Who Resolves Conflicts</h3>
+<p>Two design questions. First, <strong>when</strong>: resolve conflicts on writes or on reads? Systems like Spanner and ZooKeeper pay the cost <em>on writes</em> — they serialize writes into one order, avoiding conflicts entirely, at the price of slow, coordinated writes. Dynamo cannot stomach slow writes: the whole point is that "add to cart" must <em>never</em> block, even during a tornado.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Resolve on Read</div>
+  <p>Dynamo pushes conflict resolution to the <strong>read</strong> path. Writes always succeed immediately (never rejected), so they're fast; the cost of untangling conflicts is paid later, when someone reads. Consequence: reads may <em>uncover</em> conflicts. Two shoppers grabbing the same last item both "succeed" at add-to-cart, and the clash surfaces only at checkout — "sorry, it's unavailable."</p>
+</div>
+
+<p>Second, <strong>who</strong>: the application or the data store? The store can auto-resolve (e.g., "last write wins"), which is convenient but often wrong — there isn't always a natural, correct way to merge that the store can know. The application knows its semantics but takes on complexity. Dynamo supports <strong>both</strong>: by default last-write-wins, but an app can supply its own merge logic. (There's the flexibility principle from Part II again.)</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Honest Caveat</div>
+  <p>"Resolve on read" is a trade-off, not a free win. The lecture pushed back: a user might be <em>more</em> annoyed to learn at checkout that their item is gone than to be told up front. Dynamo's bet is that genuine conflicts are <em>rare</em> — most concurrent operations don't truly clash — so read-side resolution is cheap on average and writes stay blazing fast.</p>
+</div>
+
+<h3 id="vector-clocks">Vector Clocks — Telling Order from Concurrency</h3>
+<p>To resolve a conflict we must first <em>classify</em> two writes: did one happen strictly after the other (so the later supersedes), or are they truly <strong>concurrent</strong> (a genuine conflict needing a merge)? Plain timestamps can't reliably tell these apart across machines. The tool that can is the <strong>vector clock</strong>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Vector Clock</div>
+  <p>A <strong>vector clock</strong> attaches to a value a set of <em>(node, counter)</em> entries recording how many writes each node has applied. Comparing two vector clocks tells you one of two things: either one <strong>causally follows</strong> the other (every counter is ≥, so it supersedes), or they are <strong>concurrent</strong> (each has some counter the other lacks — a true conflict).</p>
+</div>
+
+<h3 id="dynamic-list">Dynamo's Trimmed Vector Clocks</h3>
+<p>A textbook vector clock stores one counter <em>per node in the system</em>. With tens of thousands of nodes, attaching a 10,000-entry array to <em>every key-value pair</em> is hopeless — not scalable. Dynamo's insight: for any single key, only a <em>handful</em> of nodes ever write to it (the N successors). So you never need counters for everyone.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Why a Short List Suffices</div>
+  <p>Only the few nodes responsible for a key (its N successors) can ever write it. So Dynamo stores a <strong>dynamic list</strong> of (node, counter) pairs that starts <em>empty</em> and grows only as distinct nodes actually touch that key. It will never approach the tens-of-thousands size a full vector clock would — it stays proportional to how many nodes really wrote this key.</p>
+</div>
+
+<p>Let's trace how the list grows on a single key:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>Node <strong>A</strong> coordinates a write of value X. The value carries clock <code>[A:1]</code> — "A has written this once."</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>A later <code>put</code> of value Y is handled by node <strong>B</strong>. Because this write already carried A's history and happens <em>after</em> <code>[A:1]</code>, B extends the list to <code>[A:1, B:1]</code> — capturing "this came after A's write, and B wrote once."</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>If only A, B, C keep writing, the <em>list length</em> stays fixed at three; only the counters increment, exactly like a classic vector clock over those three nodes. The list grows in <em>length</em> only when a brand-new node starts writing (e.g., after a crash brings node D in).</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="320" height="170" viewBox="0 0 320 170" style="display:block; margin:0 auto;">
+      <!-- v1 -->
+      <rect x="20" y="20" width="100" height="40" rx="8" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="70" y="38" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">V1</text>
+      <text x="70" y="53" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c0510a">[A:1, C:1]</text>
+      <!-- v2 -->
+      <rect x="200" y="20" width="100" height="40" rx="8" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="250" y="38" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">V2</text>
+      <text x="250" y="53" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2563eb">[A:1, B:1, C:1]</text>
+      <!-- arrow -->
+      <line x1="122" y1="40" x2="198" y2="40" stroke="#2d8a4e" stroke-width="2" marker-end="url(#ar2)"/>
+      <text x="160" y="32" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#2d8a4e">V2 ⊇ V1</text>
+      <defs>
+        <marker id="ar2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#2d8a4e"/></marker>
+      </defs>
+      <text x="160" y="80" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#2d8a4e">V2 supersedes V1 → drop V1 automatically</text>
+      <!-- concurrent case -->
+      <rect x="40" y="110" width="90" height="38" rx="8" fill="#fff" stroke="#c53030" stroke-width="2"/>
+      <text x="85" y="134" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c53030">[A:1, B:1]</text>
+      <rect x="190" y="110" width="90" height="38" rx="8" fill="#fff" stroke="#c53030" stroke-width="2"/>
+      <text x="235" y="134" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c53030">[A:1, C:1]</text>
+      <text x="160" y="165" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#c53030">neither ⊇ other → concurrent → client must merge</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Top: V2's clock contains V1's, so V2 clearly follows V1 — drop the stale V1. Bottom: neither clock contains the other — a true conflict the client must reconcile.</div>
+</div>
+
+<p>So resolution has two cases. If one value's clock <em>contains</em> the other's, the system <strong>automatically drops</strong> the older, stale value — no conflict. If neither contains the other, the values are <strong>concurrent</strong>; Dynamo returns <em>all</em> of them and the client must reconcile by writing back a merged value whose clock is the union of the inputs (plus its own incremented counter), which then supersedes them all.</p>
+
+<div class="callout insight">
+  <div class="callout-title">You've Seen This Before</div>
+  <p>Resolve-later-by-merging is exactly <strong>eventual consistency</strong>, the same idea behind <strong>CRDTs</strong> (conflict-free replicated data types) from the earlier remote lecture. Dynamo actually <em>predates</em> CRDTs but embodies the same guarantee: replicas may diverge temporarily, but once they can talk, they converge to a single reconciled value.</p>
+</div>
+
+<h3 id="client-plumbing">The Client Has to Play Along</h3>
+<p>One subtlety: causality must be preserved across the client too. Suppose client&nbsp;2 does a <code>get</code> (seeing some value's clock), then a <code>put</code>. For the system to record that the new write <em>causally follows</em> what was read, the client must carry the clock from the read into the write — even if the <code>put</code> lands on a different replica.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Piggybacked Context</div>
+  <p>Dynamo <strong>piggybacks the vector clock on every <code>get</code></strong> as an opaque <em>context</em>. The client is expected to thread that context back into its next <code>put</code>. This "plumbing" is how causality from a read is captured even when the follow-up write hits a different node. If a client ignores it, it can corrupt causality — but a misbehaving client is the application's fault, not Dynamo's.</p>
+</div>
+
+<h3 id="interface">The Real Interface</h3>
+<p>This is why Dynamo's API is richer than the bare <code>get(key)</code>/<code>put(key, value)</code> from your projects:</p>
+
+<pre><code><span class="cm">// Project's simple interface</span>
+<span class="fn">get</span>(key)            <span class="op">-&gt;</span> value
+<span class="fn">put</span>(key, value)
+
+<span class="cm">// Dynamo's real interface</span>
+<span class="fn">get</span>(key)            <span class="op">-&gt;</span> (values[], context)   <span class="cm">// may return MANY values; context = vector clock</span>
+<span class="fn">put</span>(key, context, value)             <span class="cm">// pass context back to record causality</span></code></pre>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>Dynamo never blocks a write and never silently picks a winner it can't justify. It tags every value with a <strong>trimmed vector clock</strong>, auto-discards values that are provably stale, and surfaces genuine concurrent conflicts to the client (or an app-supplied merge function) for reconciliation. Weak consistency is made livable by <em>knowing exactly when two writes conflict</em>.</p>
+</div>
+
+<div class="quiz" id="quiz-conflict">
+  <div class="quiz-question">A read returns two values whose vector clocks are <code>[A:1, B:1]</code> and <code>[A:1, C:1]</code>. What does Dynamo do?</div>
+  <div class="quiz-options" data-quiz="q7">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Automatically keep <code>[A:1, B:1]</code> because B sorts before C alphabetically</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Recognize the clocks are concurrent (neither contains the other) and return both values for the client to reconcile</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Discard both values as stale</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Block the read until the two writes are merged on the server</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q7','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q7">
+    <strong>Correct — B.</strong> Neither clock contains the other — <code>[A:1, B:1]</code> has a B entry the other lacks, and <code>[A:1, C:1]</code> has a C entry the first lacks — so the writes are <em>concurrent</em>, a true conflict. Dynamo returns both versions and lets the client (or an app merge function) reconcile, then write back a value whose clock unions both. There's no alphabetical tiebreak (A), neither is stale (C), and Dynamo resolves on read without blocking, never on the server-side write path (D).
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SYNTHESIS ═══════════════════════ -->
+<section id="synthesis" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>Every piece of this lecture descends from a single decision made in Part II: <strong>availability first</strong>. Trace the chain. Because Amazon's scale guarantees constant failures and partitions, and because a blocked "add to cart" is unacceptable, CAP forces Dynamo to <em>sacrifice consistency</em>. Everything else is damage control for that choice — and remarkably elegant damage control at that.</p>
+
+<p>To stay fast and flexible, Dynamo offered a minimal <strong>key-value API</strong> (Part III) with no multi-key operations, sidestepping distributed transactions entirely. To justify "fast," it adopted the discipline of <strong>tail-latency SLAs</strong> (Part IV), where the brutal arithmetic of fan-out — percentiles multiply — explains why each service must be ruthlessly quick. For the storage skeleton it <strong>recycled Chord</strong> (Part V): a consistent-hashing ring, virtual nodes for balance and heterogeneity, and replication onto N distinct physical successors — the same successor-replication idea that finished off Chord back in Part I.</p>
+
+<p>Then the two genuinely new mechanisms close the loop. <strong>Sloppy quorums with N, R, W</strong> (Part VI) replace blocking consensus with a tunable knob; the rule <code>R + W &gt; N</code> guarantees a read and a write always share a node, so the latest write is never invisible. And because that still leaves "which value is newest?" unanswered, <strong>trimmed vector clocks</strong> (Part VII) let Dynamo auto-discard provably stale values and surface only genuine concurrent conflicts — delivering eventual consistency in the spirit of CRDTs.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The One Sentence to Remember</div>
+  <p>Dynamo is a study in <em>principled trade-offs</em>: choose availability, then pay for it everywhere — minimal API, recycled ring, quorum intersection, and vector clocks — so that writes never fail and the rare conflicts they create can always be detected and reconciled.</p>
+</div>
+
+<p>Notice the meta-lesson the lecture kept returning to: <strong>there is no THE system.</strong> ZooKeeper pays on writes for strong consistency; Dynamo pays on reads for availability. Neither is "right" — each fits a workload. The skill this course is building is the ability to drop any new system onto this map of trade-offs and see at a glance where it lives.</p>
+
+<div class="callout tip">
+  <div class="callout-title">What's Next</div>
+  <p>We covered three of Dynamo's six problems: partitioning, consistency (quorums), and conflict resolution. Still open are <strong>failures</strong>, <strong>membership</strong>, and <strong>failure detection</strong> — including how vector-clock lists are garbage-collected so they don't grow forever as nodes crash and new writers appear. But first comes a guest lecture from <strong>Jesse Davis (MongoDB)</strong> on combining <strong>Raft and leases</strong> — so brush up on Paxos and replicated state machines beforehand. That material is fair game on the exam, and Dynamo's remaining pieces resume right after.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>
