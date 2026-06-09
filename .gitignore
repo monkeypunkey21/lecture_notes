@@ -1,0 +1,10 @@
+# Secrets — NEVER commit (holds live session cookies)
+.env
+
+# Python virtual environment
+.venv/
+__pycache__/
+*.pyc
+
+# OS cruft
+.DS_Store
