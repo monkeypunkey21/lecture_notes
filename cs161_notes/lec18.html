@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 18 — Neural Networks: Neurons, Structure &amp; Training</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 18 — Neural Networks</div>
+  <a href="#part1">Part I — The Neuron</a>
+  <a href="#why-neurons" class="sub">Why Neural Networks?</a>
+  <a href="#anatomy" class="sub">Anatomy of a Neuron</a>
+  <a href="#weighted-sum" class="sub">The Weighted Sum</a>
+  <a href="#neuron-example" class="sub">A Worked Example</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Activation Functions</a>
+  <a href="#why-activation" class="sub">Why a Nonlinearity?</a>
+  <a href="#step-sign" class="sub">Step &amp; Sign</a>
+  <a href="#sigmoid-relu" class="sub">Sigmoid &amp; ReLU</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — Network Structure</a>
+  <a href="#layers" class="sub">Layers &amp; the DAG</a>
+  <a href="#fully-connected" class="sub">Fully Connected &amp; Depth</a>
+  <a href="#universal" class="sub">Universal Approximators</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — Logic Gates &amp; Separability</a>
+  <a href="#and-gate" class="sub">Building an AND Gate</a>
+  <a href="#not-gate" class="sub">The NOT Gate</a>
+  <a href="#xor-problem" class="sub">The XOR Problem</a>
+  <a href="#linear-sep" class="sub">Linear Separability</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Networks as Functions</a>
+  <a href="#unfolding" class="sub">Unfolding the Output</a>
+  <a href="#subfunctions" class="sub">Function of the Weights</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part6">Part VI — Training the Network</a>
+  <a href="#loss" class="sub">The Loss Function</a>
+  <a href="#gradient" class="sub">Gradient Descent</a>
+  <a href="#perf-metric" class="sub">Loss vs. Performance</a>
+  <a href="#quiz6" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part7">Part VII — The Training Workflow</a>
+  <a href="#epoch-batch" class="sub">Epochs &amp; Batches</a>
+  <a href="#splits" class="sub">Train / Validate / Test</a>
+  <a href="#stopping" class="sub">When to Stop</a>
+  <a href="#quiz7" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#synthesis">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">CS161 · Fundamentals of Artificial Intelligence</div>
+  <h1>Neural Networks: Neurons, Structure &amp; Training</h1>
+  <p class="hero-sub">An interactive guide to Lecture 18 — from the single neuron and its activation function, through network structure and the XOR puzzle, to loss functions, gradient descent, and the train/validate/test workflow.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>The Neuron — The Building Block</h2>
+</div>
+
+<h3 id="why-neurons">Why Are We Learning Neural Networks?</h3>
+<p>For most of this course we have studied <strong>model-based</strong> AI: we wrote down a representation of the world — logical sentences, Bayesian networks, search spaces — and then <em>reasoned</em> over it. The professor calls this the "represent and reason" paradigm. Neural networks belong to a different family entirely: <strong>model-free</strong> approaches, also called <em>function fitting</em> or <em>curve fitting</em>. Instead of hand-building knowledge, we collect data and let an algorithm tune a flexible function until it matches that data.</p>
+
+<p>Why does this matter? Over the last several years, neural networks have driven nearly all of the visible progress in AI. Two areas dominate: <strong>image analysis</strong> (does this image contain a cat? where are the faces? what is the self-driving car seeing?), powered by <em>convolutional neural networks</em> (CNNs), and <strong>sequence-to-sequence translation</strong> for speech and text, powered by <em>recurrent neural networks</em> (RNNs). This lecture covers the foundation underneath all of them.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Model-Free vs. Model-Based</div>
+  <p>A <strong>model-based</strong> system encodes knowledge a human supplied (rules, probabilities, structure) and reasons over it. A <strong>model-free</strong> system, like a neural network, starts with a generic, highly flexible function and <em>learns</em> its parameters from labeled data. Neural networks are trained in a <strong>supervised</strong> fashion: every training example comes with the correct answer attached.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Scope of This Lecture</div>
+  <p>We focus on one slice: <strong>feed-forward</strong> neural networks trained with supervision. "Feed-forward" means signals only ever flow forward, from inputs toward outputs — a neuron can never take its own output back as an input. Architectures like CNNs and RNNs (and the broader debate about whether model-free is "enough") come in the next lecture.</p>
+</div>
+
+<h3 id="anatomy">The Anatomy of a Single Neuron</h3>
+<p>A neuron is a tiny <strong>computation unit</strong>. Think of it as a machine that takes in several numbers, mixes them together in a specific way, and emits a single number. Concretely, a neuron has four ingredients:</p>
+
+<ul style="margin: 0 0 18px 24px;">
+  <li><strong>Inputs</strong> — a bunch of numbers <code>a_j</code> arriving on "wires." Each input is either a raw input to the whole network, or the output of some earlier neuron.</li>
+  <li><strong>Weights</strong> — each wire carries a number <code>w_ij</code>, "the weight on the wire going from neuron <em>j</em> into neuron <em>i</em>." Weights are not set by hand; they are <em>learned</em> from data.</li>
+  <li><strong>Bias</strong> — one extra number <code>b</code> attached to the neuron itself, added in regardless of the inputs.</li>
+  <li><strong>Activation function</strong> — a function applied at the very end that transforms the combined number into the neuron's output <code>a_i</code>.</li>
+</ul>
+
+<p>The inputs and outputs of a neuron are always <em>numbers</em>, never symbols. The neuron's whole job is to turn a list of incoming numbers into one outgoing number.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="380" height="180" viewBox="0 0 380 180" style="display:block; margin:0 auto;">
+      <!-- input nodes -->
+      <circle cx="40" cy="40" r="16" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <circle cx="40" cy="90" r="16" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <circle cx="40" cy="140" r="16" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="40" y="45" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">a₁</text>
+      <text x="40" y="95" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">a₂</text>
+      <text x="40" y="145" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">a₃</text>
+      <!-- wires with weights -->
+      <line x1="56" y1="40" x2="184" y2="84" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="56" y1="90" x2="184" y2="90" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="56" y1="140" x2="184" y2="96" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="110" y="55" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c0510a">w₁ᵢ</text>
+      <text x="110" y="84" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c0510a">w₂ᵢ</text>
+      <text x="110" y="135" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c0510a">w₃ᵢ</text>
+      <!-- neuron body -->
+      <circle cx="210" cy="90" r="26" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="210" y="86" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">Σ + b</text>
+      <text x="210" y="100" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c0510a">g( )</text>
+      <!-- output wire -->
+      <line x1="236" y1="90" x2="330" y2="90" stroke="#d9d0c4" stroke-width="2"/>
+      <polygon points="330,90 320,85 320,95" fill="#d9d0c4"/>
+      <text x="285" y="80" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">aᵢ</text>
+    </svg>
+  </div>
+  <div class="figure-caption">A neuron <em>i</em>: weighted inputs flow in, the bias <code>b</code> is added, the activation <code>g</code> is applied, and one output <code>aᵢ</code> flows out — and may fan out to many later neurons.</div>
+</div>
+
+<h3 id="weighted-sum">Step One: The Weighted Sum</h3>
+<p>Before the activation function ever runs, the neuron first collapses all of its inputs into a single number. Call this intermediate value <code>in_i</code>. It is a <strong>weighted sum</strong>: multiply each incoming activation by the weight on its wire, add them all up, and then add the bias.</p>
+
+<pre><code><span class="cm"># The combined input to neuron i, before activation</span>
+in_i <span class="op">=</span> ( <span class="nb">Σ</span><span class="nb">_j</span> w_ij <span class="op">*</span> a_j ) <span class="op">+</span> b
+     <span class="cm"># sum over every input j, then add the bias b</span></code></pre>
+
+<p>So the two-step recipe inside every neuron is:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Combine.</strong> Form <code>in_i</code> by multiplying each input <code>a_j</code> by its weight <code>w_ij</code>, summing the products, and adding the bias <code>b</code>. This is one plain number.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Activate.</strong> Pass that number through the activation function: <code>a_i = g(in_i)</code>. The result is the neuron's output — again one plain number, which can be fed into many downstream neurons.</p>
+</div>
+
+<h3 id="neuron-example">A Concrete Example</h3>
+<p>Suppose a neuron (call its output <code>a₄</code>) has three inputs <code>a₁, a₂, a₃</code>, a bias <code>b</code>, and weights <code>2, −1, 0</code> on those three wires. Then its combined input is:</p>
+
+<pre><code>in <span class="op">=</span> <span class="nb">2</span><span class="op">·</span>a₁ <span class="op">+</span> (<span class="op">-</span><span class="nb">1</span>)<span class="op">·</span>a₂ <span class="op">+</span> <span class="nb">0</span><span class="op">·</span>a₃ <span class="op">+</span> b
+   <span class="op">=</span> <span class="nb">2</span><span class="op">·</span>a₁ <span class="op">-</span> a₂ <span class="op">+</span> b      <span class="cm"># the 0-weighted input drops out entirely</span>
+
+a₄ <span class="op">=</span> g(in)                  <span class="cm"># apply the activation function</span></code></pre>
+
+<p>Notice what the weights <em>express</em>: a weight of <code>2</code> says "this input matters a lot, and positively." A weight of <code>−1</code> says "this input pushes the answer the other way." A weight of <code>0</code> says "ignore this input completely" — which is why <code>a₃</code> vanishes from the formula. Learning a neuron <em>is</em> choosing these numbers.</p>
+
+<div class="callout insight">
+  <div class="callout-title">The Output Fans Out</div>
+  <p>A neuron has exactly <strong>one</strong> output value, but that single value can be sent to <em>many</em> other neurons at once. One number, many destinations. This is what lets us wire neurons into a network where each layer feeds the next.</p>
+</div>
+
+<div class="quiz" id="quiz1-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A neuron has inputs <code>a₁ = 3</code>, <code>a₂ = 1</code>, weights <code>w₁ = 2</code>, <code>w₂ = −4</code>, and bias <code>b = 1</code>. What is the combined input <code>in</code> (before activation)?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div><code>10</code></div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div><code>3</code></div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div><code>6</code></div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div><code>2</code></div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct — the answer is 3.</strong> The weighted sum is <code>2·3 + (−4)·1 + 1 = 6 − 4 + 1 = 3</code>. The trap answer <code>10</code> comes from forgetting that <code>w₂</code> is negative and adding instead of subtracting (<code>6 + 4</code>). The bias is added once, at the end, not multiplied by any input.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>Activation Functions — The Nonlinear Twist</h2>
+</div>
+
+<h3 id="why-activation">Why Do We Need an Activation Function At All?</h3>
+<p>So far a neuron just computes a weighted sum plus a bias — that is a <strong>linear</strong> operation. If every neuron were purely linear, then stacking neurons into layers would gain us nothing: a chain of linear functions is itself just one big linear function. The activation function <code>g</code> is the nonlinear ingredient that lets stacked neurons represent rich, curved, complicated relationships rather than only straight lines. It transforms the single number <code>in_i</code> into a new single number.</p>
+
+<p>The lecture introduces four classic activation functions. Two are sharp on/off switches; two are smoother and matter more in practice.</p>
+
+<h3 id="step-sign">The Step and Sign Functions</h3>
+<p>The <strong>step function</strong> is the oldest. It compares the combined input against a <em>threshold</em> <code>T</code>: output <code>1</code> if the input reaches the threshold, otherwise <code>0</code>.</p>
+
+<pre><code><span class="cm"># Step (threshold) activation</span>
+u(x) <span class="op">=</span> <span class="nb">1</span>   <span class="kw">if</span> x <span class="op">&gt;=</span> T
+       <span class="nb">0</span>   <span class="kw">otherwise</span></code></pre>
+
+<p>The <strong>sign function</strong> is similar but emits <code>−1</code> instead of <code>0</code> for the "off" case, and uses a fixed threshold of <code>0</code> rather than a tunable <code>T</code>:</p>
+
+<pre><code><span class="cm"># Sign activation</span>
+g(x) <span class="op">=</span> <span class="nb">1</span>    <span class="kw">if</span> x <span class="op">&gt;=</span> <span class="nb">0</span>
+      <span class="op">-</span><span class="nb">1</span>    <span class="kw">otherwise</span></code></pre>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="360" height="140" viewBox="0 0 360 140" style="display:block; margin:0 auto;">
+      <!-- step axes -->
+      <line x1="20" y1="110" x2="160" y2="110" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="90" y1="20" x2="90" y2="120" stroke="#d9d0c4" stroke-width="1.5"/>
+      <!-- step curve -->
+      <line x1="20" y1="95" x2="105" y2="95" stroke="#c0510a" stroke-width="2.5"/>
+      <line x1="105" y1="95" x2="105" y2="40" stroke="#c0510a" stroke-width="2.5"/>
+      <line x1="105" y1="40" x2="150" y2="40" stroke="#c0510a" stroke-width="2.5"/>
+      <text x="105" y="128" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">T</text>
+      <text x="90" y="14" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#2a2520" font-weight="600">Step</text>
+      <text x="40" y="90" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#6b6560">0</text>
+      <text x="138" y="36" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#6b6560">1</text>
+      <!-- sign axes -->
+      <line x1="200" y1="70" x2="340" y2="70" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="270" y1="20" x2="270" y2="120" stroke="#d9d0c4" stroke-width="1.5"/>
+      <!-- sign curve -->
+      <line x1="200" y1="100" x2="270" y2="100" stroke="#c0510a" stroke-width="2.5"/>
+      <line x1="270" y1="100" x2="270" y2="40" stroke="#c0510a" stroke-width="2.5"/>
+      <line x1="270" y1="40" x2="335" y2="40" stroke="#c0510a" stroke-width="2.5"/>
+      <text x="270" y="14" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#2a2520" font-weight="600">Sign</text>
+      <text x="220" y="95" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#6b6560">-1</text>
+      <text x="322" y="36" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#6b6560">+1</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Step (jumps 0 → 1 at threshold <code>T</code>) and sign (jumps −1 → +1 at 0). Both are hard switches with a discontinuity.</div>
+</div>
+
+<h3 id="sigmoid-relu">The Sigmoid and the ReLU</h3>
+<p>Two more activations matter more in practice. The <strong>sigmoid</strong> is a smooth S-shaped curve that rises gradually from near <code>0</code> to near <code>1</code>, passing through exactly <code>½</code> when its input is <code>0</code>. Because its output sits between 0 and 1, the sigmoid fits naturally when a neuron's output should be read as a <em>probability</em>. There are variants that let you control how steep the S-curve is.</p>
+
+<p>The <strong>ReLU</strong> — "rectified linear unit" — is the newest of the four (introduced around 2000) and is the dominant choice today. It is astonishingly simple: pass positive inputs straight through, and clamp anything negative to zero.</p>
+
+<pre><code><span class="cm"># ReLU: rectified linear unit</span>
+g(x) <span class="op">=</span> max(<span class="nb">0</span>, x)
+
+<span class="cm"># negative signals are suppressed to 0;</span>
+<span class="cm"># positive signals pass through unchanged</span></code></pre>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="360" height="150" viewBox="0 0 360 150" style="display:block; margin:0 auto;">
+      <!-- sigmoid axes -->
+      <line x1="20" y1="80" x2="160" y2="80" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="90" y1="20" x2="90" y2="130" stroke="#d9d0c4" stroke-width="1.5"/>
+      <path d="M 25 118 C 70 116, 78 105, 90 80 C 102 55, 110 44, 155 42" fill="none" stroke="#c0510a" stroke-width="2.5"/>
+      <circle cx="90" cy="80" r="3" fill="#c0510a"/>
+      <text x="90" y="14" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#2a2520" font-weight="600">Sigmoid</text>
+      <text x="106" y="84" text-anchor="start" font-family="JetBrains Mono, monospace" font-size="10" fill="#6b6560">½</text>
+      <text x="150" y="38" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#6b6560">1</text>
+      <!-- relu axes -->
+      <line x1="200" y1="110" x2="340" y2="110" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="270" y1="20" x2="270" y2="125" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="205" y1="110" x2="270" y2="110" stroke="#c0510a" stroke-width="2.5"/>
+      <line x1="270" y1="110" x2="330" y2="35" stroke="#c0510a" stroke-width="2.5"/>
+      <text x="270" y="14" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#2a2520" font-weight="600">ReLU</text>
+      <text x="232" y="124" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#6b6560">x&lt;0 → 0</text>
+      <text x="312" y="60" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#6b6560">x</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Sigmoid (smooth S through ½) and ReLU (flat at 0 for negatives, then slope 1). ReLU dominates modern networks.</div>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Why Smoothness Matters Later</div>
+  <p>One reason the sigmoid and ReLU beat the step and sign functions is <strong>friendliness to gradient descent</strong>. As we'll see in Part VI, training works by computing <em>partial derivatives</em> of the network. A function with a smooth, well-behaved slope is far easier to differentiate and optimize than a hard step with a flat-everywhere, jump-once shape. Keep this in mind — it foreshadows the whole training story.</p>
+</div>
+
+<div class="quiz" id="quiz2-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A neuron with a ReLU activation receives a combined input of <code>in = −5</code>. What does it output?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div><code>−5</code></div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div><code>−1</code></div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div><code>0</code></div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div><code>5</code></div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct — the output is 0.</strong> ReLU is <code>max(0, x)</code>, so any negative input is suppressed to zero; only the positive part passes through. Answer <code>−1</code> confuses ReLU with the sign function, and <code>−5</code> would only be right if there were no activation at all (a purely linear neuron). The whole point of the nonlinearity is precisely that it does <em>not</em> pass <code>−5</code> through unchanged.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>Network Structure — Stacking Neurons into Layers</h2>
+</div>
+
+<h3 id="layers">From One Neuron to a Layered DAG</h3>
+<p>A single neuron is limited. The power comes from wiring many of them together. In a feed-forward network we arrange neurons into <strong>layers</strong>: the raw inputs form layer 0 (the <em>input layer</em>), one or more <em>hidden layers</em> sit in the middle, and the final neuron(s) form the <em>output layer</em>. Signals flow strictly forward — layer 1 reads only from layer 0, layer 2 reads only from layer 1, and so on. Because nothing ever loops back, the whole structure is a <strong>directed acyclic graph</strong> (a DAG).</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="400" height="200" viewBox="0 0 400 200" style="display:block; margin:0 auto;">
+      <!-- layer 0 inputs -->
+      <circle cx="50" cy="50" r="15" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <circle cx="50" cy="100" r="15" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <circle cx="50" cy="150" r="15" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <!-- layer 1 -->
+      <circle cx="190" cy="65" r="17" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <circle cx="190" cy="135" r="17" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <!-- layer 2 output -->
+      <circle cx="330" cy="100" r="17" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <!-- edges 0->1 -->
+      <line x1="65" y1="50" x2="173" y2="65" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="65" y1="100" x2="173" y2="65" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="65" y1="100" x2="173" y2="135" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="65" y1="150" x2="173" y2="135" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="65" y1="50" x2="173" y2="135" stroke="#d9d0c4" stroke-width="1.5"/>
+      <!-- edges 1->2 -->
+      <line x1="207" y1="65" x2="313" y2="100" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="207" y1="135" x2="313" y2="100" stroke="#d9d0c4" stroke-width="1.5"/>
+      <!-- output arrow -->
+      <line x1="347" y1="100" x2="390" y2="100" stroke="#d9d0c4" stroke-width="2"/>
+      <polygon points="390,100 380,95 380,105" fill="#d9d0c4"/>
+      <!-- labels -->
+      <text x="50" y="185" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">Layer 0 (inputs)</text>
+      <text x="190" y="185" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">Layer 1 (hidden)</text>
+      <text x="330" y="140" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">Layer 2 (output)</text>
+    </svg>
+  </div>
+  <div class="figure-caption">A feed-forward network as a DAG. Each layer's neurons read only from the previous layer; the rightmost neuron is the output.</div>
+</div>
+
+<h3 id="fully-connected">Fully Connected Layers and Network Depth</h3>
+<p>A neuron need not read from <em>every</em> neuron in the previous layer — it might tap only a few wires. But when a neuron <strong>does</strong> connect to every neuron in the layer before it, we call that a <strong>fully connected</strong> layer. Fully connected layers are everywhere; you'll meet them again at the tail end of a CNN next lecture.</p>
+
+<p>The number of layers is the network's <strong>depth</strong>. This single word explains a major plot twist in the field's history.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Where "Deep Learning" Comes From</div>
+  <p>Early networks had only a couple of layers, because training networks with <em>many</em> layers ("multi-layer" networks) was extremely hard — so hard that this difficulty is part of why neural-network research nearly died out for years. The breakthrough that revived the field was learning how to train <strong>deep</strong> (many-layer) networks. That is literally where the term <em>deep learning</em> comes from: not some mysterious depth of thought, but the depth — the layer count — of the network.</p>
+</div>
+
+<h3 id="universal">Networks Are Universal Function Approximators</h3>
+<p>A whole network, end to end, just computes a function mapping its inputs to its output. Whenever you have a representation that claims to represent functions, the natural question is: <em>is it expressive enough?</em> If I hand you an arbitrary function over the inputs, can you build a network that represents it?</p>
+
+<p>For neural networks the answer is yes, in a precise sense: they are <strong>universal function approximators</strong>. Give one an arbitrary target function and any error tolerance you like, and there exists a network that approximates the target to within that tolerance. This is the technical statement behind the loose claim that neural networks are "expressive enough to capture anything." Not every machine-learning representation has this property — it is a genuine strength of neural networks.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>A neural network is just a <strong>function</strong> — a flexible, nonlinear one — built by composing many simple neurons. Because it is a universal function approximator, it can represent essentially any input-output mapping you want, <em>provided</em> you can find the right weights. Everything else in this lecture is about how to find those weights.</p>
+</div>
+
+<div class="quiz" id="quiz3-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In a feed-forward network, what does it mean for a layer to be "fully connected"?</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Every neuron also feeds its output back into itself</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Each neuron in the layer reads from every neuron in the previous layer</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Every layer has the same number of neurons</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>All weights in the layer are equal to 1</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct.</strong> A fully connected layer is one where each of its neurons draws an input from <em>every</em> neuron in the preceding layer. Option A describes a recurrent connection, which feed-forward networks forbid by definition. Options C and D describe unrelated properties — connectivity is about <em>which wires exist</em>, not how many neurons there are or what the weights happen to equal.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>Logic Gates &amp; Linear Separability</h2>
+</div>
+
+<h3 id="and-gate">Building an AND Gate from One Neuron</h3>
+<p>To build intuition, let's make a single neuron behave like a familiar Boolean function. Start with the <strong>AND gate</strong>: it takes two inputs <code>i₁, i₂</code> (each 0 or 1) and outputs 1 only when <em>both</em> are 1. Can we pick weights <code>w₁, w₂</code> and a threshold <code>T</code> (using a step activation, no bias) so the neuron reproduces this truth table?</p>
+
+<p>Yes. Take <code>w₁ = 1</code>, <code>w₂ = 1</code>, and <code>T = 1.5</code>. Let's trace every input combination:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><code>i₁=1, i₂=1</code>: weighted sum is <code>1·1 + 1·1 = 2</code>. Is <code>2 ≥ 1.5</code>? Yes → output <strong>1</strong>. ✓</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><code>i₁=1, i₂=0</code>: sum is <code>1 + 0 = 1</code>. Is <code>1 ≥ 1.5</code>? No → output <strong>0</strong>. ✓</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><code>i₁=0, i₂=1</code>: sum is <code>0 + 1 = 1</code>. Is <code>1 ≥ 1.5</code>? No → output <strong>0</strong>. ✓ (symmetric to the previous case)</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><code>i₁=0, i₂=0</code>: sum is <code>0</code>. Is <code>0 ≥ 1.5</code>? No → output <strong>0</strong>. ✓</p>
+</div>
+
+<p>All four rows match the AND truth table. The threshold <code>1.5</code> sits between "one input on" (sum = 1) and "both inputs on" (sum = 2), so only the all-on case clears the bar.</p>
+
+<h3 id="not-gate">The NOT Gate</h3>
+<p>Negation needs only one input and one output, and the trick is a <em>negative</em> weight. Take <code>w = −1</code> and <code>T = −0.5</code>. We want input 1 to map to output 0, and input 0 to map to output 1.</p>
+
+<pre><code><span class="cm"># input = 1:  1 · (-1) = -1.   Is -1 &gt;= -0.5?  No  → output 0</span>
+<span class="cm"># input = 0:  0 · (-1) =  0.   Is  0 &gt;= -0.5?  Yes → output 1</span></code></pre>
+
+<p>The negative weight flips the input's sign, and the threshold is positioned so that "0" clears it but "−1" does not — exactly inverting the input.</p>
+
+<h3 id="xor-problem">The XOR Problem — Where a Single Neuron Fails</h3>
+<p>Now try <strong>XOR</strong> ("exclusive or"): output 1 when the two inputs <em>differ</em> (1,0 or 0,1) and 0 when they match (1,1 or 0,0). Can we find weights and a threshold for a single neuron? When the professor asked the class, the honest answer came back: <em>no, we cannot</em>. And that is provably correct. A single neuron of this kind simply cannot represent XOR.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Limit of a Single Neuron</div>
+  <p>A single threshold neuron can only represent <strong>linearly separable</strong> functions. XOR is the canonical example of a function that is <em>not</em> linearly separable, so no choice of weights and threshold will ever make one neuron compute it. This famous limitation was historically a serious blow to early neural-network optimism.</p>
+</div>
+
+<h3 id="linear-sep">What "Linearly Separable" Means</h3>
+<p>Plot the inputs as points in space. With two inputs, the four combinations <code>(0,0), (0,1), (1,0), (1,1)</code> are the four corners of a square. Color a corner <em>filled</em> if its output should be 1 and <em>hollow</em> if 0. A neuron with a threshold draws a straight <strong>line</strong> (a hyperplane in higher dimensions) and outputs 1 on one side, 0 on the other. So a neuron can compute a function <em>if and only if</em> a single straight line can separate the filled corners from the hollow ones.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="170" viewBox="0 0 420 170" style="display:block; margin:0 auto;">
+      <!-- AND -->
+      <text x="60" y="18" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#2a2520" font-weight="600">AND ✓</text>
+      <line x1="25" y1="130" x2="115" y2="130" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="25" y1="40" x2="25" y2="130" stroke="#d9d0c4" stroke-width="1.5"/>
+      <circle cx="35" cy="120" r="6" fill="#fff" stroke="#2a2520" stroke-width="1.5"/>
+      <circle cx="100" cy="120" r="6" fill="#fff" stroke="#2a2520" stroke-width="1.5"/>
+      <circle cx="35" cy="55" r="6" fill="#fff" stroke="#2a2520" stroke-width="1.5"/>
+      <circle cx="100" cy="55" r="6" fill="#c0510a" stroke="#c0510a"/>
+      <line x1="70" y1="38" x2="118" y2="100" stroke="#2563eb" stroke-width="2" stroke-dasharray="4 3"/>
+      <!-- XOR -->
+      <text x="225" y="18" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#2a2520" font-weight="600">XOR ✗</text>
+      <line x1="190" y1="130" x2="280" y2="130" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="190" y1="40" x2="190" y2="130" stroke="#d9d0c4" stroke-width="1.5"/>
+      <circle cx="200" cy="120" r="6" fill="#fff" stroke="#2a2520" stroke-width="1.5"/>
+      <circle cx="265" cy="120" r="6" fill="#c0510a" stroke="#c0510a"/>
+      <circle cx="200" cy="55" r="6" fill="#c0510a" stroke="#c0510a"/>
+      <circle cx="265" cy="55" r="6" fill="#fff" stroke="#2a2520" stroke-width="1.5"/>
+      <text x="300" y="92" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#c53030">no single</text>
+      <text x="300" y="106" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#c53030">line works</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Filled = output 1, hollow = output 0. AND's one filled corner can be sliced off by a line. XOR's two filled corners sit on opposite diagonals — no straight line separates them.</div>
+</div>
+
+<p>This generalizes beyond two dimensions. For three inputs the points become the eight corners of a cube, and the separator becomes a flat <em>plane</em>. The professor's <strong>minority function</strong> (output 1 when fewer than half the inputs are 1) turns out to be separable by a plane in the cube, so a single 3-input neuron can compute it. XOR, by contrast, stays stubbornly non-separable.</p>
+
+<div class="callout tip">
+  <div class="callout-title">The Fix: Stack More Neurons</div>
+  <p>The resolution to the XOR problem is exactly why we build <em>networks</em> rather than lone neurons. By cascading just two neurons (a small hidden layer), you <em>can</em> represent XOR. This is the concrete payoff of depth from Part III — layering neurons lets the network carve up the input space with multiple lines, escaping the single-line limit.</p>
+</div>
+
+<div class="quiz" id="quiz4-wrap">
+  <div class="quiz-question">Why can a single threshold neuron compute AND but not XOR?</div>
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>XOR has more inputs than AND</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>AND's outputs can be split by a single straight line, but XOR's cannot — XOR is not linearly separable</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>XOR requires a sigmoid activation, while AND only needs a step function</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>AND uses a bias and XOR does not</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct.</strong> A single threshold neuron splits its input space with one straight line (a hyperplane), so it can only compute <em>linearly separable</em> functions. AND's single "1" corner can be sliced off by a line; XOR's two "1" corners sit on opposite diagonals, which no line can separate. Option A is false — both have two inputs. No change of activation function (C) or use of a bias (D) overcomes the geometric obstacle; only adding more neurons (a hidden layer) does.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>A Network Is a Function of Its Weights</h2>
+</div>
+
+<h3 id="unfolding">Unfolding the Output Into the Inputs</h3>
+<p>Before we can train a network, we need to see <em>clearly</em> what function it computes. Consider a tiny network: two inputs (neurons 1 and 2), a hidden layer with neurons 3 and 4, and a single output neuron 5. The weight from neuron <em>j</em> to neuron <em>k</em> is <code>w_jk</code>, the activation is <code>g</code> everywhere, and biases are all zero. The output is <code>a₅</code>.</p>
+
+<p>The output neuron's value is just its own weighted-sum-then-activate rule applied to its inputs <code>a₃</code> and <code>a₄</code>:</p>
+
+<pre><code>a₅ <span class="op">=</span> g( w₃₅<span class="op">·</span>a₃ <span class="op">+</span> w₄₅<span class="op">·</span>a₄ )</code></pre>
+
+<p>But <code>a₃</code> and <code>a₄</code> are themselves outputs of the hidden neurons, each computed from the raw inputs <code>a₁, a₂</code>. We <strong>unfold</strong> them — substitute their definitions in:</p>
+
+<pre><code>a₃ <span class="op">=</span> g( w₁₃<span class="op">·</span>a₁ <span class="op">+</span> w₂₃<span class="op">·</span>a₂ )
+a₄ <span class="op">=</span> g( w₁₄<span class="op">·</span>a₁ <span class="op">+</span> w₂₄<span class="op">·</span>a₂ )
+
+<span class="cm"># Substitute both into a₅:</span>
+a₅ <span class="op">=</span> g( w₃₅<span class="op">·</span>g(w₁₃<span class="op">·</span>a₁ <span class="op">+</span> w₂₃<span class="op">·</span>a₂)
+       <span class="op">+</span> w₄₅<span class="op">·</span>g(w₁₄<span class="op">·</span>a₁ <span class="op">+</span> w₂₄<span class="op">·</span>a₂) )</code></pre>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="360" height="180" viewBox="0 0 360 180" style="display:block; margin:0 auto;">
+      <circle cx="40" cy="60" r="16" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <circle cx="40" cy="120" r="16" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="40" y="65" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">a₁</text>
+      <text x="40" y="125" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">a₂</text>
+      <circle cx="180" cy="60" r="17" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <circle cx="180" cy="120" r="17" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="180" y="65" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">a₃</text>
+      <text x="180" y="125" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">a₄</text>
+      <circle cx="310" cy="90" r="17" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="310" y="95" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">a₅</text>
+      <line x1="56" y1="60" x2="163" y2="60" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="56" y1="60" x2="163" y2="118" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="56" y1="120" x2="163" y2="64" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="56" y1="120" x2="163" y2="120" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="197" y1="60" x2="294" y2="86" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="197" y1="120" x2="294" y2="94" stroke="#d9d0c4" stroke-width="1.5"/>
+      <text x="105" y="48" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#c0510a">w₁₃</text>
+      <text x="105" y="135" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#c0510a">w₂₄</text>
+      <text x="248" y="62" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#c0510a">w₃₅</text>
+      <text x="248" y="120" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#c0510a">w₄₅</text>
+    </svg>
+  </div>
+  <div class="figure-caption">The 2-2-1 network. Six weights connect the layers; unfolding writes <code>a₅</code> purely in terms of the inputs and those six weights.</div>
+</div>
+
+<h3 id="subfunctions">The Output Depends on Two Things: Inputs and Weights</h3>
+<p>Look at what the unfolded formula contains: the inputs <code>a₁, a₂</code> and the six weights <code>w₁₃, w₂₃, w₁₄, w₂₄, w₃₅, w₄₅</code> — nothing else. So we can write the output abstractly as:</p>
+
+<pre><code>a₅ <span class="op">=</span> f( a₁, a₂ ; w₁₃, w₂₃, w₁₄, w₂₄, w₃₅, w₄₅ )</code></pre>
+
+<p>Two kinds of quantities determine the output: the <strong>inputs</strong> (which the world hands you) and the <strong>weights</strong> (which you choose). This split is the key to learning. For a given training example, the inputs are <em>fixed</em> — so the output becomes a function of the weights <em>alone</em>. The professor calls this a "sub-function": fix <code>a₁, a₂</code> to row 1's values and you get one function <code>f₁</code> of the weights; fix them to row 2's values and you get a different function <code>f₂</code>. We will minimize over exactly these.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>You <strong>control</strong> a network's behavior entirely through its weights. The inputs you can't change — they come from the data. But by choosing the weights, you decide what output the network produces for any given input. Training is nothing more than <em>searching for the weights</em> that make the network's outputs match the labeled data. Real networks have millions or billions of weights, making this a massive function-fitting problem.</p>
+</div>
+
+<div class="quiz" id="quiz5-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Once we fix a particular training example's inputs <code>a₁, a₂</code>, the network's output <code>a₅</code> becomes a function of what?</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>The inputs only</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>The weights only</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>The activation function's name only</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Nothing — it is a fixed constant unrelated to anything</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct — a function of the weights only.</strong> The output depends on two things, the inputs and the weights. Once you <em>fix</em> the inputs to a specific example, the only remaining free quantities are the weights, so the output is a "sub-function" of the weights alone. This is precisely why training optimizes over weights: it is the one set of knobs we control. Option A is backwards (inputs are now constant), and the output is certainly not a fixed constant (D), since changing any weight changes it.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART VI ═══════════════════════ -->
+<section id="part6" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part VI</div>
+  <h2>Training — Loss Functions &amp; Gradient Descent</h2>
+</div>
+
+<h3 id="loss">The Loss Function: What We're Optimizing</h3>
+<p>We have <strong>labeled data</strong>: rows of inputs paired with the correct outputs. For each example <code>i</code> we have the input <code>I</code>, the <em>label</em> <code>l</code> (what the data says the answer should be), and a third quantity — what the network <em>actually</em> produces when we feed it <code>I</code>. Training means tuning the weights until the network's outputs line up with the labels. To make "line up" precise, we define a <strong>loss function</strong>: a single number measuring how badly the network's outputs disagree with the labels. Lower loss = better fit.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Loss Function</div>
+  <p>The <strong>loss function</strong> is the optimization criterion: the quantity we try to minimize during training. Two common choices are <strong>mean squared error</strong> (average of squared differences between prediction and label) and <strong>cross-entropy</strong>. The whole training process is the search for weights that drive this number as low as possible.</p>
+</div>
+
+<p>For mean squared error, iterate over all <code>N</code> examples, take the difference between the network's output and the label, square it, and average:</p>
+
+<pre><code><span class="cm"># Mean squared error over N examples</span>
+Loss(w) <span class="op">=</span> (<span class="nb">1</span><span class="op">/</span>N) <span class="op">·</span> <span class="nb">Σ</span><span class="nb">_i</span> ( network(Iᵢ) <span class="op">-</span> labelᵢ )²
+        <span class="cm">#         └ prediction ┘   └ truth ┘</span></code></pre>
+
+<p>Here is the crucial link to Part V: each <code>network(Iᵢ)</code> term, once its input is fixed, is a function of the weights. So the entire loss is itself <strong>a function of the weights</strong> — <code>Loss(w)</code>. We control the loss by choosing <code>w</code>, and the learning algorithm's job is to find the weights that minimize it.</p>
+
+<h3 id="gradient">Gradient Descent: Following the Slope Downhill</h3>
+<p>How do we minimize a function of many variables? With <strong>gradient descent</strong> — the same idea you met in calculus, just scaled up. Imagine a one-variable function <code>y = f(x)</code> and you want to find a peak. Start at some point <code>x₀</code>, compute the <em>derivative</em> (the slope) there, and read its sign: a positive slope means the function rises if you move right, so you take a small step in that direction. Repeat until you stop improving.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Initialize.</strong> Pick starting weights (often random).</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Compute the gradient.</strong> With many variables, the derivative becomes a <em>vector</em> of partial derivatives — one per weight. This vector is the <strong>gradient</strong>; it points in the direction the loss changes fastest. (This is the gradient that gives the algorithm its name.)</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Take a step.</strong> Adjust every weight a little in the direction that reduces the loss. The size of that adjustment is the <strong>step size</strong> (learning rate), often written as a small <code>ε</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Repeat</strong> — recompute the gradient at the new weights and step again, until a stopping condition is met.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Footgun — Choosing the Step Size</div>
+  <p>Step size is a delicate tradeoff. Too <strong>small</strong> and training crawls — it takes forever to converge. Too <strong>large</strong> and you can overshoot the optimum entirely, jumping clean over it without noticing. Tools expose this as a knob; variants like the popular <strong>Adam optimizer</strong> differ mainly in how cleverly they choose and adapt these steps.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">You Won't Implement This By Hand</div>
+  <p>In practice, libraries like <strong>TensorFlow</strong> and <strong>PyTorch</strong> already implement gradient descent and compute gradients automatically. You specify the loss function; they handle the differentiation and the weight updates. The reason we still study the concept is that you must understand it to make sound training decisions — it isn't magic, it's the same optimization you've already seen in calculus.</p>
+</div>
+
+<h3 id="perf-metric">Loss vs. Performance Metric — Two Different Numbers</h3>
+<p>Here is a subtlety that trips people up. The loss is what we <em>optimize</em> during training, but it is usually <strong>not</strong> the thing we ultimately care about. Suppose you're classifying images as "cat / no cat." You train by minimizing a loss like mean squared error or cross-entropy — but when you ask "how good is this network?", you don't report the loss. You report the <strong>performance metric</strong>: the real-world objective, such as classification <em>accuracy</em> ("it got 98% of the held-out images right").</p>
+
+<table class="compare-table">
+  <tr><th>Loss Function</th><th>Performance Metric</th></tr>
+  <tr><td>The thing you <em>optimize</em> during training</td><td>The thing you actually <em>care about</em></td></tr>
+  <tr><td>Must be smooth/differentiable for gradient descent</td><td>Can be any objective (e.g. accuracy), even non-differentiable</td></tr>
+  <tr><td>e.g. mean squared error, cross-entropy</td><td>e.g. % of images classified correctly</td></tr>
+  <tr><td>Drives the weight updates</td><td>Tells you whether the result is any good</td></tr>
+</table>
+
+<p>Why two numbers? Because accuracy ("right or wrong") is a hard, jagged objective that gradient descent can't smoothly slide down. We optimize a smooth <em>proxy</em> (the loss) but evaluate success with the metric we truly want. The next section shows that this distinction is the foundation of how we decide when training is done.</p>
+
+<div class="quiz" id="quiz6-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Why do we optimize a loss function (like mean squared error) during training but report a separate performance metric (like accuracy) at the end?</div>
+  <div class="quiz-options" data-quiz="q6">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>The loss and the accuracy are always exactly equal, so it doesn't matter which we report</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>The loss is a smooth, differentiable proxy that gradient descent can minimize, while the metric is the real-world objective we actually care about</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Accuracy is impossible to compute, so we estimate it with the loss</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>The loss is only used for image data and the metric only for text data</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q6','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q6">
+    <strong>Correct.</strong> Gradient descent needs a smooth function it can differentiate and slide down, which is what the loss provides. The thing we genuinely want — for example classification accuracy — is often jagged and not differentiable, so we can't optimize it directly. We minimize the loss as a stand-in, then evaluate the true objective with the performance metric. Option A is false (they generally differ), and the metric is perfectly computable (C) — it just isn't gradient-friendly.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART VII ═══════════════════════ -->
+<section id="part7" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part VII</div>
+  <h2>The Training Workflow — Epochs, Batches &amp; Splits</h2>
+</div>
+
+<p>Even when a tool handles gradient descent for you, you still have to control the <em>process</em>: how the data is fed in, how it's split, and when to stop. These are the practical knobs the lecture closes on.</p>
+
+<h3 id="epoch-batch">Epochs and Batches</h3>
+<p>An <strong>epoch</strong> is one full pass through the data: one application of gradient descent that touches every example once (you need the whole dataset both to compute the loss and to compute the gradient). Training runs many epochs — epoch 1, epoch 2, … up to some final epoch <code>K</code> — and you'll see the loss and the metric printed after each one.</p>
+
+<p>Within an epoch, modern practice does <strong>not</strong> run gradient descent on the entire dataset at once. Instead it splits the training data into <strong>batches</strong> — small random subsets, with a typical <em>batch size</em> like 32, 64, or 128 rows — and performs a gradient-descent update on each batch in turn. The batches are re-randomized every epoch, so each epoch shuffles the data into fresh groupings.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="400" height="150" viewBox="0 0 400 150" style="display:block; margin:0 auto;">
+      <text x="200" y="16" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#2a2520" font-weight="600">One Epoch = process every batch once</text>
+      <!-- dataset bar split into batches -->
+      <rect x="30" y="40" width="60" height="34" rx="4" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <rect x="98" y="40" width="60" height="34" rx="4" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <rect x="166" y="40" width="60" height="34" rx="4" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <rect x="234" y="40" width="60" height="34" rx="4" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <rect x="302" y="40" width="60" height="34" rx="4" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="60" y="61" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#2a2520">batch</text>
+      <text x="128" y="61" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#2a2520">batch</text>
+      <text x="196" y="61" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#2a2520">batch</text>
+      <text x="264" y="61" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#2a2520">batch</text>
+      <text x="332" y="61" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#2a2520">…</text>
+      <!-- progress dots -->
+      <text x="200" y="100" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#6b6560">Epoch 1: · · · · ·  → loss ↓, accuracy ↑</text>
+      <text x="200" y="125" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">each dot = one finished batch (one GD update)</text>
+    </svg>
+  </div>
+  <div class="figure-caption">The data is split into random batches; a gradient-descent update runs on each. Finishing all batches completes one epoch.</div>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Why Batches? Two Orthogonal Reasons</div>
+  <p>First, <strong>efficiency</strong>: batches can be processed in parallel on hardware like GPUs. Second, and more profound, <strong>randomization</strong>: drawing random batches turns plain gradient descent into <strong>stochastic gradient descent (SGD)</strong>, a variant that is meaningful beyond mere speed — it was one of the major advances behind modern progress. The randomness in the batch selection genuinely improves learning, not just throughput.</p>
+</div>
+
+<h3 id="splits">Train, Validate, Test — Three Roles for Data</h3>
+<p>You never train on all your data. You split it. The first split is <strong>training</strong> vs. <strong>testing</strong> (commonly 80% / 20%): train on the 80%, and after you're completely done, check the metric on the held-out 20% the algorithm never saw. But there's a third, subtler role. Carve a <strong>validation</strong> set out of the training data (e.g. split the 80% again). You train on what remains and, after <em>each epoch</em>, report the metric on the validation set to monitor progress.</p>
+
+<table class="compare-table">
+  <tr><th>Set</th><th>Used during training?</th><th>Role</th></tr>
+  <tr><td><strong>Training</strong></td><td>Yes — gradient descent runs on it</td><td>Optimizes the loss / fits the weights</td></tr>
+  <tr><td><strong>Validation</strong></td><td>Yes — checked after each epoch</td><td>Monitors the metric to decide <em>when to stop</em></td></tr>
+  <tr><td><strong>Testing</strong></td><td><strong>No</strong> — never touched in training</td><td>Final, honest evaluation of the finished model</td></tr>
+</table>
+
+<div class="callout warning">
+  <div class="callout-title">The Test Set Is Sacred — Never Peek</div>
+  <p>Validation and testing both compute a metric, so they feel similar — but their roles differ sharply. The validation set <em>participates</em> in training: you use it to decide when to stop. The test set must stay completely hidden during the entire training process. It is your "last line of defense," used only once you deliver the final product. Looking at the test set while training is effectively <strong>cheating</strong> — it leaks information and inflates your reported performance.</p>
+</div>
+
+<h3 id="stopping">When Do You Stop? Avoiding Overfitting</h3>
+<p>How do you know when to halt? Two naive ideas both fail. "Stop after a fixed number of epochs" is arbitrary. "Keep going as long as the loss keeps dropping" is worse — it leads straight to <strong>overfitting</strong>: the network memorizes the training data so precisely that it stops generalizing to new examples.</p>
+
+<p>The standard fix uses the validation set. After each epoch, watch the validation <em>metric</em> (e.g. accuracy). Normally accuracy climbs as you train — 80%, 90%, 95%, 96% — but at some point it plateaus, or even starts <em>decreasing</em> even while the training loss keeps falling. That divergence is the signature of overfitting, and it's your cue to stop.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Overfitting</div>
+  <p><strong>Overfitting</strong> happens when a model fits the training data so closely that it captures noise and quirks specific to that data, hurting its performance on unseen examples. The validation set catches it: when validation accuracy stops improving (or degrades) while training loss still drops, the model is overfitting, and training should stop.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Patience &amp; the Composite Stopping Rule</div>
+  <p>A common refinement is <strong>patience</strong>: if the validation metric hasn't improved for, say, 15 epochs, give up — patience has "run out." In practice the stopping criterion is often an <em>aggregate</em>: stop on lack of improvement, but also never exceed some maximum epoch count so you aren't waiting forever. High-level tools like <strong>Keras</strong> expose all of this — batch size, validation set, patience — as parameters you simply pass in.</p>
+</div>
+
+<div class="quiz" id="quiz7-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">During training, the training loss keeps dropping, but the validation accuracy stops improving and begins to fall. What is happening, and what should you do?</div>
+  <div class="quiz-options" data-quiz="q7">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>The network is underfitting; train for many more epochs</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>The network is overfitting; stop training (this is the validation set's purpose)</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>The test set is leaking; remove it from the dataset</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>The batch size is too large; set it to the full dataset</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q7','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q7">
+    <strong>Correct.</strong> Falling validation accuracy while training loss still drops is the classic signature of <em>overfitting</em>: the model is memorizing training-specific quirks at the expense of generalization. Monitoring the validation metric to catch exactly this is the validation set's whole reason for existing, and the right response is to stop training. Option A has it backwards (more epochs makes overfitting worse), and the test set (C) plays no role during training at all.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SYNTHESIS ═══════════════════════ -->
+<section id="synthesis" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This lecture built the entire feed-forward neural network from a single idea and then showed how to make it learn. Trace the arc:</p>
+
+<p>We started with the <strong>neuron</strong> (Part I): a unit that takes a weighted sum of its inputs plus a bias. On its own that is purely linear, so we added an <strong>activation function</strong> (Part II) — step, sign, sigmoid, or the now-dominant ReLU — to inject the nonlinearity that makes deep stacking worthwhile. Wiring neurons into <strong>layers</strong> (Part III) gave us a DAG that is a <em>universal function approximator</em>, expressive enough to represent essentially any mapping. The <strong>XOR problem</strong> (Part IV) made the stakes concrete: one neuron can only carve a single straight line through its inputs, so it handles linearly separable functions like AND but fails on XOR — and the cure is exactly the layering from Part III.</p>
+
+<p>Then we shifted from <em>what a network is</em> to <em>how it learns</em>. Unfolding a small network (Part V) revealed the central insight: a network's output is a <strong>function of its weights</strong>, and the weights are the one thing we control. That reframed learning as optimization. We packaged "how wrong are we?" into a <strong>loss function</strong> and minimized it with <strong>gradient descent</strong> (Part VI), carefully distinguishing the smooth loss we optimize from the real-world <em>performance metric</em> we actually want. Finally, the <strong>training workflow</strong> (Part VII) gave us the operational vocabulary — epochs, random batches and stochastic gradient descent, the train/validate/test split, and validation-based stopping to dodge overfitting.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Through-Line</div>
+  <p>A neural network is a flexible nonlinear <strong>function</strong> whose behavior is governed entirely by its <strong>weights</strong>. "Learning" means searching weight-space — via gradient descent on a loss function — for the weights that best fit labeled data. Every concept in this lecture, from ReLU to patience-based stopping, exists to make that search work and to keep it honest.</p>
+</div>
+
+<p>Notice the recurring frame the professor used: <strong>syntax and semantics</strong>. The structure of neurons and layers is the "syntax" (what a network looks like); the function it computes and how we fit it to data is the "semantics" (what it means). That is the same lens this course applied to logic earlier in the term — first the form, then the meaning — now turned on a model-free, data-driven representation instead of a hand-built logical one.</p>
+
+<div class="callout tip">
+  <div class="callout-title">What's Next</div>
+  <p>Next lecture (the last) turns to <strong>architectures</strong>: specific, battle-tested ways of wiring neurons that work well for particular tasks. The headliner is the <strong>convolutional neural network (CNN)</strong> for images — where the inputs are pixel values and a 10×10 grayscale image becomes 100 inputs — capped off by the fully connected layers you met here. We'll also revisit the big <strong>model-free vs. model-based</strong> debate from the opening of this lecture: now that you understand how function-fitting actually works, you'll be equipped to weigh its real limits ("hitting a wall") against the represent-and-reason approaches that dominated the rest of the course.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 16 — Learning Bayesian Networks</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 16</div>
+  <a href="#part1">Part I — Learning From Data</a>
+  <a href="#two-jobs" class="sub">Two Jobs: Parameters &amp; Structure</a>
+  <a href="#data-table" class="sub">What a Data Set Looks Like</a>
+  <a href="#complete-incomplete" class="sub">Complete vs Incomplete</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Maximum Likelihood</a>
+  <a href="#likelihood-score" class="sub">Scoring Parameters</a>
+  <a href="#empirical" class="sub">The Empirical Distribution</a>
+  <a href="#ml-estimate" class="sub">Closed-Form Estimates</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — The EM Algorithm</a>
+  <a href="#why-em" class="sub">Why ML Breaks Down</a>
+  <a href="#em-loop" class="sub">The Completion Loop</a>
+  <a href="#em-props" class="sub">Convergence &amp; Local Optima</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — Learning Structure</a>
+  <a href="#why-not-ml" class="sub">Why ML Overfits</a>
+  <a href="#penalty" class="sub">The Penalty Term</a>
+  <a href="#struct-search" class="sub">Local Search Over Structures</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Supervised Learning &amp; Circuits</a>
+  <a href="#model-vs-query" class="sub">Model vs Query-Oriented</a>
+  <a href="#arith-circuit" class="sub">Arithmetic Circuits</a>
+  <a href="#evaluate" class="sub">Evaluating With Indicators</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part6">Part VI — Loss, Descent &amp; Knowledge</a>
+  <a href="#cross-entropy" class="sub">Cross-Entropy Loss</a>
+  <a href="#gradient" class="sub">Gradient Descent</a>
+  <a href="#background" class="sub">Background Knowledge</a>
+  <a href="#quiz6" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#synthesis">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">CS161 · Fundamentals of Artificial Intelligence</div>
+  <h1>Learning Bayesian Networks From Data</h1>
+  <p class="hero-sub">An interactive guide to Lecture 16 — estimating parameters with maximum likelihood, filling in missing data with EM, learning network structure, and bridging to supervised learning through arithmetic circuits and cross-entropy loss.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>Where Do the Numbers Come From?</h2>
+</div>
+
+<p>In every lecture so far we were <em>handed</em> a Bayesian network: a graph of variables plus all of its probability tables, ready to answer queries. But that raises an awkward question. A Bayesian network has two pieces — a <strong>structure</strong> (which variable points to which) and <strong>parameters</strong> (the actual probability numbers). Where do those come from in the real world? Nobody walks up to a doctor and reads off "the probability of body aches given the flu is 0.83." This lecture is about the other direction: instead of using a network, we <em>build</em> one from observed data.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — A Bayesian Network Has Two Parts</div>
+  <p>The <strong>structure</strong> is the directed graph: which variables are parents of which. The <strong>parameters</strong> are the conditional probability tables (CPTs) that fill in the numbers. A network is only fully specified once you have <em>both</em>. Learning means recovering one or both of them from data.</p>
+</div>
+
+<h3 id="two-jobs">Two Jobs, and Two Ways to Slice Them</h3>
+<p>Learning a Bayesian network breaks into two distinct jobs. The first is <strong>learning the parameters</strong>: you already know the structure (perhaps it came from a story or an expert), and you just need to fill in the numbers. The second, harder job is <strong>learning the structure</strong> itself — figuring out the arrows — which in practice means you must also learn the parameters of whatever structure you pick. This is a deep subject; we will treat the common cases in detail and only sketch the rest.</p>
+
+<p>There is a second, orthogonal way to slice the same territory. We can ask <em>what we are learning the network for</em>. If we want a general-purpose model that can answer <em>any</em> query you might throw at it later, that is <strong>model-oriented</strong> learning. If instead we know in advance the one specific question we will always ask — "given these inputs, predict that output" — that is <strong>query-oriented</strong> learning, which turns out to be exactly the <strong>supervised learning</strong> that dominates modern AI. We build up to that in Parts V and VI.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Why This Matters Later</div>
+  <p>The query-oriented view is the bridge to neural networks, which we tackle next week. A neural network is, underneath, a circuit whose parameters are tuned to make predictions match labels — exactly the supervised setup we reach at the end of this lecture. Keep that destination in mind.</p>
+</div>
+
+<h3 id="data-table">What a Data Set Actually Looks Like</h3>
+<p>Throughout the lecture, "data" means a <strong>table</strong>. Each <strong>column</strong> is a variable of the Bayesian network. Each <strong>row</strong> is one <strong>example</strong> — think of it as one patient, on whom we recorded some observations. So a row is a snapshot of the world: it tells us the value each variable took for that one case. The whole table together is the data set, which we write as <code>D</code>.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="360" height="170" viewBox="0 0 360 170" style="display:block; margin:0 auto;">
+      <!-- header row -->
+      <rect x="20" y="20" width="80" height="30" fill="#f5f0e8" stroke="#d9d0c4"/>
+      <rect x="100" y="20" width="80" height="30" fill="#f5f0e8" stroke="#d9d0c4"/>
+      <rect x="180" y="20" width="80" height="30" fill="#f5f0e8" stroke="#d9d0c4"/>
+      <rect x="260" y="20" width="80" height="30" fill="#f5f0e8" stroke="#d9d0c4"/>
+      <text x="60" y="40" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" font-weight="600" fill="#2a2520">case</text>
+      <text x="140" y="40" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" font-weight="600" fill="#c0510a">Flu</text>
+      <text x="220" y="40" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" font-weight="600" fill="#c0510a">Ache</text>
+      <text x="300" y="40" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" font-weight="600" fill="#c0510a">Cough</text>
+      <!-- row 1 incomplete -->
+      <rect x="20" y="50" width="80" height="30" fill="#fff" stroke="#d9d0c4"/>
+      <rect x="100" y="50" width="80" height="30" fill="#fff" stroke="#d9d0c4"/>
+      <rect x="180" y="50" width="80" height="30" fill="#fef0f0" stroke="#d9d0c4"/>
+      <rect x="260" y="50" width="80" height="30" fill="#fff" stroke="#d9d0c4"/>
+      <text x="60" y="70" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">1</text>
+      <text x="140" y="70" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">true</text>
+      <text x="220" y="70" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" font-weight="700" fill="#c53030">?</text>
+      <text x="300" y="70" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">true</text>
+      <!-- row 2 complete -->
+      <rect x="20" y="80" width="80" height="30" fill="#fff" stroke="#d9d0c4"/>
+      <rect x="100" y="80" width="80" height="30" fill="#fff" stroke="#d9d0c4"/>
+      <rect x="180" y="80" width="80" height="30" fill="#fff" stroke="#d9d0c4"/>
+      <rect x="260" y="80" width="80" height="30" fill="#fff" stroke="#d9d0c4"/>
+      <text x="60" y="100" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">2</text>
+      <text x="140" y="100" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">false</text>
+      <text x="220" y="100" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">false</text>
+      <text x="300" y="100" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">false</text>
+      <!-- row 3 -->
+      <rect x="20" y="110" width="80" height="30" fill="#fff" stroke="#d9d0c4"/>
+      <rect x="100" y="110" width="80" height="30" fill="#fff" stroke="#d9d0c4"/>
+      <rect x="180" y="110" width="80" height="30" fill="#fff" stroke="#d9d0c4"/>
+      <rect x="260" y="110" width="80" height="30" fill="#fff" stroke="#d9d0c4"/>
+      <text x="60" y="130" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">3</text>
+      <text x="140" y="130" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">true</text>
+      <text x="220" y="130" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">true</text>
+      <text x="300" y="130" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">true</text>
+      <text x="180" y="160" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#6b6560">columns = variables · rows = examples</text>
+    </svg>
+  </div>
+  <div class="figure-caption">A data set <code>D</code>. Row 2 is a <strong>complete</strong> example (every value known); row 1 is <strong>incomplete</strong> — the value of <code>Ache</code> is missing (the red <code>?</code>).</div>
+</section>
+
+<h3 id="complete-incomplete">Complete vs Incomplete Data</h3>
+<p>The single most important distinction in this lecture is whether the data is <strong>complete</strong>. An example is complete when we know the value of <em>every</em> variable for that case. If even one value is missing — say a patient's chest X-ray was never taken — the example is <strong>incomplete</strong>. A data set is called complete only if <em>all</em> of its examples are complete; one missing cell anywhere makes the whole data set incomplete.</p>
+
+<p>Why does this matter so much? Because it controls how hard learning is:</p>
+
+<table class="compare-table">
+  <tr><th>Complete Data</th><th>Incomplete Data</th></tr>
+  <tr><td>Maximum-likelihood parameters are <strong>unique</strong></td><td>Multiple maximum-likelihood solutions can exist</td></tr>
+  <tr><td>Found by a single pass over the data (closed form)</td><td>Requires an <strong>iterative</strong> algorithm (EM)</td></tr>
+  <tr><td>Fast and well-behaved</td><td>Slower; the more missing data, the slower it converges</td></tr>
+</table>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>Whether your data is complete or not is the fork in the road for all of parameter learning. Complete data gives you a clean, one-shot answer. Missing data forces you into an iterative, hill-climbing procedure with no guarantee of a unique answer. Everything in Parts II and III flows from this one distinction.</p>
+</div>
+
+<div class="quiz" id="quiz1box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A data set has 100 examples. 99 of them have every variable recorded; one example is missing a single value. Is the data set complete?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Yes — 99% complete rounds up to "complete enough"</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>No — a single missing value anywhere makes the whole data set incomplete</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Yes — completeness only depends on the columns, not the rows</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It depends on which variable is missing</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct — B.</strong> A data set is complete only if <em>every</em> example is complete. One missing cell, in one row, makes the entire data set incomplete, which means the easy closed-form maximum-likelihood method no longer applies and you must reach for EM instead. There is no notion of "mostly complete" here — the distinction is binary, which is exactly why it matters so much for choosing an algorithm.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>Maximum Likelihood on Complete Data</h2>
+</div>
+
+<p>Suppose we know the structure and our data is complete. We want to choose the parameters — the numbers in every CPT. But there are infinitely many possible choices. How do we decide which is best? We need a <strong>score</strong>: a single number that tells us how good a candidate set of parameters is, so we can pick the highest-scoring one.</p>
+
+<h3 id="likelihood-score">Scoring Parameters: The Likelihood</h3>
+<p>Here is the idea. Pick a set of parameters. Those parameters define a complete Bayesian network, and that network defines a probability distribution over all the variables. Now ask that distribution a pointed question: <em>"How probable do you think the data we actually saw is?"</em> A good set of parameters should assign high probability to the data we observed; a bad set should assign it low probability. That probability of the data is the <strong>likelihood</strong> of the parameters, and we choose the parameters that <strong>maximize</strong> it.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Likelihood</div>
+  <p>The <strong>likelihood</strong> of a set of parameters is the probability the resulting distribution assigns to the observed data set. Because examples are assumed independent, it is the <em>product</em> of the probabilities of the individual examples:</p>
+  <p style="text-align:center; font-family:'JetBrains Mono', monospace; font-size:15px; margin-top:8px;">L(&theta;) = Pr(e<sub>1</sub>) &times; Pr(e<sub>2</sub>) &times; &middot;&middot;&middot; &times; Pr(e<sub>n</sub>)</p>
+  <p>The <strong>maximum-likelihood (ML)</strong> parameters are the ones that make this product as large as possible.</p>
+</div>
+
+<p>To compare two candidate parameter sets, &theta;<sub>1</sub> and &theta;<sub>2</sub>, you compute the likelihood of each — the product of how probable each distribution thinks the patients are — and keep whichever scores higher. The remarkable fact for complete data is that you do not have to search at all: there is a direct formula.</p>
+
+<h3 id="empirical">The Empirical Distribution</h3>
+<p>The key tool is the <strong>empirical distribution</strong>, written Pr<sub>D</sub>. The idea is almost too simple: just read the probabilities straight off the data by <em>counting</em>. The probability the empirical distribution assigns to any full instantiation of the variables is simply the <strong>frequency</strong> with which that combination appears in the data.</p>
+
+<p>Concretely, suppose our network has three variables — <code>H</code> (health-aware), <code>S</code> (smokes), <code>E</code> (exercises) — and the data set has 16 examples. Many rows repeat: two different people might both be health-aware, non-smoking exercisers. The empirical distribution collapses those repetitions. If a particular combination appears 9 times out of 16, its empirical probability is 9/16. Combinations that never appear get probability 0.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="380" height="150" viewBox="0 0 380 150" style="display:block; margin:0 auto;">
+      <text x="60" y="24" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#6b6560">raw data (16 rows)</text>
+      <text x="320" y="24" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#6b6560">Pr<tspan baseline-shift="sub" font-size="9">D</tspan></text>
+      <!-- raw rows cluster -->
+      <rect x="20" y="35" width="80" height="14" fill="#fff" stroke="#d9d0c4"/>
+      <rect x="20" y="51" width="80" height="14" fill="#fff" stroke="#d9d0c4"/>
+      <rect x="20" y="67" width="80" height="14" fill="#fef3eb" stroke="#d9d0c4"/>
+      <rect x="20" y="83" width="80" height="14" fill="#fef3eb" stroke="#d9d0c4"/>
+      <rect x="20" y="99" width="80" height="14" fill="#fef3eb" stroke="#d9d0c4"/>
+      <rect x="20" y="115" width="80" height="14" fill="#eff4ff" stroke="#d9d0c4"/>
+      <text x="60" y="45" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#2a2520">T T T</text>
+      <text x="60" y="61" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#2a2520">T T T</text>
+      <text x="60" y="77" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#2a2520">T F T</text>
+      <text x="60" y="93" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#2a2520">T F T</text>
+      <text x="60" y="109" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#2a2520">T F T</text>
+      <text x="60" y="125" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#2a2520">F T F</text>
+      <text x="60" y="143" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#6b6560">⋯</text>
+      <!-- arrow -->
+      <line x1="115" y1="80" x2="175" y2="80" stroke="#c0510a" stroke-width="2"/>
+      <polygon points="175,75 185,80 175,85" fill="#c0510a"/>
+      <text x="150" y="72" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#c0510a">count</text>
+      <!-- summary rows -->
+      <rect x="200" y="40" width="100" height="20" fill="#fef3eb" stroke="#d9d0c4"/>
+      <rect x="300" y="40" width="60" height="20" fill="#fff" stroke="#d9d0c4"/>
+      <text x="250" y="54" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">T T T</text>
+      <text x="330" y="54" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c0510a">2/16</text>
+      <rect x="200" y="62" width="100" height="20" fill="#fef3eb" stroke="#d9d0c4"/>
+      <rect x="300" y="62" width="60" height="20" fill="#fff" stroke="#d9d0c4"/>
+      <text x="250" y="76" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">T F T</text>
+      <text x="330" y="76" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c0510a">9/16</text>
+      <rect x="200" y="84" width="100" height="20" fill="#eff4ff" stroke="#d9d0c4"/>
+      <rect x="300" y="84" width="60" height="20" fill="#fff" stroke="#d9d0c4"/>
+      <text x="250" y="98" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">F T F</text>
+      <text x="330" y="98" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c0510a">1/16</text>
+      <text x="280" y="126" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">≤ 8 distinct rows</text>
+    </svg>
+  </div>
+  <div class="figure-caption">The empirical distribution summarizes 16 raw rows into the distinct instantiations, each weighted by how often it occurred. One pass over the data builds it.</div>
+</div>
+
+<h3 id="ml-estimate">Reading Off the Estimates</h3>
+<p>Once we have the empirical distribution, every parameter is just a ratio of two of its numbers. Say we want &theta; = Pr(S' | H), the probability someone <em>doesn't</em> smoke given they're health-aware. By the definition of conditional probability (Bayes conditioning):</p>
+
+<p style="text-align:center; font-family:'JetBrains Mono', monospace; font-size:15px;">Pr(S' | H) = Pr(S', H) / Pr(H)</p>
+
+<p>and we get <em>both</em> of those probabilities from the empirical distribution. Let's trace it with the lecture's numbers.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Numerator — Pr(S', H).</strong> How many of the 16 examples have someone who is health-aware <em>and</em> does not smoke? Adding up the matching rows (9/16 from one combination plus 1/16 from another) gives <strong>10/16</strong>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Denominator — Pr(H).</strong> How many examples are health-aware at all? Summing the rows where <code>H</code> is true gives <strong>12/16</strong>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Divide.</strong> &theta; = (10/16) &divide; (12/16) = 10/12 = <strong>5/6</strong>. The 16s cancel — it is really just "10 cases out of the 12 relevant ones."</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Repeat.</strong> Do the same ratio for every parameter in every CPT. One pass to build the empirical distribution, then a division per parameter, and you are done.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Why the Division?</div>
+  <p>A student asked exactly this in lecture. The parameter is a <em>conditional</em> probability, and a conditional is by definition a joint over a marginal: Pr(S'|H) = Pr(S', H)/Pr(H). We are not inventing the formula — it is just Bayes conditioning, which we studied earlier in the course, applied to numbers we counted from the data.</p>
+</div>
+
+<p>For complete data these estimates are not merely convenient — they are <strong>provably the maximum-likelihood parameters</strong>, and they are <strong>unique</strong>. So the closed-form "count and divide" recipe is genuinely the best answer the likelihood score can give.</p>
+
+<div class="quiz" id="quiz2box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In a complete data set of 20 examples, 8 are health-aware, and of those 8, exactly 6 also exercise. What is the maximum-likelihood estimate of Pr(Exercise | HealthAware)?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>6/20 — count the exercising-and-health-aware people over the whole data set</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>6/8 — count over only the health-aware subset</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>8/20 — the fraction who are health-aware</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>14/20 — total health-aware plus exercisers</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct — B.</strong> A conditional probability divides the joint by the marginal: Pr(E|H) = Pr(E,H)/Pr(H) = (6/20)/(8/20) = 6/8. The 20s cancel, leaving the intuitive answer "6 of the 8 health-aware people exercise." Option A is the <em>joint</em> Pr(E,H), not the conditional — a classic mistake of forgetting to restrict to the conditioning subset.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>The EM Algorithm for Incomplete Data</h2>
+</div>
+
+<h3 id="why-em">Why the Easy Method Breaks Down</h3>
+<p>The "count and divide" recipe rests entirely on the empirical distribution. But the moment a row has a missing value — say <code>(H=true, S=false, E=?)</code> — we cannot count it. Which bucket does it belong to? <code>(T, F, T)</code> or <code>(T, F, F)</code>? We genuinely do not know, so we cannot build the empirical distribution, and the whole closed-form approach collapses. We need something cleverer.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Trap</div>
+  <p>You might be tempted to just throw away incomplete rows, or to guess the missing value. Throwing rows away wastes data; guessing a single value bakes in an arbitrary commitment. The EM algorithm does something better: it keeps the row but spreads it probabilistically across <em>all</em> its possible completions, weighted by how likely each completion is under the current model.</p>
+</div>
+
+<h3 id="em-loop">The Completion Loop</h3>
+<p>The algorithm is called <strong>EM</strong>, for <strong>Expectation–Maximization</strong> — and it is the same algorithm you used in your homework. It is iterative. The trick is a chicken-and-egg resolution: if we knew the parameters we could fill in the missing values, and if the values were filled in we could compute the parameters. EM bootstraps by guessing one, then alternating.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Initialize.</strong> Take the known structure and invent a starting set of CPTs — typically <em>random</em> parameters. Call these CPT<sub>1</sub>. They define a Bayesian network and therefore a distribution Pr<sub>1</sub>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Expectation — complete the data.</strong> For each incomplete row, list its possible completions. The row <code>(T, F, ?)</code> has two: <code>(T, F, T)</code> and <code>(T, F, F)</code>. Use the <em>current</em> distribution Pr<sub>1</sub> to compute the probability of each completion — e.g. Pr(E=true | H=true, S=false) = x, and Pr(E=false | ...) = y. These x, y are <strong>weights</strong>, not hard choices.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Build a weighted empirical distribution.</strong> A complete row counts with weight 1. An incomplete row is replaced by its completions, each carrying its weight x or y instead of a full count of 1. Now build the empirical distribution using these fractional weights instead of integer counts.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Maximization — re-estimate.</strong> With a (soft) complete data set in hand, apply the Part II "count and divide" recipe to get new parameters CPT<sub>2</sub>, a new network, and a new distribution Pr<sub>2</sub>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <p><strong>Repeat.</strong> Use Pr<sub>2</sub> to recompute the completion weights, rebuild the weighted empirical distribution, re-estimate to get CPT<sub>3</sub>, and so on — until the parameters stop changing.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Soft Counts: The Heart of EM</div>
+  <p>The whole trick is the move from <em>hard counts</em> to <em>soft counts</em>. In complete data each row contributes a count of 1 to one bucket. In EM, an ambiguous row contributes a <em>fraction</em> (its weight) to <em>each</em> possible bucket. As the parameters improve, those weights sharpen, and the estimates improve with them. Every iteration internally runs probabilistic <strong>inference</strong> on the current network to compute those weights — which is why each iteration is computationally costly.</p>
+</div>
+
+<h3 id="em-props">Convergence and Local Optima</h3>
+<p>EM comes with a guarantee: across iterations, the likelihood of the parameters <strong>never gets worse</strong>. It either improves or stays put, until it <strong>converges</strong>. That makes EM a kind of <strong>local search</strong> — it hill-climbs through parameter space, exactly like the local-search algorithms from the search unit of the course.</p>
+
+<p>And that connection comes with the same caveat. Local search can get stuck in a local optimum, and so can EM: <em>where it converges depends on where it started</em>. This is the concrete face of the fact that incomplete data can have multiple maximum-likelihood solutions. The standard remedy is also borrowed from local search — <strong>random restarts</strong>: run EM several times from different random initial parameters and keep the best result. One more rule of thumb: the more data is missing, the slower EM converges.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Connection — This Builds On Search</div>
+  <p>If "hill-climbing, local optima, random restarts" sounds familiar, that is by design. EM is local search wearing a probability costume. The intuitions you built studying search algorithms transfer directly: a guarantee of non-worsening progress, sensitivity to the starting point, and restarts to escape bad basins.</p>
+</div>
+
+<div class="quiz" id="quiz3box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In EM, what does an incomplete row like <code>(T, F, ?)</code> contribute to the (weighted) empirical distribution?</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Nothing — incomplete rows are discarded</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>A full count of 1 to its single most-likely completion</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>A fractional weight to each possible completion, summing to 1</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>A count of 1 to every completion, ignoring probabilities</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct — C.</strong> EM replaces the ambiguous row with all of its completions, each carrying a probability weight computed from the current model, and those weights sum to 1 (replacing the single count of 1 the row would have had if complete). Option B — committing to the single best completion — is "hard EM," a cruder approximation; the real algorithm keeps every completion alive with a soft weight, which is what makes the likelihood guaranteed to improve.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>Learning the Structure</h2>
+</div>
+
+<p>So far we assumed the arrows were given. Now the harder problem: we are handed a data set and asked to learn <em>both</em> the structure and the parameters. Conceptually this splits in two — pick a structure, then estimate its parameters with the tools from Parts II–III. The real challenge is the picking. There are two questions: <strong>what score</strong> tells us one structure is better than another, and <strong>how</strong> do we search the space of structures.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="380" height="130" viewBox="0 0 380 130" style="display:block; margin:0 auto;">
+      <!-- structure 1: chain -->
+      <text x="60" y="115" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">chain</text>
+      <circle cx="60" cy="20" r="13" fill="#fef3eb" stroke="#c0510a"/><text x="60" y="25" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">A</text>
+      <circle cx="60" cy="55" r="13" fill="#fef3eb" stroke="#c0510a"/><text x="60" y="60" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">B</text>
+      <circle cx="60" cy="90" r="13" fill="#fef3eb" stroke="#c0510a"/><text x="60" y="95" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">C</text>
+      <line x1="60" y1="33" x2="60" y2="42" stroke="#2a2520" stroke-width="1.5" marker-end="url(#ar)"/>
+      <line x1="60" y1="68" x2="60" y2="77" stroke="#2a2520" stroke-width="1.5" marker-end="url(#ar)"/>
+      <!-- structure 2: fork -->
+      <text x="190" y="115" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">fork</text>
+      <circle cx="190" cy="20" r="13" fill="#eff4ff" stroke="#2563eb"/><text x="190" y="25" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">A</text>
+      <circle cx="165" cy="75" r="13" fill="#eff4ff" stroke="#2563eb"/><text x="165" y="80" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">B</text>
+      <circle cx="215" cy="75" r="13" fill="#eff4ff" stroke="#2563eb"/><text x="215" y="80" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">C</text>
+      <line x1="183" y1="31" x2="170" y2="62" stroke="#2a2520" stroke-width="1.5" marker-end="url(#ar)"/>
+      <line x1="197" y1="31" x2="210" y2="62" stroke="#2a2520" stroke-width="1.5" marker-end="url(#ar)"/>
+      <!-- structure 3: collider -->
+      <text x="320" y="115" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">collider</text>
+      <circle cx="295" cy="20" r="13" fill="#f3effe" stroke="#7c3aed"/><text x="295" y="25" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">A</text>
+      <circle cx="345" cy="20" r="13" fill="#f3effe" stroke="#7c3aed"/><text x="345" y="25" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">C</text>
+      <circle cx="320" cy="75" r="13" fill="#f3effe" stroke="#7c3aed"/><text x="320" y="80" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">B</text>
+      <line x1="302" y1="31" x2="313" y2="62" stroke="#2a2520" stroke-width="1.5" marker-end="url(#ar)"/>
+      <line x1="338" y1="31" x2="327" y2="62" stroke="#2a2520" stroke-width="1.5" marker-end="url(#ar)"/>
+      <defs><marker id="ar" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><polygon points="0,0 6,3 0,6" fill="#2a2520"/></marker></defs>
+    </svg>
+  </div>
+  <div class="figure-caption">Three candidate structures over the same variables. Structure learning is choosing among them (and many more) by score, then estimating each one's parameters.</div>
+</div>
+
+<h3 id="why-not-ml">Why Maximum Likelihood Is the Wrong Score Here</h3>
+<p>It is tempting to reuse our likelihood score: pick the structure whose best parameters make the data most probable. But this fails badly. A denser structure — more arrows, more parameters — can always fit the data <em>at least</em> as well as a sparser one, because it has more freedom. So pure maximum likelihood will always prefer the most complicated structure it is allowed, fitting the data perfectly including its noise. That is <strong>overfitting</strong>: memorizing the training data instead of capturing the real pattern.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Common Mistake — Likelihood Alone Overfits</div>
+  <p>Maximum likelihood rewards fit and nothing else. Since complexity always buys more fit, likelihood alone hands you the most tangled possible network — great on the training data, useless on new data. For <em>parameter</em> learning likelihood was perfect; for <em>structure</em> learning it is dangerous on its own.</p>
+</div>
+
+<h3 id="penalty">The Penalty Term</h3>
+<p>The fix is to add a <strong>penalty</strong> for complexity, so the score becomes "fit minus complexity." The structure search then has to <em>earn</em> each extra arrow: a new parameter is only worth it if it improves the fit by more than the penalty it costs. This balances the two forces and prevents overfitting.</p>
+
+<p>The penalty has two ingredients. First, <strong>model complexity</strong> — typically the number of <em>independent parameters</em> in the structure; you literally count them. Second, the <strong>size of the data set</strong>, which scales the penalty. The reasoning is subtle but important: with a <em>huge</em> amount of data, fitting it closely is actually fine — there is so much signal that overfitting is not a worry. You only get into trouble with <em>too little</em> data. So the penalty should <strong>shrink as the data set grows</strong>.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Fit Minus Complexity</div>
+  <p>Structure learning is a tug-of-war: likelihood pulls toward complex networks that fit every wrinkle, the penalty pulls back toward simple ones. The penalty grows with the number of parameters and shrinks with the amount of data. This "fit minus complexity" trade-off is one of the most universal ideas in all of machine learning — you will meet it again under names like regularization and the bias-variance trade-off.</p>
+</div>
+
+<h3 id="struct-search">Searching the Space of Structures</h3>
+<p>With a score in hand, how do we find the best-scoring structure? The space of possible graphs is enormous, so we cannot check them all. Instead we reuse machinery from earlier in the course — <strong>local search</strong> again. Start from some initial structure, which already has a score. Then apply small <strong>transformations</strong> — add an arrow, delete an arrow, reverse one — and check whether the transformed structure scores better. Move to it if it does, and keep climbing.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Connection — The Search Unit Pays Off Twice</div>
+  <p>Local search shows up <em>twice</em> in this lecture: once as EM for parameters under missing data, and again here for structures. Both start somewhere, take improving steps, and risk local optima. The score is different (likelihood vs. penalized likelihood) but the search skeleton is identical.</p>
+</div>
+
+<div class="quiz" id="quiz4box">
+  <div class="quiz-question">Why does structure learning add a penalty term instead of just maximizing likelihood like parameter learning does?</div>
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Likelihood is impossible to compute for graphs with many arrows</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>More-complex structures can always fit the data at least as well, so likelihood alone always picks the most complex one and overfits</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>The penalty makes the search converge faster; it has nothing to do with overfitting</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Penalties are needed only when the data is incomplete</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct — B.</strong> A structure with more parameters has more freedom, so its best-fit likelihood can never be worse than a simpler structure's — pure likelihood therefore always rewards complexity and selects the most tangled network, memorizing noise instead of pattern. The penalty (number of independent parameters, scaled down as the data grows) counterbalances this so each arrow must earn its keep. Note this is specific to <em>structure</em> learning; for fixed-structure parameter learning, plain likelihood was exactly right.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>Query-Oriented Learning &amp; Arithmetic Circuits</h2>
+</div>
+
+<h3 id="model-vs-query">Model-Oriented vs Query-Oriented</h3>
+<p>Everything so far was <strong>model-oriented</strong>: we learned a network that could answer <em>any</em> query — you give evidence on whatever variables you like and ask about whatever you like. But often we know the question in advance. Imagine we will <em>always</em> observe inputs E1, E2, E3 and always want to predict a target Q. That is <strong>query-oriented</strong> learning: we can specialize the learning to do that one job well.</p>
+
+<p>This reframing reveals a familiar structure. We have inputs and a target output, and our data lists inputs alongside the correct answer for each. Often a human supplies that answer — looking at an image and writing "cat" or "no cat." That human-supplied answer is a <strong>label</strong>, the data is <strong>labeled data</strong>, and learning to reproduce labels from inputs is <strong>supervised learning</strong> — the engine behind most real-world AI today.</p>
+
+<table class="compare-table">
+  <tr><th>Model-Oriented</th><th>Query-Oriented (Supervised)</th></tr>
+  <tr><td>Learn a general model for any query</td><td>Learn for one fixed input → output query</td></tr>
+  <tr><td>Score: maximum likelihood / penalized likelihood</td><td>Score: a <strong>loss function</strong> (e.g. cross-entropy)</td></tr>
+  <tr><td>Data: full instantiations of all variables</td><td>Data: inputs paired with human <strong>labels</strong></td></tr>
+</table>
+
+<div class="callout tip">
+  <div class="callout-title">Connection — The Bridge to Neural Networks</div>
+  <p>This whole story is the on-ramp to next week. A neural network is used almost exactly this way: a circuit with tunable parameters, fed labeled data, optimized so its outputs match the labels. Get the Bayesian-network version solid now and neural networks will feel like a variation on a theme rather than something brand new.</p>
+</div>
+
+<h3 id="arith-circuit">Compiling a Bayesian Network Into a Circuit</h3>
+<p>To do supervised learning cleanly, we borrow a tool from Bayesian-network <em>inference</em>: the <strong>arithmetic circuit</strong> (AC). Given a network plus a chosen query — say, network over <code>A, B, C</code>, with evidence always on <code>A</code> and <code>C</code>, predicting <code>B</code> — we can <strong>compile</strong> the pair into a circuit that computes the answer.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Arithmetic Circuit</div>
+  <p>An <strong>arithmetic circuit</strong> is a directed graph of just two kinds of internal nodes — <strong>addition</strong> nodes and <strong>multiplication</strong> nodes — with two kinds of inputs at the bottom. Evaluating it bottom-up (multiply and add) produces the query answer at the top, in time <em>linear</em> in the size of the circuit.</p>
+</div>
+
+<p>The two kinds of inputs are the crucial part:</p>
+<ul style="margin: 0 0 18px 22px;">
+  <li style="margin-bottom:8px;"><strong>Parameters (&theta;).</strong> These come straight from the Bayesian network's CPTs — in the lecture's example there are exactly 10 of them, matching the network's parameters.</li>
+  <li><strong>Indicators (&lambda;).</strong> These are how we feed in evidence. There is one indicator per value of each evidence variable: two for binary <code>A</code> (&lambda;<sub>A</sub>, &lambda;<sub>&not;A</sub>) and two for binary <code>C</code>.</li>
+</ul>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="340" height="180" viewBox="0 0 340 180" style="display:block; margin:0 auto;">
+      <!-- outputs -->
+      <text x="100" y="18" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#c0510a">Pr(B)</text>
+      <text x="240" y="18" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#c0510a">Pr(B')</text>
+      <!-- top add nodes -->
+      <circle cx="100" cy="40" r="14" fill="#edf7f0" stroke="#2d8a4e"/><text x="100" y="45" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" fill="#2d8a4e">+</text>
+      <circle cx="240" cy="40" r="14" fill="#edf7f0" stroke="#2d8a4e"/><text x="240" y="45" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" fill="#2d8a4e">+</text>
+      <!-- mult nodes -->
+      <circle cx="60" cy="95" r="14" fill="#fef3eb" stroke="#c0510a"/><text x="60" y="100" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" fill="#c0510a">×</text>
+      <circle cx="150" cy="95" r="14" fill="#fef3eb" stroke="#c0510a"/><text x="150" y="100" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" fill="#c0510a">×</text>
+      <circle cx="280" cy="95" r="14" fill="#fef3eb" stroke="#c0510a"/><text x="280" y="100" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" fill="#c0510a">×</text>
+      <!-- connections top -->
+      <line x1="90" y1="51" x2="68" y2="83" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="108" y1="52" x2="145" y2="83" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="248" y1="52" x2="275" y2="83" stroke="#d9d0c4" stroke-width="1.5"/>
+      <!-- inputs row -->
+      <text x="30" y="150" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2563eb">λ<tspan baseline-shift="sub" font-size="9">A</tspan></text>
+      <text x="90" y="150" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#7c3aed">θ</text>
+      <text x="150" y="150" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2563eb">λ<tspan baseline-shift="sub" font-size="9">C</tspan></text>
+      <text x="210" y="150" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#7c3aed">θ</text>
+      <text x="280" y="150" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2563eb">λ<tspan baseline-shift="sub" font-size="9">C'</tspan></text>
+      <line x1="55" y1="106" x2="33" y2="140" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="62" y1="109" x2="88" y2="140" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="150" y1="109" x2="150" y2="140" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="275" y1="106" x2="212" y2="140" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="282" y1="109" x2="280" y2="140" stroke="#d9d0c4" stroke-width="1.5"/>
+      <text x="170" y="172" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">λ = evidence indicators · θ = network parameters</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Schematic arithmetic circuit: <span style="color:#7c3aed;">&theta;</span> parameters and <span style="color:#2563eb;">&lambda;</span> indicators feed multiplications, which feed additions, producing the query distribution Pr(B) at the top.</div>
+</div>
+
+<p>Where does the circuit come from? It is compiled by the very inference machinery we saw earlier — write the network as a Boolean formula with weights, compile that to a circuit (the NNF → AC reduction), and you can answer queries by weighted model counting. We will not redo that derivation; the point is the link between <strong>probabilistic</strong> reasoning and <strong>logical</strong> reasoning. And the cost is the inference cost we already know: linear in the number of variables, exponential only in the network's <strong>treewidth</strong>.</p>
+
+<h3 id="evaluate">Evaluating With Indicators</h3>
+<p>Indicators are how evidence enters the circuit, and the rules are simple. For a variable, set the indicator of its <em>observed</em> value to 1 and all others to 0. If the value is <em>unknown</em>, set <em>all</em> of its indicators to 1.</p>
+
+<table class="compare-table">
+  <tr><th>You observe (binary A)</th><th>&lambda;<sub>A</sub></th><th>&lambda;<sub>&not;A</sub></th></tr>
+  <tr><td>A = true</td><td>1</td><td>0</td></tr>
+  <tr><td>A = false</td><td>0</td><td>1</td></tr>
+  <tr><td>A unknown</td><td>1</td><td>1</td></tr>
+</table>
+
+<p>So for evidence "A = false, C unknown," you set &lambda;<sub>A</sub>=0, &lambda;<sub>&not;A</sub>=1, &lambda;<sub>C</sub>=1, &lambda;<sub>&not;C</sub>=1. Then evaluate bottom-up. The intuition for the "unknown → all ones" rule: a 1 lets every term through, so leaving all indicators on means "sum over all values of this variable," i.e. marginalize it out — exactly what you want when you have no evidence about it.</p>
+
+<div class="quiz" id="quiz5box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Binary variable C is an evidence variable, but in this example you do <em>not</em> know its value. What should the indicator inputs &lambda;<sub>C</sub> and &lambda;<sub>&not;C</sub> be?</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Both 0 — we have no information, so contribute nothing</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Both 1 — an unknown variable turns on all its indicators</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>0.5 and 0.5 — split the probability evenly</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>1 and 0 — default to the first value</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct — B.</strong> When a variable's value is unknown, <em>all</em> of its indicators are set to 1; when it is known, only the indicator for the observed value is 1 and the rest are 0. Setting both to 1 lets every term involving C pass through the circuit, which is exactly how the circuit sums over (marginalizes out) C. Setting both to 0 (option A) would zero out those terms entirely — the opposite of "no information," it would assert C is impossible.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART VI ═══════════════════════ -->
+<section id="part6" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part VI</div>
+  <h2>Loss, Gradient Descent &amp; Background Knowledge</h2>
+</div>
+
+<p>We have a circuit that turns parameters and evidence into a prediction. For supervised learning we flip the problem: we <em>don't</em> know the parameters and want to learn them so that, on our labeled data, the circuit's predictions match the labels. We no longer maximize likelihood — we minimize a <strong>loss function</strong> that measures how far predictions are from labels.</p>
+
+<h3 id="cross-entropy">Cross-Entropy Loss</h3>
+<p>For each example the circuit produces a <strong>predicted distribution</strong> over the target. Feed in A=true, C=true and the circuit might output Pr(B)=0.7, Pr(B')=0.3. The data, meanwhile, gives a <strong>label</strong>: it just says B is false. We treat that label as a distribution too — a <strong>one-hot distribution</strong> that puts probability 1 on the labeled value and 0 everywhere else, here Pr(B)=0, Pr(B')=1. The loss measures the gap between the predicted distribution and this one-hot label distribution.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Cross-Entropy</div>
+  <p><strong>Cross-entropy</strong> takes two distributions over a variable X — predictions and label — and returns one number measuring how far apart they are. The formula sums over the values x of X:</p>
+  <p style="text-align:center; font-family:'JetBrains Mono', monospace; font-size:15px; margin-top:8px;">H(pred, label) = &minus; &Sigma;<sub>x</sub> pred(x) &middot; log label(x)</p>
+  <p>Smaller cross-entropy means closer distributions. We <strong>minimize</strong> it, averaged over all examples, so the circuit's predictions hug the labels across the whole data set.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">One-Hot Labels</div>
+  <p>The label distribution is "certain" — it knows the answer. For binary B it is just (0, 1) or (1, 0). If B had three values like {small, medium, large}, the one-hot label for "medium" would be (0, 1, 0). Recasting a hard label as a degenerate distribution is what lets us compare it to the model's soft prediction using a single, smooth measure.</p>
+</div>
+
+<h3 id="gradient">Gradient Descent</h3>
+<p>How do we actually find parameters that minimize the average cross-entropy? With <strong>gradient descent</strong>. Start with a guess for the parameters. Compute the <strong>derivative</strong> of the loss with respect to each parameter — that gradient points in the direction the loss increases fastest. To <em>decrease</em> the loss, step in the opposite direction. Repeat until the loss stops dropping. It is exactly the calculus idea of "follow the slope downhill," generalized from one variable to many.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Guess parameters.</strong> Initialize the &theta; values (often randomly).</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Measure loss.</strong> Run the circuit on the data and compute the average cross-entropy between predictions and labels.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Compute the gradient.</strong> Take the derivative of the loss with respect to every parameter to learn which way is "uphill."</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Step downhill.</strong> Nudge each parameter in the direction that lowers the loss, then loop back to step 2 until convergence.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">You Don't Hand-Code This Anymore</div>
+  <p>Years ago you would program these derivatives yourself, with varying success. Today tools like <strong>TensorFlow</strong> (Google) and <strong>PyTorch</strong> (Meta) do it for you: hand them the circuit, the data, and the loss function, and they compute gradients and run optimized variants of gradient descent automatically. They are built for neural networks but handle circuits like ours just as well — which is exactly why this generalizes to next week's material.</p>
+</div>
+
+<h3 id="background">Background Knowledge — The Holy Grail</h3>
+<p>Here is where the Bayesian-network framing shines over a raw neural network. Sometimes you already <em>know</em> some parameters — you have <strong>background knowledge</strong>. Suppose a logical constraint holds: <code>B is true if and only if A is false</code>. That pins down B's CPT entirely — its entries are forced to 0s and 1s (true given A-false, false given A-true, and so on).</p>
+
+<p>Because the circuit's &theta; inputs are <em>literally</em> the network's parameters, you can drop those known values straight in and <strong>remove them from the set you have to learn</strong>. You learn fewer parameters. This is effortless here precisely because the circuit was compiled from a meaningful model — every &theta; corresponds to a real probability you might happen to know.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Knowledge Beats Data</div>
+  <p>Injecting background knowledge has two payoffs. First, <strong>less data needed</strong>: every parameter you already know is one you don't have to learn, so you hit a target accuracy with fewer expensive human-labeled examples. Second, <strong>robustness</strong>: the more knowledge baked in, the harder the model is to fool or break. This easy knowledge-injection is a genuine advantage of model-based circuits over hand-crafted neural networks, where wiring in constraints is far messier.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Why It's Harder in Neural Networks</div>
+  <p>A neural network is also a circuit — but a hand-crafted one whose internal weights don't map to interpretable quantities like "Pr(B | A)." So you usually can't just look up a weight and set it to a known value. Integrating background knowledge there is an open challenge, whereas with a compiled Bayesian network it is as simple as copying a number across.</p>
+</div>
+
+<div class="quiz" id="quiz6box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In query-oriented (supervised) learning with an arithmetic circuit, what plays the role that "maximize likelihood" played in model-oriented learning?</div>
+  <div class="quiz-options" data-quiz="q6">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>We still maximize likelihood, just on fewer variables</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>We minimize a loss function (e.g. cross-entropy) between predictions and labels, via gradient descent</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>We count frequencies in the data and divide, as in complete-data ML</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>We run EM to fill in the labels</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q6','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q6">
+    <strong>Correct — B.</strong> Supervised learning replaces the likelihood objective with a <em>loss function</em> — commonly cross-entropy between the circuit's predicted distribution and the one-hot label — and optimizes it with gradient descent (handled in practice by tools like PyTorch or TensorFlow). Option C is the complete-data parameter recipe, which answers "what is the joint distribution," not "how do I best predict this label"; the two optimize genuinely different scores, which is the whole point of distinguishing model-oriented from query-oriented learning.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SYNTHESIS ═══════════════════════ -->
+<section id="synthesis" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This lecture answered the question every previous one ducked: where do Bayesian networks come from? The answer is a layered story, and each layer set up the next.</p>
+
+<p>We began by splitting learning two ways — <strong>parameters vs. structure</strong>, and <strong>model-oriented vs. query-oriented</strong> — and identifying the one distinction that governs everything: <strong>complete vs. incomplete data</strong>. With complete data, <strong>maximum likelihood</strong> has a beautiful closed form: build the <strong>empirical distribution</strong> in one pass, then read each parameter off as a ratio (count and divide). When values go missing, that recipe collapses, and the <strong>EM algorithm</strong> rescues it by replacing hard counts with soft, probability-weighted completions — a hill-climber that inherits both the guarantees and the local-optima pitfalls of <strong>local search</strong>.</p>
+
+<p>Learning the <strong>structure</strong> exposed a deeper principle: maximum likelihood alone overfits, because complexity always buys more fit, so we balance <strong>fit against a complexity penalty</strong> that fades as data grows — and we search structures with local search yet again. Finally, the <strong>query-oriented</strong> view reframed learning as <strong>supervised learning</strong> from labeled data. Compiling the network into an <strong>arithmetic circuit</strong> exposed its parameters and evidence indicators as explicit inputs; swapping the likelihood objective for a <strong>cross-entropy loss</strong> minimized by <strong>gradient descent</strong> turned the circuit into a trainable predictor; and because every parameter stays interpretable, we can inject <strong>background knowledge</strong> to learn from less data and resist being fooled.</p>
+
+<p>Notice how often two ideas recurred. <strong>Local search</strong> drove both EM and structure learning. And <strong>inference</strong> — the work of earlier lectures — is the engine inside everything here: EM runs inference each iteration to compute completion weights, and the arithmetic circuit <em>is</em> compiled inference repurposed for learning. Learning and inference are not separate worlds; learning is built on top of inference.</p>
+
+<div class="callout tip">
+  <div class="callout-title">What's Next</div>
+  <p>Next week: <strong>neural networks</strong>. The arithmetic circuit, the cross-entropy loss, gradient descent, and PyTorch/TensorFlow were not a detour — they are precisely how neural networks are trained for supervised learning. A neural network is another circuit with tunable parameters fit to labeled data; the difference is that its weights are <em>not</em> interpretable probabilities, which is why injecting background knowledge becomes hard and why robustness becomes a live concern. You now have the conceptual scaffolding to see neural networks as a variation on the supervised-learning theme you just built — not a leap into the unknown.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

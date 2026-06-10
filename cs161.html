@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>COMSCI 134 — Interactive Lecture Notes</title>
+<title>COMSCI 161 — Interactive Lecture Notes</title>
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -80,71 +80,44 @@
     <a href="./">← All Courses</a>
     <span class="spacer"></span>
     <a href="cs130">CS 130</a>
-    <a class="active" href="cs134">CS 134</a>
-    <a href="cs161">CS 161</a>
+    <a href="cs134">CS 134</a>
+    <a class="active" href="cs161">CS 161</a>
   </nav>
 
-  <p class="eyebrow">COMSCI 134 · Distributed Systems · Spring 2026</p>
+  <p class="eyebrow">COMSCI 161 · Fundamentals of Artificial Intelligence · Spring 2026</p>
   <h1>Interactive Lecture Notes</h1>
   <p class="sub">Self-contained, interactive study pages generated from lecture transcripts — one per session. Click any lecture to start learning.</p>
 
   <div class="week">
-    <div class="week-label">Unit 1 · Foundations</div>
+    <div class="week-label">Unit 1 · Logic &amp; Knowledge Representation</div>
     <div class="grid">
-      <a class="card" href="cs134_notes/lec1.html"><span class="num">Lecture 1</span><h3>Many Machines, One Illusion</h3></a>
-      <a class="card" href="cs134_notes/lec2.html"><span class="num">Lecture 2</span><h3>MapReduce, RPC &amp; the First Encounter with Faults</h3></a>
+      <a class="card" href="cs161_notes/lec11.html"><span class="num">Lecture 11</span><h3>First-Order Logic: Objects, Relations &amp; Quantifiers</h3></a>
+      <a class="card" href="cs161_notes/lec12.html"><span class="num">Lecture 12</span><h3>Inference in First-Order Logic</h3></a>
     </div>
   </div>
 
   <div class="week">
-    <div class="week-label">Unit 2 · Time &amp; Global State</div>
+    <div class="week-label">Unit 2 · Reasoning Under Uncertainty</div>
     <div class="grid">
-      <a class="card" href="cs134_notes/lec3.html"><span class="num">Lecture 3</span><h3>Logical Time: Clocks, Causality &amp; Vector Clocks</h3></a>
-      <a class="card" href="cs134_notes/lec4.html"><span class="num">Lecture 4</span><h3>Fault Tolerance &amp; the Chandy–Lamport Snapshot</h3></a>
+      <a class="card" href="cs161_notes/lec13.html"><span class="num">Lecture 13</span><h3>From Logic to Belief: Reasoning Under Uncertainty</h3></a>
+      <a class="card" href="cs161_notes/lec14.html"><span class="num">Lecture 14</span><h3>Bayesian Networks: Belief Through Causal Structure</h3></a>
+      <a class="card" href="cs161_notes/lec15.html"><span class="num">Lecture 15</span><h3>Bayesian Network Inference &amp; Modeling</h3></a>
     </div>
   </div>
 
   <div class="week">
-    <div class="week-label">Unit 3 · Replication &amp; Consistency</div>
+    <div class="week-label">Unit 3 · Learning From Data</div>
     <div class="grid">
-      <a class="card" href="cs134_notes/lec5.html"><span class="num">Lecture 5</span><h3>Fault Tolerance &amp; Primary-Backup Replication</h3></a>
-      <a class="card" href="cs134_notes/lec6.html"><span class="num">Lecture 6</span><h3>Consistency Models &amp; Linearizability</h3></a>
+      <a class="card" href="cs161_notes/lec16.html"><span class="num">Lecture 16</span><h3>Learning Bayesian Networks From Data</h3></a>
+      <a class="card" href="cs161_notes/lec17.html"><span class="num">Lecture 17</span><h3>Entropy, Decision Trees &amp; Random Forests</h3></a>
     </div>
   </div>
 
   <div class="week">
-    <div class="week-label">Unit 4 · Consensus</div>
+    <div class="week-label">Unit 4 · Neural Networks &amp; Deep Learning</div>
     <div class="grid">
-      <a class="card" href="cs134_notes/lec8.html"><span class="num">Lecture 8</span><h3>Consensus &amp; the Paxos Protocol</h3></a>
-      <a class="card" href="cs134_notes/lec9.html"><span class="num">Lecture 9</span><h3>Paxos, Impossibility &amp; Replicated State Machines</h3></a>
-      <a class="card" href="cs134_notes/lec10.html"><span class="num">Lecture 10</span><h3>Consensus in Practice: Chubby &amp; ZooKeeper</h3></a>
-    </div>
-  </div>
-
-  <div class="week">
-    <div class="week-label">Unit 5 · Weak Consistency &amp; Scale</div>
-    <div class="grid">
-      <a class="card" href="cs134_notes/lec11.html"><span class="num">Lecture 11</span><h3>Weak Consistency: CAP, Eventual Consistency &amp; CRDTs</h3></a>
-      <a class="card" href="cs134_notes/lec12.html"><span class="num">Lecture 12</span><h3>Sharding, Consistent Hashing &amp; the Chord Protocol</h3></a>
-      <a class="card" href="cs134_notes/lec13.html"><span class="num">Lecture 13</span><h3>Dynamo — Always-On at Amazon Scale</h3></a>
-    </div>
-  </div>
-
-  <div class="week">
-    <div class="week-label">Unit 6 · Transactions &amp; Planet-Scale Systems</div>
-    <div class="grid">
-      <a class="card" href="cs134_notes/lec14.html"><span class="num">Lecture 14</span><h3>Dynamo Under Failure &amp; the Birth of Transactions</h3></a>
-      <a class="card" href="cs134_notes/lec15.html"><span class="num">Lecture 15</span><h3>Azure Storage &amp; the Rise of Cloud-Native Apps</h3></a>
-      <a class="card" href="cs134_notes/lec16.html"><span class="num">Lecture 16</span><h3>Google Spanner — Transactions Across the Planet</h3></a>
-      <a class="card" href="cs134_notes/lec17.html"><span class="num">Lecture 17</span><h3>Delos &amp; the Virtual Log</h3></a>
-    </div>
-  </div>
-
-  <div class="week">
-    <div class="week-label">Unit 7 · Practice &amp; Wrap-up</div>
-    <div class="grid">
-      <a class="card" href="cs134_notes/lec18.html"><span class="num">Lecture 18</span><h3>Caching Microservices the Right Way</h3></a>
-      <a class="card" href="cs134_notes/lec19.html"><span class="num">Lecture 19</span><h3>Lessons Learned &amp; the Road Ahead</h3></a>
+      <a class="card" href="cs161_notes/lec18.html"><span class="num">Lecture 18</span><h3>Neural Networks: Neurons, Structure &amp; Training</h3></a>
+      <a class="card" href="cs161_notes/lec19.html"><span class="num">Lecture 19</span><h3>Convolutional Networks &amp; the Two Faces of AI</h3></a>
     </div>
   </div>
 

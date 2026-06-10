@@ -1,0 +1,583 @@
+0:00[Music]
+0:099 secondsalright let's a get started we'll come back to cs161 this is our lecture 18
+0:1616 secondsit's actually our lecture before last our last lecture will be on Thursday
+0:2323 secondswe're almost there I know we had to go through this through very difficult times and they got even more difficult
+0:3232 secondsif not upsetting last week so I think everybody should give their self a pat on the back for having gotten this far
+0:3939 secondsdespite the circumstances we just need to hang in there for another week to get to the finish line and we'll all
+0:4848 secondscongratulate ourself for you know having come through this despite everything that's that's going on today we will be
+0:5757 secondstalking about the subject of neural networks this is the last subject whisky in the course and neural networks are
+1:061 minute, 6 secondsactually interesting for a number of reasons one of them is due to the history surrounding them they've been
+1:161 minute, 16 secondsaround for a very long time at least 50 years but they've gone through many ups and downs if you wanna think about it
+1:251 minute, 25 secondsthis way at some point actually in the history of AI work on your networks almost stopped but
+1:331 minute, 33 secondsas we know over the last five plus years they've really had major impact on they
+1:431 minute, 43 secondsare in fact a lot of the applications that you see today which is bringing back attention to AI is these
+1:511 minute, 51 secondsapplications are mostly based on your networks they particularly have impact in two major areas one of them is image
+2:002 minutesanalysis and this is a particular area or sub area of computer vision this is
+2:092 minutes, 9 secondswhen we look at images and try to detect what's going on in there from things as simple as does the image have a cat or
+2:172 minutes, 17 secondsnot all the way to trying to identify particular option and locate them in the image detecting
+2:252 minutes, 25 secondsfaces and you can imagine how many application is spawned off of our ability to do that based on your
+2:312 minutes, 31 secondsnetworks one of them for example is also self-driving cars which in a sense now
+2:382 minutes, 38 secondswere able to see and that proved very useful and another area which you know
+2:462 minutes, 46 secondsnetworks has the major impact is in what you may want to call sequence to sequence translation and this is in
+2:552 minutes, 55 secondsareas like speech and text where I gained two very important application
+3:023 minutes, 2 secondsareas with a lot of influence on many things that we do on a daily basis the
+3:093 minutes, 9 secondsparticular types of neural networks that play the role here is in this case things that are called convolutional
+3:163 minutes, 16 secondsneural networks cnn's and here's a class of a neural networks known as recurrent neural networks or RN and we'll talk
+3:253 minutes, 25 secondsmore about this next time the other reasons why you know networks are interesting and the discussion of the
+3:333 minutes, 33 secondssubject gets somewhat involved is they've also led to this more recent
+3:413 minutes, 41 secondsdebate in AI which was triggered by the success of neural networks in the sense
+3:493 minutes, 49 secondsthat as you see neural networks fall under the paradigm of what people want
+3:573 minutes, 57 secondsto call model free approaches to AI sometimes people call this function
+4:044 minutes, 4 secondsfitting or curve fitting this is in contrast to model-based approaches which
+4:144 minutes, 14 secondswe mostly talked about which can be thought of as the represent and reason
+4:214 minutes, 21 secondsapproach so historically in AI the focus has been on model-based approaches and
+4:284 minutes, 28 secondswith the success of model free approaches like neural networks there's this debate about at some point whether we do need model-based and there
+4:374 minutes, 37 secondswere some voices that are basically saying that we figured it out with your networks and we don't need much and
+4:434 minutes, 43 secondsthere was another set of voices that were said you know we've got in here with bottle free and networks because
+4:514 minutes, 51 secondsmostly of advances in computation and advances in being able to get labeled
+4:584 minutes, 58 secondsdata and there is a limit to all of that so in this particular point actually now even the people behind neural
+5:075 minutes, 7 secondsnetworks and the main advocates are already starting to realize the limits of your networks and you hear in some of
+5:155 minutes, 15 secondsthe recent articles statements like we're hitting a wall and we were able to squeeze that much out of them and there
+5:235 minutes, 23 secondsis a focus coming back on the need for model base over people called background knowledge so it's almost there is no agreement on the limitations and what's
+5:325 minutes, 32 secondsto be done but there's still disagreement on how to address them you see people that would say ok we understand these limitations we
+5:395 minutes, 39 secondsacknowledge but the way to deal with them is to just do more work on your networks and the other people say no we need you know as their approaches and so
+5:485 minutes, 48 secondson so we wouldn't actually talk about this we will even revisit this debate last lecture as part of it after we have finished our discussion on your network
+5:575 minutes, 57 secondsor whatever we want to say about your networks because then we'll have a more complete context to revisit these issues and talk about them so what we'll do
+6:066 minutes, 6 secondstoday is basically focus on the basics of neural networks and it's an exception
+6:156 minutes, 15 secondsbut we will focus on one slice of it which is the one that's been making waves and the one that is then mostly in
+6:226 minutes, 22 secondsuse and that's what people would call feed-forward neural networks and these
+6:296 minutes, 29 secondsare the ones in particular that are trained in a supervised fashion as we
+6:376 minutes, 37 secondsknow that's done using label data this is not if there's a lot more going on but this is basically the mode of usage
+6:466 minutes, 46 secondson your networks that has been making waves and then we will talk about we start by talking about the
+6:536 minutes, 53 secondsbasic construct of neural networks which is emotional neuron and then we will
+6:596 minutes, 59 secondstalk about the basic structure of networks you can think of this as what
+7:097 minutes, 9 secondswe've done before which is syntax and semantics how do they look and what do they mean and then we will talk about
+7:167 minutes, 16 secondshow they are trained right so that's what we do today and on Thursday we will
+7:227 minutes, 22 secondstalk about mostly architectures so there is a particular way to build neural
+7:297 minutes, 29 secondsnetworks and some of these ways are the things that have been influential I did already mention cnn's and RL ends we
+7:377 minutes, 37 secondswill in particular talk about convolutional neural networks and some details so that you get a feel complete sense of the game and then we will end
+7:477 minutes, 47 secondswith a perspective when we try to tie things together and give you a sense of some of the more recent things and future directions and so on all right so
+7:577 minutes, 57 secondslet's get started and talk about the basics and I'm gonna put this under the title of neurons because that's what we
+8:068 minutes, 6 secondswill talk about first which is the building block of neuronal networks and let me put here a number of things that we will go over so we don't miss
+8:158 minutes, 15 secondsanything I'm gonna write it here on the left and then go over all right so these are the concepts that we need to go over
+8:228 minutes, 22 secondswhen explaining what a neuron is which is the building block as I mentioned of a neural network and what you want to
+8:308 minutes, 30 secondsthink about it is as somewhat like a computation unit that has a bunch of
+8:378 minutes, 37 secondsinputs typically coming from other neurons and it has an output right so these guys here would be generated by
+8:478 minutes, 47 secondseither the input to the neural network or the output of some other neurons we're gonna call these AI sub J and this
+8:558 minutes, 55 secondsparticular unit or neuron is AI so its output will be a some I so it is these that we call
+9:039 minutes, 3 secondsactivations so we have a bunch of activations going into the neuron and it will generate an activation and these are numbers so the inputs and outputs of
+9:129 minutes, 12 secondsa neuron are numbers and there are weights attached to these wires or these
+9:219 minutes, 21 secondsinputs and look at the notation that we are using here we will say wage a I so
+9:309 minutes, 30 secondsthis is for the wire that's going from activation j2 when you are on I and each
+9:399 minutes, 39 secondsone of these wires here will have one of these there is also another that's fear
+9:469 minutes, 46 secondsone of these is the bias B and that's another number so we have a bunch of inputs that are coming from other
+9:539 minutes, 53 secondsneurons each one of them is associated with away and then there is this number here that we call the bias and then
+10:0110 minutes, 1 secondthese numbers get combined in a certain way I'm gonna put this and I'm gonna explain it in just a second and after combining these numbers and wait in a
+10:1010 minutes, 10 secondscertain way we pass them through something that is known as the
+10:1610 minutes, 16 secondsactivation function and then we get the output which is a sub I so let's go over
+10:2310 minutes, 23 secondsthis in some detail here I'll give a concrete example in just a little bit but the combination of these inputs or
+10:3210 minutes, 32 secondsthese activations let's call it in sub I those are the result of combining the inputs to that particular neuron I this
+10:4210 minutes, 42 secondsend up being simply weighted sum so we're summing over all inputs J and then
+10:4910 minutes, 49 secondswhat we're doing is we're taking the weight attached to that particular input and multiplying it by the activation
+10:5810 minutes, 58 secondswhat we're doing here is we're taking this activation which is a number multiplying it by this guy which is a number and we're doing it for each one
+11:0711 minutes, 7 secondsof these guys are doing it for this and for this and actually we should finally add the bias here
+11:1411 minutes, 14 secondswhich is another number that's how we combine these guys right wait and put
+11:2111 minutes, 21 secondssome of these inputs for spice and that's import and then a some I which is the output end up being the result of
+11:2911 minutes, 29 secondsapplying the activation function to this particular combination best basically alright so if we want to take a concrete
+11:3711 minutes, 37 secondsexample we will basically let's try to say that we have three particular inputs
+11:4411 minutes, 44 secondslet's call them a1 a2 a3 let's say we have good bias B and this is the output
+11:5211 minutes, 52 secondslet's call it a for and let's say that the weights here are 2 minus 1 0 then we
+12:0112 minutes, 1 secondwill go ahead and basically the output a4 will be the application of this
+12:0812 minutes, 8 secondsactivation function to let's say 2 times a1 and here we have minus a2 this is a 0
+12:1712 minutes, 17 secondsso if we multiply with us we don't get anything plus B all right and that would be the output for that particular neuron
+12:2612 minutes, 26 secondswhere the question is do we have one output yes so this output that we are getting here can go into multiple
+12:3412 minutes, 34 secondsneurons and we'll see that later so this output can feed into multiple other neurons later and we will get to see
+12:4212 minutes, 42 secondsthis when we go over you know how we put these things together to get a neural network but first I'd like to spend a
+12:5012 minutes, 50 secondsbit of time here to talk about these activation functions so this is all very clear and concrete what is missing is
+12:5812 minutes, 58 secondswhat is what do you mean by the activation function let me write here some annotations right so this is here
+13:0613 minutes, 6 secondsthe input activation so this is the output and this is here what we call the bias and this is here what we called the
+13:1513 minutes, 15 secondsweight and this guy here is the activation function let me just mention now up front and of course we're going to talk about this later the idea is
+13:2413 minutes, 24 secondsthat these way Gettler right so they're not specified manually we're gonna learn them from data now the architecture of a neural
+13:3413 minutes, 34 secondsnetwork which we're going to get into later which is how do we put them together to form and your network you will see also that while in principle
+13:4213 minutes, 42 secondsyou can learn that what happened in reality is there are particular structures of neural networks that have proved very useful in particular
+13:4913 minutes, 49 secondscontexts right and I already mentioned cnn's as one of these very influential
+13:5513 minutes, 55 secondsexamples convolutional neural networks particular architecture people use to
+14:0214 minutes, 2 secondsanalyze images and also beyond so again we'll get into this later so typically depending on the task you
+14:1014 minutes, 10 secondspick up a particular architecture and then you learn the weights or what we call the neural network parameters in a
+14:1814 minutes, 18 secondssupervised fashion using data now think of architectures like cnn's and other types like when we need bayesian
+14:2614 minutes, 26 secondsnetworks we said there is naive Bayes architecture or structure there is the bipartite one and these are things that tend to come up in certain situations
+14:3414 minutes, 34 secondsand people have found out that they tend to work a certain situation a similar story in this particular case all right
+14:4214 minutes, 42 secondsso someone is saying can a neuron take its own output as its input we're not gonna get into this field we're talking
+14:4914 minutes, 49 secondsabout feed-forward in neural networks which does not allow that as I said this
+14:5714 minutes, 57 secondsis a much broader subject but we are just focusing on the the basic slices that have been influential and we will
+15:0515 minutes, 5 secondsget to this when we finish the segment and talk about the architecture and you will see that that will not happen now
+15:1215 minutes, 12 secondslet's talk about activation functions so there are very famous types and one of
+15:1915 minutes, 19 secondsthe early ones that were discussed is what's known as the step function and in
+15:2715 minutes, 27 secondsthis particular case what we have is function that looks like this alright so
+15:3415 minutes, 34 secondswhat this does is if you want to write it as U of X that would be 1 if X is
+15:4315 minutes, 43 secondsgreater than or equal to this threshold T and otherwise it is 0 if X is less
+15:5215 minutes, 52 secondsthan T so here we have the notion of a threshold this T so if the combined
+16:0116 minutes, 1 secondinputs like we did here is equal or greater than T and simply the neuron will generate a 1 otherwise it will
+16:0916 minutes, 9 secondsgenerate a 0 so this particular case the output of the neuron is either a 0 or 1 another activation is known as the sine
+16:1916 minutes, 19 secondsfunction and this guy looks like this all right so what we have here is G of x
+16:2716 minutes, 27 secondsequals 1 if X is greater than or equal to 0 and G of X is equal to minus 1
+16:3616 minutes, 36 secondsotherwise so in this case we don't have the additional parameter like we did have here which is the T now there are
+16:4416 minutes, 44 secondstwo other ones that innocence practically perhaps more important and
+16:5116 minutes, 51 secondsone of them is known as the sigmoid function sigmoid activation function let me see if I can through this
+16:5816 minutes, 58 secondscorrectly it's not as easy to draw this one I got it somewhat wrong as far as the slope but let me show you what the
+17:0717 minutes, 7 secondsdescription of this is right so when x is 0 this should be 1/2 that should have intersected here at half now there are
+17:1517 minutes, 15 secondsvariations of the sigmoid where you can control the slope of this function and this gets used typically when the neural
+17:2317 minutes, 23 secondsnetworks have more of a probabilistic interpretation and for a while the sigmoid was pretty common one of the
+17:3217 minutes, 32 secondsconsiderations that comes up when using activation functions is how friendly they are to gradient descent because we
+17:4017 minutes, 40 secondswill see later when we talk about how to train your networks that they get trained using credit cent you have to compute partial
+17:4717 minutes, 47 secondsderivatives and some of these are better suited for that kind of training we will
+17:5417 minutes, 54 secondstalk about training later now the last one our dimension which is the revenue activation function the skull is
+18:0318 minutes, 3 secondsinteresting because in a census the later activation function that was introduced but it's the one that is
+18:1118 minutes, 11 secondsdominant now and a lot of neural networks for the last few years are mostly using radio activation functions
+18:2018 minutes, 20 secondsI believe this was introduced out of 2000 and there were some inspirations for it biological inspirations and others but
+18:2718 minutes, 27 secondsit's pretty simple let's show you what this looks like and this is the revenue
+18:3318 minutes, 33 secondswhich stands for like to rectify the linearly unit and it's pretty simple it
+18:4318 minutes, 43 secondslooks like this so if the this guy is below zero we just generate a zero
+18:5118 minutes, 51 secondsotherwise we send it SS all right so if you want to write this as a function like we've already done G of X end up
+18:5918 minutes, 59 secondsbeing simply max of 0 and X all right so in a way you're suppressing the negative
+19:0919 minutes, 9 secondssignals here you're turning them into zero but otherwise you bastard
+19:1519 minutes, 15 secondsas I said these activation functions the revenues are very common today almost
+19:2219 minutes, 22 secondsalways used in a lot of these architecture all right so this is the basic notion of a neuron which is the
+19:3119 minutes, 31 secondsbuilding block of your network and let's just quickly recap here it's computation
+19:3919 minutes, 39 secondsunit you can think about it this way it takes a bunch of inputs like these guys and it basically takes a weighted sum of
+19:4819 minutes, 48 secondsthat based on the weights that we have here and as I mentioned these weights get learned eventually together with the
+19:5819 minutes, 58 secondsbias we this expression and then we apply an activation function which transforms that number so this is a single number
+20:0520 minutes, 5 secondsnow and then we transform it to another number which ends up being the output of the neuron now we'll take a quick look
+20:1220 minutes, 12 secondsabout how the structure of a network comes out to be and then we dig a little bit more practice a little bit this
+20:2020 minutes, 20 secondsmotion when you run now I have to say that in the more recent architectures when people put neural networks together there are components that are not
+20:2820 minutes, 28 secondsexactly in neurons but we will get to that later very used in a very selected way and I mean you'll see why in a sense
+20:3720 minutes, 37 secondsthat's okay as we move on with our discussion now let's just draw a picture of how and your network may look like so
+20:4620 minutes, 46 secondsagain we are restricting our discussion to what people call feed-forward neural networks and the picture looks something
+20:5420 minutes, 54 secondslike this you've got these inputs let's put them like that and then you have
+21:0221 minutes, 2 secondsthese neurons and then you've got these inputs going into the neurons so in this
+21:0921 minutes, 9 secondsparticular case I am actually feeding solve the inputs to some of the neurons
+21:1621 minutes, 16 secondsso let's say this guy gets these inputs and so on and this guy gets these guys
+21:2221 minutes, 22 secondshere and then you may have another layer of neurons and let's put one more here
+21:3021 minutes, 30 secondsokay I'm gonna make a point here so this guy is gonna feed from all of these guides then this guy is gonna feed from
+21:3821 minutes, 38 secondsall of these guys and perhaps all right so you see it's actually a dag now these
+21:4621 minutes, 46 secondshere are the inputs and this is the output and we call these layers now two
+21:5421 minutes, 54 secondsobservations here one is you can see that for a layer one of the activations are coming just from the previous layer
+22:0322 minutes, 3 secondsso we may want to call this the input layer right and call this the output later so if you look at this layer let's call this
+22:1122 minutes, 11 secondsthey one two and three and maybe this is layer zero so you can see that the inputs to layer one are coming from
+22:1822 minutes, 18 secondslayer zero and the inputs to layer two are coming from layer 1 and so on layer three gets from layer 2 this is
+22:2722 minutes, 27 secondstypically in the case recently people also started looking or focusing more on on situations where you may have the
+22:3522 minutes, 35 secondsactivations from layer some they are going further and this came up when dealing with issues that come up when
+22:4222 minutes, 42 secondsusing gradient descent but we will not do that here so it's basically the way you see it the other notion that I want
+22:5122 minutes, 51 secondsto mention is if you look at this layer here layer 1 you would realize that the particular neuron doesn't cheat from every activation on the previous layer
+23:0023 minutesright so this guy is only feeding from 1 to 3 of these guides and but look at this guy here in this particular case
+23:0723 minutes, 7 secondsthis neuron is feeding from every neuron at the previous layer and similarly this guy is feeding from every neuron at the
+23:1523 minutes, 15 secondsprevious layer we call this a fully connected layer and you will see when we
+23:2223 minutes, 22 secondstalk on Thursday about the one-particle architecture which is convolutional neural network CNN's you will see that
+23:3223 minutes, 32 secondsyou'll have two the two types and it was the end of the neural network you're gonna see fully connected layers there
+23:3923 minutes, 39 secondsthe other few remarks I want to make here are the following there is the notion of a depth of the neural network
+23:4723 minutes, 47 secondsthat is basically in a sense the number of layers and when people started using
+23:5523 minutes, 55 secondsyour layer neural networks they only had a smaller small number of layers a
+24:0324 minutes, 3 secondscouple of layers and one of the reasons for that is training so eventually you have to train these guys to find the
+24:1224 minutes, 12 secondsweights that sits on these wires and there were challenges when trying to
+24:1924 minutes, 19 secondstrain in neural networks that have too many layers or what people call multi-layer neural networks and in
+24:2924 minutes, 29 secondsfact I'm going to tell you that part of the reason that your network research at some point diminished was because of the
+24:3724 minutes, 37 secondsdifficulty of training multi-layer neural networks and one of the breakthroughs that happened and that led
+24:4624 minutes, 46 secondsto the resurface of neural networks is advances that allowed people to train
+24:5424 minutes, 54 secondsdeeper in neural networks and in fact if you have heard that many of us have
+25:0025 minutesheard the term deep learning let's actually was fairing talk but we now
+25:0725 minutes, 7 secondsbasically can Train deep neural networks right so maybe when you heard the term
+25:1525 minutes, 15 secondsdeep learning you thought of something else but actually that's what it's referring to so again one of the
+25:2325 minutes, 23 secondsadvances that triggered a lot of developments result was the ability to train the neural networks and that
+25:3225 minutes, 32 secondsbasically led to the title of deep learning which is a relatively new title given or new term given the very long
+25:3925 minutes, 39 secondshistory of work on neural networks all right so we're gonna now dig a little
+25:4725 minutes, 47 secondsbit deeper into this to get a sense of what is it that in your network
+25:5325 minutes, 53 secondsrepresents but let me also mention a couple of quick things here before we move on which is a term that you may
+26:0226 minutes, 2 secondshear the neural networks are what people
+26:0826 minutes, 8 secondscall universal function approximator z' so what this means so you would see next
+26:1626 minutes, 16 secondsin a precise way how a neural network effectively represents a function a
+26:2226 minutes, 22 secondsfunction from the inputs to the output function that map's these inputs to the other and whenever you have a
+26:3026 minutes, 30 secondsrepresentation that claims that it represents functions a question comes up on
+26:3826 minutes, 38 secondsis that expressive enough meaning if I pick up a particular function let's say in this case we have one two three four
+26:4726 minutes, 47 secondsfive six inputs if I pick up a function let's say over these six inputs I get to
+26:5526 minutes, 55 secondspick up the function are you able to build a neural network that represents that particular function and in theory
+27:0327 minutes, 3 secondsthere is the notion of a universal function approximator in which you can show that a particular representation is
+27:1127 minutes, 11 secondsa universal function approximator which means that if you give me an arbitrary function then I'm able to approximate it
+27:1927 minutes, 19 secondsto an arbitrary error maybe you can get it exactly what you come up with an error of much I deviate from the tooth function and whatever error you come up
+27:2727 minutes, 27 secondswith I can construct something that approximates to that error and neural networks are a universal function
+27:3427 minutes, 34 secondsapproximate and this is typically used to mean that they are expressive they
+27:4227 minutes, 42 secondsare able to capture anything some sense so there are functional representations that people use in machine learning that
+27:5027 minutes, 50 secondsare not universal function approximately alright so perhaps we will look at this more next time when we look at
+27:5727 minutes, 57 secondsperspectives and so on all right so what I would like to do next is practice a
+28:0528 minutes, 5 secondslittle bit the notion of a neuron by going through a few exercises to see how
+28:1228 minutes, 12 secondswe can use it to represent things that we are familiar with so that we just get more familiarity with it concretely so
+28:2128 minutes, 21 secondsI'm going to put this under the label of neurons with step activation functions
+28:2928 minutes, 29 secondsbecause we're just gonna do that can I just look at neurons in particular we want to see how we can use these to
+28:3828 minutes, 38 secondsrepresent an add gate and or gate not and then you know more generally
+28:4528 minutes, 45 secondsminority function and then we look at this notion of linearly separable
+28:5128 minutes, 51 secondsfunctions and that should give us a concrete feel of things so here I had a question for you the first question is
+28:5928 minutes, 59 secondswe do know what is an and gate alright so in the and gate we have two inputs
+29:0629 minutes, 6 secondslet's call them I 1 and I 2 and I have an output and these could be 1 1 1 0 0 1
+29:1529 minutes, 15 seconds0 0 and we know what the output we have in that particular case so the question is can I come up with a
+29:2529 minutes, 25 secondsneuron that has 2 inputs and let's call them in this case I 1 and I 2 and then I
+29:3329 minutes, 33 secondshave these weights weight 1 and weight - and then fresh one so we're assuming that we have a step activation function
+29:4029 minutes, 40 secondsso you have a step activation what you have to tell me what the T is which is the threshold the question is can you pick up these weights W 1 and W 2 and T
+29:5029 minutes, 50 secondsso that this neuron end up behaving like an angei in the sense that if you pass
+29:5829 minutes, 58 secondsit 0 and 0 it will generate 0 but if you
+30:0430 minutes, 4 secondspass it 1 and 1 1 and so on all right can someone tell me what these weights
+30:1330 minutes, 13 secondsso need three numbers W 1 W 2 and T can people suggest what these guys might be
+30:2030 minutes, 20 secondsI do have a number of suggestions here but someone said take this to be 1 and
+30:2830 minutes, 28 secondstake this guy also to be 1 and take the fresh hope to be 1.5 all right so let's
+30:3830 minutes, 38 secondssee if this is gonna work let's go over these guys here so 1 and 1 right so if we do this now I'm gonna have to
+30:4730 minutes, 47 secondsmultiply let's let's write it here so I'm gonna take one by one plus one by one all right I realize we don't have a
+30:5530 minutes, 55 secondsbias here and that will actually be a 2 I'm gonna check to be threshold which is 1.5 and it passes
+31:0431 minutes, 4 secondssome kinda generator so did the right thing let's do the other two cases which would be symmetric in this case so I'm
+31:1331 minutes, 13 secondsgonna have one by one must 0 times 1 and that would be a 1 if I do check the
+31:2131 minutes, 21 secondsquestion mark question mark here 1.5 it does not pass I'm gonna get a 0 that means both of these checks both of these
+31:2931 minutes, 29 secondswork and that's due the last guy so the last guy would be 0 times 1 plus 0 times
+31:3731 minutes, 37 seconds1 which would be 0 when we check that again doesn't pass we get it so actually this works alright and we came up with
+31:4631 minutes, 46 secondsboth weights to be 1 and we use the threshold of 1.5 and just and you can try to do this for the all would be good
+31:5531 minutes, 55 secondsexercise for you you can try this for the negation in the
+32:0332 minutes, 3 secondsnegation what we will have is a neuron that looks like this and just one input and one output and I
+32:1132 minutes, 11 secondsneed to come up with the threshold in this case one possibility is you use a
+32:1832 minutes, 18 secondsweight of minus 1 and you can take this to be minus 1/2 and I think it should
+32:2632 minutes, 26 secondswork out because remember in this case if I got a zero I want to get a 1 as an output if I got a Z so the one I've ever
+32:3332 minutes, 33 secondsto 0 0 maps to 1 and you can check that this shouldn't work so if you take 1 times minus 1 that's minus 1 when I
+32:4332 minutes, 43 secondsequals 1 then I get 1 times minus 1 I want to check this against minus half
+32:5232 minutes, 52 secondsand it is not so I get a 0 and if this
+32:5732 minutes, 57 secondsis 0 then I get a 0 times minus 1 and that is equal to 0 and I check is this
+33:0633 minutes, 6 secondsstraighter than behalf yes so I get a 1 alright so I met this guy to this output
+33:1433 minutes, 14 secondsand I met this time to the supper so it let me ask you a question now I want to
+33:2233 minutes, 22 secondsdo the X or think about it so I want the X or represented as a neuron and if you
+33:2933 minutes, 29 secondsremember what the X or is the X or I have here I 1 and I 2 and here's the
+33:3733 minutes, 37 secondsoutput and 1 1 1 0 0 1 0 0 in these two cases I want a 1 otherwise I want to
+33:4633 minutes, 46 secondszero in these particular cases all right so this is the X 4 and the question is here's my neuron and here's the 2 inputs
+33:5533 minutes, 55 secondsand I 1 and I 2 no bias and I want to have the threshold and this is the can I
+34:0434 minutes, 4 secondscome up with two weights and a t so that I can do the XOR so think about it and
+34:1334 minutes, 13 secondscome up with suggestions while I draw something here that we want used to
+34:2034 minutes, 20 secondsillustrate a concept all right so again try to come up with these three numbers as I draw something here all right so
+34:2934 minutes, 29 secondslet's see that people suggest something I don't have any suggestions for weights
+34:3634 minutes, 36 secondsand a t that really represents the XOR and someone is actually saying no we cannot do that
+34:4434 minutes, 44 secondswe cannot actually represent an X over this particular case by coming up with W 132 or an T and in fact that is the case
+34:5234 minutes, 52 secondsand for that kind of a neuron that we've been practicing it is known that you can only use it to the present what people
+35:0035 minutescall linearly separable function and what does that mean let's look at the simple case here so to import to an
+35:0835 minutes, 8 secondsoutput and let's look at the functions with it so this was the ant function right so here's i1 i2 and the four dots
+35:1735 minutes, 17 secondshere are the combinations of inputs right so this is zero zero and this particular case is 1 1 and so on
+35:2435 minutes, 24 secondsand what I did is the guys that are in red are the ones where I want the output to be one and the other guys that are
+35:3135 minutes, 31 secondshollow are the zeros so what I'm trying to do here is even separate the bread
+35:3835 minutes, 38 secondsfrom the hollow and similarly in this case we have the old game and you can see in this case that there are three
+35:4635 minutes, 46 secondsinputs that I want to map into 1 so this is 1 1 and these two guys have a 1 and a 0 and the sky is the 0 and in this
+35:5535 minutes, 55 secondsparticular case this is the XOR I want separate these guys from that guy now in the first two cases you can draw a line
+36:0336 minutes, 3 secondsthat separates the things that you want all right and in that sense this is what we call a
+36:1236 minutes, 12 secondslinearly separable function and this is not linearly separable you cannot draw a
+36:1836 minutes, 18 secondsline here that will separate the two set of points that we want to separate now this is in 2d you can try it for higher
+36:2736 minutes, 27 secondsdimensions as well so for example if you try to look at what people call for example the minority function so now
+36:3636 minutes, 36 secondswe're going to three inputs right if we're going to three inputs and you want to draw how things may look like you
+36:4436 minutes, 44 secondswould get a cube you get something that looks like this so let's say I 1 I 2 and
+36:5136 minutes, 51 secondsI 3 and then when you draw your points they will basically look more like I
+36:5936 minutes, 59 secondsdon't know to do this visually but you can try to do that so you're gonna get a point here as well ok you can see what's
+37:0737 minutes, 7 secondshappening here in this case you try to do that so minority function is a function that will generate a 1 if the
+37:1637 minutes, 16 secondsminority of Y and otherwise it is 0 so if you look at these points and I have 1
+37:2337 minutes, 23 seconds2 3 4 5 6 7 8 of them that is 8 of these points you can label each depending on
+37:3037 minutes, 30 secondshow many of I 1 I 2 I 3 are actually one or zero and then you can label the guys
+37:3837 minutes, 38 secondsin fact let's just do that you can label the guys that want to put one on it would be these
+37:4537 minutes, 45 secondsguys these four this guy here will have exactly one input as set to one and this
+37:5437 minutes, 54 secondswould have a zero and this alright so these particular guys are the ones I want to generate the one on and if you
+38:0138 minutes, 1 secondlook at this point here you're gonna feed see two inputs are set to one at this guy two inputs are set to one perspective three inputs are set to one
+38:1038 minutes, 10 secondsso I want to separate be read from the holo and in this case you can draw a plane that can separate these so this is
+38:1738 minutes, 17 secondslinearly separable and if the goal is to try to find one of these guys but now
+38:2538 minutes, 25 secondsI'll have three inputs I 1 I 2 and I 3 and three weights and you should be able to come up with those so that function
+38:3338 minutes, 33 secondsbut again you can do it will be X or now we can do for that so using a single neuron but you can put a bunch of neurons together and you can represent X
+38:4038 minutes, 40 secondsand maybe you should try this as an exercise at home in particularly you can cascade in this case two neurons and if
+38:4838 minutes, 48 secondsyou be able to do the X 4 so let's leave it at that take our 10-minute break and when we come back we will dig more into
+38:5738 minutes, 57 secondsthe syntax semantics of neural networks and particular to talk about how to get today all right so we'll resume at 11
+0:00[Music]
+0:099 secondslet's resume our discussion I want to first go over this particular neural network and fully write out the function
+0:1818 secondsthat it represents we will get to see here what's really going on and make a number of observations that will prepare
+0:2626 secondsus to talk about how they get trained so what we have here is a neural network with two inputs and we label them 1 and
+0:3434 seconds2 and then we have the first layer here with two neurons that we labeled three and four and then one more layer here
+0:4242 secondswhich is five and then I went ahead and annotated all of the weights right so this is our convention this weight one
+0:5050 secondsthree because it is going from one to three and then one for going this way
+0:5858 secondsand then to three going that way and and weight to 4 and similarly here we have three five and wait for five so we have
+1:071 minute, 7 secondsone two three four five six wait what we're gonna do now is write out the functional form or the function
+1:171 minute, 17 secondsthat is represented by this particular your a network and we do not have biases here so you can assume the biases zero
+1:251 minute, 25 secondsfor each one of these neurons now if you look at this guy here this is the our
+1:321 minute, 32 secondsnotation was that we would use a five to represent the output of this particular guy and for this guy here the value of
+1:411 minute, 41 secondsthis would be a 2 and here we used a 1 and the output of this guy would be a 3
+1:471 minute, 47 secondsand the output of this kind so if you look at a 5 and what it represents then
+1:571 minute, 57 secondswhat we have is the following we are taking the weight 3 5 and then
+2:072 minutes, 7 secondsmultiplying it by a 3 that is this guy here this the signal going into the neuron number
+2:162 minutes, 16 secondsfive it is the output which is a three and we multiply it by this guy and then we add this activation multiplied by
+2:242 minutes, 24 secondsthis weight so that would be a four and then W four five that's this particular
+2:312 minutes, 31 secondsweight and then what do we do in this case we go ahead and apply the activation function so we can assume
+2:372 minutes, 37 secondsthat the activation function here is G for all of them all right so this is the
+2:462 minutes, 46 secondsactivation function so this is the output of the neural network now we want
+2:532 minutes, 53 secondsto unfold this further because eventually I want the output to be written in terms of the inputs a1 and a2 so what does this mean I'm gonna now go
+3:023 minutes, 2 secondsand try to unfold a3 and unfold a4 so now what I'm gonna get is G and this
+3:103 minutes, 10 secondsis w 3/5 we use the same process what is a3 look at a3 a3 is the result of
+3:173 minutes, 17 secondsapplying the activation function at 3 to us to a 1 multiplied by this guy and a 2
+3:243 minutes, 24 secondsmultiplied by that guy so then we will have w1 3 multiplied by a 1 plus W 2 3
+3:353 minutes, 35 secondsmultiplied by a 2 alright and then we go ahead and unfold a 4 so I'm gonna write
+3:433 minutes, 43 secondshere W 4 5 and now I'm gonna unfold a 4 so what is a 4 if you look at a 4 it is
+3:503 minutes, 50 secondsa 1 multiplied by this and then a 2 multiplied by that and then what we have
+3:563 minutes, 56 secondshere is w 1 for a 1 plus W 2 for all
+4:044 minutes, 4 secondsright now look what happened here we as we actually wrote the output of the
+4:124 minutes, 12 secondsneural network which is a 5 in terms of the two inputs of the neural network the
+4:204 minutes, 20 secondsonly other things that appear in this expression that we have now are what are the weights which are these guys now
+4:284 minutes, 28 secondsif you want to write this in another way you can say that this is a 5 here and it's some function of the two inputs a 1
+4:384 minutes, 38 secondsa 2 and the weights and this would be 1 3 1 4 da da da all the way to the video
+4:474 minutes, 47 seconds4 5 okay see what's going on here to kind of things contribute to the output the input to the neural networks and the
+4:564 minutes, 56 secondsweights let me mark these I'll tell you why we're going over the slowly because it's very important for how learning
+5:035 minutes, 3 secondsworks now someone is asking does this mean that we are assuming zero biases yes we did not have any biases so for each in your own you can assume that the
+5:125 minutes, 12 secondsbias is zero that's what we did but if the bias is not zero it doesn't change anything and the thing that you have to observe here is the neural network as a
+5:205 minutes, 20 secondswhole just represents a function and because what I can do with these guys the activation functions in general it
+5:295 minutes, 29 secondsdoes represent a complex non linear function now the other observation I
+5:375 minutes, 37 secondswant to make here which is the following you can control this function in
+5:445 minutes, 44 secondsparticular what value for a 5 you're gonna get for a particular value of a 1 and a 2 we can control that by setting
+5:525 minutes, 52 secondsthe weights and in fact that's what the training algorithms will do because typically what I have is data and in
+6:026 minutes, 2 secondsparticular label data and label data in this case would look like this you will
+6:096 minutes, 9 secondshave a 1 a 2 a 5 and someone comes and tells you you know what when a 1 was
+6:166 minutes, 16 secondsthis when a 2 was that I got this red when a 1 was this when a 2 was that I
+6:226 minutes, 22 secondsgot was bad and so on and what I want to do is in a sense have been your network
+6:306 minutes, 30 secondskind of fitness data that is I want to choose these weights so the
+6:386 minutes, 38 secondswhen I go to the neural network and say what is your output on these a 1 and a 2 it will give me an a value here that is
+6:466 minutes, 46 secondssimilar to what the neural network will do but we'll talk about this in a more precise sets and the way I can do this
+6:536 minutes, 53 secondsis by controlling these guys now the other thing that I want to mention which will help us in parsing some of what
+7:007 minuteswill happen next is the following now again it depends how much math you've done you maybe find this very
+7:107 minutes, 10 secondscomfortable or you may find it a little bit more challenging but look at this
+7:177 minutes, 17 secondsonce more if I go and fix the value of a1 and a2 for some values all right so I'm looking at the first row here I have
+7:257 minutes, 25 secondsvery specific values for these guys now under a particular value for a 1 and
+7:327 minutes, 32 secondsa 2 a 5 is just a function of the weights so let's call it let's call this
+7:407 minutes, 40 seconds1 2 3 these are the specific values of rows in my data so value for a1 a2 and
+7:487 minutes, 48 secondslet's call this the value 1 and Row 1 then I'm getting a function f 1 in terms of these guys and if I am doing maybe a
+7:587 minutes, 58 secondsbullet here if I'm doing the second row then the value of this guy will be for another kind of a function so there is
+8:088 minutes, 8 secondsthe general function which is this vibe but every time I set a1 and a2 to specific value I get what we call a sub
+8:168 minutes, 16 secondsfunction I get a function that is only in terms of these cats ok and you're gonna see why this observation will be
+8:238 minutes, 23 secondsuseful in when we talk about training so I hope it's clear to you that what's happening with the neural network is
+8:318 minutes, 31 secondsthat it just represents a complex function and here we saw the example and this is a function of the inputs to the
+8:398 minutes, 39 secondsneural networks and the weights and we got data and now we want to find the weights so that we kind of match or fit
+8:478 minutes, 47 secondsthe data in a particular way very firm here game when I wrote about this in my
+8:558 minutes, 55 secondsCA cm article the article that appeared on the cover of CCAC ACM communications of ACC and this was optional reading for
+9:029 minutes, 2 secondsweek one I I did stress this particular observation that the main game in your network something that's very familiar and people have done this in calculus
+9:109 minutes, 10 secondsright which is fitting a function to beta the difference here is that these functions are way more complex than you
+9:179 minutes, 17 secondsmay have done in your calculus course where you have fed functions over one variable or two variables these things
+9:249 minutes, 24 secondscan have millions and some of the big companies employing neural networks that have millions of parameters billions of
+9:329 minutes, 32 secondsweights like so this is very massive function flipping a problem and why you may have fitted a few data points you
+9:409 minutes, 40 secondscollect it in a chemistry or physics lab like 10 points and you try to fit a linear quadratic function these data sets are huge all right and this is
+9:509 minutes, 50 secondswhere people make this reference to computation and paper data that part of the reason we're able to do what we are able to do now is because we can handle
+9:579 minutes, 57 secondsmassive data sets and we have so much computational power that we can fill it complex functions that have millions and billions of parameters again just to
+10:0610 minutes, 6 secondsgive you a little bit of a completeness here because we didn't do any of that yeah for a neural network to be inputs
+10:1310 minutes, 13 secondswhen you're doing image for example analysis the impulse could be the values of the pixels so if you're talking about
+10:2110 minutes, 21 secondsa grayscale image then each one of these guys would be the value of a pixel so if
+10:2910 minutes, 29 secondsyou had an image let's say that was 10 by 10 then you will have 100 inputs in
+10:3610 minutes, 36 secondsthat particular case alright and that would be these guys that you would feel if you had a colored image then it is
+10:4510 minutes, 45 secondsmore right because you would end up feeding the RGB values but we'll talk about this next lecture when we talk about
+10:5310 minutes, 53 secondsCNN's that are used for this particular purpose let's get to the notion of
+11:0011 minuteslearning so now we're going to talk about the training and and here I need to mentioned a couple of notation first
+11:0811 minutes, 8 secondswhich is when you want to Train I want to match in a sense the output that is
+11:1611 minutes, 16 secondsgenerated by the neural network to data and as we discussed earlier we have here enable data that in this particular case
+11:2511 minutes, 25 secondslooks like this but I have a 1 and a 2 and then I had a 5 right so this is my
+11:3111 minutes, 31 secondstable data now the matching process or how do I make them look the same that's done using something known as the most
+11:4011 minutes, 40 secondsfunction so this is a very important term in this particular case so the loss
+11:4711 minutes, 47 secondsfunction think of it as the optimization criteria and that is what am I trying to
+11:5411 minutes, 54 secondsoptimize and there are a couple of common loss functions or things that you
+12:0212 minutes, 2 secondstry to optimize and one of them is we've seen before the cross-entropy and another one is
+12:1012 minutes, 10 secondsmean squared error we'll look at this next so let's assume that the each one
+12:1712 minutes, 17 secondsof these rows is called an I so you have I 1 I 2 this is the input and let's call
+12:2412 minutes, 24 secondsthis the label so this would be label 1 navel to and and so on right so in my data set I'm going to refer to the input
+12:3312 minutes, 33 secondsas I am gonna refer to the output as the label and realize also that when I have the neural network I can go and say to
+12:4212 minutes, 42 secondsthe neural network and your network for input I 3 what do you generate right so we have
+12:5012 minutes, 50 secondsthree quantities that we're gonna see we're gonna see I which is an import l which what the data says I should get
+13:0013 minutesfor that input and then there is this quantity which is what when your network actually says I'm gonna get for that and
+13:0713 minutes, 7 secondswe're gonna put this together to write the loss function that we want to try to optimize so what you would do in this
+13:1513 minutes, 15 secondscase if you wanna do the squared error that you can iterate over the data set and in this case let's say
+13:2413 minutes, 24 secondswe have n of these guys alright so the last time is so big n is how many
+13:3113 minutes, 31 secondsexamples I have in my data set and what we're gonna do we're gonna go and say okay let's see neural network what do
+13:3913 minutes, 39 secondsyou say about that particular input that's the value that the neural network will generate for that particular input
+13:4713 minutes, 47 secondsand then what does the data says about that right so what I'm doing here is I'm
+13:5413 minutes, 54 secondstrying to find the difference between what the neural network said and what the data says okay squaring the
+14:0214 minutes, 2 secondsdifference and taking the average over all examples I want to try to minimize that now remember what we said on the
+14:1014 minutes, 10 secondsprevious slide that is if you look at this guy here with quantity that is the
+14:1714 minutes, 17 secondsoutput of the neural network over a particular input what did we say we say that that is a function of the weights
+14:2614 minutes, 26 secondsso we can say the weights are that when you want to WK we said that if you take the neural network fix the inputs then
+14:3514 minutes, 35 secondsthe output is simply a function of these guys so this whole expression now if you look at it this loss function that we're
+14:4314 minutes, 43 secondscomputing is simply a function of these counts so I can control this guy by
+14:5214 minutes, 52 secondschoosing these particular values and that's what the learning algorithm will try to do will try to find these weight reduse
+14:5814 minutes, 58 secondsso I can minimize this loss function all right and there is a standard way of doing this now it doesn't have to be the
+15:0715 minutes, 7 secondsloss function doesn't have to be this you could have chosen a different loss function and that is done depending on the implication now one thing you're
+15:1515 minutes, 15 secondsgonna see before we move on is that a bunch of things that we cannot be doing like you know what loss function do you use later when we talk about CNN's
+15:2315 minutes, 23 secondsyou're gonna find that as you're building them you can have to make a whole bunch of choices and the general idea is people have this
+15:3115 minutes, 31 secondscovenant that for certain situations certain things work well and you're gonna hear people telling you don't three discover things from scratch
+15:3815 minutes, 38 secondsyou'll find out when it's the common practice or what's the common wisdom and just use it and you're gonna see that some of these choices I don't want to
+15:4615 minutes, 46 secondssay a victory but yes in the sense that people have found out that they work well but there are not a lot of good understanding of necessarily why but the
+15:5615 minutes, 56 secondsbottom line is you can do a lot with these things and people have been doing a lot with these things in terms of getting things accomplished but again
+16:0416 minutes, 4 secondswe'll get back to that later and talk about imitations and so on okay here we are the question now is how I'm gonna do that I'm gonna optimize the loss and
+16:1316 minutes, 13 secondstherefore find these and the standard way of doing this is what's known as gradient descent so we're gonna talk
+16:2016 minutes, 20 secondsabout this next a little bit at the high level because as I said you rarely implement these things anymore people
+16:2816 minutes, 28 secondshave really invested a lot and give you all of these tools for you to kind of use but we need to talk about a gradient
+16:3516 minutes, 35 secondsitself in order to make some further points about training that you need to be aware of so let's go and talk a
+16:4316 minutes, 43 secondslittle bit about gradient descent this is a very important algorithm you probably know it if you've taken
+16:5116 minutes, 51 secondscalculus and this is where you had a function let's say that looks like this
+16:5916 minutes, 59 secondsthis is X and this is y and you had a function that looks something like this and you wanna try to find like a maximum
+17:0817 minutes, 8 secondsvalue of this function and if you remember one of the simplest methods is you go ahead and get a value initially
+17:1617 minutes, 16 secondsand that value may be let's say x0 and then you compute the value of the function so here the function is y
+17:2517 minutes, 25 secondsequals f of X and then you go ahead and compute the derivative which is the
+17:3317 minutes, 33 secondsderivative of the function with respect to X at this particular point and you see the sign of that derivative and if
+17:4117 minutes, 41 secondsit is positive then you know that I can increase the the function by going that way and then you go ahead and take a step that way that is you increase X 0 by let's say
+17:5117 minutes, 51 secondsepsilon and then you repeat the same process you could have landed here by and let's say you started with this guy
+17:5717 minutes, 57 secondsX month then if you look at the derivative in this case you're gonna find out that it's suggesting that you go this way
+18:0418 minutes, 4 secondsin order to further increase the value of the function and there's the question of when I move from my current or in how
+18:1418 minutes, 14 secondsmuch of a delta do I use or how much of an epsilon and that gives you this notion of a step which is this is your
+18:2118 minutes, 21 secondsthe question and this is the notion of a step these are two concepts now issues come up there right how much of a step do you make if you make a step that is
+18:3018 minutes, 30 secondsvery small then it takes a while to converge but if you make a step that's too big you may actually end up jumping over the maximum value without knowing
+18:3718 minutes, 37 secondsso you may be here make a big step you end up going there and you miss this guy and so on okay again what happens in our
+18:4418 minutes, 44 secondscase is basically this game except that instead of your Y being just a function
+18:5118 minutes, 51 secondsof one X we have seen what happens in our case our Y is a function of the
+18:5818 minutes, 58 secondswhole bunch of variables which are the weights and we're basically doing the same thing we're trying to find the values of these guys that optimizes this
+19:0719 minutes, 7 secondswas our loss function now when you're doing this in multi-dimensional there is multi input variables you end up
+19:1519 minutes, 15 secondscomputing the partial derivatives with respect to each one of them and this vector here is known as the gradient all
+19:2419 minutes, 24 secondsright and that's why it's called clearing this that's basically what's going on here so these algorithms are applying this
+19:3219 minutes, 32 secondskind of a concept and they do it by taking steps so they get some value of the weights initially then they compute
+19:4119 minutes, 41 secondsthe gradient and the user to decide how to modify these guys and they just keep modifying them until we stop at a particular part so we're going to talk
+19:5019 minutes, 50 secondsabout this a little bit more or how do you stop and so on but once more the concept that when I'm precise is today when
+19:5719 minutes, 57 secondsyou get tools like tensorflow and buy tours and so on they already come equipped with various implementations of
+20:0620 minutes, 6 secondsgradient descent and they will do the gradient computation and the application of a gradient descent on your behalf you
+20:1420 minutes, 14 secondshave to specify the loss function that you want to optimize and basically they take things from there so what we need
+20:2220 minutes, 22 secondsto do here is explain the basic concepts the gradient and to show you that the learning algorithm is what you've really
+20:2920 minutes, 29 secondsdone in calculus before none of this is very surprising and to also mention that there are variants of gradient descent
+20:3720 minutes, 37 secondsif you use one of the tools for example you're gonna find something called the atom optimizer it's very common this is one of the
+20:4620 minutes, 46 secondsimplementations out there and you'll find that part of the variations is how do you make these steps and and so on so
+20:5420 minutes, 54 secondsthere's lot going on there but all under if you want to think about it under the level of optimization if you care about
+21:0121 minutes, 1 secondthese details you probably wanna take a dedicated machine learning course for an optimization course where you study
+21:0921 minutes, 9 secondsthese objects in detail but for our course intro to AI we're not gonna first we don't have time and then doesn't make sense to go into some of these technical
+21:1821 minutes, 18 secondsdetails which fall into the scope of something else but I do hope that you get to see the big picture here which as you will see very simple simple and
+21:2621 minutes, 26 secondsfamiliar some Devon what we need to do next is tell you a little bit more
+21:3321 minutes, 33 secondsbecause even if we use a tool that is out there that implements gradient descent and then you don't have to worry
+21:4121 minutes, 41 secondsabout how to implement it and use it you still need to know some basic information that is important to put
+21:4921 minutes, 49 secondsthings together alright so we don't have a lot more to do here but important first let me stress another concept why
+21:5721 minutes, 57 secondsgradient descent is trying to optimize the loss function which we said could be something like mean square error of
+22:0422 minutes, 4 secondscourse entity you really objective and objective may not be function but something else for example
+22:1222 minutes, 12 secondslet's say you're looking at images and you're trying to decide whether they have cats or not so in that particular case if you
+22:2122 minutes, 21 secondslook at your data set you're gonna have these guys which represent the pixel values let's say we're doing an X scale
+22:2922 minutes, 29 secondsimages and the output is a yes/no right so the input in this case are the pixels of the image and there was someone that
+22:3722 minutes, 37 secondslooked at every image and labeled it yes has a cat no it does not have a cat and so on okay that's what you do then you will name your network and you optimize
+22:4622 minutes, 46 secondsa certain loss function and then you're done now how do you know how good is your neural network now you're not gonna
+22:5422 minutes, 54 secondslook at how small the loss function was you're gonna go to the action and bottom
+23:0123 minutes, 1 secondline which is how well is your neural network doing on classification so if you remember what we said in the past you may take your data set which let's
+23:1123 minutes, 11 secondssay we have 2,000 images and you may keep part of these right so you can
+23:1823 minutes, 18 secondsbasically split this into 1600 and 400 this is what we call the training data
+23:2623 minutes, 26 secondsset and this is what we call the testing so what you may do is you say okay let me go and optimize the loss function and
+23:3223 minutes, 32 secondson these 1600 images and when I'm done let me see how well I did so I'm gonna go to these 400 guys that the training
+23:4023 minutes, 40 secondsalgorithm did not see and let me compute the accuracy so what is the accuracy I'm gonna go to each one of those 400 and say you're a network what are you saying
+23:4823 minutes, 48 secondslet's observe a cat or not I mean your neural network comes back with an answer yes no and you match it with what the data says and maybe you'll find out that
+23:5623 minutes, 56 secondsokay it got it right 98 percent of the time so that would be the accuracy all right so that's 98 percent now what am I
+24:0524 minutes, 5 secondsdoing here I'm distinguishing the loss function which is the thing that you are optimizing during the training process
+24:1324 minutes, 13 secondsand your final objective which I'm gonna call the performance metric which you're
+24:1924 minutes, 19 secondsreally after right so you optimize this but when you're done to see how well you've done you check the performance
+24:2824 minutes, 28 secondsmetric and you get a 98% now I'll tell you why this distinction is important next right but the important thing for
+24:3624 minutes, 36 secondsnow is you've got your data set you typically split it into two parts and the two parts could be commonly people
+24:4524 minutes, 45 secondsdo eighty twenty percent so you do 80 percent to train and 20 percent to test you optimize the loss function using the
+24:5324 minutes, 53 secondseighty percent which we call the training data and then you check your performance metric on the other testing
+25:0025 minutesthere now that we have settled this let's go talk about the very last part
+25:0625 minutes, 6 secondsof this game all right so this last part again under the training neural networks
+25:1425 minutes, 14 secondsI put back loss function and performance metric very important typically we call it the loss and now I'm gonna put a few
+25:2325 minutes, 23 secondsmore concepts that we need to go over to put all of the stick together the concepts I'm gonna mention next are the
+25:3025 minutes, 30 secondsnotion of an iPod the notion of a batch the notion of test sorry train let's
+25:3825 minutes, 38 secondsstart with train validation or validate or test this all with respect to data we
+25:4525 minutes, 45 secondstalked about two of them so far and the final notion I want to talk about is the stocking cracking these are important
+25:5225 minutes, 52 secondsbecause even if you use a tool that gives you a lot of what we talked about you still need to control some of these things as you train something so let's
+26:0226 minutes, 2 secondsgo over these as we mentioned what you try to do initially is you take your data and you split it into what we call
+26:1026 minutes, 10 secondstraining beta and testing data and typically this is like 80% and this is 20% and you run gradient descent on the
+26:1926 minutes, 19 secondstraining data to optimize the mass so this is optimizing the loss and then you
+26:2626 minutes, 26 secondsdo the testing by checking the metalic and see how well you did okay now there
+26:3226 minutes, 32 secondsis very important variations on this or of this picture so far the first is
+26:3926 minutes, 39 secondsthere is this notion of a meta which is one iteration of gradient descent so typically when you're running these things and and seeing what's gonna
+26:4826 minutes, 48 secondshappen as the training takes place you're gonna find that the output is being printed like this let's see that ever 1 and then here you'll find the
+26:5726 minutes, 57 secondsvalue of the last and the value of the metric and then a box - da da da
+27:0427 minutes, 4 secondsall right so each one of these is a particular application gradient descent now remember what an application of
+27:1227 minutes, 12 secondsgradient descent will do is we'll have to go at least once through the data right so if you want to compute the mean square error or the loss function you
+27:2127 minutes, 21 secondshave to go through the data you saw the formula before and then to compute the gradient as well right so each one of these you can think of it as a pass
+27:3027 minutes, 30 secondsthrough the data now it's gonna keep going the question is you're gonna get this last epic let's call it Big K right
+27:3927 minutes, 39 secondsand then you're gonna stop so now we're gonna talk about this picture a little bit how do you stop this is one thing
+27:4627 minutes, 46 secondsimportant and second in each epoch you will see that there is actually further refinement so we kind of thing to do is
+27:5527 minutes, 55 secondsthese days is instead of running gradient descent on the whole data set right so what you would do is you take
+28:0428 minutes, 4 secondsyour data set and then divide it into what we call batches so each one of these is a batch typical sizes of
+28:1428 minutes, 14 secondsbatches could be something like 64 so every 60 for example is a batch and moreover what you do is so this is
+28:2128 minutes, 21 secondstraining what you do is when you divide your training data into batches to do that randomly so you end up breaking it into random batches and then you would
+28:2928 minutes, 29 secondsdo gradient descent on each one of the batches so all of this isn't with within one Emma so instead of the above doing
+28:3628 minutes, 36 secondsjust applying training set on the whole thing it will go and apply it on these batches and that would be one Emma and
+28:4428 minutes, 44 secondsthen when you go to second Emma you actually do the splitting of your data into batches again so part of what you have to do here when
+28:5328 minutes, 53 secondsyou run these algorithms you have to decide on the batch size this is one of these things that you have to come up with and again there's common wisdom to do that and sometimes you just have to
+29:0129 minutes, 1 secondtry things so you try 32 64 128 and see what works best so that's an important concept here which is the concept of a
+29:1029 minutes, 10 secondsbatch and taking your data and basically splitting it randomly into batches again
+29:1829 minutes, 18 secondsold with the kaepa alright again why do we mention this because if you build these systems or you pick one of these tools and you put in your network that
+29:2729 minutes, 27 secondsscreen if you have to come up with the batch size so now you know what's going on now there's one more important concept here and we're basically
+29:3429 minutes, 34 secondseffectively we done the important concept has to do is when do you stop well the simplest thing you can do is to
+29:4229 minutes, 42 secondssay well don't do more than a thousand a box so stop after a thousand a box oh that's not a very good stopping criteria
+29:4929 minutes, 49 secondsthe other thing is you may say you know what keep doing this as long as the loss is getting smaller we're good just keep
+29:5729 minutes, 57 secondsgoing keep doing this right get the most out of minimizing the loss that also turns out not to be a very good idea because you may end up overfitting that
+30:0730 minutes, 7 secondsis you make the data look so much the neural net would produce exactly like with the data and and then you may over
+30:1430 minutes, 14 secondsfit so today one of the more common ways of doing this is the following now your
+30:2230 minutes, 22 secondsclinic data before you go and apply gradient descent you take it and split
+30:2930 minutes, 29 secondsit also in a way into train and what we call validate validation beta all right so you may do another you may take this
+30:3730 minutes, 37 seconds80 percent and split again into 80 and 50 now why do we do this what you do there is you train on the sky but then
+30:4530 minutes, 45 secondsafter every a part you report the metric on the validation data and you monitor
+30:5230 minutes, 52 secondsthat so now you're looking at the accuracy so you're optimizing the laws and every after every epoch say what's
+30:5930 minutes, 59 secondsgoing on with respect to the validation data um well am i doing what is the accurate and if the accuracy on I mean normally
+31:0731 minutes, 7 secondsyou would want to see the accuracy getting better as as you go down and do more a box and you try to stop when you stop making enough improvements on the
+31:1631 minutes, 16 secondsvalidation data right so if you realize that the accuracy was going you know you
+31:2431 minutes, 24 secondsstart 80% it was moving up so they got 90 95 96 like 7 keep going in sometimes
+31:3131 minutes, 31 secondsit's not improving it even gets stuck there or sometimes actually it may start decreasing the accuracy may start decreasing even though you're doing
+31:3931 minutes, 39 secondsbetter on minimizing loss then you stop then you realize that you probably over 50 so you monitor this guy performance
+31:4731 minutes, 47 secondsmetric on the validation and use it as a criteria to stop again current tools we
+31:5431 minutes, 54 secondstalked about there's a float on the road fighters there's even higher level tools like Karis which even give you even
+32:0132 minutes, 1 secondhigher primitives they give you all of these things as functions to call you don't have to implement this stuff but you need to know what they're talking
+32:0932 minutes, 9 secondsabout so you know which one to call so the stopping criteria typically is done by having a validation data set and
+32:1632 minutes, 16 secondsmonitoring the performance metric on that validation set and using it as a way to stop and generally you start when
+32:2432 minutes, 24 secondsyou start start making enough improvements on the validation data set
+32:3032 minutes, 30 secondsand definitely if you start going worse on that guy all right and that's
+32:3832 minutes, 38 secondsbasically the big picture here and the main terminology that you need to know when you're putting things together
+32:4632 minutes, 46 secondsthat's again quickly recap the notion of an epoch it's very important the notion of a badge and this notion of training
+32:5332 minutes, 53 secondsdata set validation data set testing data set and the notion of stopping criteria again most of these tools when
+32:5932 minutes, 59 secondsyou call the training function you pass it these parameters you tell it what is the batch size and how do you want to
+33:0833 minutes, 8 secondsstop and and and things like this now there is a question about the difference between the validation and the testing I
+33:1633 minutes, 16 secondsknow this gets a little bit using their similar in a certain way and they're distinct in a certain way they are similar in the sense that I use both
+33:2533 minutes, 25 secondsthe validation data set and the testing data set to compute the metric they are different in the sense that the
+33:3233 minutes, 32 secondsvalidation data said plays a role in the training so when I'm training I am using
+33:3933 minutes, 39 secondsthe performance metric on the validation to decide when to stop the main thing
+33:4633 minutes, 46 secondsabout the testing data is no you cannot see it at all during training I'm reserving this as my last line of defense
+33:5433 minutes, 54 secondsI'm not showing this to you you can't use it in any way when you're training when you're completely done and you deliver the product I'm gonna go and use
+34:0234 minutes, 2 secondsthe testing data set to see how well you've done but the sacred thing is you have no access to this you cannot see otherwise with cheating but the validation data
+34:1234 minutes, 12 secondsset is being used during the training process you're looking at it and you're using it to decide how to train does this make sense very good now there's another question
+34:2034 minutes, 20 secondswhich is does one batch equal to one epic no the air park itself when you
+34:2934 minutes, 29 secondshave done it then you have processed many batches so if you take your data
+34:3534 minutes, 35 secondsset and split it into batches you may end up having let's say a thousand
+34:4234 minutes, 42 secondsbatches so inside one epoch you will be processing these hundred batches you can
+34:4934 minutes, 49 secondsthink of each batch as a smaller data set so instead of in one pepper of doing the whole data set now I'm doing a
+34:5634 minutes, 56 secondsthousand smaller data sets each one of them is called a batch sometimes you will see at least I do this in a system
+35:0435 minutes, 4 secondsI'm building when you do an epic you would say epic one and then you will start seeing dots representing progress
+35:1135 minutes, 11 secondsand each dot represents that I just finished one batch and then by the time you finish all batches then you go and
+35:1835 minutes, 18 secondsreport Plus and report the metric on the validation data set and then you go to a clock tool and the process repeats
+35:2635 minutes, 26 secondsyou're gonna see these dots as great in the census going through the batches and then get to see the loss and the metric a game and so on and what you typically
+35:3535 minutes, 35 secondssee is the last getting smaller and if you're doing accuracy you're gonna see the accuracy getting higher and then at
+35:4135 minutes, 41 secondssome point you're gonna say stops the stopping criteria when it stops because I'm not making enough improvements
+35:5035 minutes, 50 secondssometimes people call this patience so there is a patience factor which is something that you may also have to
+35:5835 minutes, 58 secondsspecify which says if you stop making enough improvements within like 15 epochs just just give up right so you
+36:0536 minutes, 5 secondsmay say sometimes stop and then say because patience read run out because for the last 15 or so epics I was not
+36:1236 minutes, 12 secondsmaking progress and sometimes you end up putting an upward limit on a box it's fine but please don't go beyond the bounds of a box because I can't wait I
+36:2036 minutes, 20 secondsdon't want to wait for longer so the the stopping criteria may end up being an aggregate of various things but now you
+36:2936 minutes, 29 secondssee what are the concentrations you just want to be careful not to over fit and using this notion of a validation dataset has proven pretty useful in that
+36:3836 minutes, 38 secondsregard any other questions and someone is saying what's the purpose of splitting the data into batches actually there's two one of them that you can clean these
+36:4736 minutes, 47 secondsin parallel and if you have architectures like GPUs and then you run them and panel so it's purely efficiency however there is something more
+36:5536 minutes, 55 secondsimportant in a sense there is this notion of randomization where these batches are picked up at random from the data set and then you get what people
+37:0437 minutes, 4 secondscall stochastic gradient descent which is a variation on gradient descent that is meaningful not just from purely
+37:1237 minutes, 12 secondscomputational reasons so you may want to read on stochastic gradient descent so there's really two orthogonal things that are happening here and that is a
+37:2037 minutes, 20 secondsbig deal this was also one of these major things in the area that led to the current progress another question we'll
+37:2837 minutes, 28 secondsdo we get each epoch from are they different sources known each epoch is running on the exact same data set but breaking up breaking it up differently
+37:3737 minutes, 37 secondsinto batches all right so you you may have your data set like this in the first part you may break it this
+37:4437 minutes, 44 secondsway in another a park you get different contents of each of the batches so let's say each batch is of size four you may
+37:5337 minutes, 53 secondshave example 117 and 15 and 20 here but in the second case the match would be
+37:5937 minutes, 59 secondsthe different numbers 1 if 331 74 right
+38:0638 minutes, 6 secondsI hope this explained it so match size is just the number of rows to include yes that would be the number of exam so if you say I have a batch of size 64
+38:1538 minutes, 15 secondsthen you're picking up 64 rows from your original dataset and including them in that batch we're basically done with the
+38:2238 minutes, 22 secondsmaterial for the day so thank you and I will see you in the last lecture on Thursday
+

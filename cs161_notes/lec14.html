@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 14 — Bayesian Networks</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 14</div>
+  <a href="#part1">Part I — Why Bayesian Networks</a>
+  <a href="#from-logic" class="sub">From Logic to Probability</a>
+  <a href="#two-components" class="sub">The Two Components</a>
+  <a href="#compactness" class="sub">Why It's Compact</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — The Notation</a>
+  <a href="#vars-values" class="sub">Variables vs. Values</a>
+  <a href="#distributions" class="sub">Distributions &amp; Tables</a>
+  <a href="#sets-instantiations" class="sub">Sets &amp; Instantiations</a>
+  <a href="#var-independence" class="sub">Variable Independence</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — The Graph</a>
+  <a href="#dag" class="sub">Directed Acyclic Graphs</a>
+  <a href="#causality" class="sub">Edges as Causality</a>
+  <a href="#family-terms" class="sub">Parents, Descendants, Non-descendants</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — Markovian Assumptions</a>
+  <a href="#markov-rule" class="sub">The Reading Rule</a>
+  <a href="#markov-examples" class="sub">Worked Examples</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — CPTs &amp; the Distribution</a>
+  <a href="#cpts" class="sub">Conditional Probability Tables</a>
+  <a href="#parameters" class="sub">Parameter Notation</a>
+  <a href="#chain-rule" class="sub">Filling the Table</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part6">Part VI — D-Separation</a>
+  <a href="#why-dsep" class="sub">Why We Need It</a>
+  <a href="#paths-valves" class="sub">Paths &amp; Valves</a>
+  <a href="#three-rules" class="sub">The Three Valve Rules</a>
+  <a href="#quiz6" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#synthesis">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">CS161 · Fundamentals of Artificial Intelligence</div>
+  <h1>Bayesian Networks: Capturing Belief Through Causal Structure</h1>
+  <p class="hero-sub">How a graph of causes plus a handful of numbers can pin down an exponentially large state of belief — compactly, intuitively, and exactly.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>Why Bayesian Networks?</h2>
+</div>
+
+<h3 id="from-logic">From Logic to Probability — and Now to a Modeling Tool</h3>
+<p>For a long stretch of its history, AI tried to reason using <strong>classical logic</strong>: facts are either true or false, and you chain them together with rules of inference. That works beautifully for things you are certain about. But people constantly reason in ways logic cannot capture. "It looks like rain, so I'll grab an umbrella" is not a logical deduction — clouds do not <em>entail</em> rain. This is <strong>plausible reasoning</strong>, and logic simply has no machinery for it.</p>
+<p>The previous lecture introduced the fix the field eventually agreed on: <strong>probability theory</strong> as the formal basis for beliefs. Instead of "true" or "false," every statement gets a number between 0 and 1, and we have rules (conditioning, Bayes' rule, marginalization) for updating those numbers as evidence arrives. That gave us the <em>foundation</em>. Today's lecture builds the <em>tool</em> that lets us actually specify and work with beliefs over many variables at once: the <strong>Bayesian network</strong>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Bayesian Network</div>
+  <p>A <strong>Bayesian network</strong> is a high-level, intuitive way to specify a probabilistic state of belief. It is a <em>modeling tool</em>: you describe what causes what and supply a few local probabilities, and the network <strong>induces</strong> a full probability distribution over all the variables.</p>
+</div>
+
+<h3 id="two-components">The Two Components</h3>
+<p>Every Bayesian network has exactly two parts, and it is worth fixing them in your mind now because the whole lecture is really just unpacking each one.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>A directed acyclic graph (DAG).</strong> Nodes are variables; directed edges point from one variable to another. We will read this graph as a picture of <em>causality</em> — an edge from A to B means "A directly influences B." Crucially, the graph alone (with no numbers attached yet) already tells us a great deal about which variables are independent.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Numeric annotations.</strong> For each variable we attach a small table of probabilities describing how that variable behaves <em>given its direct causes</em>. These are the numbers — and later in the course, we will see they can even be <em>learned from data</em>.</p>
+</div>
+
+<p>Put the structure and the numbers together and they jointly <strong>induce a probability distribution</strong>: the same kind of object from last lecture, where every possible world (every combination of variable values) gets a probability, and all those probabilities sum to 1.</p>
+
+<h3 id="compactness">The Punchline: Compactness</h3>
+<p>Here is why this matters so much. A probability distribution written out as a flat table is <strong>exponential</strong> in the number of variables. With 5 binary variables you have 2⁵ = 32 rows; with 30 variables you have over a billion. You could never elicit that table by asking someone to fill in every row.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>A Bayesian network is a <strong>compact</strong> representation of a distribution. The full distribution is exponential in the number of variables, but the network is generally <em>not</em> — it stores only small local tables. Yet structure + small tables pin down the giant table <strong>completely and uniquely</strong>.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Where This Is Heading</div>
+  <p>This sets up the next several lectures. Once a belief state is specified by a network, we ask how to <strong>answer queries</strong> about it (inference) — this year by compiling networks into <em>circuits</em> reminiscent of neural networks. From there, the course flows into <strong>machine learning</strong>, where the network's numbers are learned from data rather than handed to us.</p>
+</div>
+
+<div class="quiz" id="quiz1box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">What is the central advantage of a Bayesian network over writing the probability distribution as a flat table?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>It can represent beliefs that are impossible to express as a distribution at all.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>It is a compact representation — generally not exponential in the number of variables — that still pins down the full distribution.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>It avoids probability entirely and uses only logic.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It is always faster to answer any query than working with the flat table.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct — B.</strong> A flat distribution over <em>n</em> binary variables has 2ⁿ rows, which is hopeless to elicit directly. A Bayesian network stores only small local tables yet, together with the graph structure, induces that same full distribution exactly. Option A is wrong because the network induces an ordinary distribution (nothing new is representable); C is wrong because the network is built <em>on</em> probability; and D overstates the case — compactness of representation does not by itself guarantee fast inference for every query.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>The Notation You Cannot Skip</h2>
+</div>
+
+<p>Before any of the real machinery, the professor deliberately slowed down to fix notation — because this area reuses a small set of symbols in very precise ways, and mixing them up makes everything downstream confusing. Read this part carefully; it is the alphabet for the rest of the lecture.</p>
+
+<h3 id="vars-values">Variables vs. Values: Big <em>X</em> and Little <em>x</em></h3>
+<p>The first convention is a capitalization rule. A <strong>variable</strong> is written with a capital letter, like <code>X</code>. A specific <strong>value</strong> that the variable takes is written with the matching lowercase letter, like <code>x</code>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Variable vs. Value</div>
+  <p>If <code>X</code> is a variable whose possible values are <code>red</code>, <code>blue</code>, <code>green</code>, then a lowercase <code>x</code> stands for <em>one</em> of those — say <code>red</code>. Writing <code>P(x)</code> is shorthand for "the probability that the variable <code>X</code> takes the particular value <code>x</code>," i.e. <code>P(X = x)</code>. This is a single <strong>number</strong>.</p>
+</div>
+
+<h3 id="distributions">A Distribution Is a Whole Table</h3>
+<p>Now contrast <code>P(x)</code> (a number) with <code>P(X)</code> (capital). Writing the probability of the <em>variable</em> — not a specific value — denotes the entire <strong>distribution</strong> over that variable: a small table giving one probability for each possible value.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="240" height="170" viewBox="0 0 240 170" style="display:block; margin:0 auto;">
+      <text x="120" y="22" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" font-weight="600" fill="#c0510a">P(X)</text>
+      <!-- table -->
+      <rect x="40" y="36" width="160" height="120" fill="none" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="120" y1="36" x2="120" y2="156" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="40" y1="66" x2="200" y2="66" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="40" y1="96" x2="200" y2="96" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="40" y1="126" x2="200" y2="126" stroke="#d9d0c4" stroke-width="1.5"/>
+      <text x="80" y="56" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#6b6560">X</text>
+      <text x="160" y="56" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#6b6560">P</text>
+      <text x="80" y="86" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">red</text>
+      <text x="160" y="86" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">0.5</text>
+      <text x="80" y="116" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">blue</text>
+      <text x="160" y="116" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">0.3</text>
+      <text x="80" y="146" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">green</text>
+      <text x="160" y="146" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">0.2</text>
+    </svg>
+  </div>
+  <div class="figure-caption"><code>P(X)</code> is the whole table — one probability per value. <code>P(x)</code> picks out a single cell.</div>
+</div>
+
+<h3 id="sets-instantiations">Sets of Variables and Instantiations</h3>
+<p>Often we care about several variables at once. A <strong>set of variables</strong> is written in <strong>bold</strong>, like <code>X</code> (bold). When you take a bold set and fix a value for <em>every</em> variable in it, the result is called an <strong>instantiation</strong>, written with a bold lowercase <code>x</code>.</p>
+
+<p>Concretely, suppose <code>X</code> has values {red, blue, green} and we add a second variable <code>Y</code> with values {large, small, medium}. Let bold <code>A</code> = {X, Y}. Then a bold instantiation <code>a</code> is a full assignment, for example "X = red and Y = small." Another instantiation would be "X = red and Y = medium." The professor (and we) use <strong>state</strong> and <strong>instantiation</strong> interchangeably — they mean the same thing.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Don't Confuse These</div>
+  <p><strong>Plain capital</strong> = one variable. <strong>Bold capital</strong> = a set of variables. <strong>Plain lowercase</strong> = a value of one variable. <strong>Bold lowercase</strong> = an instantiation (a value for every variable in the set). The bolding carries real meaning; losing it is the most common way students misread these formulas.</p>
+</div>
+
+<h4 id="binary-prime">Binary shorthand: <code>t</code> and <code>t'</code></h4>
+<p>For a <strong>binary</strong> variable <code>T</code> (values true/false) we previously wrote <code>t</code> for "T is true" and <code>¬t</code> for "T is false." A convenient alternative is to write <code>t</code> for true and <code>t'</code> (t-prime) for false. So <code>t'</code> means exactly the same as <code>¬t</code>. It can be slightly ambiguous, but context makes it clear, and it shows up constantly in the tables ahead.</p>
+
+<h3 id="var-independence">Variable Independence</h3>
+<p>This is the notation that earns its keep. Last lecture we met <strong>conditional independence</strong> between <em>sentences</em>: <code>P(α | β, γ) = P(α | γ)</code> means "given γ, learning β tells you nothing new about α." Here α, β, γ were individual sentences.</p>
+<p>Now we lift this idea to whole <em>sets of variables</em>. Given three variable sets <code>X</code>, <code>Y</code>, <code>Z</code> (all bold), we write</p>
+
+<pre><code><span class="fn">I</span>(<span class="tp">X</span>, <span class="tp">Z</span>, <span class="tp">Y</span>)   <span class="cm"># X and Y are independent given Z</span></code></pre>
+
+<p>The middle set, <code>Z</code>, is the thing that is <strong>given</strong> (known). The claim is: once you fix the state of <code>Z</code>, telling me the state of <code>Y</code> does not change my belief about any state of <code>X</code>. Formally, for every instantiation, <code>P(x | y, z) = P(x | z)</code>.</p>
+
+<div class="callout insight">
+  <div class="callout-title">One Statement, Many Statements</div>
+  <p>Variable independence is a <strong>compact</strong> declaration of <em>sentential</em> independence. Suppose <code>X</code> = {A, B}, <code>Y</code> = {C}, <code>Z</code> = {D, E}, all binary. Then <code>X</code> has 4 states, <code>Y</code> has 2, and <code>Z</code> has 4 — so <code>I(X, Z, Y)</code> is actually <strong>4 × 2 × 4 = 32</strong> separate sentence-level independence statements (e.g. "A∧B is independent of C given D∧E", "A∧¬B is independent of C given D∧E", and so on). One line of variable notation packs all 32.</p>
+</div>
+
+<p>This compactness is exactly why Bayesian networks reach for variable independence. The structure of a network will assert many such independences at once — which is what makes the graph so informative before we ever write down a number.</p>
+
+<div class="quiz" id="quiz2box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">With <code>X</code> = {A, B}, <code>Y</code> = {C}, <code>Z</code> = {D, E} all binary, how many sentence-level independence statements does <code>I(X, Z, Y)</code> compactly assert?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>5 — one per variable.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>8 — two values each for three sets.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>32 — the product of the number of states of each set (4 × 2 × 4).</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>2 — true and false.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct — C.</strong> Two binary variables in <code>X</code> give 2² = 4 states, the single variable in <code>Y</code> gives 2, and two binary variables in <code>Z</code> give 4. Each combination is one sentential statement, so 4 × 2 × 4 = 32. Option A confuses the count with the number of variables; B and D ignore that sets of variables have exponentially many joint states.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>The Graph — Capturing Independence Visually</h2>
+</div>
+
+<p>The first component of a Bayesian network is its graph. The goal of this part is to see how drawing a graph of causes <em>automatically</em> commits you to a set of independence beliefs — so the picture does real work, not decoration.</p>
+
+<h3 id="dag">The Running Example: A Burglar Alarm</h3>
+<p>We extend last lecture's classic story. You own a burglar alarm. It can be triggered by a <strong>burglary</strong> (its intended job) but it is also sensitive to <strong>earthquakes</strong>. If the alarm goes off, a <strong>neighbor may call</strong> you. And separately, an earthquake might produce a <strong>radio report</strong>. That gives five variables:</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="360" height="240" viewBox="0 0 360 240" style="display:block; margin:0 auto;">
+      <defs>
+        <marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="#c0510a"/>
+        </marker>
+      </defs>
+      <!-- nodes -->
+      <circle cx="90" cy="40" r="26" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="90" y="46" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="16" fill="#2a2520">E</text>
+      <circle cx="270" cy="40" r="26" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="270" y="46" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="16" fill="#2a2520">B</text>
+      <circle cx="40" cy="140" r="26" fill="#eff4ff" stroke="#2563eb" stroke-width="2"/>
+      <text x="40" y="146" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="16" fill="#2a2520">R</text>
+      <circle cx="180" cy="140" r="26" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="180" y="146" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="16" fill="#2a2520">A</text>
+      <circle cx="180" cy="210" r="26" fill="#edf7f0" stroke="#2d8a4e" stroke-width="2"/>
+      <text x="180" y="216" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="16" fill="#2a2520">C</text>
+      <!-- edges -->
+      <line x1="80" y1="63" x2="50" y2="116" stroke="#c0510a" stroke-width="2" marker-end="url(#arrow)"/>
+      <line x1="103" y1="62" x2="166" y2="118" stroke="#c0510a" stroke-width="2" marker-end="url(#arrow)"/>
+      <line x1="257" y1="62" x2="194" y2="118" stroke="#c0510a" stroke-width="2" marker-end="url(#arrow)"/>
+      <line x1="180" y1="167" x2="180" y2="181" stroke="#c0510a" stroke-width="2" marker-end="url(#arrow)"/>
+    </svg>
+  </div>
+  <div class="figure-caption">E = earthquake, B = burglary, A = alarm, C = call from neighbor, R = radio report. Arrows point from cause to effect.</div>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Directed Acyclic Graph (DAG)</div>
+  <p>A <strong>graph</strong> has nodes and edges. <strong>Directed</strong>: every edge has an arrow pointing from one node to another. <strong>Acyclic</strong>: you can never follow the arrows and return to where you started — no loops allowed. This DAG is the first component of a Bayesian network.</p>
+</div>
+
+<h3 id="causality">Edges as Causality</h3>
+<p>We read each edge as a <strong>direct causal influence</strong>. An earthquake can cause the alarm to trigger, so E → A. A burglary can too, so B → A. The alarm triggering can cause a call, so A → C. And an earthquake can cause a radio report, so E → R. Viewed this way, the graph is simply a picture of what causes what.</p>
+
+<p>Here is the surprising payoff. If you tell me only your <em>causal picture</em>, I can already read off some of your <strong>independence beliefs</strong> — with no numbers at all. Two examples from the alarm graph:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>R and C are independent given A.</strong> Normally a radio report (R) <em>would</em> change your belief about getting a call (C): a report suggests an earthquake, which suggests the alarm fired, which suggests a call. But if you already <em>know</em> the alarm's state (say your phone confirms it did not trigger), then the chain is cut — a radio report no longer moves your belief about a call. So <code>I(R, A, C)</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>E and B are independent given the empty set.</strong> Earthquakes and burglaries have no common cause and neither causes the other, so knowing nothing else, learning about one tells you nothing about the other: <code>I(E, {}, B)</code>.</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>Your <strong>perceptions of causality</strong>, drawn as a DAG, <em>imply</em> a set of independence beliefs automatically. The graph is the cheap, intuitive first half of eliciting your enormous belief table — it constrains the table heavily before a single number is written.</p>
+</div>
+
+<h3 id="family-terms">Three Family Terms: Parents, Descendants, Non-descendants</h3>
+<p>To state the general rule precisely, we need three pieces of graph vocabulary, all relative to a node <code>V</code>.</p>
+
+<h4>Parents</h4>
+<p>The <strong>parents</strong> of <code>V</code> are the nodes with an edge pointing directly <em>into</em> <code>V</code> — its direct causes. In our graph: parents of A are {E, B}; parents of R are {E}; parents of C are {A}.</p>
+
+<h4>Descendants</h4>
+<p>The <strong>descendants</strong> of <code>V</code> are every node you can reach by following edges <em>forward</em> from <code>V</code> — everything downstream. Descendants of E: follow E → A → C, giving {A, C} (and via the rule we are about to verify, also R is a child of E but R is reached from E too — careful: descendants of E are {A, C, R}). Descendants of B: {A, C}. Descendants of C: nothing — C is at the bottom.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Non-descendants (the special version)</div>
+  <p>Literally, the non-descendants of <code>V</code> are everything that is <em>not</em> a descendant. But for our purposes we use a refined version: take the non-descendants and then <strong>exclude <code>V</code> itself and its parents</strong>. This trimmed set is what the next rule will reference.</p>
+</div>
+
+<p>Let's compute it for two nodes:</p>
+<ul style="margin: 0 0 18px 22px;">
+  <li><strong>Node A.</strong> Descendants = {C}. Everything else = {A, B, E, R}. Remove A (itself) and its parents {E, B}, leaving non-descendants = <strong>{R}</strong>.</li>
+  <li><strong>Node E.</strong> Descendants = {A, C, R}. Removing E and its parents (E has no parents) leaves non-descendants = <strong>{B}</strong>.</li>
+</ul>
+
+<div class="quiz" id="quiz3box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In the alarm graph, what is the (refined) set of non-descendants of node <code>C</code>? Recall C's only parent is A, and C has no descendants.</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>{E, B, R} — everything except C and its parent A.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>{A} — only its parent.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>{E, B, A, R} — everything except C.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>{} — C has no non-descendants.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','a')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct — A.</strong> C has no descendants, so the non-descendants start as everything else: {E, B, A, R}. We then remove C itself (already out) and its parent A, leaving {E, B, R}. Option C forgets to exclude the parent A; B confuses parents with non-descendants; D forgets that the refinement only removes V and its parents, not everything.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>Markovian Assumptions — Reading the Graph as Independence</h2>
+</div>
+
+<p>We now state the single rule that turns a DAG into a precise list of independence statements. These statements are the <strong>Markovian assumptions</strong> of the network: all the independences implied directly by the graph's structure.</p>
+
+<h3 id="markov-rule">The Reading Rule</h3>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Markovian Assumption</div>
+  <p>For <strong>every</strong> variable <code>V</code>: once you know the states of <code>V</code>'s <strong>parents</strong>, information about <code>V</code>'s <strong>non-descendants</strong> does not change your belief about <code>V</code>. In symbols, <code>I(V, parents(V), non-descendants(V))</code>.</p>
+</div>
+
+<p>Because the rule applies to every node, a network with five variables yields five Markovian assumptions — one per variable. The intuition is causal: your direct causes (parents) screen you off from everything that is neither downstream of you nor one of your causes.</p>
+
+<h3 id="markov-examples">Worked Examples</h3>
+<p>Let's instantiate the rule on the alarm graph, node by node.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>V = C (call).</strong> Parents(C) = {A}. Non-descendants(C) = {B, E, R}. So <code>I(C, A, {B,E,R})</code>: once you know whether the alarm fired, your belief about getting a call is independent of the burglary, the earthquake, and the radio report.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>V = R (radio report).</strong> Parents(R) = {E}. R has no descendants, so its non-descendants are {B, A, C}. So <code>I(R, E, {B,A,C})</code>: once you know whether there was an earthquake, the report's likelihood is independent of burglary, alarm, and call.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>V = A (alarm).</strong> Parents(A) = {E, B}. Non-descendants(A) = {R}. So <code>I(A, {E,B}, R)</code>: knowing the earthquake and burglary, the alarm is independent of the radio report.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>V = E and V = B (the root causes).</strong> E and B have no parents, so each is independent of its non-descendants given nothing. This is exactly the earlier observation that earthquake and burglary are independent <code>I(E, {}, B)</code>.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Structure Without Numbers</div>
+  <p>Notice we stated all five Markovian assumptions using <strong>only the graph</strong> — no probability tables anywhere. That means: whatever numbers you eventually attach, these independences are <em>guaranteed</em> to hold. Different numbers give a different belief table, but the same structural independences persist. The graph constrains the table; the numbers fill in the rest.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Why This Matters Later</div>
+  <p>This guarantee is what makes the upcoming "compile to circuits" idea powerful. Because behavior is constrained by your causal model regardless of the numbers, the resulting circuit — trained like a neural network later in the course — carries provable guarantees instead of being a black box.</p>
+</div>
+
+<div class="quiz" id="quiz4box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">The Markovian assumption for the alarm node A is <code>I(A, {E,B}, {R})</code>. In plain words, what does it claim?</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>The alarm can never be influenced by the radio report under any circumstances.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Once we know the earthquake and burglary, learning about the radio report does not change our belief about the alarm.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>The alarm is independent of its parents.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>The radio report is a descendant of the alarm.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct — B.</strong> The Markovian assumption is <em>conditional</em>: given the parents {E, B}, the node is independent of its non-descendants {R}. Option A drops the conditioning — without knowing E and B, R and A really are correlated (both relate to earthquakes). C is backwards: a node is dependent on its parents, that is the whole point. D is false: R and A are siblings under E, not in a descendant relationship.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>CPTs and Inducing the Full Distribution</h2>
+</div>
+
+<p>The graph gave us independences. Now we add the second component — the numbers — and show how structure plus numbers reconstruct the entire belief table. We switch to a second example network with five variables: <strong>winter</strong> (A), <strong>sprinkler</strong> (B), <strong>rain</strong> (C), <strong>wet grass</strong> (D), and <strong>slippery road</strong> (E).</p>
+
+<h3 id="cpts">Conditional Probability Tables (CPTs)</h3>
+<p>Each variable gets one <strong>CPT</strong> — a Conditional Probability Table — giving the probability of that variable's states <em>for every combination of its parents' states</em>. With five variables we have five CPTs. The convention: in a CPT, the variable listed <em>last</em> is the one whose probability we are specifying; the earlier columns are its parents.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="300" height="180" viewBox="0 0 300 180" style="display:block; margin:0 auto;">
+      <text x="150" y="22" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" font-weight="600" fill="#c0510a">CPT for D (wet grass)</text>
+      <rect x="30" y="34" width="240" height="132" fill="none" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="90" y1="34" x2="90" y2="166" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="150" y1="34" x2="150" y2="166" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="210" y1="34" x2="210" y2="166" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="30" y1="60" x2="270" y2="60" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="30" y1="86" x2="270" y2="86" stroke="#d9d0c4" stroke-width="1"/>
+      <line x1="30" y1="112" x2="270" y2="112" stroke="#d9d0c4" stroke-width="1"/>
+      <line x1="30" y1="138" x2="270" y2="138" stroke="#d9d0c4" stroke-width="1"/>
+      <text x="60" y="52" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#6b6560">B</text>
+      <text x="120" y="52" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#6b6560">C</text>
+      <text x="180" y="52" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#6b6560">D</text>
+      <text x="240" y="52" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#6b6560">θ</text>
+      <!-- a sample of rows -->
+      <text x="60" y="78" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">b</text>
+      <text x="120" y="78" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">c'</text>
+      <text x="180" y="78" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">d</text>
+      <text x="240" y="78" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">0.9</text>
+      <text x="60" y="104" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c0510a">b</text>
+      <text x="120" y="104" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c0510a">c'</text>
+      <text x="180" y="104" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c0510a">d'</text>
+      <text x="240" y="104" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c0510a">0.1</text>
+      <text x="60" y="130" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">b'</text>
+      <text x="120" y="130" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">c</text>
+      <text x="180" y="130" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">d</text>
+      <text x="240" y="130" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">...</text>
+      <text x="150" y="158" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#6b6560">(one row per parent combination)</text>
+    </svg>
+  </div>
+  <div class="figure-caption">A CPT for D with parents B and C. The highlighted row encodes <code>P(d' | b, c') = 0.1</code>.</div>
+</div>
+
+<h3 id="parameters">Parameter Notation: θ</h3>
+<p>A single number inside a CPT is called a <strong>parameter</strong>. We write it as θ (theta) with the node's value first and its parents' values after a bar. So the highlighted row above is</p>
+
+<pre><code>θ<sub>d' | b, c'</sub>  =  P(d' | b, c')  =  0.1</code></pre>
+
+<p>Other examples from this network: <code>θ(e' | c') = 1</code> and <code>θ(a') = 0.4</code> (variable A has no parents, so its CPT is just a prior). This θ-notation becomes essential during <strong>learning</strong>, where parameters are the very quantities estimated from data.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Counting Independent Parameters</div>
+  <p>A binary node with no parents has two parameters (P(a), P(a')) but only <strong>one is free</strong> — the other is forced because they sum to 1. A binary node with two binary parents has 4 × 2 = 8 entries but only <strong>4 independent</strong> ones. This freedom-counting is where the compactness savings actually live.</p>
+</div>
+
+<h3 id="chain-rule">Filling the Distribution Table, One Row at a Time</h3>
+<p>Now the central mechanism. The five CPTs <em>induce</em> a full distribution over all 2⁵ = 32 worlds. To find the probability of any one world (one full row of the giant table), use this rule:</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — The Product Rule</div>
+  <p>For a chosen world, go to each of the five CPTs and pull out the <strong>one</strong> parameter whose row is <em>compatible</em> with that world (matches the values of the node and its parents). <strong>Multiply</strong> the five numbers. That product is the probability of the world.</p>
+</div>
+
+<p>Let's trace the world where A = true, B = true, C = false, D = true, E = false. We pull one number from each CPT that matches this assignment:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>CPT for A</strong> (no parents). A is true → pull <code>0.6</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>CPT for B</strong> (parent A). B is true with A true → pull <code>0.2</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>CPT for C</strong> (parent A). C is <em>false</em> with A true → pull <code>0.2</code>. (Be careful here — match both C's value and its parent A's value.)</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>CPT for D</strong> (parents B, C). D true, B true, C false → pull <code>0.9</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <p><strong>CPT for E</strong> (parent C). E false, C false → pull the matching entry. Multiply all five: 0.6 × 0.2 × 0.2 × 0.9 × … → the world's probability comes out to <code>0.0216</code>.</p>
+</div>
+
+<p>One more, the all-false world (everything false): pull 0.4 (from A), 0.25 (B), 0.9 (C), 1 (D), 1 (E), giving <code>0.09</code>. Do this for all 32 rows and you have reconstructed the entire distribution — from five small tables.</p>
+
+<details>
+<summary>Why does multiplying CPT entries work? (The chain rule)</summary>
+<div class="details-body">
+<p>This product rule is not arbitrary — it is the probability <strong>chain rule</strong> specialized to the network's independences. The chain rule says any joint factors as <code>P(A) · P(B|A) · P(C|A,B) · P(D|A,B,C) · P(E|A,B,C,D)</code>. The Markovian assumptions then let us drop every conditioning variable that is a non-descendant given the parents, collapsing each factor to <code>P(node | parents)</code> — exactly the CPT entries we pull. The result is the product over nodes of <code>θ(node | parents)</code>.</p>
+<pre><code>P(world) = ∏<sub>over nodes V</sub>  θ( v | parents(V) )</code></pre>
+</div>
+</details>
+
+<div class="callout insight">
+  <div class="callout-title">A Well-Behaved Belief State</div>
+  <p>The table you reconstruct is not just <em>any</em> table. Every independence implied by the structure is automatically respected by it. So the distribution's behavior is <strong>governed and constrained by your perceptions of causality</strong> — you could have predicted some of its independence behaviors before ever seeing a number.</p>
+</div>
+
+<div class="quiz" id="quiz5box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">To compute the probability of a single world from a Bayesian network with five variables, you should:</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Add together the five prior probabilities of each variable.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Pull from each CPT the one entry compatible with that world, and multiply the five numbers.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Multiply every entry in every CPT together.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Take the maximum CPT entry among the five.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct — B.</strong> Each variable contributes exactly one parameter — the entry whose node value and parent values match the world — and the joint probability is the product of those entries (the chain rule under the Markovian assumptions). Option A adds instead of multiplies and ignores parents; C would multiply unrelated rows; D has no probabilistic justification at all.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART VI ═══════════════════════ -->
+<section id="part6" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part VI</div>
+  <h2>D-Separation — Testing Independence on the Graph</h2>
+</div>
+
+<h3 id="why-dsep">Why the Markovian List Is Not Enough</h3>
+<p>Suppose someone hands you a complicated DAG and asks: "Are X and Y independent given Z?" One approach is to list all the Markovian assumptions and look. But the Markovian list is only the <em>directly</em> implied independences. You can often derive <strong>more</strong> independences by combining them with the laws of probability. So if your independence is not on the list, it might still hold — the list is necessary-to-trust but not complete-to-rule-out.</p>
+
+<div class="callout warning">
+  <div class="callout-title">A Subtle Trap</div>
+  <p>If an independence <em>appears</em> in the Markovian assumptions, it definitely holds. But if it does <em>not</em> appear, you cannot conclude it fails — it may still be implied. Reasoning "it's not on the list, so it's false" is a genuine error.</p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — D-Separation</div>
+  <p><strong>D-separation</strong> is a graphical test applied to a DAG that detects <em>all</em> the independences — the Markovian assumptions <em>and</em> everything derivable from them — without doing any algebra. Run the test on X, Y, Z and it tells you directly whether X and Y are independent given Z.</p>
+</div>
+
+<h3 id="paths-valves">Paths and Valves</h3>
+<p>The intuition is about <strong>information flow</strong>. To test whether X and Y are independent given Z, look at <em>every</em> path between X and Y. Picture each path as a pipe and each node along it as a <strong>valve</strong> that is either open or closed (given what we know in Z).</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>A path is <strong>blocked</strong> if at least one valve on it is closed — one closed valve stops the whole pipe.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>If <strong>every</strong> path between X and Y is blocked, then X and Y are <strong>d-separated</strong> given Z, hence independent.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>If <strong>any</strong> path is unblocked (all its valves open), information can flow and we do <em>not</em> have independence.</p>
+</div>
+
+<p>So the entire test reduces to one question: <strong>is a given valve open or closed?</strong> And that depends on which of three shapes the valve has. Along a path, a node connects to its two path-neighbors in exactly one of three ways:</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="380" height="150" viewBox="0 0 380 150" style="display:block; margin:0 auto;">
+      <defs>
+        <marker id="ar2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#c0510a"/>
+        </marker>
+      </defs>
+      <!-- sequential -->
+      <circle cx="25" cy="55" r="13" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <circle cx="65" cy="55" r="13" fill="#eff4ff" stroke="#2563eb" stroke-width="1.5"/>
+      <circle cx="105" cy="55" r="13" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <line x1="38" y1="55" x2="50" y2="55" stroke="#c0510a" stroke-width="1.5" marker-end="url(#ar2)"/>
+      <line x1="78" y1="55" x2="90" y2="55" stroke="#c0510a" stroke-width="1.5" marker-end="url(#ar2)"/>
+      <text x="65" y="100" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#2a2520">Sequential</text>
+      <text x="65" y="118" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">cause→W→effect</text>
+      <!-- divergent -->
+      <circle cx="190" cy="30" r="13" fill="#eff4ff" stroke="#2563eb" stroke-width="1.5"/>
+      <circle cx="160" cy="80" r="13" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <circle cx="220" cy="80" r="13" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <line x1="183" y1="42" x2="168" y2="68" stroke="#c0510a" stroke-width="1.5" marker-end="url(#ar2)"/>
+      <line x1="197" y1="42" x2="212" y2="68" stroke="#c0510a" stroke-width="1.5" marker-end="url(#ar2)"/>
+      <text x="190" y="118" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#2a2520">Divergent</text>
+      <text x="190" y="135" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">common cause W</text>
+      <!-- convergent -->
+      <circle cx="310" cy="80" r="13" fill="#eff4ff" stroke="#2563eb" stroke-width="1.5"/>
+      <circle cx="280" cy="30" r="13" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <circle cx="340" cy="30" r="13" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <line x1="287" y1="42" x2="302" y2="68" stroke="#c0510a" stroke-width="1.5" marker-end="url(#ar2)"/>
+      <line x1="333" y1="42" x2="318" y2="68" stroke="#c0510a" stroke-width="1.5" marker-end="url(#ar2)"/>
+      <text x="310" y="118" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#2a2520">Convergent</text>
+      <text x="310" y="135" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">common effect W</text>
+    </svg>
+  </div>
+  <div class="figure-caption">The three valve types at a node W (blue). Sequential: a cause flows through W to an effect. Divergent: W is a common cause. Convergent: W is a common effect.</div>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">The Same Node, Different Valves</div>
+  <p>A valve type depends on the <em>path</em>, not the node alone. In the alarm graph, node A is a <strong>sequential</strong> valve on the path E → A → C, but a <strong>convergent</strong> valve on the path E → A ← B. Once you fix a specific path, the neighbors are unambiguous, so the valve type is clear.</p>
+</div>
+
+<h3 id="three-rules">The Three Valve Rules</h3>
+<p>Everything is decided "given that we know Z." Here are the rules — two are identical and intuitive; the third is the famous twist.</p>
+
+<h4>Sequential valve (cause → W → effect)</h4>
+<p>Example: E → A → C. Does knowing there was an earthquake change your belief about a call? Yes — through the alarm. But if you already <em>know</em> the alarm's state, the earthquake no longer matters for the call. So:</p>
+<pre><code>Sequential valve is CLOSED  ⇔  W ∈ Z   <span class="cm"># the middle node is known</span></code></pre>
+
+<h4>Divergent valve (W is a common cause)</h4>
+<p>Example: R ← E → A. A radio report and the alarm are correlated <em>through</em> their common cause, the earthquake. But if you already know whether there was an earthquake, that correlation vanishes. Same rule as sequential:</p>
+<pre><code>Divergent valve is CLOSED  ⇔  W ∈ Z   <span class="cm"># the common cause is known</span></code></pre>
+
+<h4>Convergent valve (W is a common effect) — the twist</h4>
+<p>Example: E → A ← B. Two causes, one shared effect. If you know <em>nothing</em> about the alarm, do earthquake and burglary interact? No — two independent causes of a common effect are independent until you observe the effect. But the moment you <strong>know the alarm fired</strong>, they start interacting: if you then learn there was no burglary, the earthquake becomes <em>more</em> likely (something had to set it off). This is "explaining away." So the rule flips:</p>
+<pre><code>Convergent valve is CLOSED  ⇔  W ∉ Z   <span class="cm"># the common effect is UNknown</span>
+<span class="cm"># (and, in the full rule, no descendant of W is known either)</span></code></pre>
+
+<div class="callout insight">
+  <div class="callout-title">Why Convergent Is Backwards</div>
+  <p>For sequential and divergent valves, <strong>knowing</strong> the node <em>closes</em> it (cuts the flow). For a convergent valve, <strong>knowing</strong> the common effect <em>opens</em> it — observing a shared symptom makes its competing causes inform each other. This single asymmetry is the heart of d-separation, and it is exactly the "explaining away" reasoning logic could never capture.</p>
+</div>
+
+<table class="compare-table">
+  <tr><th>Valve type</th><th>Shape at W</th><th>Closed (blocks flow) when…</th></tr>
+  <tr><td>Sequential</td><td>→ W →</td><td>W is in Z (known)</td></tr>
+  <tr><td>Divergent</td><td>← W →</td><td>W is in Z (known)</td></tr>
+  <tr><td>Convergent</td><td>→ W ←</td><td>W is <em>not</em> in Z (W and its descendants unknown)</td></tr>
+</table>
+
+<p>With these three rules, the test is mechanical: for each path between X and Y, label every valve, decide open/closed using Z, and check whether the path is blocked. If all paths are blocked, X and Y are d-separated — and therefore independent given Z.</p>
+
+<div class="quiz" id="quiz6box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">On the path E → A ← B, the node A is a convergent valve. Given Z = {A} (we know the alarm's state), is this valve open or closed, and what does that imply for E and B along this path?</div>
+  <div class="quiz-options" data-quiz="q6">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Closed — so E and B remain independent along this path.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Open — knowing the common effect makes E and B interact ("explaining away") along this path.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Closed — convergent valves follow the same rule as sequential ones.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Open — but only because A has no parents.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q6','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q6">
+    <strong>Correct — B.</strong> A convergent valve is closed only when its common effect (and all descendants) are <em>unknown</em>; observing A does the opposite — it <em>opens</em> the valve. With A known, learning about B shifts belief about E (explaining away), so they interact along this path. Options A and C apply the sequential/divergent rule to a convergent valve, which is exactly the mistake the twist warns against; D invents an irrelevant reason.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SYNTHESIS ═══════════════════════ -->
+<section id="synthesis" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This lecture built a single, coherent pipeline for capturing an enormous belief state without ever writing it out. It starts from the realization (Part I) that probability succeeds where logic fails at plausible reasoning, but a raw distribution is exponential and impossible to elicit directly. The Bayesian network is the fix, and it has exactly two halves.</p>
+
+<p>Parts II–IV are the <strong>structural half</strong>. After fixing the notation (variables vs. values, sets vs. instantiations, and the compact <code>I(X, Z, Y)</code> form of independence), we drew a DAG of causes. That graph, through the family terms parents / descendants / non-descendants, hands us the <strong>Markovian assumptions</strong> for free — a precise set of independences implied by the structure alone, before any number exists.</p>
+
+<p>Part V is the <strong>numeric half</strong>. Each node gets a CPT of parameters θ(v | parents). The graph's independences turn the probability chain rule into a simple product: the probability of any world is just the product of one matching entry per CPT. Structure plus numbers therefore <strong>pin down the full 2ⁿ table completely and uniquely</strong> — and that table automatically respects every structural independence.</p>
+
+<p>Part VI is the <strong>reasoning half</strong>. Because the Markovian list misses derived independences, <strong>d-separation</strong> gives a complete graphical test: trace paths, classify each valve as sequential, divergent, or convergent, and decide open/closed given what you know. Two valve rules are intuitive; the convergent "explaining away" rule is the deep twist that makes probabilistic reasoning richer than logic ever was.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The One-Sentence Takeaway</div>
+  <p>A picture of causes (the DAG) plus a few local tables (the CPTs) compactly and exactly specifies a full probabilistic belief state — and you can read that state's independences straight off the graph using d-separation.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">What's Next</div>
+  <p>We have specified a belief state; next we need to <strong>query</strong> it — given evidence, what is the probability of some event? Upcoming lectures cover <strong>inference</strong>, including a striking approach that <em>compiles</em> a Bayesian network into a <strong>circuit</strong> closely related to neural networks. That bridges directly into the course's final theme, <strong>machine learning</strong>, where the CPT parameters θ are no longer handed to us but <strong>learned from data</strong> — turning hand-built causal models into trainable, guarantee-carrying systems.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

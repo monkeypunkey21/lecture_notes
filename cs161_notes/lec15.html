@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 15 — Bayesian Network Inference &amp; Modeling</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 15</div>
+  <a href="#part1">Part I — The Network &amp; Its Queries</a>
+  <a href="#why-inference" class="sub">Why Inference Exists</a>
+  <a href="#the-network" class="sub">The Five-Variable Network</a>
+  <a href="#the-joint" class="sub">The Joint Distribution</a>
+  <a href="#quiz-q1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Four Kinds of Query</a>
+  <a href="#prior-marginal" class="sub">Prior Marginals</a>
+  <a href="#auxiliary" class="sub">The Auxiliary Variable</a>
+  <a href="#posterior-marginal" class="sub">Posterior Marginals</a>
+  <a href="#mpe" class="sub">MPE</a>
+  <a href="#map" class="sub">MAP</a>
+  <a href="#quiz-q2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — Algorithms &amp; Tree Width</a>
+  <a href="#two-families" class="sub">Two Families of Algorithm</a>
+  <a href="#tree-width" class="sub">Tree Width</a>
+  <a href="#three-structures" class="sub">Trees, Polytrees, DAGs</a>
+  <a href="#quiz-q3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — Reduction to Logic (WMC)</a>
+  <a href="#why-wmc" class="sub">Why Reduce to Logic</a>
+  <a href="#model-counting" class="sub">SAT, #SAT, WMC</a>
+  <a href="#the-encoding" class="sub">The Encoding</a>
+  <a href="#literal-weights" class="sub">Weights on Literals</a>
+  <a href="#quiz-q4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Modeling a Network</a>
+  <a href="#three-steps" class="sub">The Three Steps</a>
+  <a href="#diseases-story" class="sub">The Disease Story</a>
+  <a href="#bipartite" class="sub">Bipartite (Cause→Effect)</a>
+  <a href="#query-evidence" class="sub">Query vs Evidence</a>
+  <a href="#quiz-q5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part6">Part VI — Learning &amp; Sensitivity</a>
+  <a href="#three-sources" class="sub">Where CPTs Come From</a>
+  <a href="#complete-data" class="sub">Complete vs Incomplete Data</a>
+  <a href="#max-likelihood" class="sub">Maximum Likelihood</a>
+  <a href="#sensitivity" class="sub">Sensitivity Analysis</a>
+  <a href="#quiz-q6" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#synthesis">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">CS161 · Fundamentals of Artificial Intelligence</div>
+  <h1>Bayesian Network Inference &amp; Modeling</h1>
+  <p class="hero-sub">An interactive guide to Lecture 15 — the questions you can ask a Bayesian network, how to answer them without exploding, and the surprising bridge from probability back to logic.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>The Network and the Question It Hides</h2>
+</div>
+
+<h3 id="why-inference">Why Are We Learning This?</h3>
+<p>In the last lecture we learned how to <em>build</em> a Bayesian network: a set of variables, arrows showing which variables directly influence which, and a small table of probabilities attached to each variable. A Bayesian network is a compact recipe. But a recipe is only useful if you can cook from it. The whole reason we build one is so we can later ask it questions: "Given that both tests came back positive, how likely is it the patient actually has the disease?" The act of answering such a question is called <strong>inference</strong>, and it is the engine that turns a static model into a reasoning system.</p>
+
+<p>This lecture is about two things that always go together. First, <strong>inference</strong> — the kinds of questions you can pose and how a machine answers them. Second, <strong>modeling</strong> — how you sit down with a real story and turn it into a network in the first place. We start with inference, because once you see what questions a network can answer, you understand <em>why</em> you would ever build one.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Bayesian Network</div>
+  <p>A <strong>Bayesian network</strong> is a directed acyclic graph whose nodes are random variables. Each node carries a <strong>CPT</strong> (conditional probability table) giving the probability of that variable's values <em>given each combination of its parents' values</em>. An edge from <code>A</code> to <code>B</code> means "<code>A</code> is a direct cause / influence of <code>B</code>." Together, the structure plus the CPTs define a full probability distribution over every variable — without you ever writing that giant distribution down.</p>
+</div>
+
+<h3 id="the-network">The Running Example: A Condition and Two Tests</h3>
+<p>The professor anchors the whole inference discussion in one small network with <strong>five binary variables</strong>. Keeping it concrete lets us actually compute numbers by hand. Here is the cast:</p>
+
+<ul style="margin: 0 0 18px 22px;">
+  <li><strong>C — Condition</strong>: does the person have the medical condition (a disease)? More common in males (5%) than females (1%).</li>
+  <li><strong>S — Sex</strong>: the population is 55% male, 45% female.</li>
+  <li><strong>T1 — Test 1</strong>: a test for the condition; its result is caused by whether C is present.</li>
+  <li><strong>T2 — Test 2</strong>: a second test, whose accuracy <em>also</em> depends on S (it is more accurate on females than males).</li>
+  <li><strong>A — Auxiliary</strong>: a special "constructed" variable we will explain shortly; it lets us say "both tests agreed" as a single piece of evidence.</li>
+</ul>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="380" height="220" viewBox="0 0 380 220" style="display:block; margin:0 auto;">
+      <!-- nodes -->
+      <ellipse cx="100" cy="40" rx="34" ry="22" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="100" y="46" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" font-weight="600" fill="#2a2520">S</text>
+      <ellipse cx="240" cy="40" rx="34" ry="22" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="240" y="46" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" font-weight="600" fill="#2a2520">C</text>
+      <ellipse cx="170" cy="125" rx="34" ry="22" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="170" y="131" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" font-weight="600" fill="#2a2520">T1</text>
+      <ellipse cx="300" cy="125" rx="34" ry="22" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="300" y="131" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" font-weight="600" fill="#2a2520">T2</text>
+      <ellipse cx="235" cy="195" rx="34" ry="20" fill="#f3effe" stroke="#7c3aed" stroke-width="2"/>
+      <text x="235" y="201" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" font-weight="600" fill="#2a2520">A</text>
+      <!-- edges -->
+      <line x1="222" y1="58" x2="185" y2="105" stroke="#c0510a" stroke-width="2" marker-end="url(#arr)"/>
+      <line x1="252" y1="60" x2="290" y2="105" stroke="#c0510a" stroke-width="2" marker-end="url(#arr)"/>
+      <line x1="118" y1="58" x2="278" y2="106" stroke="#c0510a" stroke-width="2" marker-end="url(#arr)"/>
+      <line x1="183" y1="145" x2="218" y2="178" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrp)"/>
+      <line x1="293" y1="145" x2="252" y2="178" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrp)"/>
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#c0510a"/></marker>
+        <marker id="arrp" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c3aed"/></marker>
+      </defs>
+    </svg>
+  </div>
+  <div class="figure-caption">The five-variable network. Condition <code>C</code> causes both tests; <code>S</code> also influences <code>T2</code>. The purple node <code>A</code> is an auxiliary variable that records "both tests agreed."</div>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Reading a CPT Number</div>
+  <p>The professor pauses on the number 20% in Test 1's table — "is this a false positive or a false negative?" It is the probability the test reads <em>negative given the condition is present</em>: a missed sick person, i.e. a <strong>false negative</strong>. The mirror entry — positive given no condition — is the <strong>false positive</strong>. Test 2's table is split into male and female halves precisely because its error rates differ by sex; that is what the edge <code>S → T2</code> encodes.</p>
+</div>
+
+<h3 id="the-joint">The Ghost in the Machine: the Joint Distribution</h3>
+<p>Before asking any question, hold one image in your head. Five binary variables means <code>2⁵ = 32</code> possible "worlds" — full assignments like (S=male, C=yes, T1=pos, T2=pos, A=yes). The <strong>joint probability distribution</strong> is a table with one row per world and a probability in each row, all summing to 1. From last lecture you know how to compute any row: multiply together the relevant CPT entries. This 32-row table is the complete truth about the network.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Trap We Must Avoid</div>
+  <p>Every query <em>could</em> be answered by building this joint table and reading off rows. With 5 variables that is fine — 32 rows. But the table is <strong>exponential in the number of variables</strong>: 100 variables would need <code>2¹⁰⁰</code> rows, more than atoms in the universe. The entire field of inference algorithms exists to answer questions <em>without ever materializing this table</em>. Keep this tension in mind for the rest of the lecture.</p>
+</div>
+
+<div class="quiz" id="quiz-block-1">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In Test 1's CPT, the entry "probability T1 = negative given C = yes" equals 0.20. What does this 20% represent?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>The false <strong>positive</strong> rate — a healthy person flagged sick</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>The false <strong>negative</strong> rate — a sick person the test misses</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>The prior probability that anyone has the condition</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>The overall accuracy of the test</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct — it is the false negative rate.</strong> The condition really is present (C = yes), yet the test comes back negative, so a genuinely sick person is told they are fine. A false <em>positive</em> would instead be "test = positive given C = no" — the mirror-image entry in the same table. The prior (option C) lives in C's own CPT, not in the test's, and a single CPT cell never summarises "overall accuracy."
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>Four Kinds of Question</h2>
+</div>
+
+<p>A Bayesian network can be interrogated in several distinct ways, and the homework will drill all of them. They form a natural ladder, each a little more demanding than the last: <strong>prior marginals → posterior marginals → MPE → MAP</strong>. We will climb it one rung at a time.</p>
+
+<h3 id="prior-marginal">Rung 1 — Prior Marginals</h3>
+<p>A <strong>marginal</strong> is the distribution over one variable (or a small set), ignoring the others. <strong>Prior</strong> means "before we have observed any evidence." So a prior marginal asks: for variable <code>C</code>, what is P(C = yes) and P(C = no), averaged over everyone in the population?</p>
+
+<p>Conceptually you compute it from the joint table by <strong>summing over all rows where C = yes</strong>. For this network that comes out to <code>P(C = yes) ≈ 3.2%</code>, so <code>P(C = no) ≈ 96.8%</code>. Do the same for Test 1 and you find <code>P(T1 = positive) ≈ 21.92%</code>: pull a random person off the street, run Test 1, and about 22% of the time it reads positive — even though only 3.2% are truly sick, because the test makes mistakes.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Marginal vs Prior</div>
+  <p><strong>Marginal</strong> = a distribution over a <em>small</em> subset of variables, with the rest "summed out." <strong>Prior</strong> = computed with <em>no evidence</em> asserted. Tools like SamIam (the professor's own software you will use on the homework) display these as <em>monitors</em> — little boxes next to each node showing its current marginal probabilities.</p>
+</div>
+
+<h3 id="auxiliary">A Detour: the Auxiliary Variable A</h3>
+<p>Why does the network carry that fifth variable <code>A</code>? Suppose you want to assert a <em>compound</em> fact: "both tests came out the same — either both positive or both negative — but I don't know which." You cannot express that by fixing T1 and T2 individually, because you don't know their values; you only know they <em>match</em>.</p>
+
+<p>The trick is to add an auxiliary node <code>A</code> whose CPT is <strong>deterministic</strong>: A = yes with probability 1 exactly when T1 = T2, and 0 otherwise. Its table is all 0s and 1s — it encodes a logical constraint rather than any real uncertainty. Now "the tests agreed" becomes the single, clean piece of evidence <code>A = yes</code>.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Constraints as Deterministic CPTs</div>
+  <p>This is a recurring move: when evidence is a <em>relationship between variables</em> rather than a value of one variable, introduce an extra node whose CPT is 0/1. The probabilistic machinery then handles the logical constraint automatically. It quietly foreshadows Part IV, where the whole network gets recast in logical, Boolean terms.</p>
+</div>
+
+<h3 id="posterior-marginal">Rung 2 — Posterior Marginals</h3>
+<p>Now we add evidence. A <strong>posterior marginal</strong> is the same kind of question as a prior marginal — give me the distribution over one variable — but computed <em>after</em> observing some facts <code>E</code> (the professor also calls evidence β). Suppose we observe <strong>T1 = positive and T2 = positive</strong>.</p>
+
+<p>Conceptually, evidence carves the joint table down to only the rows consistent with it, then renormalizes so those rows sum to 1 again. We are now answering questions about <em>that</em> reduced table — the posterior — instead of the full prior table.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Prior:</strong> before any test, P(C = yes) ≈ 3.2%. The disease is rare.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Observe</strong> T1 = positive and T2 = positive. Keep only joint-table rows where both hold.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Posterior:</strong> P(C = yes | both positive) jumps to ≈ 45.3%. Two positive tests dramatically raise our belief — but note it is <em>not</em> near-certainty, because the disease was so rare to begin with.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Side effect:</strong> the same evidence shifts <em>other</em> variables too. P(S = male | both positive) rises from the prior 55% to ≈ 83%, because the condition (which the positive tests now suggest) is much more common in males.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">This Answers the Day-One Mystery</div>
+  <p>In the first probability lecture, a disease test came back positive yet P(disease) stayed surprisingly low, and students asked why. Posterior marginals are exactly the answer: a rare prior plus an imperfect test means even a positive result leaves real doubt. Here, two positive tests still only reach ~45%, not ~99%.</p>
+</div>
+
+<h3 id="mpe">Rung 3 — MPE (Most Probable Explanation)</h3>
+<p>Marginals report a distribution per variable. Sometimes you instead want the single most likely <em>complete scenario</em>. An <strong>MPE query</strong> asks: given the evidence, what is the one full assignment of <em>all</em> the remaining variables that has the highest joint probability?</p>
+
+<p>With evidence <code>A = yes</code> fixed, the other four variables (S, C, T1, T2) range over <code>2⁴ = 16</code> combinations. MPE searches those 16 and returns the winner. Here it is <strong>C = no, S = female, T1 = negative, T2 = negative</strong>, with probability ≈ 47%. The answer is not a number alone — it is a <em>specific instantiation</em> plus its probability, with a guarantee that no other full assignment is more probable.</p>
+
+<h3 id="map">Rung 4 — MAP (Maximum a Posteriori)</h3>
+<p>MAP is the <strong>generalization</strong> of MPE. Instead of finding the best assignment to <em>all</em> variables, you, the user, name a <em>subset</em> you care about, and MAP finds the most likely joint state of just those — averaging (marginalizing) over everything else. With evidence <code>A = yes</code> and asking only about <code>{S, C}</code>, MAP returns <strong>S = male, C = no</strong> with probability ≈ 49.3%.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — MPE is the Easy Special Case</div>
+  <p>If you have a MAP solver, you get MPE for free: just tell MAP that your "subset of interest" is <em>all</em> the variables. So MPE ⊆ MAP. Yet we give MPE its own name because, from a complexity standpoint, <strong>maximizing over all variables is genuinely easier</strong> than maximizing over a chosen subset while summing out the rest. MAP is the harder problem. Naming the easy case lets us reach for the cheaper algorithm whenever it applies.</p>
+</div>
+
+<table class="compare-table">
+  <tr><th>Query</th><th>Returns</th><th>Evidence?</th><th>You choose vars?</th></tr>
+  <tr><td>Prior marginal</td><td>Distribution over one var</td><td>No</td><td>No</td></tr>
+  <tr><td>Posterior marginal</td><td>Distribution over one var</td><td>Yes</td><td>No</td></tr>
+  <tr><td>MPE</td><td>Best full assignment + prob</td><td>Yes</td><td>No (all of them)</td></tr>
+  <tr><td>MAP</td><td>Best assignment to a subset + prob</td><td>Yes</td><td>Yes</td></tr>
+</table>
+
+<div class="quiz" id="quiz-block-2">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">You are handed only a MAP solver. How do you make it compute an MPE?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Pass it an empty set of variables to maximize over</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Pass it <strong>all</strong> the variables as the set to maximize over</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Run it once per variable and combine the results</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It is impossible — MPE is strictly harder than MAP</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct.</strong> MPE is the special case of MAP where the "variables to maximize over" set is the <em>entire</em> collection of non-evidence variables, so a MAP engine handed every variable returns the MPE assignment directly. Option D has the difficulty backwards: MPE is the <em>easier</em> problem, which is exactly why it gets its own name and its own faster algorithms.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>How Inference Stays Cheap: Tree Width</h2>
+</div>
+
+<h3 id="two-families">Why Are We Learning This?</h3>
+<p>We keep insisting we must <em>not</em> build the exponential joint table. So how do real algorithms dodge it, and when do they succeed? The answer is one of the most important practical facts in the whole field: the cost of inference is governed not by the number of variables but by a structural property of the graph called <strong>tree width</strong>. Get that small, and a million-variable network is still tractable.</p>
+
+<p>The professor notes there are <strong>two broad families</strong> of exact inference algorithm — too many to cover, more suited to a graduate course — but you should know they exist by name:</p>
+
+<table class="compare-table">
+  <tr><th>Family</th><th>Idea</th></tr>
+  <tr><td>Variable elimination</td><td>Sum out variables one at a time, reusing intermediate results.</td></tr>
+  <tr><td>Conditioning</td><td>Fix ("condition on") certain variables to break the graph into easy pieces, then recombine.</td></tr>
+</table>
+
+<h3 id="tree-width">The Master Formula</h3>
+<p>Both families share the same cost profile. Let:</p>
+<ul style="margin: 0 0 18px 22px;">
+  <li><code>m</code> = number of variables,</li>
+  <li><code>d</code> = number of values per variable (2 for binary),</li>
+  <li><code>w</code> = the <strong>tree width</strong> of the network — a number measuring "how connected / loopy" the graph is.</li>
+</ul>
+
+<pre><code><span class="cm"># Cost of answering a marginal (prior or posterior):</span>
+cost  =  O( m  <span class="op">·</span>  d<span class="nb">^w</span> )
+         <span class="op">└─ linear</span>   <span class="op">└─ exponential in tree width only</span></code></pre>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Pay for Connectedness, Not Size</div>
+  <p>Inference is <strong>linear in the number of variables</strong> but <strong>exponential only in the tree width</strong>. If <code>w</code> is small, you win, no matter how many variables there are. If <code>w</code> is 50 or 100, exact inference is hopeless. The number of variables is almost a red herring; the network's <em>shape</em> is what determines whether you can reason at all.</p>
+</div>
+
+<p>Tree width comes from graph theory. We won't define it formally, but two named network shapes pin down its value and give you intuition.</p>
+
+<h3 id="three-structures">Three Structures You Must Recognize</h3>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="180" viewBox="0 0 420 180" style="display:block; margin:0 auto;">
+      <!-- TREE -->
+      <text x="60" y="18" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#c0510a">TREE (w = 1)</text>
+      <circle cx="60" cy="45" r="13" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <circle cx="30" cy="100" r="13" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <circle cx="90" cy="100" r="13" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <circle cx="90" cy="155" r="13" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="52" y1="55" x2="36" y2="90" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="68" y1="55" x2="84" y2="90" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="90" y1="113" x2="90" y2="142" stroke="#d9d0c4" stroke-width="2"/>
+      <!-- POLYTREE -->
+      <text x="210" y="18" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#c0510a">POLYTREE (w = k)</text>
+      <circle cx="175" cy="45" r="13" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <circle cx="245" cy="45" r="13" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <circle cx="210" cy="105" r="13" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <circle cx="210" cy="160" r="13" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="184" y1="55" x2="202" y2="93" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="236" y1="55" x2="218" y2="93" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="210" y1="118" x2="210" y2="147" stroke="#d9d0c4" stroke-width="2"/>
+      <!-- DAG -->
+      <text x="360" y="18" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#c0510a">DAG (any w)</text>
+      <circle cx="335" cy="45" r="13" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <circle cx="390" cy="45" r="13" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <circle cx="335" cy="110" r="13" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <circle cx="390" cy="110" r="13" fill="#fff" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="335" y1="58" x2="335" y2="97" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="390" y1="58" x2="390" y2="97" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="346" y1="52" x2="379" y2="103" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="379" y1="52" x2="346" y2="103" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="348" y1="110" x2="377" y2="110" stroke="#d9d0c4" stroke-width="2"/>
+    </svg>
+  </div>
+  <div class="figure-caption">Three structures. A <strong>tree</strong> gives every node one parent (w = 1). A <strong>polytree</strong> allows multiple parents but no undirected loops (w = max parents, k). A general <strong>DAG</strong> can have loops and arbitrarily large tree width.</div>
+</div>
+
+<h4>Trees — w = 1</h4>
+<p>A <strong>tree</strong> Bayesian network gives every node exactly <em>one parent</em>. Its tree width is 1, so the formula collapses to <code>O(m · d)</code> — pure <strong>linear time</strong>. You can have a million nodes and still answer queries fast, never touching the impossible joint table. This is the headline payoff promised earlier.</p>
+
+<h4>Polytrees — w = k</h4>
+<p>A <strong>polytree</strong> still has no undirected loops, but a node may have <em>several</em> parents. Its tree width equals <code>k</code>, the maximum number of parents any node has. So if no node has more than 5 parents, <code>w = 5</code> and inference is still very efficient. Polytrees are also called <strong>singly connected</strong> networks.</p>
+
+<h4>General DAGs — multiply connected</h4>
+<p>Anything more tangled — with undirected loops — is a general <strong>DAG</strong>, also called a <strong>multiply connected</strong> network. Here tree width can be large, and exact inference may become infeasible. (More sophisticated methods sometimes still cope, including the logic-based one in Part IV.)</p>
+
+<div class="quiz" id="quiz-block-3">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A Bayesian network has 1,000,000 variables, but it is a tree (each node has one parent). What can we say about exact inference?</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Infeasible — we'd need a joint table of size 2^1,000,000</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Feasible and <strong>linear</strong> in the number of variables, since tree width is 1</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Feasible but exponential in the number of variables</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Feasible only if every variable is binary</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct.</strong> Cost is <code>O(m · d^w)</code>, and a tree has w = 1, so the cost is just <code>O(m · d)</code> — linear in the million variables. The joint table (option A) would indeed be astronomically large, but the whole point of inference algorithms is that we never build it. The number of variables alone never makes inference exponential; only large tree width does.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>The Bridge Back to Logic: Weighted Model Counting</h2>
+</div>
+
+<h3 id="why-wmc">Why Are We Learning This?</h3>
+<p>Earlier in CS161 we spent weeks on logic — Boolean formulas, satisfiability, model counting. It might have seemed like a separate world from probability. This part delivers the punchline that ties the course together: <strong>you can answer probabilistic queries using nothing but symbolic, logical manipulation.</strong> The technique is called a <em>reduction</em> — recasting one problem as another you already know how to solve — and it is one of the most powerful ideas in computer science.</p>
+
+<h3 id="model-counting">The Ladder: SAT → #SAT → WMC</h3>
+<p>Start with a Boolean expression over Boolean variables, e.g. <code>(A ∨ B) ∧ ¬C</code>. With 3 variables there are <code>2³ = 8</code> possible worlds (truth assignments). Three increasingly informative questions:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>SAT:</strong> "Is there <em>at least one</em> world that satisfies the formula?" A yes/no answer. For <code>(A ∨ B) ∧ ¬C</code>, yes.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>#SAT (sharp-SAT):</strong> "<em>How many</em> worlds satisfy it?" Now we count the satisfying rows rather than just detecting one.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>WMC (weighted model counting):</strong> Each satisfying world carries a <em>weight</em>; instead of counting 1 per world, we <em>sum the weights</em> of all satisfying worlds. Plain #SAT is just WMC with every weight equal to 1.</p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Weighted Model Counting (WMC)</div>
+  <p>Given a Boolean formula and a weight for each satisfying assignment, <strong>WMC = the sum of the weights of all satisfying assignments (models)</strong>. The reduction we are about to build encodes a Bayesian network as a formula whose models correspond to the network's worlds, and whose <em>weights are the very probabilities we want</em>. Answering a probability query then becomes: do a weighted model count.</p>
+</div>
+
+<h3 id="the-encoding">The Encoding: From Network to Formula δ</h3>
+<p>From the Bayesian network we extract a Boolean formula the professor calls <strong>δ</strong>. Its variables come in two kinds:</p>
+<ul style="margin: 0 0 18px 22px;">
+  <li>The <strong>original network variables</strong> (here A, B, C — the network's nodes, written as Booleans).</li>
+  <li>One extra <strong>parameter variable</strong> <code>Pᵢ</code> per number (parameter) in the CPTs. A parameter like <code>θ(A)</code> or <code>θ(C | A)</code> gets its own indicator <code>Pᵢ</code>.</li>
+</ul>
+
+<p>Now look at any model (satisfying assignment) of δ. Some of the <code>Pᵢ</code> appear <em>positively</em> (true) and the rest <em>negatively</em> (false). The professor's worked model has A true, B false, C true, exactly three of the <code>Pᵢ</code> true and the other seven false. The reading is: a positive <code>Pᵢ</code> means "this CPT parameter is <em>present</em> in this world," and the three present parameters turn out to be exactly the CPT entries you'd multiply to get that world's probability.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="150" viewBox="0 0 420 150" style="display:block; margin:0 auto;">
+      <text x="210" y="22" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#6b6560">ONE MODEL OF δ  →  ONE NETWORK WORLD</text>
+      <!-- literals row -->
+      <rect x="20" y="40" width="46" height="30" rx="6" fill="#edf7f0" stroke="#2d8a4e" stroke-width="1.5"/>
+      <text x="43" y="60" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">A</text>
+      <rect x="72" y="40" width="46" height="30" rx="6" fill="#fef0f0" stroke="#c53030" stroke-width="1.5"/>
+      <text x="95" y="60" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">¬B</text>
+      <rect x="124" y="40" width="46" height="30" rx="6" fill="#edf7f0" stroke="#2d8a4e" stroke-width="1.5"/>
+      <text x="147" y="60" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">C</text>
+      <rect x="184" y="40" width="50" height="30" rx="6" fill="#edf7f0" stroke="#2d8a4e" stroke-width="1.5"/>
+      <text x="209" y="60" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">P1</text>
+      <rect x="240" y="40" width="50" height="30" rx="6" fill="#edf7f0" stroke="#2d8a4e" stroke-width="1.5"/>
+      <text x="265" y="60" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">P4</text>
+      <rect x="296" y="40" width="50" height="30" rx="6" fill="#edf7f0" stroke="#2d8a4e" stroke-width="1.5"/>
+      <text x="321" y="60" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">P7</text>
+      <text x="380" y="60" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#6b6560">…¬Pj…</text>
+      <!-- weights -->
+      <text x="209" y="100" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#c0510a">weight = w(P1)·w(P4)·w(P7)</text>
+      <text x="209" y="128" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">= θ(A) · θ(¬B|A) · θ(C|A)  =  P(world)</text>
+    </svg>
+  </div>
+  <div class="figure-caption">A model of δ: the three positive <code>Pᵢ</code> pick out exactly the three CPT parameters whose product is that world's probability. Multiplying their weights reproduces P(world) exactly.</div>
+</div>
+
+<h3 id="literal-weights">Weights Live on Literals, Not Worlds</h3>
+<p>There are exponentially many worlds, so we cannot list a weight for each. The elegant fix: specify weights <strong>per literal</strong> (per variable-sign), then define a world's weight as the <em>product</em> of its literals' weights. That is only a <em>linear</em> number of weights. The recipe is strikingly simple:</p>
+
+<table class="compare-table">
+  <tr><th>Literal</th><th>Weight</th></tr>
+  <tr><td>Original network variable (A, ¬A, B, ¬B, C, ¬C)</td><td>1</td></tr>
+  <tr><td>Positive parameter literal <code>Pᵢ</code></td><td>the CPT number θ it stands for</td></tr>
+  <tr><td>Negative parameter literal <code>¬Pᵢ</code></td><td>1</td></tr>
+</table>
+
+<p>Because the network literals all weigh 1, and the absent-parameter literals all weigh 1, a model's weight reduces to the product of just the <em>present</em> parameters — precisely <code>θ(A) · θ(¬B|A) · θ(C|A)</code> for the worked model. That is exactly the probability that world should have. Sum the weights of all eight models and you recover every row of the probability table. Probabilistic inference <em>is</em> weighted model counting.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Probability as Pure Symbol-Pushing</div>
+  <p>This reduction means you can compile the Boolean formula δ into a special Boolean circuit (in a normal form with the properties <em>smoothness, decomposability, determinism</em>) and answer probabilistic queries by manipulating that circuit. Three further perks: (1) the encoding shown is the simple "vanilla" version — smarter ones exist; (2) it is <em>not</em> bound by tree width, so it can sometimes win even when standard algorithms drown; (3) it generalizes beyond Bayesian networks — even to inference in probabilistic programming languages.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">"Aren't We Adding Exponentially Many Variables?"</div>
+  <p>A student worried the <code>Pᵢ</code> blow up the variable count. They do not. We add <em>one parameter variable per CPT entry</em>, so the total number of variables tracks the <strong>size of the network</strong> (the total size of the CPTs), which is itself only <code>n · d^(k+1)</code> — linear in the network, exponential merely in a node's parent count <code>k</code>. Compare that to the joint table's <code>d^n</code>. The encoding stays linear in the size of the network.</p>
+</div>
+
+<div class="quiz" id="quiz-block-4">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In the WMC encoding, why are the weights specified on individual <em>literals</em> rather than on whole worlds?</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Because literal weights are easier to read off a screen</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Because there are exponentially many worlds but only linearly many literals; a world's weight is the <strong>product</strong> of its literal weights</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Because worlds don't have well-defined probabilities</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Because the SAT solver can only accept per-literal input</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct.</strong> Listing a weight per world would require an exponential table — exactly the blow-up we are trying to avoid. By giving one weight per literal (a linear amount of data) and defining a world's weight as the product of its literals' weights, we reconstruct every world's probability cheaply. Worlds absolutely do have well-defined probabilities (option C is false) — that product <em>is</em> the probability.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>Modeling: Turning a Story into a Network</h2>
+</div>
+
+<h3 id="three-steps">Why Are We Learning This?</h3>
+<p>So far we assumed the network already existed. But in practice <em>you</em> have to build it from a messy English description of some domain. The professor gives a disarmingly simple but genuinely useful recipe — three steps that, once you internalize them, keep your modeling organized no matter how complex the story.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The Three Steps of Modeling</div>
+  <p><strong>Step 1:</strong> Define the <em>variables</em> and their possible <em>values</em>. <strong>Step 2:</strong> Add the <em>edges</em> — for each variable, ask "what are its direct causes?" and draw arrows from those. <strong>Step 3:</strong> Fill in the <em>CPTs</em> — the actual probability numbers. Always in that order: variables, then structure, then numbers.</p>
+</div>
+
+<h3 id="diseases-story">Worked Example: Flu, Cold, and Tonsillitis</h3>
+<p>The story: <em>Flu</em> causes fever, body aches, chilling, and a sore throat. <em>Cold</em> causes chilling and a sore throat. <em>Tonsillitis</em> causes a sore throat and can be associated with fever. We want a network for medical diagnosis.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Variables.</strong> Three <em>diseases</em> — Flu, Cold, Tonsillitis — and four <em>symptoms</em> — Fever, Body aches, Sore throat, Chilling. Each is binary (present / not present). Seven variables in all.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Edges — one node at a time.</strong> Don't scatter arrows randomly. Visit each symptom and ask "what diseases directly cause this?" <em>Chilling</em> ← Cold, Flu. <em>Body aches</em> ← Flu only. <em>Sore throat</em> ← all three. <em>Fever</em> ← Flu, Tonsillitis. All arrows point from diseases (top) down to symptoms (bottom).</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>CPTs.</strong> Here the story gives no numbers, so we'd fill these later (Part VI shows how). Structure first; numbers can come from data.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">A Tactic Worth Remembering</div>
+  <p>"Go variable by variable and ask: what are this variable's <em>direct</em> causes?" This single discipline prevents the classic beginner error of throwing in arrows by gut feeling. Direct causes become parents; everything else is left to the conditional independencies the structure already implies.</p>
+</div>
+
+<h3 id="bipartite">The Bipartite Pattern: Causes → Effects</h3>
+<p>The resulting graph has a recognizable shape: two layers, with edges flowing only from the top layer to the bottom. This is a <strong>bipartite</strong> structure — diseases on top (causes), symptoms below (effects).</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="190" viewBox="0 0 420 190" style="display:block; margin:0 auto;">
+      <text x="55" y="20" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#c0510a">CAUSES</text>
+      <!-- diseases -->
+      <ellipse cx="70" cy="45" rx="34" ry="18" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/><text x="70" y="50" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#2a2520">Flu</text>
+      <ellipse cx="200" cy="45" rx="34" ry="18" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/><text x="200" y="50" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#2a2520">Cold</text>
+      <ellipse cx="345" cy="45" rx="42" ry="18" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/><text x="345" y="50" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#2a2520">Tonsillitis</text>
+      <text x="40" y="120" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#6b6560" transform="rotate(-90 40 120)">EFFECTS</text>
+      <!-- symptoms -->
+      <ellipse cx="65" cy="150" rx="34" ry="18" fill="#fff" stroke="#d9d0c4" stroke-width="2"/><text x="65" y="155" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#2a2520">Aches</text>
+      <ellipse cx="160" cy="150" rx="34" ry="18" fill="#fff" stroke="#d9d0c4" stroke-width="2"/><text x="160" y="155" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" fill="#2a2520">Chilling</text>
+      <ellipse cx="265" cy="150" rx="40" ry="18" fill="#fff" stroke="#d9d0c4" stroke-width="2"/><text x="265" y="155" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" fill="#2a2520">SoreThroat</text>
+      <ellipse cx="370" cy="150" rx="34" ry="18" fill="#fff" stroke="#d9d0c4" stroke-width="2"/><text x="370" y="155" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#2a2520">Fever</text>
+      <!-- edges -->
+      <line x1="62" y1="62" x2="65" y2="132" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="72" y1="62" x2="150" y2="134" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="80" y1="62" x2="250" y2="134" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="90" y1="60" x2="360" y2="134" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="190" y1="62" x2="165" y2="133" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="205" y1="62" x2="258" y2="133" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="335" y1="62" x2="275" y2="133" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="350" y1="62" x2="372" y2="132" stroke="#d9d0c4" stroke-width="1.5"/>
+    </svg>
+  </div>
+  <div class="figure-caption">A bipartite diagnosis network: diseases (causes) on top, symptoms (effects) below, edges flowing only downward. This cause→effect, two-layer pattern recurs across many domains.</div>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">The Same Shape, Everywhere</div>
+  <p>This isn't just for medicine. Google built a bipartite network ("Rephil," millions of nodes) to detect what a web page is about: the top layer is <strong>topics</strong> (sports, elections...), the bottom layer is <strong>words on the page</strong>. Give it evidence about which words appear, and query which topic is most probable. Same structure, totally different domain — that is the power of recognizing patterns.</p>
+</div>
+
+<h3 id="query-evidence">Query Variables vs Evidence Variables</h3>
+<p>Two more terms you will meet in the tools. <strong>Evidence variables</strong> are the ones you observe and assert; <strong>query variables</strong> are the ones you ask about. Crucially, which is which is <em>task-specific</em>, not baked into the network:</p>
+
+<table class="compare-table">
+  <tr><th>Task</th><th>Evidence (observed)</th><th>Query (asked about)</th></tr>
+  <tr><td>Diagnosis</td><td>Symptoms ("I have fever + aches")</td><td>Diseases ("do I have the flu?")</td></tr>
+  <tr><td>Prediction</td><td>Disease ("I have tonsillitis")</td><td>Symptoms ("will I get a sore throat?")</td></tr>
+</table>
+
+<div class="quiz" id="quiz-block-5">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">When building the disease network, the professor insists you add edges by visiting each node and asking one specific question. What is it?</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>"Which other variables is this one correlated with?"</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>"What are the <strong>direct causes</strong> of this variable?" — those become its parents</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>"Which variable should come first alphabetically?"</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>"How many edges does the graph need to stay a tree?"</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct.</strong> You go node by node and ask for its <em>direct causes</em>, drawing an arrow from each cause into that node. This disciplined, causal question is what stops you from sprinkling edges by intuition. Mere correlation (option A) is exactly what we avoid — Bayesian network edges express direct causal/dependency structure, and the conditional independencies follow from getting the parents right.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART VI ═══════════════════════ -->
+<section id="part6" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part VI</div>
+  <h2>Filling the Numbers: Learning &amp; Sensitivity</h2>
+</div>
+
+<h3 id="three-sources">Where Do CPT Numbers Come From?</h3>
+<p>Step 3 of modeling — the actual probabilities — has three possible sources. The professor lays them out:</p>
+
+<table class="compare-table">
+  <tr><th>Source</th><th>How</th></tr>
+  <tr><td>Problem statement</td><td>The numbers are simply given to you in the story (you'll see this in the cow example).</td></tr>
+  <tr><td>Subjective beliefs</td><td>An expert estimates them by hand — the historical method when the field began.</td></tr>
+  <tr><td>Learning from data</td><td>Estimate the numbers automatically from a dataset of past cases.</td></tr>
+</table>
+
+<h3 id="complete-data">Data: Complete vs Incomplete</h3>
+<p>A dataset is a table: columns are the network's variables, rows are cases (e.g. patients). Patient 1 might have Cold = yes, Flu = no, Tonsillitis = <strong>?</strong> (unknown), Chilling = yes, and so on. That question mark is the whole story.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Complete vs Incomplete Data</div>
+  <p>A row is <strong>complete</strong> if every variable's value is known; a dataset is complete if every row is. The moment any cell is a "?", the dataset is <strong>incomplete</strong>. This distinction decides how hard learning is.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Why the "?" Hurts</div>
+  <p>With <strong>complete</strong> data, learning the CPTs is easy — one pass over the data, a <em>closed-form</em> count-and-divide. With <strong>incomplete</strong> data there is no such shortcut; you need an iterative algorithm. The most famous is <strong>EM (Expectation-Maximization)</strong>, which you'll run on the homework (using a tool, not by implementing it). EM essentially fills in the missing values and re-estimates, round after round.</p>
+</div>
+
+<h3 id="max-likelihood">What Are We Optimizing? Maximum Likelihood</h3>
+<p>Suppose two groups learn two different CPT sets — CPTs-A and CPTs-B — for the same structure, giving networks A and B. Which is "better"? Answering this defines the <em>objective</em> that learning algorithms chase.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>Take network A. For each row (patient) in the data, ask A: "what probability do you assign to this exact case?" Call them P₁, P₂, …, Pₙ.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>Multiply them: <code>score(A) = P₁ · P₂ · ⋯ · Pₙ</code>. This is how well network A "explains" the data — its <strong>likelihood</strong>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>Do the same for network B to get score(B). <strong>Choose the network with the larger score</strong> — the one that assigns the data the highest probability.</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Maximum Likelihood</div>
+  <p>The <strong>maximum likelihood principle</strong>: pick the parameters that <em>maximize the probability of the observed data</em>. As a student neatly put it, you maximize P(data | network). With complete data this maximum has a clean closed form; with incomplete data, EM iteratively climbs toward it. This single principle underlies an enormous fraction of statistical machine learning.</p>
+</div>
+
+<h3 id="sensitivity">Sensitivity Analysis</h3>
+<p>The final new concept comes from a second story — confirming pregnancy in artificially inseminated cows, with a tree-structured network of five variables (Pregnancy → Progesterone level → three tests: Scanning, Blood, Urine). Crucially, that story hands you <em>every</em> number, including an 87% procedure success rate, so you can fill all CPTs straight from the text.</p>
+
+<p>Once the network is built, <strong>sensitivity analysis</strong> asks: how much does a query's answer change when I tweak a parameter? If nudging one CPT entry barely moves your conclusion, that number can be sloppy; if a tiny change flips your diagnosis, you'd better measure it carefully. It tells you which parameters actually matter — invaluable when your numbers are uncertain estimates.</p>
+
+<div class="callout tip">
+  <div class="callout-title">On the Homework</div>
+  <p>The upcoming assignment has no programming. You'll use the SamIam tool (with short video tutorials) to build networks from stories, run EM to learn CPTs from data, answer prior/posterior/MPE/MAP queries, classify networks as tree / polytree / general, and perform sensitivity analysis. Everything in this lecture maps to a task you'll actually do.</p>
+</div>
+
+<div class="quiz" id="quiz-block-6">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">You have a fully observed (complete) dataset and want maximum-likelihood CPTs. What's the situation?</div>
+  <div class="quiz-options" data-quiz="q6">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>You must run EM, because EM is always required to learn parameters</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Learning is easy: a single closed-form pass (count and normalize) over the data</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Learning is impossible without subjective expert beliefs</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>You minimize the probability the network assigns to the data</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q6','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q6">
+    <strong>Correct.</strong> Complete data admits a closed-form maximum-likelihood solution — essentially counting how often each parent/child combination occurs and normalizing — in one pass. EM (option A) is only needed when data is <em>incomplete</em>, i.e. has missing values. And maximum likelihood <em>maximizes</em>, not minimizes, the probability the network assigns to the data, so option D is the principle stated backwards.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SYNTHESIS ═══════════════════════ -->
+<section id="synthesis" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This lecture completed the arc of Bayesian networks by joining the two halves of the story: <em>how to ask questions of a network</em> and <em>how to build one in the first place</em>.</p>
+
+<p>We began (Part I) by re-grounding ourselves: a network secretly defines a giant joint distribution we must never materialize. That tension motivated the four queries (Part II) — prior and posterior marginals, then MPE and its harder generalization MAP — which are simply different ways of summarizing or maximizing that hidden distribution. The two-positive-tests example finally explained the day-one mystery: rare priors plus imperfect tests leave real residual doubt.</p>
+
+<p>Part III answered the practical worry hanging over everything: <em>can we actually compute these answers?</em> Yes — as long as <strong>tree width</strong> is small. Cost is linear in the variable count but exponential only in tree width, which is why trees (w = 1) and polytrees (w = k) are tractable even at massive scale, while tangled DAGs may not be.</p>
+
+<p>Part IV delivered the lecture's intellectual climax: a <strong>reduction</strong> of probabilistic inference to <strong>weighted model counting</strong> — pure logic. The very SAT and model-counting machinery from earlier in the course turns out to answer probability queries, with CPT parameters reappearing as literal weights. This is the course's logic and probability threads tied into a single knot, and it even sidesteps the tree-width barrier.</p>
+
+<p>Parts V and VI turned to construction: the three-step modeling discipline (variables → edges → CPTs), the recurring bipartite cause→effect pattern, the query-vs-evidence framing, and finally where CPT numbers come from — problem statements, expert beliefs, or <strong>learning from data</strong> via the maximum likelihood principle (closed-form for complete data, EM for incomplete). Sensitivity analysis then told us which of those numbers actually deserve our care.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Through-Line</div>
+  <p>A Bayesian network is a <em>compression</em> of an exponential distribution into a linear-sized object. Everything today exploited that compression: inference reads answers off it without expanding it, tree width measures when that's possible, the WMC reduction re-expresses it in logic, and learning chooses its numbers to best fit data. Build small, reason big.</p>
+</div>
+
+<div class="callout tip" style="margin-top: 32px;">
+  <div class="callout-title">What's Next</div>
+  <p>You'll cement all of this on the upcoming (programming-free) homework with the SamIam tool: construct networks from stories, run EM to learn CPTs, fire off prior / posterior / MPE / MAP queries, classify tree vs polytree vs general, and perform sensitivity analysis. Conceptually, the reduction-to-logic idea points forward to <em>knowledge compilation</em> and to inference in richer settings like probabilistic programming — the same "recast a hard problem as one you already know how to solve" move you just watched transform probability into model counting.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

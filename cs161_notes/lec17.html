@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 17 — Entropy, Decision Trees &amp; Random Forests</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 17</div>
+  <a href="#part1">Part I — Entropy</a>
+  <a href="#why-entropy" class="sub">Why Quantify Uncertainty?</a>
+  <a href="#entropy-formula" class="sub">The Entropy Formula</a>
+  <a href="#binary-curve" class="sub">The Binary Entropy Curve</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Conditional Entropy</a>
+  <a href="#observing" class="sub">Observing Before You Know</a>
+  <a href="#cond-formula" class="sub">Averaging Over Outcomes</a>
+  <a href="#never-increase" class="sub">It Can Never Increase</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — Decision Trees</a>
+  <a href="#classifiers" class="sub">Classifiers &amp; Labeled Data</a>
+  <a href="#tree-anatomy" class="sub">Anatomy of a Tree</a>
+  <a href="#interpretable" class="sub">Interpretability</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — Building the Tree</a>
+  <a href="#scoring" class="sub">Scoring an Attribute</a>
+  <a href="#worked-example" class="sub">A Worked Score</a>
+  <a href="#algorithm" class="sub">The Learning Algorithm</a>
+  <a href="#cross-val" class="sub">Cross-Validation</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Random Forests</a>
+  <a href="#ensemble" class="sub">Many Trees, One Vote</a>
+  <a href="#bootstrap" class="sub">Bootstrap Data Sets</a>
+  <a href="#feature-bagging" class="sub">Random Attribute Subsets</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part6">Part VI — Bayes Classifiers</a>
+  <a href="#naive-bayes" class="sub">Naive Bayes &amp; Thresholds</a>
+  <a href="#quiz6" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#together">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">CS161 · Fundamentals of Artificial Intelligence</div>
+  <h1>Entropy, Decision Trees &amp; Random Forests</h1>
+  <p class="hero-sub">An interactive guide to Lecture 17 — measuring uncertainty with entropy, then using it to grow interpretable decision trees and combine them into powerful random-forest classifiers.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>Entropy — Putting a Number on Uncertainty</h2>
+</div>
+
+<h3 id="why-entropy">Why Are We Learning This?</h3>
+<p>Today's goal is to build <strong>classifiers</strong> — machines that look at the
+characteristics of something and output a decision. A lending company feeds in an
+applicant's income and payment history and gets back <em>approve</em> or <em>decline</em>.
+A clinic feeds in test results and gets back <em>cold</em> or <em>COVID-19</em>. The most
+intuitive way to build such a machine is a <strong>decision tree</strong>, and combining
+many trees gives a <strong>random forest</strong>.</p>
+
+<p>But before we can grow a single tree, we need one mathematical tool: a way to
+<em>measure how uncertain we are</em> about something. Eyeballing it works for simple
+cases — but the moment a variable has three, four, or more possible values, your eyes
+fail you. <strong>Entropy</strong> is the number that captures uncertainty precisely, and
+it will sit at the heart of everything that follows.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Entropy</div>
+  <p>The <strong>entropy</strong> of a variable <code>X</code> is a single non-negative
+  number that quantifies how uncertain we are about its value, given its probability
+  distribution. <strong>Higher entropy means more uncertainty.</strong> Entropy is zero
+  exactly when we are completely certain of the outcome.</p>
+</div>
+
+<h4>A motivating observation</h4>
+<p>The lecture revisits the old Bayesian-network example with three binary variables —
+<em>earthquake</em>, <em>burglary</em>, and <em>alarm</em> — and their marginal
+distributions (the probability of each being true or false on its own):</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="150" viewBox="0 0 420 150" style="display:block; margin:0 auto;">
+      <!-- earthquake -->
+      <text x="70" y="24" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="14" font-weight="700" fill="#2a2520">Earthquake</text>
+      <rect x="20" y="40" width="100" height="22" fill="#edf7f0" stroke="#d9d0c4"/>
+      <rect x="20" y="40" width="10" height="22" fill="#2d8a4e"/>
+      <text x="70" y="56" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">0.1 / 0.9</text>
+      <text x="70" y="86" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" font-weight="600" fill="#c0510a">H = 0.469</text>
+      <text x="70" y="106" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">most certain</text>
+      <!-- burglary -->
+      <text x="210" y="24" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="14" font-weight="700" fill="#2a2520">Burglary</text>
+      <rect x="160" y="40" width="100" height="22" fill="#edf7f0" stroke="#d9d0c4"/>
+      <rect x="160" y="40" width="20" height="22" fill="#2d8a4e"/>
+      <text x="210" y="56" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">0.2 / 0.8</text>
+      <text x="210" y="86" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" font-weight="600" fill="#c0510a">H = 0.722</text>
+      <text x="210" y="106" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">in between</text>
+      <!-- alarm -->
+      <text x="350" y="24" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="14" font-weight="700" fill="#2a2520">Alarm</text>
+      <rect x="300" y="40" width="100" height="22" fill="#edf7f0" stroke="#d9d0c4"/>
+      <rect x="300" y="40" width="76" height="22" fill="#2d8a4e"/>
+      <text x="350" y="56" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">~0.76 / 0.24</text>
+      <text x="350" y="86" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" font-weight="600" fill="#c0510a">H = 0.80</text>
+      <text x="350" y="106" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">least certain</text>
+      <!-- arrow -->
+      <line x1="20" y1="135" x2="400" y2="135" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="210" y="148" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">increasing uncertainty (entropy) →</text>
+    </svg>
+  </div>
+  <div class="figure-caption">A distribution closer to 50/50 carries more uncertainty — and a higher entropy — than a lopsided one.</div>
+</div>
+
+<p>For <em>earthquake</em>, the split <code>0.1 / 0.9</code> is very lopsided: we are
+quite sure it is false, so uncertainty is low. For <em>alarm</em>, the split is closer to
+even, so we are much less sure. If you ordered them from most certain to least certain,
+you would say earthquake, then burglary, then alarm. Entropy puts numbers on exactly that
+ranking: <code>0.469 &lt; 0.722 &lt; 0.80</code>.</p>
+
+<h3 id="entropy-formula">The Entropy Formula</h3>
+<p>Entropy sums over every possible value of the variable. For each value, take its
+probability, multiply by the base-2 logarithm of that probability, add them up, and negate
+the total (the negation makes the answer non-negative, since logs of probabilities are
+negative):</p>
+
+<pre><code><span class="cm">// entropy of a variable X</span>
+H(X) = <span class="op">-</span> <span class="fn">sum over values x of</span> [ P(x) <span class="op">*</span> log<span class="nb">2</span>( P(x) ) ]</code></pre>
+
+<p>For the binary variable <em>burglary</em> with distribution <code>0.2 / 0.8</code>:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>Term for the "true" outcome: <code>0.2 &times; log2(0.2) = 0.2 &times; (-2.322) = -0.464</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>Term for the "false" outcome: <code>0.8 &times; log2(0.8) = 0.8 &times; (-0.322) = -0.258</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>Add and negate: <code>-(-0.464 - 0.258) = 0.722</code>. That matches the value in the figure above.</p>
+</div>
+
+<h3 id="binary-curve">The Binary Entropy Curve</h3>
+<p>To build intuition, consider a binary variable <code>Z</code> whose "true" probability is
+<code>p</code> (so "false" has probability <code>1 - p</code>). Plotting entropy as a function
+of <code>p</code> gives a smooth hump:</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="320" height="220" viewBox="0 0 320 220" style="display:block; margin:0 auto;">
+      <!-- axes -->
+      <line x1="50" y1="180" x2="290" y2="180" stroke="#2a2520" stroke-width="1.5"/>
+      <line x1="50" y1="180" x2="50" y2="30" stroke="#2a2520" stroke-width="1.5"/>
+      <!-- curve: entropy hump peaking at p=0.5, H=1 -->
+      <path d="M 50 180 Q 170 -40 290 180" fill="none" stroke="#c0510a" stroke-width="2.5"/>
+      <!-- markers -->
+      <circle cx="50" cy="180" r="4" fill="#2d8a4e"/>
+      <circle cx="290" cy="180" r="4" fill="#2d8a4e"/>
+      <circle cx="170" cy="50" r="4" fill="#7c3aed"/>
+      <!-- dashed peak guide -->
+      <line x1="170" y1="50" x2="170" y2="180" stroke="#d9d0c4" stroke-width="1.5" stroke-dasharray="4 3"/>
+      <line x1="50" y1="50" x2="170" y2="50" stroke="#d9d0c4" stroke-width="1.5" stroke-dasharray="4 3"/>
+      <!-- labels -->
+      <text x="50" y="200" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">0</text>
+      <text x="170" y="200" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">0.5</text>
+      <text x="290" y="200" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">1</text>
+      <text x="170" y="214" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#6b6560">p = P(Z = true)</text>
+      <text x="38" y="54" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">1</text>
+      <text x="38" y="184" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">0</text>
+      <text x="22" y="110" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#6b6560" transform="rotate(-90 22 110)">H(Z)</text>
+      <text x="200" y="44" font-family="DM Sans, sans-serif" font-size="11" fill="#7c3aed">max = 1 bit</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Binary entropy peaks at p = 0.5 (maximum confusion) and drops to 0 at both ends, where the outcome is certain.</div>
+</div>
+
+<p>The two endpoints — point A where <code>p = 0</code> (we know <code>Z</code> is false) and
+point B where <code>p = 1</code> (we know <code>Z</code> is true) — both have entropy
+<strong>zero</strong>: perfect certainty. The peak sits at <code>p = 0.5</code>, where a
+binary variable is maximally confusing and entropy equals <strong>1</strong>. For a variable
+with more than two values, the maximum is larger — a fun exercise is to work out how it grows
+with the number of values.</p>
+
+<div class="callout insight">
+  <div class="callout-title">What Entropy Really Measures</div>
+  <p>A student asked whether entropy's value means anything in absolute terms. It does. The
+  field of <strong>information theory</strong> interprets entropy as the average number of
+  <em>bits</em> you would need to communicate the value of a variable. The more uncertain the
+  variable, the more information each outcome carries, and the more bits you need. That is why
+  the maximally-uncertain binary variable has entropy of exactly one bit.</p>
+</div>
+
+<div class="quiz" id="quiz1c">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A fair coin and a heavily biased coin (99% heads) are both flipped. Which has higher entropy, and why?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>The biased coin, because 0.99 is a larger number than 0.5.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>The fair coin, because its 50/50 split sits at the peak of the entropy curve.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>They are equal, since both are binary variables.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>The biased coin, because it almost always lands heads.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct answer: B.</strong> Entropy measures uncertainty, not the size of any single
+    probability. The fair coin's 50/50 distribution is the point of maximum confusion (entropy = 1
+    bit), while the 99/1 biased coin is nearly certain to land heads, so its entropy is close to
+    zero. Option A confuses "bigger probability" with "more uncertainty," and D actually describes
+    a <em>low</em>-entropy situation.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>Conditional Entropy — The Value of an Observation</h2>
+</div>
+
+<h3 id="observing">Why Are We Learning This?</h3>
+<p>Entropy tells us how uncertain we are <em>right now</em>. But the whole point of building a
+classifier is to <strong>reduce</strong> that uncertainty by gathering evidence. Suppose you
+are unsure whether a patient has the flu. You can run a blood test — but you do not yet know
+how it will come out. The natural question is: <em>before</em> running the test, how much will
+my uncertainty about the flu drop, on average, once I see the result? <strong>Conditional
+entropy</strong> answers exactly that, and it is the score a decision tree uses to pick which
+question to ask next.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Builds On Part I</div>
+  <p>Plain entropy <code>H(X)</code> uses the marginal distribution of <code>X</code>. Everything
+  here is the same machine, but fed a <em>conditional</em> distribution instead. If you are solid
+  on the entropy formula, conditional entropy is just two small additions on top of it.</p>
+</div>
+
+<h4>Step 1: entropy after a known observation</h4>
+<p>Imagine you actually <em>observed</em> the variable <code>Y</code> and learned it equals a
+specific value <code>y</code>. The entropy of <code>X</code> in this new world,
+written <code>H(X | y)</code>, uses the very same formula — you just swap the prior probability
+<code>P(x)</code> for the conditional probability <code>P(x | y)</code>.</p>
+
+<h3 id="cond-formula">Step 2: averaging over outcomes we haven't seen yet</h3>
+<p>The interesting case is when we have <em>not</em> observed <code>Y</code> yet. We do not know
+which value it will take, so we cannot pick a single <code>H(X | y)</code>. The solution is to
+consider every possible outcome of <code>Y</code>, compute the resulting entropy for each, and
+weight each by how likely that outcome is:</p>
+
+<pre><code><span class="cm">// conditional entropy of X given Y (Y not yet observed)</span>
+H(X | Y) = <span class="fn">sum over values y of</span> [ P(y) <span class="op">*</span> H(X | y) ]</code></pre>
+
+<p>Concretely, the lecture asks: what happens to our uncertainty about <em>burglary</em> once we
+observe the <em>alarm</em>? Burglary alone has entropy <code>0.722</code>. Observing the alarm
+splits into two worlds:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Alarm is true.</strong> The conditional distribution of burglary shifts, and its
+  entropy actually <em>rises</em> to <code>0.825</code> — knowing the alarm fired makes burglary
+  genuinely harder to call.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Alarm is false.</strong> Now burglary is much clearer; its entropy <em>drops</em> to
+  <code>0.169</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Weight and add.</strong> Combine the two using the probabilities of the alarm
+  firing or not. The weighted average comes out to <code>H(burglary | alarm) = 0.329</code>.</p>
+</div>
+
+<h3 id="never-increase">The Surprising Guarantee: Observation Never Hurts</h3>
+<p>Notice something: <code>0.329 &lt; 0.722</code>. Observing the alarm <em>lowered</em> our
+average uncertainty about burglary. This is not a coincidence — it is a theorem.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — You Can Never Lose by Observing</div>
+  <p>Conditional entropy <code>H(X | Y)</code> is <strong>always less than or equal to</strong>
+  the prior entropy <code>H(X)</code>. On average, observing another variable can only make you
+  more certain about <code>X</code> — never less. This is the principle that makes "ask a good
+  question, then ask another" a sound strategy for building classifiers.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Watch the Word "Average"</div>
+  <p>The guarantee holds for the <em>average</em> <code>H(X | Y)</code>, not for any individual
+  outcome. We just saw that learning <em>alarm = true</em> raised burglary's entropy from
+  <code>0.722</code> to <code>0.825</code>. A single observation can leave you more confused;
+  it is only when you average over all of <code>Y</code>'s possible values that uncertainty is
+  guaranteed not to increase.</p>
+</div>
+
+<p>When is the inequality an exact equality — when does observing <code>Y</code> leave our
+uncertainty about <code>X</code> completely unchanged? When <code>X</code> and <code>Y</code> are
+<strong>independent</strong>. If <code>Y</code> tells you nothing about <code>X</code>, observing
+it cannot move the needle.</p>
+
+<div class="quiz" id="quiz2c">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">For some specific outcome <code>Y = y</code>, you find <code>H(X | y) &gt; H(X)</code>. Has a theorem been violated?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Yes — conditional entropy can never exceed prior entropy under any circumstance.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>No — the guarantee is about the averaged <code>H(X | Y)</code>; a single outcome may raise entropy.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Yes — it means X and Y must be independent.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>No — but only because entropy can be negative here.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct answer: B.</strong> The "never increase" guarantee applies to
+    <code>H(X | Y)</code>, the probability-weighted average over all of <code>Y</code>'s outcomes.
+    Any individual <code>H(X | y)</code> can be higher than the prior — exactly what we saw when
+    "alarm = true" pushed burglary's entropy from 0.722 up to 0.825. Option C is wrong because
+    independence forces <em>equality</em> on the average, and D is wrong because entropy is always
+    non-negative.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>Decision Trees — Classifiers You Can Read</h2>
+</div>
+
+<h3 id="classifiers">Classifiers and Labeled Data</h3>
+<p>A <strong>classifier</strong> takes an <em>instance</em> (a set of feature values) and returns
+a <em>class</em> (a decision). Decision trees and random forests learn classifiers through
+<strong>supervised learning</strong>: we train from <strong>labeled data</strong>, where each
+example already comes tagged with the correct class.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Labeled Data</div>
+  <p>A labeled data set is a table. Each row is an <strong>example</strong>; the columns are
+  <strong>features</strong> (also called <strong>attributes</strong>) plus one special column,
+  the <strong>class variable</strong> (or <strong>target</strong>), holding the correct answer.
+  Supervised learning means the algorithm gets to see the answers during training.</p>
+</div>
+
+<p>The running example is the classic "restaurant" problem: should I wait for a table, or leave?
+The target <code>WillWait</code> is true or false (a <em>binary classifier</em>, though classes
+need not be binary), and there are about ten attributes per restaurant — price range, whether it
+is raining, the type of cuisine, the estimated wait, and so on — across 12 labeled examples.</p>
+
+<h3 id="tree-anatomy">The Anatomy of a Decision Tree</h3>
+<p>A decision tree turns those attributes into a flowchart. Each internal node tests one
+attribute; each branch corresponds to one value of that attribute; each leaf is a final decision.
+To classify an instance, you start at the root and walk down, following the branch that matches
+your instance's values, until you hit a leaf.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="440" height="240" viewBox="0 0 440 240" style="display:block; margin:0 auto;">
+      <!-- root: Patrons -->
+      <rect x="170" y="14" width="100" height="30" rx="6" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="220" y="34" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#c0510a">Patrons?</text>
+      <!-- branches from root -->
+      <line x1="190" y1="44" x2="70" y2="96" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="220" y1="44" x2="220" y2="96" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="250" y1="44" x2="360" y2="96" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="120" y="74" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#6b6560">None</text>
+      <text x="232" y="74" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#6b6560">Some</text>
+      <text x="315" y="74" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#6b6560">Full</text>
+      <!-- leaf: None -> No -->
+      <rect x="30" y="96" width="80" height="28" rx="6" fill="#fef0f0" stroke="#c53030" stroke-width="1.5"/>
+      <text x="70" y="114" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#c53030">Don't wait</text>
+      <!-- leaf: Some -> Yes -->
+      <rect x="180" y="96" width="80" height="28" rx="6" fill="#edf7f0" stroke="#2d8a4e" stroke-width="1.5"/>
+      <text x="220" y="114" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#2d8a4e">Wait</text>
+      <!-- internal: Full -> WaitEstimate -->
+      <rect x="305" y="96" width="110" height="30" rx="6" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="360" y="116" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#c0510a">WaitEstimate?</text>
+      <!-- branches from WaitEstimate -->
+      <line x1="330" y1="126" x2="300" y2="176" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="390" y1="126" x2="410" y2="176" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="296" y="156" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#6b6560">&gt;60</text>
+      <text x="418" y="156" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#6b6560">0–10</text>
+      <rect x="262" y="176" width="74" height="26" rx="6" fill="#fef0f0" stroke="#c53030" stroke-width="1.5"/>
+      <text x="299" y="193" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#c53030">Don't wait</text>
+      <rect x="378" y="176" width="60" height="26" rx="6" fill="#edf7f0" stroke="#2d8a4e" stroke-width="1.5"/>
+      <text x="408" y="193" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#2d8a4e">Wait</text>
+    </svg>
+  </div>
+  <div class="figure-caption">A fragment of the restaurant decision tree. Internal nodes test attributes; branches are values; leaves are decisions. To classify, walk root-to-leaf.</div>
+</div>
+
+<p>Reading the tree: if there are <em>no</em> patrons, don't wait. If there are <em>some</em>,
+wait. If it is <em>full</em>, we are still uncertain, so the tree asks a follow-up question —
+the wait estimate — and so on. Each test peels away uncertainty until a confident decision
+remains.</p>
+
+<h3 id="interpretable">Why Trees Are Prized: Interpretability</h3>
+<p>You can <em>read</em> a decision tree and see exactly the logic it applies. That property —
+<strong>interpretability</strong> — is a major theme in modern AI, largely because the most
+powerful method, neural networks, lacks it. A neural network may perform brilliantly while
+remaining an opaque box; a decision tree is transparent by construction.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Interpretability Is Being Redefined</div>
+  <p>The professor notes that "interpretable because a human can eyeball it" is becoming an old
+  notion. Recent work in <strong>explainable AI</strong> can take a numeric model — even a neural
+  network — and compile its behavior into <em>logic</em>, then use automated reasoning to explain
+  what it does. So we may not need to visually inspect a model to understand it; we can reason
+  about a symbolic version of it instead.</p>
+</div>
+
+<div class="quiz" id="quiz3c">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In the restaurant tree, what does an internal node (like "Patrons?") represent?</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>A final class decision such as "wait" or "don't wait."</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>A single labeled training example.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>A test on one attribute, with one branch per possible value of that attribute.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>The probability that the class variable is true.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct answer: C.</strong> An internal node tests exactly one attribute and sprouts a
+    branch for each value that attribute can take ("Patrons?" branches into None, Some, and Full).
+    Final decisions live at the <em>leaves</em> (option A), not internal nodes. The tree is the
+    learned classifier, not a single example (B), and a basic decision tree returns a class label,
+    not a probability (D).
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>Building the Tree — Which Question to Ask First</h2>
+</div>
+
+<h3 id="scoring">Why Are We Learning This?</h3>
+<p>We can read a tree, but how do we <em>grow</em> one from data? The whole art is choosing,
+at each node, which attribute to split on. A good split sorts the examples into groups that are
+as pure (as certain) as possible. This is precisely where Parts I and II pay off: we
+<strong>score each attribute by the conditional entropy it leaves behind</strong>, and pick the
+attribute that drives uncertainty about the class lowest.</p>
+
+<div class="callout tip">
+  <div class="callout-title">This Is Conditional Entropy in Disguise</div>
+  <p>Picking a split asks: "What happens to the entropy of the class variable <code>WillWait</code>
+  after I test attribute <code>A</code>?" That is exactly <code>H(WillWait | A)</code> from Part II.
+  A great attribute produces low conditional entropy — pure, confident child groups.</p>
+</div>
+
+<h4>The class distribution at each branch</h4>
+<p>Take the "Patrons?" split. The full data set has 12 examples, evenly split 6 wait / 6 don't,
+so the prior entropy of <code>WillWait</code> is <code>H = 1</code>. After testing patrons we land
+in one of three groups, each with its own class distribution and its own entropy:</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="430" height="170" viewBox="0 0 430 170" style="display:block; margin:0 auto;">
+      <!-- None -->
+      <text x="70" y="22" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#2a2520">None</text>
+      <rect x="30" y="34" width="80" height="20" fill="#fef0f0" stroke="#d9d0c4"/>
+      <text x="70" y="49" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">0 / 1</text>
+      <text x="70" y="76" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" font-weight="600" fill="#c0510a">H = 0</text>
+      <text x="70" y="96" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">2 of 12 → certain</text>
+      <!-- Some -->
+      <text x="215" y="22" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#2a2520">Some</text>
+      <rect x="175" y="34" width="80" height="20" fill="#edf7f0" stroke="#d9d0c4"/>
+      <text x="215" y="49" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">1 / 0</text>
+      <text x="215" y="76" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" font-weight="600" fill="#c0510a">H = 0</text>
+      <text x="215" y="96" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">4 of 12 → certain</text>
+      <!-- Full -->
+      <text x="360" y="22" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#2a2520">Full</text>
+      <rect x="320" y="34" width="80" height="20" fill="#f5f0e8" stroke="#d9d0c4"/>
+      <rect x="320" y="34" width="27" height="20" fill="#e8833a"/>
+      <text x="360" y="49" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">⅓ / ⅔</text>
+      <text x="360" y="76" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" font-weight="600" fill="#c0510a">H ≈ 0.918</text>
+      <text x="360" y="96" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">6 of 12 → unsure</text>
+      <!-- combine line -->
+      <line x1="30" y1="120" x2="400" y2="120" stroke="#d9d0c4" stroke-width="1.5"/>
+      <text x="215" y="142" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#2a2520">score = (2/12)·0 + (4/12)·0 + (6/12)·0.918 = <tspan font-weight="700" fill="#c0510a">0.459</tspan></text>
+      <text x="215" y="160" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">conditional entropy H(WillWait | Patrons), far below the prior of 1</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Each branch yields a class distribution and an entropy. Weight each by how many examples flow down it, then sum.</div>
+</div>
+
+<p>"None" and "Some" lead to perfectly pure groups (entropy 0 — total certainty). Only "Full" is
+muddy. Weighting by the fraction of examples down each branch — <code>2/12</code>, <code>4/12</code>,
+<code>6/12</code> — gives a conditional entropy near <code>0.46</code>, a big drop from the prior
+of <code>1</code>. Patrons is an excellent first question.</p>
+
+<h3 id="worked-example">A Fully Worked Score</h3>
+<p>Let's score a generic attribute <code>A</code> step by step. We start with 100 examples (50
+positive, 50 negative). Attribute <code>A</code> is binary:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Split the data.</strong> Of the 100 examples, 70 have <code>A = yes</code> (30 positive,
+  40 negative) and 30 have <code>A = no</code> (20 positive, 10 negative).</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Entropy of the "yes" group.</strong> Distribution <code>30/70, 40/70</code> gives
+  <code>H = 0.985</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Entropy of the "no" group.</strong> Distribution <code>20/30, 10/30</code> gives
+  <code>H = 0.918</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Branch probabilities from the data.</strong> 70 of 100 examples went "yes," so
+  <code>P(yes) = 0.7</code> and <code>P(no) = 0.3</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <p><strong>Weighted sum.</strong> <code>0.7 &times; 0.985 + 0.3 &times; 0.918 = 0.965</code>.
+  That is the score (conditional entropy) for attribute <code>A</code>.</p>
+</div>
+
+<p>We compute this score for every candidate attribute and choose the one with the
+<strong>lowest</strong> conditional entropy — equivalently, the largest drop from the prior, which
+is the attribute's <em>information gain</em>. The professor frames the choice as picking the
+attribute that maximizes a score; minimizing leftover entropy and maximizing gain are two sides
+of the same coin.</p>
+
+<h3 id="algorithm">The Learning Algorithm</h3>
+<p>With scoring in hand, the full recursive tree-builder is short. It takes a set of examples, a
+set of available attributes, and the <em>parent examples</em> (carried over for one of the base
+cases):</p>
+
+<pre><code><span class="kw">function</span> <span class="fn">DecisionTreeLearn</span>(examples, attributes, parent_examples):
+  <span class="cm">// ── base cases ──</span>
+  <span class="kw">if</span> examples <span class="kw">is</span> empty:
+      <span class="kw">return</span> <span class="fn">plurality</span>(parent_examples)      <span class="cm">// no data: fall back to parent</span>
+  <span class="kw">if</span> all examples share one class c:
+      <span class="kw">return</span> c                              <span class="cm">// entropy 0: pure leaf</span>
+  <span class="kw">if</span> attributes <span class="kw">is</span> empty:
+      <span class="kw">return</span> <span class="fn">plurality</span>(examples)             <span class="cm">// out of questions: majority vote</span>
+
+  <span class="cm">// ── main body ──</span>
+  A <span class="op">=</span> <span class="fn">argmax</span> over attributes of <span class="fn">score</span>(a, examples)   <span class="cm">// best split</span>
+  tree <span class="op">=</span> new node testing A
+  <span class="kw">for each</span> value v of A:
+      subset <span class="op">=</span> examples <span class="kw">where</span> A <span class="op">==</span> v
+      branch <span class="op">=</span> <span class="fn">DecisionTreeLearn</span>(subset, attributes <span class="op">-</span> A, examples)
+      add branch to tree under value v
+  <span class="kw">return</span> tree</code></pre>
+
+<p>The three base cases stop the recursion gracefully:</p>
+
+<table class="compare-table">
+  <tr><th>Base Case</th><th>Situation</th><th>Return</th></tr>
+  <tr><td>Pure node</td><td>All examples share one class (entropy 0)</td><td>That class</td></tr>
+  <tr><td>Out of attributes</td><td>Examples still mixed, but no attributes left to test</td><td>Plurality (majority) of the examples</td></tr>
+  <tr><td>Empty subset</td><td>A branch caught no examples at all</td><td>Plurality of the <em>parent</em> examples</td></tr>
+</table>
+
+<p>The key engine is <code>argmax</code> — "give me the attribute with the best score." Each
+recursive call filters to the examples matching one branch value and drops the chosen attribute
+from the candidate set, so as we descend the tree we work with smaller and smaller example sets
+and fewer attributes. Notably, the tree often uses only a subset of attributes — on the restaurant
+data it picked roughly four of the ten.</p>
+
+<h3 id="cross-val">Cross-Validation — Proving the Tree Is Actually Good</h3>
+<p>Suppose you build a tree and a colleague builds a Naive Bayes classifier on the same data.
+Whose is better? You cannot judge a model by accuracy on data it was trained on — that rewards
+memorization. The fix is to hold data back.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Cross-Validation</div>
+  <p>Randomly split the data, e.g. 80% <strong>training</strong> / 20% <strong>testing</strong>.
+  Train only on the 80%; the model never sees the 20%. Then measure accuracy on the untouched 20%.
+  Repeat the random split several times (say five) and average the scores. This <strong>k-fold
+  cross-validation</strong> estimates how the model performs on data it has never seen.</p>
+</div>
+
+<div class="quiz" id="quiz4c">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">When choosing the next attribute to split on, the algorithm picks the attribute that…</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>has the most possible values, to create the widest split.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>minimizes the conditional entropy of the class variable (maximizes information gain).</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>appears first in the data table, scanning left to right.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>maximizes the conditional entropy, leaving the most uncertainty.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct answer: B.</strong> The score of an attribute is the conditional entropy
+    <code>H(class | attribute)</code>, and we choose the attribute that drives it <em>lowest</em> —
+    equivalently, the one whose information gain (drop from the prior entropy) is largest, because
+    that produces the purest, most confident child groups. Option D inverts the objective, A would
+    bias toward useless high-cardinality attributes, and C ignores the data entirely.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>Random Forests — Wisdom of the Crowd</h2>
+</div>
+
+<h3 id="ensemble">Why Are We Learning This?</h3>
+<p>A single decision tree can latch onto quirks of the training data — <strong>overfitting</strong>.
+The cure is delightfully simple: don't build one tree, build <em>many</em>, and let them vote.
+A collection of trees that vote is a <strong>random forest</strong>, an instance of the more
+general idea of <strong>ensemble learning</strong>.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="400" height="190" viewBox="0 0 400 190" style="display:block; margin:0 auto;">
+      <!-- three small trees -->
+      <g>
+        <circle cx="60" cy="40" r="8" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+        <line x1="55" y1="46" x2="42" y2="68" stroke="#d9d0c4" stroke-width="1.5"/>
+        <line x1="65" y1="46" x2="78" y2="68" stroke="#d9d0c4" stroke-width="1.5"/>
+        <circle cx="42" cy="72" r="6" fill="#edf7f0" stroke="#2d8a4e" stroke-width="1.5"/>
+        <circle cx="78" cy="72" r="6" fill="#fef0f0" stroke="#c53030" stroke-width="1.5"/>
+        <text x="60" y="100" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" font-weight="600" fill="#2d8a4e">Yes</text>
+      </g>
+      <g>
+        <circle cx="200" cy="40" r="8" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+        <line x1="195" y1="46" x2="182" y2="68" stroke="#d9d0c4" stroke-width="1.5"/>
+        <line x1="205" y1="46" x2="218" y2="68" stroke="#d9d0c4" stroke-width="1.5"/>
+        <circle cx="182" cy="72" r="6" fill="#fef0f0" stroke="#c53030" stroke-width="1.5"/>
+        <circle cx="218" cy="72" r="6" fill="#fef0f0" stroke="#c53030" stroke-width="1.5"/>
+        <text x="200" y="100" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" font-weight="600" fill="#c53030">No</text>
+      </g>
+      <g>
+        <circle cx="340" cy="40" r="8" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+        <line x1="335" y1="46" x2="322" y2="68" stroke="#d9d0c4" stroke-width="1.5"/>
+        <line x1="345" y1="46" x2="358" y2="68" stroke="#d9d0c4" stroke-width="1.5"/>
+        <circle cx="322" cy="72" r="6" fill="#fef0f0" stroke="#c53030" stroke-width="1.5"/>
+        <circle cx="358" cy="72" r="6" fill="#edf7f0" stroke="#2d8a4e" stroke-width="1.5"/>
+        <text x="340" y="100" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" font-weight="600" fill="#c53030">No</text>
+      </g>
+      <!-- vote arrows -->
+      <line x1="60" y1="108" x2="190" y2="150" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="200" y1="108" x2="200" y2="150" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="340" y1="108" x2="210" y2="150" stroke="#d9d0c4" stroke-width="1.5"/>
+      <!-- final -->
+      <rect x="150" y="150" width="100" height="30" rx="6" fill="#fef0f0" stroke="#c53030" stroke-width="1.5"/>
+      <text x="200" y="170" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#c53030">Majority: No</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Each tree classifies the instance independently; the forest returns the majority vote (Yes, No, No → No).</div>
+</div>
+
+<p>Give the forest an instance, ask every tree, and take the <strong>majority vote</strong>. With
+hundreds or thousands of trees, individual mistakes wash out and the ensemble resists overfitting.
+But for voting to help, the trees must <em>differ</em> from each other — so the forest injects
+randomness in two places.</p>
+
+<h3 id="bootstrap">Randomness 1: Bootstrap Data Sets</h3>
+<p>Rather than train every tree on the identical data, each tree gets its own
+<strong>bootstrap</strong> sample: draw the same number of examples from the original set, but
+<strong>with replacement</strong> — the same example can be picked more than once, and some never
+get picked at all.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>Original set: examples <code>{1, 2, 3, 4, 5}</code>. We draw 5, with replacement.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>One draw might yield <code>{3, 5, 3, 1, 4}</code> — example <code>3</code> appears twice and
+  example <code>2</code> never appears.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>The left-out example <code>2</code> is an <strong>out-of-bag</strong> example: unseen by this
+  tree during training, so it is free to use for evaluation later.</p>
+</div>
+
+<h3 id="feature-bagging">Randomness 2: Random Attribute Subsets</h3>
+<p>The second twist is at each split. A normal tree scores <em>all</em> available attributes and
+picks the best. A random forest, at every node, first picks a small random subset of <code>m</code>
+attributes (out of <code>N</code> total) and only scores <em>those</em>, choosing the best among
+them.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The Three Forest Ingredients</div>
+  <p>(1) An <strong>ensemble</strong> of many trees with <strong>majority voting</strong>;
+  (2) a <strong>bootstrap</strong> data set per tree (sampling with replacement);
+  (3) a <strong>random subset of <code>m</code> attributes</strong> considered at each split.
+  Together these decorrelate the trees so their votes genuinely combine.</p>
+</div>
+
+<p>Here <code>m</code> is a tunable parameter; a common starting point is <code>m = √N</code>. To
+choose it, try several values and evaluate each forest on its <strong>out-of-bag</strong> examples —
+the held-out points from bootstrapping serve as a free, built-in test set.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Diversity Beats Brilliance</div>
+  <p>A random forest deliberately <em>weakens</em> each individual tree (limited data, limited
+  attributes) so that the trees disagree in their errors. When you average many diverse, imperfect
+  predictors, their independent mistakes cancel and the ensemble is far more effective than any
+  single tree — the practical payoff of random forests.</p>
+</div>
+
+<div class="quiz" id="quiz5c">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">What is the purpose of sampling each tree's training set <em>with replacement</em> (bootstrapping)?</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>To guarantee every tree sees the exact same data and agrees.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>To give each tree a slightly different data set, creating diversity and leaving out-of-bag examples for evaluation.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>To shrink the data so training runs faster.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>To remove duplicate examples from the original data set.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct answer: B.</strong> Sampling with replacement makes each tree's data set
+    different — some examples repeat, others are missing — which decorrelates the trees so their
+    majority vote actually improves on any one of them. As a bonus, the examples left out of a
+    tree's bootstrap (out-of-bag) become a free test set. Option A is the opposite of the goal, and
+    bootstrapping keeps the data set the same size (not smaller), so C and D are wrong.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART VI ═══════════════════════ -->
+<section id="part6" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part VI</div>
+  <h2>Bayesian Network Classifiers</h2>
+</div>
+
+<h3 id="naive-bayes">Why Are We Learning This?</h3>
+<p>Decision trees and forests are not the only way to build a classifier. We can also turn a
+<strong>Bayesian network</strong> into one. This closes the loop with earlier lectures and shows
+that "classifier" is a goal, not a single technique.</p>
+
+<p>The most common structure is <strong>Naive Bayes</strong>: a single class variable <code>C</code>
+at the top, with all the attributes hanging beneath it as children. The "naive" assumption is that
+the attributes are conditionally independent given the class.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="360" height="150" viewBox="0 0 360 150" style="display:block; margin:0 auto;">
+      <!-- class node -->
+      <circle cx="180" cy="34" r="22" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="180" y="40" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="16" font-weight="600" fill="#c0510a">C</text>
+      <text x="215" y="30" font-family="DM Sans, sans-serif" font-size="11" fill="#6b6560">class variable</text>
+      <!-- edges -->
+      <line x1="165" y1="50" x2="70" y2="96" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="174" y1="56" x2="140" y2="96" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="186" y1="56" x2="220" y2="96" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="195" y1="50" x2="290" y2="96" stroke="#d9d0c4" stroke-width="2"/>
+      <!-- attribute nodes -->
+      <circle cx="60" cy="110" r="18" fill="#eff4ff" stroke="#2563eb" stroke-width="1.5"/>
+      <text x="60" y="115" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2563eb">A₁</text>
+      <circle cx="135" cy="110" r="18" fill="#eff4ff" stroke="#2563eb" stroke-width="1.5"/>
+      <text x="135" y="115" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2563eb">A₂</text>
+      <circle cx="225" cy="110" r="18" fill="#eff4ff" stroke="#2563eb" stroke-width="1.5"/>
+      <text x="225" y="115" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2563eb">A₃</text>
+      <circle cx="300" cy="110" r="18" fill="#eff4ff" stroke="#2563eb" stroke-width="1.5"/>
+      <text x="300" y="115" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2563eb">A₄</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Naive Bayes: the class C is the parent of every attribute. Fixing the attributes to an instance, we compute P(C | instance).</div>
+</div>
+
+<p>To classify an instance, you fix the attribute values and compute the probability of the class.
+For a binary class you might simply pick whichever class is more probable — but more generally you
+use a <strong>threshold</strong>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Classification Threshold</div>
+  <p>Choose a threshold <code>T</code> (say 90%). Given an instance, compute
+  <code>P(C | instance)</code>. If it is <strong>≥ T</strong>, output the positive class;
+  otherwise output the negative class. The threshold lets you trade off false positives against
+  false negatives — crucial in medical or financial decisions.</p>
+</div>
+
+<p>The lecture's example is the pregnancy network: an instance fixes the scan <code>S</code>, blood
+test <code>B</code>, and urine test <code>U</code>. With <code>T = 90%</code>, you declare
+"pregnant" only when <code>P(pregnant | S, B, U) ≥ 0.90</code>. A Naive Bayes classifier is
+attractive partly because inference on it is cheap — its tree-width is small, so the standard
+inference-complexity guarantee from the Bayesian-network lectures makes the probability easy to
+compute.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Connecting Back to Probability</div>
+  <p>This is the same probabilistic machinery from the Bayesian-network lectures, now repurposed as
+  a decision rule. A classifier, in this view, is "a Bayesian network plus a threshold." It is a
+  reminder that the entropy you learned today and the probability calculus you learned earlier are
+  two faces of the same theory.</p>
+</div>
+
+<div class="quiz" id="quiz6c">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In a Naive Bayes classifier with threshold <code>T = 0.9</code>, you compute <code>P(pregnant | S, B, U) = 0.85</code>. What is the output?</div>
+  <div class="quiz-options" data-quiz="q6">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>"Pregnant," because 0.85 is a high probability.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>"Not pregnant," because 0.85 is below the threshold of 0.9.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Undefined — the threshold only applies to decision trees.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>"Pregnant," because the class variable is binary.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q6','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q6">
+    <strong>Correct answer: B.</strong> The rule is to output the positive class only when the
+    computed probability meets or exceeds the threshold. Since <code>0.85 &lt; 0.90</code>, the
+    classifier returns "not pregnant," even though 0.85 sounds high — the threshold is what makes
+    the decision, not a gut sense of "high." Option C is wrong because thresholds are central to
+    Bayesian-network classifiers, and the class being binary (D) does not change the comparison.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SUMMARY ═══════════════════════ -->
+<section id="together" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This lecture built a complete pipeline from a single primitive. We started with
+<strong>entropy</strong> — one number that measures how uncertain we are about a variable. We
+extended it to <strong>conditional entropy</strong>, which predicts how much an observation will
+reduce that uncertainty on average, and proved the comforting fact that observing never hurts.</p>
+
+<p>Those two ideas are not abstractions: they are literally the scoring function that
+<strong>grows a decision tree</strong>. At each node we ask "which attribute leaves the class
+variable least uncertain?" — that is conditional entropy — and split on the winner, recursing until
+each region is pure. The result is an <strong>interpretable</strong> classifier you can read like a
+flowchart.</p>
+
+<p>To make trees more powerful we surrendered some interpretability for accuracy with
+<strong>random forests</strong>: many trees, each trained on a bootstrap sample and restricted to
+random attribute subsets, voting by majority. The deliberate diversity cancels individual errors.
+Finally, <strong>Bayesian network classifiers</strong> showed that the same goal can be reached
+through pure probability plus a threshold, tying today's material back to the probability calculus
+of earlier lectures.</p>
+
+<table class="compare-table">
+  <tr><th>Method</th><th>Interpretability</th><th>Typical Effectiveness</th></tr>
+  <tr><td>Decision tree</td><td>Highest (read it directly)</td><td>Good, can overfit</td></tr>
+  <tr><td>Random forest</td><td>Lower (a crowd of trees)</td><td>Strong, resists overfitting</td></tr>
+  <tr><td>Bayesian network classifier</td><td>Moderate</td><td>Often stronger than trees</td></tr>
+  <tr><td>Neural network</td><td>Lowest (opaque box)</td><td>Often strongest today</td></tr>
+</table>
+
+<p>The professor's ordering — roughly, trees are most interpretable but neural networks are most
+effective, with Bayesian networks in between — frames a central tension in modern AI: the most
+accurate models are the hardest to explain. And the emerging answer, explainable AI, is to
+<em>compile</em> a numeric model into logic and reason about it symbolically, so we no longer have
+to choose between power and understanding.</p>
+
+<div class="callout tip" style="margin-top: 32px;">
+  <div class="callout-title">What's Next</div>
+  <p>Next week we tackle <strong>neural networks</strong> — the most effective and least
+  interpretable family on the chart above. Watch for the same questions to resurface: how do we
+  train them, how do we evaluate them (cross-validation returns), and how do we explain what they
+  have learned. Entropy will reappear too, as the <em>cross-entropy</em> loss that neural networks
+  are trained to minimize.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

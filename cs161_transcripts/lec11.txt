@@ -1,0 +1,557 @@
+0:011 second[Music]
+0:1515 seconds[Music]
+0:1818 secondsall right welcome back to 161 this is lecture 11 we will continue today our
+0:2525 secondsdiscussion on logic we started initially by talking about propositional logic today we will talk
+0:3232 secondsabout the more advanced type of logic that's known as first-order logic sometimes this is also known by the
+0:4141 secondsacronym fol it's also known as political calculus and we will see the reason for
+0:4949 secondsthis particular name and just a little bit this is a quite influential logic not just in computer science and AI but
+0:5858 secondseven before that but had played a role in philosophy and mathematics in fact some of you may have been exposed to it
+1:071 minute, 7 secondsin these other contexts particularly philosophy if you've taken perhaps a
+1:131 minute, 13 secondscourse on critical thinking and so on in fact when we talked about logic and motivated in the first lecture on the
+1:211 minute, 21 secondssubject in this course we talked about McCarthy's proposal which called for representing the process of reasoning
+1:301 minute, 30 secondsusing deduction and we mentioned that you would have a knowledge base which contains some statements and logic you
+1:371 minute, 37 secondspass it to thinking engine which performs logical deduction as a way of
+1:461 minute, 46 secondsmodeling this thinking process that that original proposal of McCarthy was based on official logic which as we mentioned
+1:541 minute, 54 secondsis more expressive and you'll see more succinct and propositional logic there
+2:032 minutes, 3 secondswas a lot of developments in AI a lot of focus on first-order logic in the first few decades so there was a lot of
+2:102 minutes, 10 secondsresults and you'll see that the main challenge despite these advantages the main challenge with first-order logic is
+2:182 minutes, 18 secondsactually computational in due to that people have also developed
+2:252 minutes, 25 secondssome restrictions of first-order logic that kind of sits in between propositional logic and full-fledged
+2:332 minutes, 33 secondsfirst-order logic and those are commonly used today particularly because due to these restrictions one can take
+2:432 minutes, 43 secondsstatements and this restricted form of first-order logic and actually convert them to propositional logic and then use
+2:502 minutes, 50 secondspropositional logic machinery to do the reason we will discuss this next time in
+2:552 minutes, 55 secondssome detail but before I do that let me just very quickly give you a motivating
+3:033 minutes, 3 secondsexample for what you may expect from today's discussion and this is in relation to the Wampus world example
+3:113 minutes, 11 secondsthat we discussed at the beginning of propositional logic if you recall we had a grid there and there were these cells
+3:193 minutes, 19 secondsor squares and then we had a whimpers there and we wanted to state various facts about it so when we did it in
+3:263 minutes, 26 secondspropositional logic we had to go and give different propositional variables
+3:333 minutes, 33 secondsto present various things that may happen in these cells so we would go
+3:393 minutes, 39 secondsahead and say that breezy 2 3 and maybe 1 plus 1 1 and these were propositional
+3:483 minutes, 48 secondsvariables that were either true or false that will indicate whether we have a please and the same 2 3 whether there is olympus in cell 1 1 and as you can
+3:573 minutes, 57 secondsimagine you will have quite a number of variables in this particular case and when you are representing something like
+4:054 minutes, 5 secondsif there was let's say fit in the cell then the adjacent ones will have a breeze we would have to repeat that
+4:134 minutes, 13 secondsstatements for each one of these cells if you were to use first-order logic in this case and I'm just gonna write it
+4:214 minutes, 21 secondshere this may look familiar or completely foreign doesn't matter at this point because we're gonna discuss this in detail but I just wanted to give
+4:294 minutes, 29 secondsyou an example of our statement and this logic may look like so this would be a statement that
+4:364 minutes, 36 secondsbasically says for all squares are if there is a bit in that particular cell
+4:434 minutes, 43 secondsthat implies for all other cells that are adjacent to are those cells must be
+4:514 minutes, 51 secondsbusy and you see here new things one is this notion of quantification which we
+4:584 minutes, 58 secondswill talk about in detail so you're saying for all instead of having to enumerate them explicitly we have what
+5:055 minutes, 5 secondswe call properties we have this notion of a relation and this will also would be a property and you can do even more
+5:145 minutes, 14 secondssubstituted things like reference objects using functions so in principle you can define a function that says left
+5:235 minutes, 23 secondsand when you apply this to a particular cell then you will be referencing the Excel to the left of that 1s and so on
+5:335 minutes, 33 secondsall right we look at all of this in more detail as we go on but I just wanted to give you a very quick example before we
+5:415 minutes, 41 secondsmove on and you can imagine what I meant when I said more suction right so using something like this you can express
+5:495 minutes, 49 secondsknowledge more compactly such things that's what it means more compactly and let me just mention that typically when
+5:585 minutes, 58 secondsyou discuss a logic you have to talk about the syntax and semantics which is what we've done in propositional logic and we'll find ourself here focusing
+6:066 minutes, 6 secondsmore on syntax and how to present knowledge reusing first-order logic because it can get tricky actually in
+6:156 minutes, 15 secondsfact we're going to spend quite a bit of time today just taking statements and that's oral language and seeing how we can represent them using first order logic this is the maze in really that we
+6:246 minutes, 24 secondsneed to pick up from today semantics of first-order logic are somewhat more involved if you want to give them a formal and proper treatment
+6:326 minutes, 32 secondswe'll just hint at that today but will mostly focus on syntax and how to represent using triste for the logic so
+6:386 minutes, 38 secondslet me go ahead and move on to the next step the notion of a world in first order logic is
+6:476 minutes, 47 secondsquite a bit more ritual than the way it was in propositional logic so in propositional logic simply that we
+6:566 minutes, 56 secondshave variables so this could be a b c and so on and then each one of them could be either true or false and any
+7:057 minutes, 5 secondscombination of that would be a world so world is simply something like a is true B is false C is false and and so on in
+7:157 minutes, 15 secondsfirst order logic it's more involved so here we have the notion of objects and
+7:227 minutes, 22 secondsthese objects can have properties they can be related together using relations
+7:317 minutes, 31 secondsand we also have the notion of functions that map from objects to objects so we
+7:407 minutes, 40 secondswill do is first try to do this intuitively by showing you some example statements that you would use to express
+7:487 minutes, 48 secondsknowledge and then we will go through the exercise of you having to identify these components objects properties relations and functions in power
+7:577 minutes, 57 secondsstatements and then we will go and discuss the syntax of first order logic or property all right so here what I'm
+8:068 minutes, 6 secondsgonna do is write few statements and then we will try to do them together by defining these components but let me
+8:138 minutes, 13 secondsjust mention first that examples of objects here might be people houses
+8:198 minutes, 19 secondsWampus numbers colors and so on examples of properties may be that
+8:288 minutes, 28 secondssomething is breezy as we've seen in the previous example may be large something
+8:358 minutes, 35 secondsis red and so on and as far as relations we could talk about something being inside something else and we can talk
+8:448 minutes, 44 secondsabout something being adjacent to something else and or something that is larger than something else and so on and
+8:538 minutes, 53 secondsas far as functions you can talk about things like father of best friend off and so on alright so
+9:029 minutes, 2 secondslet's go ahead and do some examples and what I'm gonna do here is again I'm gonna write a statement like this one and I'm gonna put here objects and I'm
+9:129 minutes, 12 secondsgonna put relations and then functions and properties and you will basically
+9:209 minutes, 20 secondshelp me out here so that's it in this particular example if you look at the statement one plus one equals two what
+9:289 minutes, 28 secondswould be the objects in this case we just want to get a sense of this okay and people are saying one two these would be the objects correctly and
+9:379 minutes, 37 secondssomeone is asking is first-order logic and predicate calculus the same thing yes they're just two different names and again you'll see why it's called
+9:449 minutes, 44 secondspredicate calculus in just a little bit now what are the relations in this particular case in this particular sentence the relation and people are
+9:539 minutes, 53 secondssaying equals and do we have any functions in this case remember the functions maps objects objects yes
+10:0210 minutes, 2 secondspeople are saying plus any properties in this particular case the people actually exhausted everything in this case so
+10:1110 minutes, 11 secondsthere couldn't be properties there is no properties in this it's okay let's repeat the same exercise but now using
+10:1810 minutes, 18 secondsthe statement and we will do basically the same things objects let me just put the initials here objects relations and
+10:2610 minutes, 26 secondsfunctions and properties so what are the objects in this particular case so
+10:3210 minutes, 32 secondspeople are typing square and compass and let's see and what else do we have
+10:4110 minutes, 41 secondsrelations in this particular case right people are writing adjacent very good okay so we're getting the hang of this
+10:4910 minutes, 49 secondsand what about functions do we have any functions in this case can people see
+10:5610 minutes, 56 secondsany functions okay I'm getting silence people are saying no functions and what
+11:0311 minutes, 3 secondsabout properties okay good smelly now someone is asking are these categories mutually exclusive can
+11:1111 minutes, 11 secondssomeone cancer thing belong to two categories no they are YouTube exclusive but you will see
+11:1811 minutes, 18 secondslater that the way you formulate the problem may give you some choices so we
+11:2511 minutes, 25 secondswill find ourself in situations where someone may want to define something as a property versus a relation or the
+11:3411 minutes, 34 secondsother way around so there is not just one specific way of doing this thing and we'll talk more about this when we get
+11:4111 minutes, 41 secondsto it later this is something that basically we will have to mention because it's one of these interesting things that come up when you try to
+11:5011 minutes, 50 secondsformulate you know natural language statements and represent them using first order logic very so let's go ahead
+11:5711 minutes, 57 secondsnow that we've gotten a feel of this and start talking about the syntax of first
+12:0412 minutes, 4 secondsorder logic and you will see that it's richer and we would have to go over more things and then we get to the point
+12:1312 minutes, 13 secondswhere we start using it now here's the interesting thing so in propositional logic all we have to
+12:2012 minutes, 20 secondsdo is come up with variables these were the things that were in a sense problem-specific so if you were talking
+12:2812 minutes, 28 secondsabout the Wumpus grid then you had to come up with variables that was in whether sellers breezy or smelly and so
+12:3712 minutes, 37 secondson and this was the domain-specific part of the syntax but then the rest of it like logical connectives and so on
+12:4512 minutes, 45 secondsapplied always in first order logic you'll have to talk about constants you
+12:5212 minutes, 52 secondswill have to talk about predicates and functions those would be the components that are specific to a particular
+13:0113 minutes, 1 secondproblem now we've seen functions right so when you decide to have something
+13:0713 minutes, 7 secondsthat says left off if you're doing the Wumpus world you may want to refer to
+13:1413 minutes, 14 secondsthe left cell of some particular cell so you introduce function like left oh this
+13:2213 minutes, 22 secondswould be specific to that domain now it's is the other name for relations all right so people typically use predicates
+13:3113 minutes, 31 secondsinstead of relation and that's why it's called predicate calculus and where we've seen examples of adjacent so you
+13:3913 minutes, 39 secondshave decided to use the predicate adjacent when formulating the 1 + 4 you may not use this in some other domain
+13:4713 minutes, 47 secondsand then there are constants these are names for objects so you could have the
+13:5413 minutes, 54 secondsnumber two you could basically decide to have the name Jack you may decide to use
+14:0014 minutesthe constant UCL a and so on so these are think of them as direct names of
+14:0714 minutes, 7 secondsobjects these particular components as I said they are domain specific and
+14:1514 minutes, 15 secondscorrespond to a particular thing that you're trying to model and then the other components which are always there
+14:2114 minutes, 21 secondsyou have the variables and we will use small letters formats this is when we
+14:2814 minutes, 28 secondssaid something like for all our if it are and so on so then you have the connectives logical connectives
+14:3614 minutes, 36 secondsand these are your usual and or negation implication equivalence and so on now
+14:4414 minutes, 44 secondsyou have a special predicate which is the equality and in a sense this falls under predicates but it's somewhat
+14:5214 minutes, 52 secondstreated specially and then you have the quantifiers now there's two of them we already seen one of them this guy exists for all and there is another one which
+15:0015 minutesis this guy which is that exists so this is for all and this reads as there
+15:0815 minutes, 8 secondsexists we're gonna look at them in more detail and let me say as far as convention we're using lowercase for
+15:1715 minutes, 17 secondsvariables and we're gonna use upper case for constants I think there was a question about this yeah we'll try to be
+15:2715 minutes, 27 secondsI'll try to be consistent but that's the intention is to use lowercase for variables and uppercase for constant so
+15:3415 minutes, 34 secondsagain you've got these two categories this is one and this is too and once more this is in
+15:4215 minutes, 42 secondsa way domain-specific and once more there could be multiple choices for how
+15:5115 minutes, 51 secondsto do this part and this is also what is also known sometimes as they wrote capillary so we'll say before you start representing things using first-order
+15:5915 minutes, 59 secondslogic we need to pick up your vocabulary you need to know what are the constants predicate sign function sometimes for very simple examples almost obvious what
+16:0716 minutes, 7 secondsit is and there is only one way of doing it but for more involved things and we try to look at that in the second part of the lecture today it's not as immediately obvious now
+16:1616 minutes, 16 secondslet's keep going with with syntax and the next thing we're gonna discuss is
+16:2416 minutes, 24 secondshow do you build sentences in first order logic so in proposition it was pretty simple once you have the
+16:3116 minutes, 31 secondsvariables then every variable is a sentence and then you can put things together using connectors so if X is a boolean variable you can talk about not
+16:3916 minutes, 39 secondsX and then you can say not X or Y and so on and in this particular case it's a little bit more involved so let's go
+16:4716 minutes, 47 secondsahead and see how you put even your simplest type of sentences and let me just take a look at the board quickly
+16:5516 minutes, 55 secondsbefore I do that so we talked about predicate as being relations and someone's saying what are the properties
+17:0417 minutes, 4 secondsyou can think of properties as relations that have a single argument all right so
+17:1217 minutes, 12 secondsthose would fall under the predicate category and then you'll see examples of that you can look at smelly X where
+17:2117 minutes, 21 secondssmelly is a predicate in this particular case very good question well folks what we need to do is talk about atomic
+17:3017 minutes, 30 secondssentences that is the simplest type of sentences you can write in first order logic and again this is more involved in
+17:3817 minutes, 38 secondspropositional logic it was just a single variable is the atomic sentence and here we have to do in fact even in two steps the first thing we have to talk about is
+17:4717 minutes, 47 secondsthe notion of a term before we even get to what is an atomic sentence so what is it - a term think of
+17:5517 minutes, 55 secondsit as an expression that you can use to refer to an object all right and there are three ways in which you can refer to
+18:0318 minutes, 3 secondsan object in first order logic you can do that using a constant so you can say - or you can say UCLA or you can say
+18:1318 minutes, 13 secondsJack right or you can use a variable and you've seen that and this is when use quantification you say for all X right
+18:2218 minutes, 22 secondsso you're all that exists X or the third way is to apply a function so here you
+18:3018 minutes, 30 secondswould have a function that is applied to terms so anyway it is a recursive definition and we'll see examples of
+18:3818 minutes, 38 secondsthat so you could say father of Jack right so we may have the function being father oh
+18:4718 minutes, 47 secondsand then you do Jack that would be a term right I'm referring to a particular object but not directly using this
+18:5518 minutes, 55 secondsparticular function now once you have this notion of a term then we can say that the atomic sentence would look like
+19:0319 minutes, 3 secondsthis it's basically a predicate applied to terms all right so this is an example
+19:1319 minutes, 13 secondsso you could have brother that's a predicate and you can say Jack
+19:2019 minutes, 20 secondsTom okay this was pretty simple in the sense that these guys were just constants right or you could say brother
+19:3019 minutes, 30 secondsfather of Jack Tom now what we used is a simple term which is a constant and the
+19:3819 minutes, 38 secondsmore complex one which was a function being applied to another object and so on all right so now that we have our
+19:4619 minutes, 46 secondsatomic sentences this is the simplest type of symptoms that you can write and then you can go ahead and combine this
+19:5419 minutes, 54 secondsusing connectives and more importantly quantifiers so let's take a look at this so we're continuing
+20:0320 minutes, 3 secondssyntax and suppose that s s one s two
+20:1020 minutes, 10 secondssentences then you can go ahead and do the obvious where you can negate this guy you can take the conjunction of
+20:1920 minutes, 19 secondsthese two guys their disjunction and so on you could do implications you could
+20:2620 minutes, 26 secondsdo it reference we didn't use this year and so on all right so you know you
+20:3420 minutes, 34 secondscould say greater one two or less than or equal one two and so on
+20:4320 minutes, 43 secondsthis would be an example statement you can do something like later 1 2 and not
+20:5420 minutes, 54 seconds3 of statements but just to give you an example so this would be negated and so
+21:0121 minutes, 1 secondon gonna do something a little bit more interesting you may say something like
+21:0821 minutes, 8 secondsgreater age of Sally age so what
+21:1721 minutes, 17 secondshappened here is we use more complex terms in this case we apply the function that is age to a person and then we're
+21:2621 minutes, 26 secondscomparing the ages of two people in this particular case and then you could have or and do whatever and you can go ahead
+21:3421 minutes, 34 secondsand do implications and so on ok you get the idea so this is so this this part
+21:4021 minutes, 40 secondshere can be similarly basically to propositional logic again it gets interesting when we do the next step which is quantification and there you
+21:5021 minutes, 50 secondscan start really having fun writing things easy first-order logic ok before we do that let me see there is a question here about the difference
+21:5821 minutes, 58 secondsbetween a function and a relation function and the relation so again let's
+22:0622 minutes, 6 secondsdo this one more time but you will get a better feel of it as we do more example a function Maps
+22:1422 minutes, 14 secondsobjects to object and we just saw an example of that so when you're talking about the
+22:2122 minutes, 21 secondsage of Sally so this is an object and the result of this whole thing is
+22:2822 minutes, 28 secondsanother object which is a number in this particular case so a relation holds
+22:3622 minutes, 36 secondsbetween objects and looking at our example this would be greater than right
+22:4422 minutes, 44 secondsso greater than is a relation between two objects that says the first object is greater than the second object and if
+22:5122 minutes, 51 secondsyou look in this particular case this was our object 1 and this was our object
+22:5722 minutes, 57 seconds2 and then we said that they a certain relation holds between them that the first object is basically greater than
+23:0623 minutes, 6 secondsthe second option so we will see again examples as we move on and you'll hopefully get more comfortable with that
+23:1323 minutes, 13 secondssomeone saying so with a relation to return true or false yes you can think of a relation being either true or false either holds or not
+23:2123 minutes, 21 secondsand someone is saying against or relation predicate Maps objects to boolean values you can think of it this way
+23:2823 minutes, 28 secondsyes all right let's let's move on and talk about quantification we will treat each one of them separately and then we
+23:3623 minutes, 36 secondslook at the connections between them which is where things get interesting so I will start here with what we would
+23:4323 minutes, 43 secondscall Universal quantification this is this guy when we say for all reads for
+23:5223 minutes, 52 secondsall and the general pattern is like this you can have for all and then you're
+24:0024 minutesgonna have variable or more and then you're gonna have sentence all right so next second example so you may have the
+24:0824 minutes, 8 secondsfollowing statement for all X X UCLA
+24:1424 minutes, 14 secondsimplies smart X ok just before we look at this more carefully this is the
+24:2224 minutes, 22 secondspredicates in this case are and smart all right and we see here that at is the relation that holds between
+24:3124 minutes, 31 secondstwo particular objects the predicate smart has only one argument so anyway we go to our language this would be a
+24:3924 minutes, 39 secondsrelation and this would be in this particular case what we call the property but we can ignore this distinction for now and just think of
+24:4724 minutes, 47 secondsthem both else predicates now do we have constants in this statement yes UCLA so
+24:5524 minutes, 55 secondsthis is our constant in this particular case hey now what this statement is
+25:0225 minutes, 2 secondssaying is that everyone at UCLA is smart now what I want you to do is think about
+25:0925 minutes, 9 secondsthe statement in the following way and it may look obvious now but it will help you later in the sense that sometimes
+25:1725 minutes, 17 secondsyou're trying to flip your system things out and they not as obvious but when you think about them the way I'm gonna do it next you'll find that things come out
+25:2425 minutes, 24 secondsvery clearly you want to think of this as in a sense being equivalent to the
+25:3325 minutes, 33 secondsconjunction so we're thinking of this as for all X key and P has has variables in
+25:4225 minutes, 42 secondsit right X so if you take X and replace it by all possible values it may have
+25:4925 minutes, 49 secondsand then write a big conjunction that's what is going on here so you can think
+25:5525 minutes, 55 secondsof this as saying at John UCLA implies
+26:0226 minutes, 2 secondssmart John this is one thing and then you can say and and so on all right so
+26:1026 minutes, 10 secondsthis could be added now in general let's say you have a function called father oh
+26:1926 minutes, 19 secondsthat would also mean this also includes
+26:2226 minutes, 22 secondsadd father and UCLA implies smart
+26:3226 minutes, 32 secondsnow one thing you can see this is actually in principle would be an infinite conjunction because you may have an infinite number of
+26:3926 minutes, 39 secondsobjects you can then say father off father off and and so on so it is saving you from having to write a huge
+26:4826 minutes, 48 secondsconjunction like this which could be infinite right you can just do it simply by doing this but remember this and then
+26:5626 minutes, 56 secondswe're gonna do existence of quantification that is there exists later you can see kind of a dual story to this now we're gonna go to the next
+27:0327 minutes, 3 secondsguy which is essential quantification and we'll see how it looks and in particular we'll start talking about the
+27:1227 minutes, 12 secondsinteractions Kingdom between the two twenty fives so exist actual quantification this is denoted this way
+27:2127 minutes, 21 secondsright and it reads there exists and the general pattern here of the statements
+27:2927 minutes, 29 secondswould look like this you will have this symbol and then you would have variables and then you would have a sentence so
+27:3727 minutes, 37 secondshere's a statement it says there exists X at X UCLA and Tom X so what we have
+27:4827 minutes, 48 secondshere again to predict its we have this path predicate and we have to own and we
+27:5527 minutes, 55 secondsalso have the constant UCLA now I hope intuitively it's clear what this means right it just means that someone at UCLA
+28:0428 minutes, 4 secondsis taught what I want you to now think about is if I want to replace this by a
+28:1228 minutes, 12 secondsstatement that does not have variables and let's keep it simple and say the only objects that we have are ad and
+28:2128 minutes, 21 secondsSandy and Tom what would this look like if I were to replace the statement by a
+28:3028 minutes, 30 secondsstatement that does not have variables in the previous case we had a conjunction
+28:3728 minutes, 37 secondsthat is we did the substitution we took this statement and we said okay what
+28:4628 minutes, 46 secondscould be the value of x and said it is that and then what else and it's that and when we took those
+28:5328 minutes, 53 secondsand we had a conjunction between them in this case what we're gonna do okay good people are saying it should be a disjunction so this would look something
+29:0229 minutes, 2 secondslike at at UCLA and Tom Edie this would
+29:0929 minutes, 9 secondsbe one of them or and then you would go ahead and say at Sandy UCLA and told
+29:1829 minutes, 18 secondssandy and so on and then you keep going right so it's a disjunction okay okay
+29:2529 minutes, 25 secondsremember that it will come handy later if you think this is obvious fine but then remember it when you get stuck in
+29:3429 minutes, 34 secondscertain cases as far as trying to understand what is the meaning of is something that your book mentions it may
+29:4129 minutes, 41 secondslook obvious but the idea is that typically when you write statements using for all you end up using place
+29:5129 minutes, 51 secondsconnected with them and when you end up writing statements using that you end up basically using this so here we said for
+30:0130 minutes, 1 secondall X at X UCLA implies smart X but when
+30:1030 minutes, 10 secondswe do the extension quantification it looked like this at X UCLA and stalled X
+30:2030 minutes, 20 secondsnow I will leave it to you at home to go and see what happens if you switch these
+30:2730 minutes, 27 secondsthat is what happens for example if instead of this you could cats what does
+30:3430 minutes, 34 secondsthe sentence end up meaning alright and you will find it useful to unfold things
+30:4130 minutes, 41 secondsto really see what's going on alright so in the next minutes or so I would like to talk about the interaction between
+30:4930 minutes, 49 secondsthese two guys at least and then we will go ahead and write something more complex as far as expressing statements
+30:5830 minutes, 58 secondsin this logic now this would be under the title of
+31:0531 minutes, 5 secondsproperties of quantifiers again before I start let me just quickly check the board here okay so the question is when
+31:1431 minutes, 14 secondswe did the unfolding on the previous screen when we unfolded that exist statements into disjunctions would it
+31:2131 minutes, 21 secondsalso be infinite in general yes similar story and you have to realize what makes
+31:2931 minutes, 29 secondsthings infinite is this notion of functions which can be applied multiple times so we just had a small example and and we did not have functions that's why
+31:3831 minutes, 38 secondsit was fine all right so as far as properties of 25 the first thing you
+31:4531 minutes, 45 secondsneed to know is that if you have for all X and then for all Y then that's the
+31:5131 minutes, 51 secondssame as for all Y for all X so you can flip these and if you want to prove this
+32:0032 minutesor convince yourself just apply the unfolding technique that we mentioned and and you'll see that both of them will unfold to the same thing now
+32:0832 minutes, 8 secondssimilarly for this guy if you have there exist X there exists Y this is the same
+32:1432 minutes, 14 secondsas there exists Y there exists X once more you can convince yourself with this
+32:2232 minutes, 22 secondsby using the unfolding technique now here's what you have to pay attention to there exist X for all Y is not the same
+32:3332 minutes, 33 secondsas for all Y there exists X so you cannot flip these guys in this case
+32:4232 minutes, 42 secondsbecause there are different types of quantifiers let's take an example and what I'm gonna do here is I'm gonna write the statement well let me put it
+32:5132 minutes, 51 secondsfor all Y there exists X loves X Y so
+33:0033 minutesthis is our candidate and then what we will do is try to flip them and see what
+33:0833 minutes, 8 secondshappens let me not do the flipping yet I want someone in plain English to type to the
+33:1633 minutes, 16 secondschat box what is this statement saying and let me take a look here okay I am getting a variety of answers every
+33:2433 minutes, 24 secondsperson loves X no you can't use X so everyone has someone who loves them
+33:3333 minutes, 33 secondseveryone is loved by someone I'm getting too many answers basically what this is
+33:4033 minutes, 40 secondssaying is everyone in the world is loved by at least one person everyone in the
+33:4833 minutes, 48 secondsworld this is this guy for all Y everyone in the world there is someone
+33:5433 minutes, 54 secondswhich is X what X loves mine so everyone in the world is loved by at least one
+34:0134 minutes, 1 secondperson all right and now if we try to do the other one where we go ahead and flip
+34:0934 minutes, 9 secondsthe quantifiers look what happens so people are asking this the meaning of
+34:1734 minutes, 17 secondsthis guy is let's just make it clear that X loves Y all right that's the
+34:2634 minutes, 26 secondsmeaning no if you look at this statement well the only thing we did is go ahead and and flip these guys right so we took
+34:3534 minutes, 35 secondsit essential out and remove the universal n this statement basically
+34:4134 minutes, 41 secondschanges the meaning now you have there
+34:4534 minutes, 45 secondsis a person who loves everyone in the
+34:5434 minutes, 54 secondsright so there is a person that's X well exists X such that for all Y X loves
+35:0235 minutes, 2 secondsokay there is a person who loves everyone in the world so these are very different statements and the only thing that we did fear is flip those
+35:1135 minutes, 11 secondsquantifiers all right let's do one more thing and then we take our break this is
+35:1835 minutes, 18 secondsduality between these quantifiers in the sense that I don't really meet both if I
+35:2535 minutes, 25 secondshave one I can always Express wherever I want in the sense that I can simulate one of them or
+35:3335 minutes, 33 secondsone of them using the other so let's take a look at this and here you can
+35:4035 minutes, 40 secondshelp me out so if we say for all X likes X ice cream all right gives a statement
+35:4935 minutes, 49 secondssays everybody likes ice cream yeah can you try to say the same thing but without using for all that is using
+35:5935 minutes, 59 secondsthat exists it will be somewhat an indirect way of saying it but it should be possible and if you type to the chat
+36:0736 minutes, 7 secondsbox you can use this for exists and yeah we don't need for all for now but you
+36:1436 minutes, 14 secondscan use this for exists can someone try to express the same thing or you can see
+36:2136 minutes, 21 secondsin English so let me see what people are saying ah good good the bunch of you are
+36:2836 minutes, 28 secondsso let me see some people wrote it saying not there exists X not likes X
+36:4136 minutes, 41 secondsice cream and some of them some of you spelled it in English let me try to read one of the English statements that
+36:4836 minutes, 48 secondspeople wrote someone said there is no person who does not like ice cream all right so if you look at this guy here
+36:5836 minutes, 58 secondswhat is this guy saying let's let's look at it in pieces look at this what is the same says that exists someone who
+37:0537 minutes, 5 secondsdoesn't like ice cream and this guy says all got through but no that's impossible the first part if you want to think
+37:1237 minutes, 12 secondsabout it as this guy being alpha alpha a saying there is someone who does not like ice cream and the other side says
+37:1937 minutes, 19 secondsno that's impossible so everybody likes asking well in general you can think about it in the following sense if you
+37:2637 minutes, 26 secondsremember the Morgan's law in the Morgan's law we said if you have this then you can push the negation inside but then when you walk through an end
+37:3537 minutes, 35 secondsyou flip it to and/or so this becomes that and then the Morgan's law also says if you have this then you can go ahead
+37:4437 minutes, 44 secondsand do the following look what happened here there was this notion of flipping of these guys they
+37:5237 minutes, 52 secondswere this became that in quantifiers the same story what happens is you can push the negation inside but if you walk
+38:0138 minutes, 1 secondthrough a quantifier you flip it so let's look at this guy here I can push the negation inside but the minute I walk through this guy it ends up being
+38:0938 minutes, 9 secondsfor all and then I have not not likes X ice cream and those two can sit together
+38:1738 minutes, 17 secondsso I get for all X likes X ice cream Praeger alright so we're done with this
+0:011 second[Music]
+0:1515 seconds[Music]
+0:1818 secondslet's assume with our second part of the lecture on representing knowledge using first-order logic what we will do next
+0:2626 secondsis just a few examples to exercise what we've learned so far and then in the rest of the time after that I'll try to
+0:3535 secondswalk you through some larger example that's discussed in your textbook we'll sketch it here but it will help you to get to see even a bigger picture about
+0:4343 secondshow all of this works next up sentence we're gonna write we're gonna try to make use of equality which
+0:5050 secondsis a special predicate as we've seen so we'll end up using it there I just want us to do a couple of examples before we
+0:5959 secondsmove to other things and I'm gonna start with the following statements I'm gonna write it and then we'll see how we
+1:081 minute, 8 secondsrepresent spot has two sisters and since we're starting with this I'm gonna help you out here by telling you that we will
+1:171 minute, 17 secondshave just one predicate sister and it has two arguments and we will have only
+1:241 minute, 24 secondsone constant which is spot and now I want someone to write a statement in
+1:321 minute, 32 secondsfirst order logic that represents the fact that spot has two sisters so
+1:391 minute, 39 secondsanybody wants to try that and we may need for this part here to allow people to actually stick it out instead of type
+1:471 minute, 47 secondsit because it's gonna be more challenging to do that so if you're interested in contributing the solutions through your mic please raise your hand
+1:551 minute, 55 secondsand hopefully Lorraine can help us here in unmuting and muting people as we need to do that anybody wants to do this well
+2:042 minutes, 4 secondsalready people are typing to the board and saying things like let me pick up
+2:122 minutes, 12 secondsone of the solutions actually so one of the solutions that people typed here is but it does have quantifiers I'm gonna
+2:202 minutes, 20 secondswrite it and it says the sister
+2:242 minutes, 24 secondsX spots and sister Y spot right and not
+2:332 minutes, 33 secondsX equals y so someone type this that X
+2:402 minutes, 40 secondsis a sister spot where is sister up spot and they are not equal but there was no
+2:452 minutes, 45 secondsquantification so okay so now people are basically saying we need to use that
+2:532 minutes, 53 secondsexists so there exists X that exists Y so when the statement saying is that there are x and y x atmosphere sisters
+3:033 minutes, 3 secondspark y happens to be a sister and they're not the same all right very good now let me ask you a question let me ask
+3:103 minutes, 10 secondsyou a question here does this say that spot I'm looking at this car here and
+3:183 minutes, 18 secondsthere was some ambiguity in what I said does this say that spot has exactly two sisters or has at least two systems so
+3:273 minutes, 27 secondsit could have two or more okay very good a lot of people are saying basically that at least two sisters so this does
+3:343 minutes, 34 secondsallow for spot to have more than two sisters right she may have three right but two or more
+3:413 minutes, 41 secondsvery good well let's do it now in a more interesting way what if I want to say
+3:503 minutes, 50 secondsthat spot has exactly two sisters right
+3:583 minutes, 58 secondsso we're doing now hopping the challenge a little bit so this was correct the first one was correct this this was correct
+4:044 minutes, 4 secondsnow how do we actually do this so that we say that spot has exactly two sisters
+4:114 minutes, 11 secondsand to make it somewhat structured let me suggest that you could add more to
+4:194 minutes, 19 secondsthe previous statement so I'm gonna write it again here and say there exists
+4:254 minutes, 25 secondsX there exists Y right sister X spot and
+4:314 minutes, 31 secondssister Y spot and not equals y and I want to continue so I
+4:414 minutes, 41 secondswant to add more and let me see okay you know you have to realize it's not as easy for me now to parse these answers
+4:504 minutes, 50 secondsthat not a simple yes/no answers people are writing X complicated expressions I'm going to look at for one of the
+4:574 minutes, 57 secondssimpler ones and try to get it so someone is let me see very partial
+5:055 minutes, 5 secondssolutions that I'm seeing okay I think I got one now so let me write this for all
+5:135 minutes, 13 secondsZ sister Z spot okay check out the scrolling so I'm trying to keep track of
+5:215 minutes, 21 secondswhat I'm copying here this is the one that says for all Z if Z is the sister
+5:285 minutes, 28 secondsof spot then very good yes yes so this solution here says for all Z sister Z
+5:355 minutes, 35 secondsspot implies that Z equal X or Z equals y this was one of the solutions that one
+5:435 minutes, 43 secondsof you actually contributed and it just continues it says yeah that is x and y and both sisters by the way that man the
+5:525 minutes, 52 secondssame and moreover if some Z happens to be a sister of spot that I can tell you that she must be either X or Y couldn't
+5:595 minutes, 59 secondsbe anything else so this actually does it now a bunch of you wrote expressions again apologies I can't parse them all
+6:076 minutes, 7 secondsof them is not as easy to do this but let me do something here which and asked you yes no question so instead of doing
+6:166 minutes, 16 secondsthis instead of writing this guy here let me write something else and you guys tell me if it is the same or not so
+6:256 minutes, 25 secondsinstead of this guy I want to write the following and this is not there exists Z
+6:356 minutes, 35 secondssister spot so what do you guys think the question is can I use the guy in red
+6:456 minutes, 45 secondsinstead of the guy back so the guy in red saying there's some Z which happens to be system's fault that is not X and that is not why and
+6:556 minutes, 55 secondsI'm just negating all of us so do people think that they're the same okay good so
+7:027 minutes, 2 secondsa bunch of people are saying yes yes that always also works in terms of meaning it's the same very good yes in fact it will be very good exercise
+7:117 minutes, 11 secondsand maybe we should try to do it or maybe you can type at home do the
+7:177 minutes, 17 secondsfollowing try to simplify this guy and see if it actually comes out to that and
+7:247 minutes, 24 secondsit should and and we know how to do this all we have to do is push the negation inside right you guys know how to do that now if we push the negation inside
+7:337 minutes, 33 secondswhat happens we're gonna push this guy inside when you pass through this guy it becomes for all he remember that and then keep going when you get not system
+7:427 minutes, 42 secondsZ spot and keep going the morgue is law this flips into an or and double negation here this becomes Z
+7:517 minutes, 51 secondsequals x this flips into an or and then double negation it goes away so you get this so if we push the
+7:597 minutes, 59 secondsnegation inside that's what we get we did two things here we applied the rule that says if you walk through there exists it becomes for all and the other
+8:068 minutes, 6 secondsway around and that's how we got this guy and the rest of it is just the Morgan's law now you remember that not
+8:158 minutes, 15 secondsalpha or beta is the same as alpha implies that I remember this Golden Rule we mentioned and you said you have to
+8:228 minutes, 22 secondskind of try to remember this okay now think of this guy here as alpha and
+8:288 minutes, 28 secondsthink of this whole thing as beta so what do I have not alpha or beta I can
+8:368 minutes, 36 secondsmake it into an implication by saying the sister Z spot implies Z equals x or y equals y
+8:478 minutes, 47 secondswhich is the first statement that we have let's copy this and I guess then I you have all of the tools not only to
+8:578 minutes, 57 secondsintuitively say in that these two statements statement 1 and statement 2 are the same but you can actually use the tools that
+9:069 minutes, 6 secondsyou have to show that formally and prove that one of them is the same as the other and therefore they say the same
+9:139 minutes, 13 secondsthing very vague let's do a couple of more things here sometimes people use another kind of
+9:239 minutes, 23 secondsquantifier that looks like this it's not as common but we'll mention it because it will help us do another exercise so
+9:309 minutes, 30 secondsthis the idea here is this is there exists a unique instead of just saying that exists so you can think of this as
+9:389 minutes, 38 secondsthe uniqueness 25 so what is that if I go ahead and say the following if I
+9:459 minutes, 45 secondswrite the following then this is saying that there is exactly one king so once
+9:519 minutes, 51 secondsmore as an exercise I want you to represent this using the usual or the
+9:599 minutes, 59 secondstraditional existential quantifier to say the same thing what would this come out to if I want to not use this guy
+10:0910 minutes, 9 secondsbecause we don't need it really you can do the same thing just with a regular existence should quantify so for example if I simply go ahead and say there
+10:1810 minutes, 18 secondsexists X King X that doesn't do it right because this leaves out the possibility
+10:2610 minutes, 26 secondsof having more than one King this is saying there's at least one thing but I want to say there's exactly one K and similarly to simplify it I want you to
+10:3510 minutes, 35 secondsjust add more to this so I want you to add something here that end up having
+10:4110 minutes, 41 secondsthat intended effect of saying there's only one king not more than one king and
+10:4810 minutes, 48 secondslet's see what people are saying someone is saying all we have to do is to say
+10:5710 minutes, 57 secondsfor all Y King Y implies x equals y very
+11:0611 minutes, 6 secondsgood yes right so the first process there is a king and the other okay I made a mistake here can someone point
+11:1411 minutes, 14 secondsit to me I did something wrong in terms of the okay I'm not gonna tell you what it is but it's maybe useful thing for you to
+11:2311 minutes, 23 secondscatch there is a problem with what I wrote it's almost time I just did something that is problematic people can people
+11:3011 minutes, 30 secondsnotice that very good very good very good look what happened here this bracket is wrong right this bracket here is
+11:3911 minutes, 39 secondssuggesting that the scope of X is only in this but but it's not actually active here this actually let me see if I know
+11:4611 minutes, 46 secondsif I can do this right this X here that's this guy now it is proper because
+11:5611 minutes, 56 secondsthis thing okay there is an X and X happens to be king and by the way for any other King Y that y must be X and
+12:0512 minutes, 5 secondsthis brings us to this notion of scoping and let me do one more example on this one to explain this point this is an
+12:1412 minutes, 14 secondsimportant point and you'll have to pay attention to it the situation is actually similar to variables in writing
+12:2112 minutes, 21 secondsprograms so for example it is okay to write the following let me put the sentencing okay look at the statement
+12:3012 minutes, 30 secondsthe question is you don't notice the answer yet but based on your intuition do you think this is of qiyama is that
+12:3712 minutes, 37 secondsokay or not should be allowed or not yes or no all right so a lot of people are saying no no no no it should not be
+12:4512 minutes, 45 secondsallowed well in a programming language what happens if you have a variable that
+12:5312 minutes, 53 secondshas this in a sense bigger scope and inside that scope that variable is defined and used again this is fun this
+13:0313 minutes, 3 secondsis fine but then this time here is universally quantified and this guy here is existential quantifier it's not good
+13:1113 minutes, 11 secondspractice you probably don't want to do this all right it's not good practice you don't want to do this but this should be fine in the sense that this
+13:2013 minutes, 20 secondsguy now becomes existentially quantified and basically you lost the universal quantification here it doesn't extend to
+13:2813 minutes, 28 secondsall of the one thing you need to just know on this front is you want to avoid having
+13:3513 minutes, 35 secondswhat we call three variables that would be a problem three variables are
+13:4213 minutes, 42 secondsvariables that have no quantifiers that's not okay and when we say there is
+13:5113 minutes, 51 secondsthe notion of a well-formed formula in first order logic and it basically means
+14:0014 minutesthat it is an expression with no free variables so you want to make sure that
+14:0914 minutes, 9 secondsevery variable is quantified over otherwise you don't have a legitimate formula let me now move to a little bit
+14:1814 minutes, 18 secondsof a more comprehensive bigger example and this is something that's discussed in detail in your book we will not do it
+14:2714 minutes, 27 secondsfully when you see how much we will sketch but it's useful to in the state a number of points when you start putting all of these things together and using
+14:3614 minutes, 36 secondsthem in a more substantial fashion but before I do that let me tell you something interesting before we get to
+14:4414 minutes, 44 secondsthat exam and this is with regards to inference in first order logic so if you look at the picture where we have a box
+14:5314 minutes, 53 secondslike this and let's call it an inference engine and the goal of this is to do implications we've seen examples of that a lot of
+15:0215 minutes, 2 secondsthem in propositional logic you have a knowledge base which is a set of statements and then you have a query and typically we're interested in does the
+15:0915 minutes, 9 secondsquery follow from the knowledge base now in propositional logic because the answer was always yes no right if you
+15:1715 minutes, 17 secondsremember we used to call this Delta I wish to call this alpha and then I asked you this Delta imply alpha and then again yes
+15:2415 minutes, 24 secondsno now things are a little bit more interesting in this particular case and let me explain so let's say your
+15:3115 minutes, 31 secondsknowledge base looks like this pretty simple it just have the statement that says for all
+15:4015 minutes, 40 secondscats X implies I'm an ax and then it happens that we have tuna which is a cat
+15:5015 minutes, 50 secondsand we have spot which is a cat that's our knowledge base right it's got three sentences in it let's put it this way
+15:5815 minutes, 58 secondsnow and let's say that the query is does there exist a mama that's the query and now I wanna know does this query follow
+16:0716 minutes, 7 secondsfrom the knowledge base what do you guys think yes or no in this case so the query is does there exist a mammal and
+16:1516 minutes, 15 secondsthen we're having cat tuna cat spot and then cats are mammals and people are saying yes okay now here's the thing the
+16:2316 minutes, 23 secondsthing though is in the way inference works in first order logic and we'll see that next time not only can you answer
+16:3116 minutes, 31 secondsthe question in this case but you can also get what we call a binding list which gives you
+16:3816 minutes, 38 secondsmore information and in this case the binding list would be the following you
+16:4616 minutes, 46 secondswill get that X and it will be bound to spot or X would be bound to tuna that is
+16:5316 minutes, 53 secondsyou did not only get the answers yes but also oh if you the possible values for X
+17:0217 minutes, 2 secondshere are spot or tuna so in a way in the process of answering the query you do
+17:0917 minutes, 9 secondsthe computation right you did not only answer yes or no but you even gave me the reasons why that answer is that way
+17:1817 minutes, 18 secondswhat happened here is the secret is I asked an existential is there an X that satisfy this property and it won't be
+17:2717 minutes, 27 secondsguessed and here are the XS that were questioned for people who took the course programming languages where you
+17:3417 minutes, 34 secondsgot exposed to various types of programming languages does this remind you of something there is a language
+17:4117 minutes, 41 secondsthat you studied there a lot of people typing prologue prologue prologue prologue yes yes in fact Prolog is
+17:4917 minutes, 49 secondslogical in language and it was based on these ideas it's a restricted form of this
+17:5617 minutes, 56 secondsvery good and someone said they just starting with yesterday for those who are taking the course in this quarter so
+18:0318 minutes, 3 secondsyou will see this more in action later I just wanted to give you and that before we get started okay let me go to the next example
+18:1118 minutes, 11 secondsthe fully fledged one so in this example from your book what we have here is a little circuit board and we have a bunch
+18:2118 minutes, 21 secondsof gates B this would be what we call an X or and the idea is that this is gate
+18:2718 minutes, 27 secondsthat will generate high or 1 if and only if X two inputs are distinct and this would be an end here and this would be
+18:3618 minutes, 36 secondsand or and this circuit has three inputs and two outputs it corresponds to what
+18:4518 minutes, 45 secondsis known as one bit full adder doesn't matter you may have seen this you can cascade these things and use it to add
+18:5418 minutes, 54 secondsbinary numbers you can think of the 1 & 2 inputs as the 2 bits you're trying to add and then number 3 here is the carry
+19:0219 minutes, 2 secondsand and so on but that doesn't matter for us what matters is if you go ahead and say this is a 1 this is a 1 and this
+19:1119 minutes, 11 secondsis a 1 and do the actual computations you should get basically a 0 here 1 & 1
+19:2019 minutes, 20 secondshere 0 here and this would be I think if you can trace that again this doesn't matter in fact I'm gonna take this it's
+19:2919 minutes, 29 secondsgonna be known just practice the point is of this example if I want to reason about circuits of this stuff and the
+19:3919 minutes, 39 secondssurface kind of reasoning would be if I tell you what are the inputs to the circuit you compute the output on the
+19:4519 minutes, 45 secondsopposite I tell you I have a 0 here and a 1 there can you tell me what kind of inputs to the circuit will generate that
+19:5419 minutes, 54 secondskind of an output now that becomes a little bit tricky so the first kind of a query I give you the inputs you can easily do the output but if I tell you
+20:0220 minutes, 2 secondsthe reverse right use the outputs what kind of inputs will generate that now can also do more sophisticated things we're not gonna do it in the example
+20:1020 minutes, 10 secondsthat we're gonna work out next but you can reason about the health right so you can assume that gates can break or some
+20:1720 minutes, 17 secondsconnections can be loose and then you can go and say okay I did apply if you saw in the example if I give 1 1 1 I
+20:2420 minutes, 24 secondsshould get 1 1 as an output let's say you go ahead and do 1 1 1 and then you don't get 1 1 as the output then
+20:3220 minutes, 32 secondssomething went wrong so you can actually use reasoning to figure out what may have gone wrong so you could go and say oh it must be the scale it's broken and
+20:4020 minutes, 40 secondsso on so that's the kind of thing we want to do now when you do this you can represent knowledge using first order logic and the keeping that you'll have
+20:4820 minutes, 48 secondsto realize that your knowledge base will have two components there is a component that is independent of this particular
+20:5720 minutes, 57 secondscircuit what we will do is wanna reason this is about this particular circuit but there's a component that's independent of this particular circuit
+21:0521 minutes, 5 secondsso this captures the domain and then there is the component of the knowledge base which is this circuit meaning I
+21:1421 minutes, 14 secondshave to say that I have five gates and they're called X 1 X 2 that' and they're connected in this particular way and so
+21:2021 minutes, 20 secondson so this is the instance if you want to think about it alright so you're gonna find that your knowledge base has
+21:2721 minutes, 27 secondsthese two components and we'll see this concretely once you put the knowledge base together then you can ask queries
+21:3521 minutes, 35 secondsalright and I will just before we get started before we so that we don't lose
+21:4121 minutes, 41 secondssight of what's going on here when we're done with the knowledge base then you
+21:4821 minutes, 48 secondscan go and ask the following kind of questions let me write this question can I actually write it not yet I need the
+21:5621 minutes, 56 secondsvocabulary for that but anyways you can music we need to say if I have a 0 here and a 1 here what kind of pose would
+22:0322 minutes, 3 secondspossibly generate that kind of an output and it would end up being something like that exist input one that exists in co2
+22:1322 minutes, 13 secondsthat exists input 3 and then you write home statement there and then when you get the answer yes
+22:2022 minutes, 20 secondsthen the binding list for these guys will give you the kind of three inputs that will give you that but let's go and talk about the details here first thing
+22:2822 minutes, 28 secondsthat we need to be here is come up with Bieber calculate right so the steps are pretty simple when you do something like this first you come up with the
+22:3622 minutes, 36 secondsvocabulary and if you remember what the vocabulary was and let me use blue this
+22:4322 minutes, 43 secondswas the set of constants the set of functions and the set of predicates and
+22:5022 minutes, 50 secondsif you recall we mentioned that this is specific to the domain that you're trying to model if you're talking about circuits you will lose something if
+22:5822 minutes, 58 secondsyou're talking about the one person or do you use other things right and then this is step one and then step two is we
+23:0823 minutes, 8 secondswrite that part of the knowledge base that is general not specific to this particular circuit and the third step is we encode this particular instance so we
+23:1623 minutes, 16 secondscan reason about it now there are multiple ways in which you can come up with the vocabulary here so when we do this on a board we try to experiment
+23:2423 minutes, 24 secondswith various things and look at their implications and so on unfortunately this mode when luckily very very miss it
+23:3123 minutes, 31 secondsfor that so I will go ahead and just write the vocabulary for you that is
+23:3823 minutes, 38 secondsused on the book in this example and I can say up front it doesn't have to be this way you could have done things a little bit differently as far as
+23:4723 minutes, 47 secondsconstants we'll end up using the following we need the constant and
+23:5423 minutes, 54 secondsconstant or the constant not the constant X or and these are meant to
+24:0324 minutes, 3 secondsrefer to the type of gates so I want to say that this is an and gate so I will use these show bear with me for just a
+24:1224 minutes, 12 secondssecond and you'll see the relevance of all of us I would end up using the constant 0 and 1 to refer to the signals
+24:2024 minutes, 20 secondson the wires whether there and then I will meet the constant X 1 X 2 a 1 a 2
+24:2824 minutes, 28 secondsand a 1 to be able to about these specific gates that appear in the circuit so you want to think
+24:3724 minutes, 37 secondsabout these constants here this is domain I always use these and these are used for the specific instance as far as
+24:4624 minutes, 46 secondsfunctions and end up needing the function type which takes a gain and comes back with the type of that gate
+24:5324 minutes, 53 secondswhether its end or all and so on I need the notion of a signal for the function of a signal which looks at the
+25:0025 minutesoutput or an input of a gate and returns 0 1 and finally I need in and out and these are meant to take a gate and
+25:1025 minutes, 10 secondsrepresents the first input the second input output and so on and finally I only need one predicate which is
+25:1725 minutes, 17 secondsconnected and that means that the output of one gate is connected to another ok you're gonna see all of this coming together you probably is wondering why
+25:2625 minutes, 26 secondsthat's quite something else where would I start and I get this problem so let me tell you upfront down don't worry about
+25:3325 minutes, 33 secondsthis we will not actually ask you to encode problems of this skin if you're
+25:4025 minutes, 40 secondsworried about fine and and so on they will be more like what we did before all right so just sit and enjoy this and and
+25:4725 minutes, 47 secondsknow that this is not easy for the first time so you have to do a number of these before you start really getting a hang
+25:5425 minutes, 54 secondsof how this is done and in this class that would be outside the scope of what we what we need to do here so you could
+26:0126 minutes, 1 secondhave done this differently when we do a little bit more of this you may look at this and says oh I could have done it differently fine yes I believe that so
+26:0826 minutes, 8 secondslet's go ahead and start seeing what we need to write here to formulate this
+26:1526 minutes, 15 secondsproblem and I'm gonna erase this part here all right so the first thing we're
+26:2226 minutes, 22 secondsgonna do is try to write the domain part of the knowledge base the part that does
+26:3026 minutes, 30 secondsnot pertain to this particular circuit but that talks about this more generally and again I'm gonna start writing some sentences and we'll try to understand
+26:3926 minutes, 39 secondsthem and believe in them locally and then we'll comment more generally about things so here's some
+26:4626 minutes, 46 secondsthat you end up writing let me correct and then we can basically see what it's
+26:5326 minutes, 53 secondssaying for all T 1 T 2 so what this is saying is if two wires or two ports
+27:0227 minutes, 2 secondsthere's the notion of a port here which is an input or an output of a gate if they're connected then they must have
+27:0827 minutes, 8 secondsthe same signal and then you have something like for all T 1 T 2 connected
+27:1827 minutes, 18 secondsT 1 T 2 is the same as connected T 2 can
+27:2527 minutes, 25 secondsyou watch this is like symmetric now you see why do I need this well believe it or not for you and I if I tell you that the output of this
+27:3427 minutes, 34 secondsconnect with the input of this does that mean that the input of this is connected to that well you and I know this yes but first of all the logic does not know that you have to tell it that connected
+27:4227 minutes, 42 secondsis actually a symmetric relation and then there is more but the main thing I want to get to next is how do you
+27:5027 minutes, 50 secondsdescribe the behavior of these gates and this is where we start putting a lot of things together so if you want to
+27:5727 minutes, 57 secondsdescribe how and or gate functions let me again write that here and then we'll see what it's actually saying so this
+28:0528 minutes, 5 secondswould be for all G if typeof g equals or
+28:1228 minutes, 12 secondsthen signal out 1 g 1 if and only if
+28:2028 minutes, 20 secondsthere exists all right this is how much bigger than what we wrote but let's just
+28:2928 minutes, 29 secondslook at it because it's actually put a lot of the vocabulary together so I'm trying to explain or capture knowledge about how or gates behave now you know
+28:3828 minutes, 38 secondsfor a nor gate the output would be one if and only if one of the inputs is one and what this guy is doing is just
+28:4528 minutes, 45 secondssaying that says for all G if the type of G happens to be also it is a nor gate then you've got the following that the
+28:5428 minutes, 54 secondssignal on the first output of this game so this is the gate this is first up on that signal is one if and
+29:0229 minutes, 2 secondsonly air there is an input end that has that particular signal of one and if you
+29:0929 minutes, 9 secondslook at the rest of the example in your book you're gonna find similar statements for an XOR and not you would
+29:1829 minutes, 18 secondsneed to include those kind of statements in there and I will leave you with something to spark your curiosity is to
+29:2629 minutes, 26 secondsget you to read more about us this example the domain part which is not specific to the instance we have has
+29:3529 minutes, 35 secondsanother statement I'm gonna write it to you actually two statements for all the
+29:4029 minutes, 40 secondssignal he equals 1 or Sigma equals 0 and
+29:4929 minutes, 49 secondsmoreover not 1 equals 0 that would be the general part of this knowledge base
+29:5829 minutes, 58 secondsnow I think people who see this from me and ok now maybe yeah I understand how
+30:0530 minutes, 5 secondsit has to be connected why I connect it symmetric and why I have to say that and then yeah of course I need to describe
+30:1230 minutes, 12 secondshow gates behave this may actually end up looking weird and the reason is that in in terms of the logic in general it's
+30:2130 minutes, 21 secondspossible that two constants will name the same object just like we couldn't have nicknames right so a person could
+30:3030 minutes, 30 secondshave been referred to by two different names so in this case you want to say that no 1 and 0 are not the same guy in
+30:3930 minutes, 39 secondsfact there was an example in your book which is interesting that shows what happens if you drop this statement from your knowledge base what kind of trouble
+30:4730 minutes, 47 secondsyou get into so you may want to check it out I just want to finish off by telling you about the second part of this knowledge base which is the one that is
+30:5530 minutes, 55 secondsspecific to this instance and how it looks and then we will have the whole thing together so in addition to this
+31:0331 minutes, 3 secondsfirst part that we did here on the left on the right you go and start describing what you have in this particular case so what you have in this particular case is
+31:1131 minutes, 11 secondsI had we type x1 equals x or and then the type of X 2
+31:1931 minutes, 19 secondsis also x over and so on right so I declare the types of the five gates that
+31:2631 minutes, 26 secondsI had in this particular case and this was right so I went ahead for each one
+31:3331 minutes, 33 secondsof the five gates and declared what it is and then I have to declare the connectivity how are they connected together I'll just give you a couple of examples
+31:4031 minutes, 40 secondsso you will have connected out one of x1
+31:4631 minutes, 46 secondsin to a two so what is this statement
+31:5331 minutes, 53 secondssaying let's look at this next one this is the output one and then the
+31:5931 minutes, 59 secondssecond input of a two which is this guy so I'm saying that this output and this
+32:0832 minutes, 8 secondsinput are connected right I'm basically stating this file and so on so you can have a bunch of these and that's
+32:1532 minutes, 15 secondsbasically it so the minute that you had these two components one and two you're
+32:2432 minutes, 24 secondsready to stop asking quiz and let me show you the query that I sketched at
+32:3032 minutes, 30 secondsthe very beginning there exists I 1 I 2
+32:3532 minutes, 35 secondsI 3 and then signal in one equals now
+32:4732 minutes, 47 secondswhat is C 1 C 1 is this guy so in this formulation and the way people did it I can talk about this whole box as another
+32:5732 minutes, 57 secondscomponent or gate C 1 that has three inputs one two and three and has two outputs one and two so what this guy said
+33:0533 minutes, 5 secondsdoes there exist some I 1 I 2 and I 3 so that they all happen to be the values of the input one two and three and at the
+33:1333 minutes, 13 secondssame time this output here is 0 and this output here is 1 and then you get the answer
+33:2033 minutes, 20 secondsnot only yes but you get the binding lists and in this case you're gonna get rebinding or for this particular guy you
+33:3033 minutes, 30 secondswill get one one zero you'll get one zero one and you will get
+33:3733 minutes, 37 secondszero one one fine so not only do you get it yes you get it yes and by the way here's the combination of I 1 I 2 I 3
+33:4533 minutes, 45 secondsthat makes that statement true so what happened here is move isn't backward we said what kind of circuit inputs will generate that particular output and and
+33:5433 minutes, 54 secondsyou get it this way now of course this is fine I mean it's a turn ok example
+34:0034 minutesnot very sophisticated kind of reasoning it gets more interesting if you start
+34:0734 minutes, 7 secondsreasoning about folds but to do that you will have to expand your vocabulary so
+34:1534 minutes, 15 secondsI'm just gonna sketch something for you and for those or it just it can think more about this then you may have to introduce a predicate that says ok that
+34:2334 minutes, 23 secondsis the gate is behaving ok and then those statements that we did here for behavior they will all be conditioned on
+34:3134 minutes, 31 secondsthe gate beam ok and then you may include the political called stuck 0 and what this means is if a gate is stuck
+34:3934 minutes, 39 secondszero the output will always be zero regardless over the input X that you can have stuck one as well and so on so if
+34:4834 minutes, 48 secondsyou expand your vocabulary to start talking about the state of gates then you'll have to expand or you find your statements and do other things and you
+34:5734 minutes, 57 secondscan do more reasoning but you can look at this example in your book the intention here was to show you how everything comes together and how your
+35:0535 minutes, 5 secondsknowledge base will have two parts one general one specific instance and how queries that have existential quantification can actually do some kind
+35:1435 minutes, 14 secondsof computation on your behalf and as I mentioned it's not as easy to play this game which by the way it's called
+35:2235 minutes, 22 secondsknowledge engineering the process of coming up with the vocabulary and making sure that you put all of the right statements and debugging your knowledge
+35:3035 minutes, 30 secondsbase and so on but hopefully this gives you a good idea about what's going on so we're done for today and the next
+35:3835 minutes, 38 secondslecture on the logic which would be the last one we will talk about how to do inference in
+35:4535 minutes, 45 secondsthe context of first-order logic and tight a little bit also more to the inference in the propositional workings
+35:5435 minutes, 54 secondsall right then so I will see you next week thank you

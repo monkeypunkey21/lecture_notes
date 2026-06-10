@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 13 — From Logic to Belief</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 13</div>
+  <a href="#part1">Part I — The Crisis of Monotonic Logic</a>
+  <a href="#what-is-monotonicity" class="sub">What Monotonicity Means</a>
+  <a href="#tweety" class="sub">The Tweety Problem</a>
+  <a href="#abnormality" class="sub">Patching with Abnormality</a>
+  <a href="#nixon" class="sub">The Nixon Diamond</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Degrees of Belief</a>
+  <a href="#beyond-logic" class="sub">Going Beyond Logic</a>
+  <a href="#worlds-numbers" class="sub">From Worlds to Numbers</a>
+  <a href="#worlds-to-sentences" class="sub">From Worlds to Sentences</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — Properties of Beliefs</a>
+  <a href="#bounds" class="sub">Bounds, 0 and 1</a>
+  <a href="#negation" class="sub">Belief in a Negation</a>
+  <a href="#inclusion-exclusion" class="sub">Disjunction &amp; Overlap</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — Belief Change &amp; Independence</a>
+  <a href="#explaining-away" class="sub">Explaining Away</a>
+  <a href="#independence" class="sub">Independence</a>
+  <a href="#cond-independence" class="sub">Conditional Independence</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — The Inference Toolkit</a>
+  <a href="#chain-rule" class="sub">Chain Rule</a>
+  <a href="#case-analysis" class="sub">Case Analysis</a>
+  <a href="#bayes-rule" class="sub">Bayes' Rule</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part6">Part VI — The Disease Test</a>
+  <a href="#disease-setup" class="sub">Setting It Up</a>
+  <a href="#disease-solve" class="sub">Solving It</a>
+  <a href="#quiz6" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#synthesis">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">CS161 · Fundamentals of Artificial Intelligence</div>
+  <h1>From Logic to Belief: Reasoning Under Uncertainty</h1>
+  <p class="hero-sub">An interactive guide to Lecture 13 — why classical logic broke, how degrees of belief fixed it, and the probability toolkit that powers everything that follows.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>The Crisis of Monotonic Logic</h2>
+</div>
+
+<p>For the first few decades of artificial intelligence, the field ran almost entirely on <strong>logic</strong> — the propositional and first-order systems we have spent the past several lectures building. You write down facts and rules in a knowledge base, and a reasoning engine deduces new facts that must follow. It is clean, exact, and provably correct. So why are we now, in this lecture, walking away from it?</p>
+
+<p>Because in the late 1970s and early 1980s, AI researchers hit a wall. They discovered a deep, structural mismatch between how classical logic behaves and how human common-sense reasoning behaves. The decade-long struggle to resolve that mismatch — McCarthy and others called it a genuine crisis — gave birth to a whole new era of AI, and ultimately to machine learning. To understand where we are going, we first have to understand exactly what broke.</p>
+
+<h3 id="what-is-monotonicity">What "Monotonicity" Means</h3>
+
+<p>The property that caused all the trouble is called <strong>monotonicity</strong>. Here is the precise statement. Suppose you have a knowledge base &Delta; (delta), and some sentence &alpha; (alpha) follows from it — written <code>&Delta; &#8872; &alpha;</code>, read "delta entails alpha." Monotonicity says: if you now <em>learn additional information</em> &beta; (beta) and add it to your knowledge base, then &alpha; <em>still</em> follows. Nothing you learn can ever retract a conclusion you already drew.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Monotonicity</div>
+  <p>A logic is <strong>monotonic</strong> if conclusions only ever accumulate: once <code>&Delta; &#8872; &alpha;</code> holds, then <code>&Delta; &cup; {&beta;} &#8872; &alpha;</code> holds for <em>any</em> new fact &beta;. In plain words: <em>what is believed remains believed in the presence of new information.</em> Classical logic is monotonic.</p>
+</div>
+
+<p>Why is classical logic monotonic? It falls right out of the semantics of entailment we already know. Recall that <code>&Delta; &#8872; &alpha;</code> means exactly that the <strong>models of &Delta;</strong> (the worlds where &Delta; is true) are a <em>subset</em> of the <strong>models of &alpha;</strong>. Now add &beta;. The worlds satisfying both &Delta; and &beta; are <code>Models(&Delta;) &cap; Models(&beta;)</code> — a subset of <code>Models(&Delta;)</code>, which was already a subset of <code>Models(&alpha;)</code>. A subset of a subset is still a subset, so &alpha; still follows. Pure set theory.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="320" height="200" viewBox="0 0 320 200" style="display:block; margin:0 auto;">
+      <ellipse cx="160" cy="100" rx="150" ry="85" fill="none" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="160" y="30" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#6b6560">Models(&#945;)</text>
+      <ellipse cx="135" cy="110" rx="95" ry="55" fill="#eff4ff" stroke="#2563eb" stroke-width="2"/>
+      <text x="95" y="80" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2563eb">Models(&#916;)</text>
+      <ellipse cx="165" cy="120" rx="45" ry="30" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="165" y="124" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c0510a">&#916; &#8743; &#946;</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Adding &beta; shrinks the model set inward. Since <code>Models(&Delta;)</code> already sat inside <code>Models(&alpha;)</code>, the smaller <code>Models(&Delta; &and; &beta;)</code> does too — so &alpha; survives.</div>
+</div>
+
+<h3 id="tweety">The Tweety Problem</h3>
+
+<p>Monotonicity sounds like a feature, not a bug — until you compare it with how people actually reason. Consider the famous example that circulated in the AI literature at the time.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>"Tweety is a bird."</strong> Call this your knowledge base &Delta;. I ask: does Tweety fly? You answer <strong>yes</strong> — call the conclusion "flies(Tweety)" your &alpha;. Perfectly reasonable.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>"Tweety is a penguin."</strong> Now I hand you a new fact, &beta;. I ask again: does Tweety fly? You answer <strong>no</strong>. Penguins do not fly.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>You just violated monotonicity.</strong> Adding &beta; <em>retracted</em> a conclusion (&alpha;) you had already drawn. A monotonic logic is forbidden from ever doing this — yet human reasoning does it constantly.</p>
+</div>
+
+<p>This pattern is everywhere. You leave campus at 4:30 planning to be home by 5:00, and you build your whole evening around that conclusion. Then your car won't start. One extra fact — "the car won't start" — and a conclusion that firmly followed a moment ago no longer follows. Human reasoning is <strong>non-monotonic</strong>: new information can defeat old conclusions.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>Classical logic is <strong>monotonic</strong>; human common-sense reasoning is <strong>non-monotonic</strong>. Interestingly, although formal logic had been developed for centuries, AI researchers were the first to actually notice this mismatch — because they were the first to try to make a machine reason like a person. Closing this gap is the entire reason this lecture exists.</p>
+</div>
+
+<h3 id="abnormality">Patching Logic with an "Abnormality" Predicate</h3>
+
+<p>The natural first instinct is: maybe the rule was just written carelessly. Instead of the blunt <code>&forall;x. bird(x) &rarr; flies(x)</code>, write a more careful rule that admits exceptions:</p>
+
+<pre><code><span class="op">&forall;</span>x. bird(x) <span class="op">&and;</span> <span class="op">&not;</span>abnormal(x) <span class="op">&rarr;</span> flies(x)</code></pre>
+
+<p>Now the logic no longer contradicts itself. If you learn "Tweety is a bird" and separately "Tweety does not fly," the system simply concludes Tweety must be abnormal — no contradiction. So far so good. But watch what we lost.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Patch Backfires</div>
+  <p>With the careful rule, if you tell the system only "<code>bird(Tweety)</code>" and ask "does Tweety fly?", the honest answer is <strong>"I don't know"</strong> — because the system can't confirm <code>&not;abnormal(Tweety)</code>. But that is exactly wrong! Tell a person "here's a bird," and they say "it flies." Every rule has unconfirmable exceptions, so under this patch you can <em>never draw any conclusion at all</em>. The cure is as useless as the disease.</p>
+</div>
+
+<p>The original rule was too strong (one penguin causes a contradiction, and from a contradiction you can derive <em>anything</em>, since the model set of an inconsistent base is empty and the empty set is a subset of everything). The patched rule is too weak (it paralyzes you with "I don't know"). What humans actually do is something the patched logic only gestures at: <strong>we assume birds are normal by default, unless we see evidence to the contrary.</strong> We draw the conclusion "flies(Tweety)" not from facts alone, but from <em>facts plus a default assumption</em>. And reasoning from facts-plus-assumptions is no longer classical logic — it is something new.</p>
+
+<div class="callout insight">
+  <div class="callout-title">A New Kind of Logic</div>
+  <p>The realization that everyday reasoning combines hard facts with retractable default assumptions launched an entire research program: <strong>non-monotonic logics</strong> (and more broadly, non-classical logics). The hope was to extend logic so it could gracefully handle defaults and exceptions.</p>
+</div>
+
+<h3 id="nixon">When Assumptions Collide: The Nixon Diamond</h3>
+
+<p>Extending logic with defaults turned out to be much harder than it looked, and a second example shows exactly why. Suppose your knowledge base has two default rules (everything universally quantified):</p>
+
+<pre><code><span class="op">&forall;</span>x. quaker(x)     <span class="op">&and;</span> <span class="op">&not;</span>ab&#8321;(x) <span class="op">&rarr;</span>  pacifist(x)
+<span class="op">&forall;</span>x. republican(x) <span class="op">&and;</span> <span class="op">&not;</span>ab&#8322;(x) <span class="op">&rarr;</span> <span class="op">&not;</span>pacifist(x)</code></pre>
+
+<p>Note we need <em>two different</em> abnormality predicates, one per rule. Informally: Quakers are typically pacifists; Republicans are typically not. Now you learn that <strong>Nixon is both a Quaker and a Republican.</strong></p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="280" height="180" viewBox="0 0 280 180" style="display:block; margin:0 auto;">
+      <rect x="100" y="10" width="80" height="30" rx="6" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="140" y="30" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">Nixon</text>
+      <line x1="120" y1="40" x2="55" y2="80" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="160" y1="40" x2="225" y2="80" stroke="#d9d0c4" stroke-width="2"/>
+      <rect x="10" y="80" width="90" height="30" rx="6" fill="#eff4ff" stroke="#2563eb" stroke-width="2"/>
+      <text x="55" y="100" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2563eb">Quaker</text>
+      <rect x="180" y="80" width="90" height="30" rx="6" fill="#eff4ff" stroke="#2563eb" stroke-width="2"/>
+      <text x="225" y="100" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2563eb">Republican</text>
+      <line x1="55" y1="110" x2="120" y2="150" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="225" y1="110" x2="160" y2="150" stroke="#c53030" stroke-width="2" stroke-dasharray="4 3"/>
+      <rect x="95" y="150" width="90" height="28" rx="6" fill="#f3effe" stroke="#7c3aed" stroke-width="2"/>
+      <text x="140" y="169" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#7c3aed">pacifist?</text>
+    </svg>
+  </div>
+  <div class="figure-caption">The "Nixon diamond." One default path concludes <code>pacifist</code>, the other concludes <code>&not;pacifist</code>. You cannot adopt both default assumptions at once.</div>
+</div>
+
+<p>If you make <em>both</em> default assumptions — "Nixon is a normal Quaker" and "Nixon is a normal Republican" — you derive that Nixon is both a pacifist <em>and</em> not a pacifist. A flat contradiction. So you cannot make all your default assumptions simultaneously; they clash. Now you are in the business of <strong>managing assumptions</strong>: when a set of defaults is jointly inconsistent, which ones do you give up?</p>
+
+<div class="callout tip">
+  <div class="callout-title">Connection — Belief Revision</div>
+  <p>This "which assumptions do I throw out?" question is exactly the problem of <strong>belief revision</strong> we touched on in the very first lecture — managing a body of beliefs when contradictory information arrives. It is a whole field in its own right in philosophy, and AI contributed heavily to it. The Nixon diamond is a clean instance: deciding which default to retract <em>is</em> belief revision.</p>
+</div>
+
+<div class="quiz" id="quiz1-box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Why is the "Tweety is a penguin" example a problem for <em>classical</em> logic specifically?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Classical logic cannot represent the fact that penguins are birds.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Adding the new fact retracts a prior conclusion, but classical logic is monotonic and forbids retraction.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Classical logic has no way to express "flies" as a predicate.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>The knowledge base becomes too large to search efficiently.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct — B.</strong> Once "Tweety is a bird" lets you conclude "flies(Tweety)," monotonicity guarantees that conclusion survives any new fact. But "Tweety is a penguin" overturns it, which monotonic logic is structurally incapable of allowing. The issue is not expressiveness (A and C are false — these are easy to write in first-order logic) nor efficiency (D); it is the monotonic semantics itself.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>Degrees of Belief</h2>
+</div>
+
+<h3 id="beyond-logic">Going Beyond Logic Entirely</h3>
+
+<p>For about a decade, researchers tried to <em>fix</em> logic — to bolt defaults and assumption-management onto a classical foundation. As the Nixon diamond shows, that path is thorny. Meanwhile, a competing line of thought said: maybe the problem is the foundation. Maybe we should go <strong>beyond logic</strong>.</p>
+
+<p>Classical logic offers only a crude, three-way verdict on any sentence &alpha;: it follows, its negation follows, or neither. True, false, or "I don't know." That is a very blunt instrument. The new idea: instead of asking "is &alpha; true?", <strong>assign &alpha; a degree of belief</strong> — a number, by convention in the interval [0, 1], representing how strongly you believe it. Now you have infinitely many shades between certainty and ignorance.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Degree of Belief</div>
+  <p>A <strong>degree of belief</strong> is a number in <code>[0, 1]</code> attached to a sentence, capturing the extent to which an agent believes it. <code>0</code> = certain it is false, <code>1</code> = certain it is true, and everything in between is graded confidence. This replaces the crude true/false/unknown trichotomy with a continuum.</p>
+</div>
+
+<p>Just as there were many proposed ways to extend logic, there were many proposed calculi for manipulating degrees of belief. But the community eventually <strong>settled on probability</strong> as the right framework — it is the calculus we will use for the rest of the course. And here is the lovely twist: probability does not throw logic away. As we will see, the entire machinery is <em>built on top of</em> the logical notions of worlds, satisfaction, and entailment we already developed.</p>
+
+<h3 id="worlds-numbers">From Possible Worlds to Numbers</h3>
+
+<p>We return to the running example from our logic lectures. Three Boolean variables describe a situation: <code>E</code> = earthquake, <code>B</code> = burglary, <code>A</code> = alarm. Three Booleans give <code>2&sup3; = 8</code> possible <strong>worlds</strong> — complete assignments of true/false to every variable.</p>
+
+<table class="compare-table">
+  <tr><th>Logic's view of knowledge</th><th>Probability's view of knowledge</th></tr>
+  <tr><td>Each world is either <em>possible</em> or <em>impossible</em> (in or out)</td><td>Each world gets a <em>number</em> — its degree of belief</td></tr>
+  <tr><td>Knowledge = the set of worlds left standing</td><td>Knowledge = how the belief mass is distributed</td></tr>
+  <tr><td>Adding facts knocks worlds out</td><td>Adding facts reshapes the numbers</td></tr>
+  <tr><td>Answers: yes / no / neither</td><td>Answers: a number in [0, 1]</td></tr>
+</table>
+
+<p>So instead of marking each of the 8 worlds "possible" or "impossible," we assign each one a number between 0 and 1. By convention <strong>these numbers sum to 1</strong> across all worlds. Strictly speaking the sum-to-1 rule is not logically necessary — what truly matters is the <em>ratios</em> between worlds. But normalizing to 1 lets us meaningfully compare different people's belief tables (Jack's distribution versus Susan's) on a common scale.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Knowledge as Distributed Mass</div>
+  <p>In logic, learning meant <em>throwing out</em> possible worlds — the more you know, the fewer worlds remain, the less uncertain you are. Probability keeps that spirit but softens it: instead of deleting worlds, you redistribute a fixed unit of "belief mass" among them. A world you find implausible gets a tiny share, not outright deletion.</p>
+</div>
+
+<h3 id="worlds-to-sentences">From Worlds to Sentences — The Fundamental Equation</h3>
+
+<p>The table gives numbers to <em>worlds</em>. But we rarely care about a single complete world; we care about <em>sentences</em> like "was there an earthquake or a burglary?" That is not a world — it is an &alpha; that many worlds satisfy. How do we get a belief in &alpha; out of beliefs in worlds? With the single equation everything else in this course rests on:</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="320" height="70" viewBox="0 0 320 70" style="display:block; margin:0 auto;">
+      <text x="160" y="42" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="18" fill="#2a2520">Pr(&#945;) = &#8721;<tspan font-size="12" baseline-shift="sub">&#969; &#8872; &#945;</tspan> Pr(&#969;)</text>
+    </svg>
+  </div>
+  <div class="figure-caption">The belief in a sentence &alpha; is the sum of the belief masses of all worlds &omega; that <em>satisfy</em> &alpha; (written <code>&omega; &#8872; &alpha;</code>). Notice this definition reuses logical satisfaction directly.</div>
+</div>
+
+<p>To find the belief in &alpha;, walk through every world, keep the ones where &alpha; is true, and add up their numbers. That's it. Let's exercise it on our alarm example (using illustrative table values):</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Pr(E), probability of earthquake.</strong> Find the worlds where <code>E</code> is true — worlds 1, 2, 3, 4. Add their numbers: the total comes to <strong>0.1</strong>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Pr(B), probability of burglary.</strong> The worlds with <code>B</code> true are 1, 2, 5, 6. Adding their numbers gives <strong>0.2</strong>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>A compound sentence: Pr(B &or; &not;E).</strong> Worlds with <code>B</code> true are {1,2,5,6}; worlds with <code>&not;E</code> true are {5,6,7,8}. Their <em>union</em> is {1,2,5,6,7,8} — add up exactly those six numbers, counting each world once.</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>Probability theory in this course is <strong>logic with weights</strong>. The same possible worlds, the same satisfaction relation <code>&omega; &#8872; &alpha;</code> — we simply attach a number to each world and sum. Every property we derive next is a consequence of this one definition, not an axiom handed down from on high.</p>
+</div>
+
+<div class="quiz" id="quiz2-box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">According to the fundamental equation, how do you compute <code>Pr(&alpha;)</code> for a sentence &alpha;?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Multiply together the numbers of all worlds where &alpha; is true.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Take the number of the single most likely world where &alpha; is true.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Sum the belief masses of every world that satisfies &alpha;.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Count the worlds where &alpha; is true and divide by 8.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct — C.</strong> The defining equation is <code>Pr(&alpha;) = &Sigma;<sub>&omega; &#8872; &alpha;</sub> Pr(&omega;)</code>: identify all worlds satisfying &alpha; and add their numbers. We sum, not multiply (A is wrong — multiplication arises only for independent events). D would be right only if every world had equal mass 1/8, which is a special case, not the general rule.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>Properties of Beliefs</h2>
+</div>
+
+<p>If you have seen probability in a statistics class, you were probably handed a list of "axioms" and told to accept them. In this course they are <strong>not axioms</strong> — they are theorems that fall straight out of the one summation equation. Let's derive the essential ones, because understanding <em>why</em> they hold is what makes them stick.</p>
+
+<h3 id="bounds">Bounds, Inconsistency, and Validity</h3>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>0 &le; Pr(&alpha;) &le; 1.</strong> A belief is a sum of some of the world-numbers. Each world-number is at least 0, so the sum can't go below 0. And the <em>most</em> you could ever sum is all of them, which equals 1. So every belief lives in [0, 1].</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>If &alpha; is inconsistent, Pr(&alpha;) = 0.</strong> Inconsistent (unsatisfiable, contradictory) means <em>no</em> world satisfies &alpha;. The sum ranges over an empty set of worlds, and an empty sum is 0 by definition.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>If &alpha; is valid, Pr(&alpha;) = 1.</strong> Valid means &alpha; is true at <em>every</em> world. The sum then covers all worlds, and we already know those add up to 1.</p>
+</div>
+
+<h3 id="negation">Belief in a Negation</h3>
+
+<p>Here is one you will use constantly: <code>Pr(&alpha;) + Pr(&not;&alpha;) = 1</code>. Picture the set of all worlds as a rectangle, with a circle inside it for the worlds satisfying &alpha;.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="280" height="160" viewBox="0 0 280 160" style="display:block; margin:0 auto;">
+      <rect x="10" y="10" width="260" height="140" rx="8" fill="#f5f0e8" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="225" y="135" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#6b6560">&#172;&#945;</text>
+      <ellipse cx="120" cy="80" rx="75" ry="55" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="120" y="85" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" fill="#c0510a">&#945;</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Inside the circle: worlds satisfying &alpha;. Outside (but inside the rectangle): worlds satisfying &not;&alpha;. Together they tile the whole space, so their masses add to 1.</div>
+</div>
+
+<p>Add up the masses inside the circle — that's <code>Pr(&alpha;)</code>. Add up the masses outside the circle — that's <code>Pr(&not;&alpha;)</code>. Together they cover every world exactly once, so they must total 1. (This is why <code>Pr(&not;T &#124; &not;D) = 98%</code> follows immediately from <code>Pr(T &#124; &not;D) = 2%</code> in the disease example later.)</p>
+
+<h3 id="inclusion-exclusion">Disjunction and the Overlap Trap</h3>
+
+<p>Now a subtler question that matters enormously for computation: given <code>Pr(&alpha;)</code> and <code>Pr(&beta;)</code>, can we compute <code>Pr(&alpha; &or; &beta;)</code> just by combining those two numbers? The tempting move is to <em>add</em> them. But look at what that double-counts.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="300" height="160" viewBox="0 0 300 160" style="display:block; margin:0 auto;">
+      <ellipse cx="115" cy="80" rx="80" ry="55" fill="#eff4ff" stroke="#2563eb" stroke-width="2"/>
+      <ellipse cx="195" cy="80" rx="80" ry="55" fill="#f3effe" stroke="#7c3aed" stroke-width="2" fill-opacity="0.55"/>
+      <path d="M 155 33 A 80 55 0 0 0 155 127 A 80 55 0 0 0 155 33 Z" fill="#fde0e0" stroke="#c53030" stroke-width="1.5"/>
+      <text x="80" y="84" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" fill="#2563eb">&#945;</text>
+      <text x="230" y="84" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" fill="#7c3aed">&#946;</text>
+      <text x="155" y="84" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#c53030">&#945;&#8743;&#946;</text>
+    </svg>
+  </div>
+  <div class="figure-caption">The red overlap satisfies both &alpha; and &beta;. Adding <code>Pr(&alpha;) + Pr(&beta;)</code> counts those worlds <em>twice</em>.</div>
+</div>
+
+<p>The worlds in the red intersection satisfy both &alpha; and &beta;, so adding the two beliefs counts them twice. The fix is to subtract that overlap exactly once — the <strong>inclusion–exclusion</strong> rule:</p>
+
+<pre><code>Pr(&#945; <span class="op">&or;</span> &#946;) = Pr(&#945;) + Pr(&#946;) <span class="op">&minus;</span> Pr(&#945; <span class="op">&and;</span> &#946;)</code></pre>
+
+<div class="callout tip">
+  <div class="callout-title">The Special Case You'll Reuse</div>
+  <p>If &alpha; and &beta; are <strong>mutually exclusive</strong> — their model sets do not intersect, so the red region is empty and <code>Pr(&alpha; &and; &beta;) = 0</code> — the rule simplifies to plain addition: <code>Pr(&alpha; &or; &beta;) = Pr(&alpha;) + Pr(&beta;)</code>. This is the workhorse behind case analysis in Part V.</p>
+</div>
+
+<div class="quiz" id="quiz3-box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Under what condition is <code>Pr(&alpha; &or; &beta;) = Pr(&alpha;) + Pr(&beta;)</code> exactly correct?</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Always — disjunction always corresponds to addition.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>When &alpha; and &beta; are mutually exclusive (their model sets do not overlap).</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>When &alpha; and &beta; are both valid.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>When <code>Pr(&alpha;) = Pr(&beta;)</code>.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct — B.</strong> Plain addition works only when there is no overlap to double-count, i.e. <code>Pr(&alpha; &and; &beta;) = 0</code>, which is precisely mutual exclusivity. In general (A) you must subtract the intersection. Equal probabilities (D) say nothing about overlap, and two valid sentences (C) overlap completely — the worst possible case for naive addition.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>Belief Change &amp; Independence</h2>
+</div>
+
+<p>The whole point of degrees of belief is that they <em>change</em> as evidence arrives — gracefully, without the contradictions that broke classical logic. To make this vivid, the professor walked through a sequence of updates on the burglary example, where the belief table was synthesized from a <strong>causal graph</strong>: a burglary can set off the alarm, and so can an earthquake.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="260" height="150" viewBox="0 0 260 150" style="display:block; margin:0 auto;">
+      <ellipse cx="55" cy="30" rx="48" ry="24" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="55" y="35" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#c0510a">Burglary</text>
+      <ellipse cx="205" cy="30" rx="55" ry="24" fill="#eff4ff" stroke="#2563eb" stroke-width="2"/>
+      <text x="205" y="35" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2563eb">Earthquake</text>
+      <ellipse cx="130" cy="120" rx="42" ry="24" fill="#f3effe" stroke="#7c3aed" stroke-width="2"/>
+      <text x="130" y="125" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#7c3aed">Alarm</text>
+      <line x1="70" y1="50" x2="115" y2="98" stroke="#d9d0c4" stroke-width="2" marker-end="url(#arrow)"/>
+      <line x1="190" y1="50" x2="145" y2="98" stroke="#d9d0c4" stroke-width="2" marker-end="url(#arrow)"/>
+      <defs>
+        <marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="#c0510a"/>
+        </marker>
+      </defs>
+    </svg>
+  </div>
+  <div class="figure-caption">The causal structure: both burglary and earthquake can trigger the alarm. This graph is what the belief table was built to reflect.</div>
+</div>
+
+<h3 id="explaining-away">Explaining Away</h3>
+
+<p>Follow the burglary belief as evidence piles on. It starts at <code>Pr(B) = 0.2</code>.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>You learn the alarm went off.</strong> A burglary is now more plausible, so <code>Pr(B &#124; A)</code> jumps to about <strong>0.74</strong>. The alarm is evidence <em>for</em> burglary.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Then you learn there was also an earthquake.</strong> Now the alarm has an alternative explanation. Your belief in burglary <em>drops</em> — to about <strong>0.25</strong>. The earthquake "explains away" the alarm.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Alternatively, you learn there was definitely no earthquake.</strong> Then burglary is the <em>only</em> remaining explanation for the alarm, so the belief climbs even higher — to about <strong>0.96</strong>.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Plausible Reasoning, For Free</div>
+  <p>These intuitive shifts — belief rising and falling sensibly as competing explanations appear — are called <strong>patterns of plausible reasoning</strong>. They were extremely hard to capture in the non-monotonic-logic era. Probability produces them automatically: part from the math itself, part from the causal structure baked into the table. Judea Pearl's late-1980s book first laid this out comprehensively.</p>
+</div>
+
+<h3 id="independence">Independence as Unchanged Belief</h3>
+
+<p>In this same example, learning about a burglary did <em>not</em> change the belief in an earthquake: <code>Pr(E &#124; B) = Pr(E) = 0.1</code>. When evidence about one thing leaves your belief in another untouched, the two are <strong>independent</strong>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Independence</div>
+  <p>&alpha; is <strong>independent</strong> of &beta; when <code>Pr(&alpha; &#124; &beta;) = Pr(&alpha;)</code> — knowing &beta; does not shift your belief in &alpha;. This is symmetric: if &beta; doesn't change your mind about &alpha;, then &alpha; doesn't change your mind about &beta;. (You may have seen the equivalent product form <code>Pr(&alpha; &and; &beta;) = Pr(&alpha;)&middot;Pr(&beta;)</code>; we prefer the belief-change form because it says what independence <em>means</em>.)</p>
+</div>
+
+<p>Why is it symmetric? Bayes conditioning gives <code>Pr(&alpha; &#124; &beta;) = Pr(&alpha; &and; &beta;) / Pr(&beta;)</code>. If that equals <code>Pr(&alpha;)</code>, rearranging gives <code>Pr(&alpha; &and; &beta;) = Pr(&alpha;)&middot;Pr(&beta;)</code>, which is symmetric in &alpha; and &beta; — so the relationship runs both ways.</p>
+
+<h3 id="cond-independence">Independence Is Dynamic — Conditional Independence</h3>
+
+<p>Here is the crucial subtlety. Burglary and earthquake are independent on their own. But run the explaining-away story again, this time <em>given that the alarm has triggered</em>. Now learning about an earthquake very much changes your belief in burglary (it drops from 0.74 to about 0.25). <strong>Independence evaporated</strong> the moment we conditioned on the alarm.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Independence Depends on What You Know</div>
+  <p>Two things can be independent <em>unconditionally</em> yet become dependent once you learn something else. Whether B and E are independent is not a fixed fact about them — it depends on the rest of your knowledge. This is exactly why we need a <em>conditional</em> notion.</p>
+</div>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Conditional Independence</div>
+  <p>&alpha; is <strong>conditionally independent</strong> of &beta; given &gamma; when <code>Pr(&alpha; &#124; &beta;, &gamma;) = Pr(&alpha; &#124; &gamma;)</code> — once you already know &gamma;, additionally learning &beta; tells you nothing new about &alpha;. Equivalently, <code>Pr(&alpha; &and; &beta; &#124; &gamma;) = Pr(&alpha; &#124; &gamma;)&middot;Pr(&beta; &#124; &gamma;)</code>. Plain independence is the special case where &gamma; is empty.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Connection — Bayesian Networks Ahead</div>
+  <p>Conditional independence is the hinge the rest of the course swings on. When we reach <strong>Bayesian networks</strong>, you'll see that by drawing a causal graph — just specifying what causes what — you implicitly declare a rich set of conditional independences. The graph lets us read off what an agent believes is independent of what, which is what makes large probabilistic models tractable.</p>
+</div>
+
+<div class="quiz" id="quiz4-box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Burglary and earthquake are independent. After you learn the alarm went off, learning there was an earthquake lowers your belief in burglary. What does this illustrate?</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>The original independence claim must have been a mistake.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Independence is dynamic: two variables can be independent unconditionally yet dependent once you condition on a common effect.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>The alarm is independent of both burglary and earthquake.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Probabilities cannot model causal relationships.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct — B.</strong> Burglary and earthquake are genuinely independent <em>marginally</em>, but conditioning on their common effect (the alarm) couples them — this is "explaining away." That motivates conditional independence. The original claim was right (A is wrong), the alarm clearly depends on both causes (C is wrong), and the example shows probability captures causal structure beautifully (D is wrong).
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>The Inference Toolkit</h2>
+</div>
+
+<p>We now collect three identities — all consequences of the fundamental equation plus Bayes conditioning — that we will combine to answer real questions. Each one is a tool for breaking a belief we <em>don't</em> directly know into beliefs we <em>do</em>.</p>
+
+<h3 id="chain-rule">The Chain Rule</h3>
+
+<p>The first decomposes the belief in a big conjunction into a product of conditional beliefs, peeling off one conjunct at a time:</p>
+
+<pre><code>Pr(&#945;&#8321; <span class="op">&and;</span> &#945;&#8322; <span class="op">&and;</span> &#8230; <span class="op">&and;</span> &#945;&#8345;) =
+   Pr(&#945;&#8321; <span class="op">&#124;</span> &#945;&#8322; &#8230; &#945;&#8345;) &middot; Pr(&#945;&#8322; <span class="op">&#124;</span> &#945;&#8323; &#8230; &#945;&#8345;) &middot; &#8230; &middot; Pr(&#945;&#8345;)</code></pre>
+
+<p>It is proved by repeatedly applying Bayes conditioning and rearranging — not hard, and in fact your homework asks you to do it. The pattern to remember: the belief in a conjunction equals the belief in each piece <em>given everything that follows it</em>. We won't lean on it heavily today, but it reappears when we explain the meaning of Bayesian networks.</p>
+
+<h3 id="case-analysis">Case Analysis (Law of Total Probability)</h3>
+
+<p>This is the one you'll reach for constantly. Suppose you can't compute <code>Pr(&alpha;)</code> directly, but you can split the world of possibilities into cases &beta;&#8321;, &hellip;, &beta;&#8345; that are <strong>mutually exclusive</strong> (no overlap) and <strong>exhaustive</strong> (cover everything).</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="300" height="160" viewBox="0 0 300 160" style="display:block; margin:0 auto;">
+      <rect x="10" y="10" width="280" height="140" rx="8" fill="#faf8f4" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="66" y1="10" x2="66" y2="150" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="122" y1="10" x2="122" y2="150" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="178" y1="10" x2="178" y2="150" stroke="#d9d0c4" stroke-width="1.5"/>
+      <line x1="234" y1="10" x2="234" y2="150" stroke="#d9d0c4" stroke-width="1.5"/>
+      <text x="38" y="145" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#6b6560">&#946;&#8321;</text>
+      <text x="94" y="145" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#6b6560">&#946;&#8322;</text>
+      <text x="150" y="145" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#6b6560">&#946;&#8323;</text>
+      <text x="206" y="145" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#6b6560">&#946;&#8324;</text>
+      <text x="262" y="145" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#6b6560">&#946;&#8325;</text>
+      <ellipse cx="150" cy="70" rx="120" ry="40" fill="#fef3eb" fill-opacity="0.75" stroke="#c0510a" stroke-width="2"/>
+      <text x="150" y="74" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" fill="#c0510a">&#945;</text>
+    </svg>
+  </div>
+  <div class="figure-caption">The cases &beta;&#8321;&hellip;&beta;&#8325; partition all worlds. The sentence &alpha; (orange) is sliced by them, so <code>Pr(&alpha;)</code> is just the sum of its slices.</div>
+</div>
+
+<p>Because &alpha; is chopped into non-overlapping slices, one per case, you can add the slices up. Written with Bayes conditioning, the slice in case &beta;&#7522; is "belief in &alpha; if it were case &beta;&#7522;" weighted by "how likely case &beta;&#7522; is":</p>
+
+<pre><code>Pr(&#945;) = &#8721;&#7522; Pr(&#945; <span class="op">&#124;</span> &#946;&#7522;) &middot; Pr(&#946;&#7522;)
+<span class="cm">// two-case version:</span>
+Pr(&#945;) = Pr(&#945; <span class="op">&#124;</span> &#946;)&middot;Pr(&#946;) + Pr(&#945; <span class="op">&#124;</span> <span class="op">&not;</span>&#946;)&middot;Pr(<span class="op">&not;</span>&#946;)</code></pre>
+
+<div class="callout tip">
+  <div class="callout-title">Why "Case Analysis" Is the Better Name</div>
+  <p>The textbook name is "law of total probability," but think of it as <strong>case analysis</strong>: "what would my belief in &alpha; be in each scenario, weighted by how likely that scenario is?" You enumerate exhaustive, non-overlapping scenarios and take a weighted average. That framing makes it obvious <em>and</em> tells you how to use it.</p>
+</div>
+
+<h3 id="bayes-rule">Bayes' Rule</h3>
+
+<p>Finally, the star of the show. Bayes conditioning says <code>Pr(&alpha; &#124; &beta;) = Pr(&alpha; &and; &beta;)/Pr(&beta;)</code>. Apply the same rule the other way for <code>Pr(&beta; &#124; &alpha;)</code>, notice the numerators are the same conjunction, and rearrange. Out pops <strong>Bayes' rule</strong>:</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="320" height="80" viewBox="0 0 320 80" style="display:block; margin:0 auto;">
+      <text x="160" y="48" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="17" fill="#2a2520">Pr(&#945; &#124; &#946;) = Pr(&#946; &#124; &#945;) &middot; Pr(&#945;) / Pr(&#946;)</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Bayes' rule. Algebraically it is just Bayes conditioning rearranged — yet it earned its own name.</div>
+</div>
+
+<p>Why does a simple rearrangement deserve a famous name? Because of <em>what the pieces mean</em>. Let &alpha; be a <strong>cause</strong> and &beta; an <strong>effect</strong> — say, &alpha; = disease, &beta; = symptom. Then the left side, <code>Pr(&alpha; &#124; &beta;)</code>, is the probability of the <em>cause given the effect</em> — the diagnostic question we actually want answered. The right side needs <code>Pr(&beta; &#124; &alpha;)</code>: the probability of the <em>effect given the cause</em>.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>It is usually easy to know <strong>effect given cause</strong> (a doctor readily states "the chance of a headache given the flu") but hard to know <strong>cause given effect</strong> ("the chance of flu given a headache"). Bayes' rule lets you <em>compute the hard, valuable direction from the easy, available one.</em> When we build Bayesian networks, you'll supply the easy effect-given-cause numbers, and inference will run them backward for you.</p>
+</div>
+
+<div class="quiz" id="quiz5-box">
+  <div class="quiz-question">Why is Bayes' rule so valuable for diagnosis, even though it is algebraically just a rearrangement?</div>
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>It lets you compute the hard-to-get "cause given effect" from the easy-to-get "effect given cause."</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>It is the only equation that can handle more than two variables.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>It eliminates the need to know any prior probabilities.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It guarantees the answer is always greater than 0.5.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','a')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct — A.</strong> The diagnostic direction (disease given symptom) is what we want but rarely have; the causal direction (symptom given disease) is what experts readily provide. Bayes' rule converts between them. It still requires the prior <code>Pr(&alpha;)</code> (so C is wrong), makes no guarantee about the answer's magnitude (D is wrong), and is not about variable count (B is wrong — that's the chain rule's territory).
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART VI ═══════════════════════ -->
+<section id="part6" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part VI</div>
+  <h2>Worked Example: The Disease Test</h2>
+</div>
+
+<p>Now we put every tool together on the canonical example. A patient takes a test for a disease, and the test comes back <strong>positive</strong>. What is the probability they actually have the disease? The answer is famously surprising.</p>
+
+<h3 id="disease-setup">Setting It Up</h3>
+
+<p>Two binary variables: <code>D</code> = has the disease, <code>T</code> = test is positive. We are told three facts:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Base rate.</strong> One in a thousand people have the disease: <code>Pr(D) = 1/1000</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>False positive rate 2%.</strong> The test reads positive on healthy people 2% of the time: <code>Pr(T &#124; &not;D) = 2/100</code>. So <code>Pr(&not;T &#124; &not;D) = 98/100</code> (they must sum to 1).</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>False negative rate 5%.</strong> The test reads negative on sick people 5% of the time: <code>Pr(&not;T &#124; D) = 5/100</code>. So <code>Pr(T &#124; D) = 95/100</code> — the true positive rate.</p>
+</div>
+
+<p>Notice every number we were handed is an <strong>effect-given-cause</strong> probability (test result given disease status). The causal story is <code>Disease &rarr; Test</code>. We want the reverse, diagnostic direction — <code>Pr(D &#124; T)</code> — which is exactly the job Bayes' rule was built for.</p>
+
+<h3 id="disease-solve">Solving It</h3>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Write Bayes' rule.</strong> <code>Pr(D &#124; T) = Pr(T &#124; D) &middot; Pr(D) / Pr(T)</code>. We have <code>Pr(T &#124; D) = 95/100</code> and <code>Pr(D) = 1/1000</code>. We are missing the denominator <code>Pr(T)</code> — the chance a random person tests positive.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Get Pr(T) by case analysis.</strong> Split on whether the person has the disease: <code>Pr(T) = Pr(T &#124; D)&middot;Pr(D) + Pr(T &#124; &not;D)&middot;Pr(&not;D)</code>. Every one of those four numbers is already in hand.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Plug in.</strong> <code>Pr(T) = (95/100)(1/1000) + (2/100)(999/1000) = 2093/100000</code>. The positives are dominated by false positives from the huge healthy population.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Finish Bayes' rule.</strong> <code>Pr(D &#124; T) = (95/100)(1/1000) / (2093/100000) = 95/2093 &asymp; 4.5%</code>.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">The Surprise</div>
+  <p>A positive result on a fairly accurate test still leaves only a <strong>~4.5%</strong> chance of disease. Why? The disease is rare (1 in 1000), so the vast healthy majority generates far more false positives than the few sick people generate true positives. Ignoring the base rate — the "base rate fallacy" — is one of the most common mistakes in reasoning under uncertainty, and the math here is the cure.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">What We Combined</div>
+  <p>This single answer used the whole toolkit: <strong>Bayes' rule</strong> to flip cause and effect, <strong>case analysis</strong> to compute the denominator <code>Pr(T)</code>, and the <strong>negation rule</strong> to turn false-positive/negative rates into their complements. Three tools, one clean number.</p>
+</div>
+
+<div class="quiz" id="quiz6-box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In the disease example, why is <code>Pr(D &#124; T)</code> only about 4.5% despite the test being fairly accurate?</div>
+  <div class="quiz-options" data-quiz="q6">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>The test's false negative rate of 5% dominates the calculation.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>The disease is rare, so false positives from the large healthy population outnumber true positives.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Bayes' rule systematically underestimates probabilities.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>The base rate <code>Pr(D)</code> was not used in the computation.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q6','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q6">
+    <strong>Correct — B.</strong> With only 1 in 1000 actually sick, the 999 healthy people each test positive 2% of the time, producing roughly 20 false positives for every ~1 true positive — so most positives are false alarms. The false negative rate barely matters here (A is wrong), Bayes' rule is exact, not biased (C is wrong), and the base rate <code>Pr(D)</code> is central to the calculation, not absent (D is wrong).
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SYNTHESIS ═══════════════════════ -->
+<section id="synthesis" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This lecture is a hinge in the course. We began by exposing the fatal flaw in everything that came before it: classical logic is <strong>monotonic</strong>, but human reasoning is not. The Tweety problem, the abnormality-predicate patch that paralyzes you with "I don't know," and the Nixon diamond's clashing assumptions all showed that <em>fixing</em> logic from the inside is a quagmire — and that managing conflicting assumptions is really the old problem of belief revision in disguise.</p>
+
+<p>So the field went <strong>beyond logic</strong>, replacing crude true/false/unknown verdicts with graded <strong>degrees of belief</strong>, and settled on probability as the calculus. Crucially, we did not abandon what we learned — we built on it. Probability here is <em>logic with weights</em>: the same possible worlds, the same satisfaction relation <code>&omega; &#8872; &alpha;</code>, with one number per world and a single summation equation, <code>Pr(&alpha;) = &Sigma;<sub>&omega; &#8872; &alpha;</sub> Pr(&omega;)</code>, from which everything else follows.</p>
+
+<p>From that one equation we derived the <strong>properties of beliefs</strong> (bounds, negation, inclusion–exclusion), watched belief <strong>change</strong> gracefully under evidence — including "explaining away," the very plausible-reasoning patterns logic struggled with — and saw that <strong>independence is dynamic</strong>, which forced the richer notion of conditional independence. Then we assembled the inference toolkit: the <strong>chain rule</strong>, <strong>case analysis</strong>, and <strong>Bayes' rule</strong>, and combined all three to crack the disease-test example, where a positive result still meant only a 4.5% chance of illness.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Through-Line</div>
+  <p>Logic asks "is &alpha; true?" Probability asks "how strongly should I believe &alpha;, and how should that shift as evidence arrives?" The first question shattered on the rocks of common-sense reasoning; the second, answered with probability built atop logic's worlds, is what makes modern, evidence-driven AI — including machine learning — possible.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">What's Next</div>
+  <p>The closing observation pointed the way: so far our variables have been binary (<code>D</code>/<code>&not;D</code>, <code>T</code>/<code>&not;T</code>), inherited from propositional logic. Next we generalize to <strong>multi-valued variables</strong> — a variable that can be red, green, or blue — and then to <strong>Bayesian networks</strong>, where a causal graph encodes conditional independences, you specify only easy effect-given-cause numbers, and inference runs Bayes' rule backward at scale. From there the course bridges into <strong>machine learning</strong>: learning these belief models directly from data. Keep the summation equation and Bayes' rule close — everything ahead is built on them.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

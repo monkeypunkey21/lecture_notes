@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 19 — Interactive Textbook</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 19</div>
+  <a href="#part1">Part I — Convolution &amp; Filters</a>
+  <a href="#why-cnn" class="sub">Why CNNs Exist</a>
+  <a href="#the-filter" class="sub">The Filter as a Roaming Neuron</a>
+  <a href="#convolution-trace" class="sub">Computing One Output</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Hyperparameters</a>
+  <a href="#filter-size" class="sub">Filter Size</a>
+  <a href="#padding" class="sub">Padding &amp; Same Convolution</a>
+  <a href="#stride" class="sub">Stride</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — Volumes, Filters, Pooling</a>
+  <a href="#channels" class="sub">Color &amp; Channels</a>
+  <a href="#multiple-filters" class="sub">Multiple Filters</a>
+  <a href="#max-pooling" class="sub">Max Pooling</a>
+  <a href="#architecture" class="sub">The Whole Architecture</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — Model-Free vs Model-Based</a>
+  <a href="#model-free" class="sub">What "Model-Free" Means</a>
+  <a href="#three-problems" class="sub">Three Weaknesses</a>
+  <a href="#brittleness" class="sub">Brittleness in Practice</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Injecting Knowledge</a>
+  <a href="#model-based-sl" class="sub">Model-Based Supervised Learning</a>
+  <a href="#experiments" class="sub">The Experiments</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#together">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">CS161 · Fundamentals of Artificial Intelligence</div>
+  <h1>Convolutional Networks &amp; the Two Faces of AI</h1>
+  <p class="hero-sub">The course finale — how CNNs see images through convolution and pooling, and the deep divide between model-free learning and model-based reasoning.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>Convolution — A Neuron That Roams</h2>
+</div>
+
+<h3 id="why-cnn">Why Are We Learning This?</h3>
+<p>Of all the places neural networks have changed the world, the loudest is <strong>computer vision</strong> — getting a computer to look at the raw pixels of an image and say "that's a cat," "that's a stop sign," "that's a tumor." The architecture that made this possible is the <strong>convolutional neural network</strong>, or CNN. A second family, the <strong>recurrent neural network</strong> (RNN), powers sequence-to-sequence tasks like speech recognition and machine translation, but our focus today is the CNN, because it is conceptually clean and it lets us see exactly how a network learns to perceive.</p>
+
+<p>Here is the striking thing the professor wants you to notice up front: by the end of this, you will see how <em>little</em> algorithmic machinery a CNN actually contains compared to the search, logic, and probabilistic reasoning we spent the term building. Almost the whole structure reduces to two simple ideas, repeated:</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The Two Pillars of a CNN</div>
+  <p><strong>(1) Local detection of features.</strong> A small detector looks at one little patch of the image at a time and reports whether some pattern — an edge, a corner, later a whole eye or wheel — is present there. <strong>(2) Aggregation / abstraction.</strong> A second kind of layer summarizes those local findings, throwing away precise position to keep "is the feature roughly here?" A CNN simply <em>alternates</em> these two operations, and finishes with a fully connected layer that makes the final decision.</p>
+</div>
+
+<h3 id="the-filter">The Filter: A Neuron Described as a Matrix</h3>
+<p>Start with the simplest input: a small <strong>grayscale image</strong>, say 6×6. Each cell is a <strong>pixel</strong>, and the number in it is the brightness (the grayscale level). So the image is just a 6×6 matrix of numbers.</p>
+
+<p>Now recall what a single neuron does: it has a list of inputs, multiplies each input by a corresponding <strong>weight</strong>, sums them, and passes the result through an activation function. A CNN's central trick is to point one neuron not at the whole image but at a small <strong>3×3 patch</strong> of it. That neuron then has exactly 3×3 = 9 inputs and 9 weights. Instead of drawing nine wires, we lay those nine weights out as a <strong>3×3 matrix</strong> and call it a <strong>filter</strong>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Filter (Kernel)</div>
+  <p>A <strong>filter</strong> is a small matrix of weights — here 3×3 — that represents one feature-detecting neuron. You overlay it on a patch of the image, multiply each weight by the pixel underneath it, sum everything up, and that single number is the neuron's output for that patch.</p>
+</div>
+
+<p>The word <strong>convolution</strong> names the act of taking this filter and sliding it across every patch of the image, computing one output number per position. The filter "roams" over the image. That is the whole operation.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="200" viewBox="0 0 420 200" style="display:block; margin:0 auto;">
+      <!-- input grid 6x6 -->
+      <text x="70" y="16" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#6b6560">6×6 image</text>
+      <g stroke="#d9d0c4" stroke-width="1.5" fill="none">
+        <rect x="22" y="26" width="96" height="96"/>
+        <line x1="22" y1="42" x2="118" y2="42"/><line x1="22" y1="58" x2="118" y2="58"/>
+        <line x1="22" y1="74" x2="118" y2="74"/><line x1="22" y1="90" x2="118" y2="90"/>
+        <line x1="22" y1="106" x2="118" y2="106"/>
+        <line x1="38" y1="26" x2="38" y2="122"/><line x1="54" y1="26" x2="54" y2="122"/>
+        <line x1="70" y1="26" x2="70" y2="122"/><line x1="86" y1="26" x2="86" y2="122"/>
+        <line x1="102" y1="26" x2="102" y2="122"/>
+      </g>
+      <!-- highlighted 3x3 patch -->
+      <rect x="22" y="26" width="48" height="48" fill="#fef3eb" stroke="#c0510a" stroke-width="2.5"/>
+      <!-- arrow -->
+      <text x="155" y="76" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="22" fill="#c0510a">∗</text>
+      <line x1="170" y1="74" x2="210" y2="74" stroke="#c0510a" stroke-width="2" marker-end="url(#ar1)"/>
+      <defs><marker id="ar1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#c0510a"/></marker></defs>
+      <!-- filter 3x3 -->
+      <text x="200" y="16" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#6b6560">3×3 filter</text>
+      <g stroke="#c0510a" stroke-width="1.5" fill="#fff">
+        <rect x="176" y="26" width="48" height="48"/>
+      </g>
+      <g stroke="#c0510a" stroke-width="1" fill="none">
+        <line x1="192" y1="26" x2="192" y2="74"/><line x1="208" y1="26" x2="208" y2="74"/>
+        <line x1="176" y1="42" x2="224" y2="42"/><line x1="176" y1="58" x2="224" y2="58"/>
+      </g>
+      <text x="184" y="40" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#2a2520">w1</text>
+      <text x="200" y="40" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#2a2520">w2</text>
+      <text x="216" y="40" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#2a2520">w3</text>
+      <!-- arrow 2 -->
+      <line x1="240" y1="74" x2="280" y2="74" stroke="#c0510a" stroke-width="2" marker-end="url(#ar1)"/>
+      <!-- output 4x4 -->
+      <text x="340" y="16" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#6b6560">4×4 feature map</text>
+      <g stroke="#d9d0c4" stroke-width="1.5" fill="none">
+        <rect x="300" y="26" width="80" height="80"/>
+        <line x1="300" y1="46" x2="380" y2="46"/><line x1="300" y1="66" x2="380" y2="66"/><line x1="300" y1="86" x2="380" y2="86"/>
+        <line x1="320" y1="26" x2="320" y2="106"/><line x1="340" y1="26" x2="340" y2="106"/><line x1="360" y1="26" x2="360" y2="106"/>
+      </g>
+      <rect x="300" y="26" width="20" height="20" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+    </svg>
+  </div>
+  <div class="figure-caption">Convolution: the highlighted 3×3 patch, weighted by the filter, produces the single highlighted output cell. Slide the patch over all positions to fill the 4×4 feature map.</div>
+</div>
+
+<h3 id="convolution-trace">Computing One Output Number</h3>
+<p>Let us trace exactly what happens when the filter sits on the top-left 3×3 patch. We multiply each pixel by the filter weight sitting on top of it, then add up all nine products.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Line up the filter on the patch.</strong> Each of the nine pixels gets paired with the weight directly above it. Pixel 3 pairs with weight +1, pixel 0 pairs with weight +1, and so on.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Multiply each pair.</strong> First row contributes <code>3·(+1) + 0·(+1) + ...</code>. A whole row of zero pixels contributes zero. The bottom row contributes the negative weights, e.g. <code>2·(−1) + 7·(−1)</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Sum the nine products</strong> into a single number. (Normally you would now apply the activation function — <strong>ReLU</strong>, which clamps negatives to zero — but here we just record the raw sum to keep the arithmetic visible.)</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Write that number into the output's top-left cell.</strong> Then slide the filter one step right and repeat. Sliding over all valid positions of a 6×6 image with a 3×3 filter yields a <strong>4×4</strong> grid of numbers.</p>
+</div>
+
+<p>That 4×4 grid is itself a matrix — the <strong>feature map</strong>. Crucially, every one of its 16 cells was produced by the <em>same</em> filter, i.e. the same nine weights, applied at a different location. So instead of 16 independent neurons, you have <strong>one</strong> neuron used 16 times. This weight-sharing is exactly why a CNN can detect "an edge" no matter where in the image the edge appears.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Where Do the Weights Come From?</div>
+  <p>Originally, engineers <em>hand-picked</em> filter values known to highlight, say, vertical edges or horizontal edges. The breakthrough was realizing the filter is just a neuron's weights — so we don't need to choose them. We let <strong>gradient descent</strong> learn them automatically from the loss function. The network discovers which patterns are worth detecting.</p>
+</div>
+
+<div class="quiz" id="quiz1box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">You convolve a 6×6 grayscale image with a single 3×3 filter (no padding, stride 1). How many distinct sets of weights are being learned, and what is the output size?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>16 sets of weights; output is 6×6</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>1 set of 9 weights; output is 4×4</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>9 sets of weights; output is 3×3</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>36 sets of weights; output is 6×6</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct — B.</strong> A single 3×3 filter is one neuron with exactly 9 shared weights, and those same 9 weights are reused at every position. Sliding a 3×3 window over a 6×6 image gives 4 valid positions per row and 4 per column, so the feature map is 4×4. Option A confuses the <em>number of outputs</em> (16) with the number of weight sets — the whole point of convolution is that all 16 outputs share one set of weights.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>The Three Knobs — Filter Size, Padding, Stride</h2>
+</div>
+
+<p>The basic convolution has three dials you, the designer, must set. They are called <strong>hyperparameters</strong>: values not learned by gradient descent but chosen ahead of time, usually by following community "common wisdom" about what has worked before rather than deriving them from scratch.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Hyperparameter</div>
+  <p>A <strong>hyperparameter</strong> is a setting of the model's structure or training that you fix <em>before</em> learning, rather than something the optimizer tunes. For convolution the three core ones are <strong>F</strong> = filter size, <strong>P</strong> = padding, and <strong>S</strong> = stride.</p>
+</div>
+
+<h3 id="filter-size">Filter Size (F)</h3>
+<p>Our example used F = 3 (a 3×3 filter). Common choices are 3×3 or 4×4. The bigger the filter, the more the output shrinks: a larger window has fewer valid positions to sit in. Each filter also carries an intuition — one set of nine numbers might fire on <strong>vertical edges</strong>, another on <strong>horizontal edges</strong>, another on some slanted or more abstract pattern. The output feature map, if you visualized it as an image, would have those very patterns highlighted.</p>
+
+<h3 id="padding">Padding (P) and "Same" Convolution</h3>
+<p>Plain convolution shrinks the image (6×6 → 4×4) and quietly under-weights the <strong>edges</strong>: a corner pixel only ever sits in one filter position, while a central pixel sits in nine. <strong>Padding</strong> fixes both problems by ringing the image with extra border pixels (usually zeros) before convolving.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="320" height="170" viewBox="0 0 320 170" style="display:block; margin:0 auto;">
+      <!-- padded grid 8x8: outer ring is padding -->
+      <text x="160" y="16" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#6b6560">P = 1 → 6×6 image becomes 8×8</text>
+      <g>
+        <rect x="100" y="28" width="120" height="120" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+        <rect x="115" y="43" width="90" height="90" fill="#fff" stroke="#2a2520" stroke-width="1.5"/>
+      </g>
+      <!-- inner grid lines -->
+      <g stroke="#d9d0c4" stroke-width="1" fill="none">
+        <line x1="115" y1="58" x2="205" y2="58"/><line x1="115" y1="73" x2="205" y2="73"/>
+        <line x1="115" y1="88" x2="205" y2="88"/><line x1="115" y1="103" x2="205" y2="103"/>
+        <line x1="115" y1="118" x2="205" y2="118"/>
+        <line x1="130" y1="43" x2="130" y2="133"/><line x1="145" y1="43" x2="145" y2="133"/>
+        <line x1="160" y1="43" x2="160" y2="133"/><line x1="175" y1="43" x2="175" y2="133"/>
+        <line x1="190" y1="43" x2="190" y2="133"/>
+      </g>
+      <text x="107" y="92" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" fill="#c0510a">pad</text>
+      <text x="160" y="162" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#2a2520">conv with 3×3 → back to 6×6 (same convolution)</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Adding a one-pixel border (P = 1) turns the 6×6 image into 8×8; a 3×3 convolution then yields a 6×6 output — the input size is preserved.</div>
+</div>
+
+<p>When the output matches the input size, we call it a <strong>same convolution</strong>. There is a formula relating F and P that tells you exactly how much padding preserves the dimension under a given filter; for F = 3, a padding of P = 1 does it. Larger filters need more padding to stay "same."</p>
+
+<h3 id="stride">Stride (S)</h3>
+<p>So far the filter moved <strong>one</strong> step at a time — a <strong>stride of 1</strong>. With a <strong>stride of 2</strong>, the filter jumps two cells right each move, and two cells down at the end of a row. It skips positions, so it produces far fewer outputs.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Stride</div>
+  <p>The <strong>stride S</strong> is how many pixels the filter shifts between applications. A larger stride samples the image more coarsely, producing a smaller output. Stride 1 (overlapping windows) and stride 2 are both common.</p>
+</div>
+
+<p>The professor's quick quiz to the class: <em>if you increase the stride, what happens to the output's height and width?</em> The answer is that the output <strong>shrinks</strong>. Bigger stride means fewer landing spots, hence a smaller feature map. So both larger filters and larger strides reduce dimensions; padding pushes the other way, growing them back.</p>
+
+<table class="compare-table">
+  <tr><th>Knob</th><th>Symbol</th><th>Effect on output size</th></tr>
+  <tr><td>Filter size</td><td>F</td><td>Bigger F → smaller output</td></tr>
+  <tr><td>Padding</td><td>P</td><td>Bigger P → larger output (can restore "same")</td></tr>
+  <tr><td>Stride</td><td>S</td><td>Bigger S → smaller output</td></tr>
+</table>
+
+<div class="quiz" id="quiz2box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A team wants the feature map to be exactly the same height and width as the input image. Which single change most directly achieves this for a 3×3 filter at stride 1?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Increase the stride to 2</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Use a larger 5×5 filter with no padding</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Add padding of P = 1 around the image</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Remove the activation function</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','c')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct — C.</strong> A "same" convolution preserves the spatial dimensions, and for a 3×3 filter at stride 1 that requires a one-pixel border, P = 1, which is exactly what the formula gives. Option A (bigger stride) shrinks the output further, and option B (bigger filter, no padding) shrinks it even more. The activation function (D) only transforms the values; it never changes the grid size.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>Volumes, Many Filters, and Pooling</h2>
+</div>
+
+<p>Real images are in color, and real networks detect more than one pattern. Generalizing convolution along both of those directions is what turns the toy example into an actual CNN. The unifying idea: every layer takes a <strong>volume</strong> in and produces another <strong>volume</strong> out.</p>
+
+<h3 id="channels">Color Images Are Volumes</h3>
+<p>A grayscale image is a single matrix. A <strong>color image</strong> needs three matrices stacked — one each for <strong>red, green, and blue</strong>. Each pixel now holds three numbers, so we say the image has <strong>3 channels</strong>. A 6×6 color image is a 6×6×3 volume: height × width × channels.</p>
+
+<p>To convolve a volume, the filter must also gain a third dimension equal to the number of channels. A 3×3 filter over a 3-channel image is really <strong>3×3×3 = 27 weights</strong>. It roams in 3D over little cubes of the input. At each position it sums all 27 products into <em>one</em> number — so it <strong>collapses the three channels into one</strong>. The output of a single such filter is again a flat 4×4 feature map.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="360" height="180" viewBox="0 0 360 180" style="display:block; margin:0 auto;">
+      <!-- input volume 6x6x3 -->
+      <text x="70" y="18" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#6b6560">6×6×3</text>
+      <g fill="#fff" stroke="#2a2520" stroke-width="1.3">
+        <rect x="44" y="40" width="70" height="70"/>
+      </g>
+      <polygon points="44,40 60,26 130,26 114,40" fill="#f5f0e8" stroke="#2a2520" stroke-width="1.3"/>
+      <polygon points="114,40 130,26 130,96 114,110" fill="#e8d9c4" stroke="#2a2520" stroke-width="1.3"/>
+      <text x="79" y="80" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">R G B</text>
+      <!-- conv symbol -->
+      <text x="150" y="80" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="20" fill="#c0510a">∗</text>
+      <!-- filter cube 3x3x3 -->
+      <text x="190" y="18" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#c0510a">3×3×3</text>
+      <g fill="#fef3eb" stroke="#c0510a" stroke-width="1.3">
+        <rect x="174" y="52" width="34" height="34"/>
+      </g>
+      <polygon points="174,52 184,42 218,42 208,52" fill="#fde2cc" stroke="#c0510a" stroke-width="1.3"/>
+      <polygon points="208,52 218,42 218,76 208,86" fill="#f7c9a4" stroke="#c0510a" stroke-width="1.3"/>
+      <!-- arrow -->
+      <line x1="230" y1="76" x2="266" y2="76" stroke="#c0510a" stroke-width="2" marker-end="url(#ar3)"/>
+      <defs><marker id="ar3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#c0510a"/></marker></defs>
+      <!-- output 4x4 flat -->
+      <text x="310" y="18" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#6b6560">4×4×1</text>
+      <g stroke="#d9d0c4" stroke-width="1.3" fill="#fff">
+        <rect x="282" y="50" width="56" height="56"/>
+      </g>
+      <g stroke="#d9d0c4" stroke-width="1" fill="none">
+        <line x1="296" y1="50" x2="296" y2="106"/><line x1="310" y1="50" x2="310" y2="106"/><line x1="324" y1="50" x2="324" y2="106"/>
+        <line x1="282" y1="64" x2="338" y2="64"/><line x1="282" y1="78" x2="338" y2="78"/><line x1="282" y1="92" x2="338" y2="92"/>
+      </g>
+    </svg>
+  </div>
+  <div class="figure-caption">A 3×3×3 filter convolves a 3-channel volume and collapses the channels, producing a flat 4×4 map. The filter's depth must always match the input's channel count.</div>
+</div>
+
+<h3 id="multiple-filters">Multiple Filters Build a New Volume</h3>
+<p>One filter detects one kind of pattern. But to recognize a cat, you need to spot edges <em>and</em> textures <em>and</em> eyes <em>and</em> ears — many features. So you use <strong>many filters</strong>, each its own 3×3×3 cube of weights, each producing its own 4×4 map. Stack those maps and you have a new volume.</p>
+
+<p>Convolve a 6×6×3 input with 2 filters and you get a <strong>4×4×2</strong> output. The "2" is no longer channels of color — it is the <strong>number of filters</strong>. Use 16 filters and you get 4×4×16. Add padding P = 1 with those 16 filters and you preserve the spatial size: 6×6×16. Increase the stride and the spatial size shrinks again.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>Every CNN layer is the same shape of operation: <strong>take a volume, convolve it with a bank of filters, get another volume.</strong> The depth of the output volume equals the number of filters you used. Stacking such layers — volume to volume to volume — is essentially the entire architecture.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Weight-Sharing, Again</div>
+  <p>Within that 4×4×2 output, the 16 orange cells are all the <em>same</em> neuron (the first filter) applied at 16 positions; the 16 yellow cells are all the second neuron. So 32 output values are really just <strong>two</strong> distinct sets of weights. This is why CNNs have so few parameters relative to their power — and it is the structural reason they generalize across position.</p>
+</div>
+
+<h3 id="max-pooling">Max Pooling — The Aggregation Layer</h3>
+<p>Convolution handled "local detection." The second pillar — <strong>aggregation/abstraction</strong> — is delivered by <strong>max pooling</strong>. It looks similar to convolution (a window roaming over the input) but with a crucial difference: it has <em>no weights</em>. Over each window it simply outputs the <strong>maximum</strong> value.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="320" height="150" viewBox="0 0 320 150" style="display:block; margin:0 auto;">
+      <!-- 4x4 input with numbers -->
+      <g stroke="#d9d0c4" stroke-width="1.3" fill="#fff">
+        <rect x="20" y="30" width="100" height="100"/>
+      </g>
+      <g stroke="#d9d0c4" stroke-width="1" fill="none">
+        <line x1="70" y1="30" x2="70" y2="130"/><line x1="20" y1="80" x2="120" y2="80"/>
+        <line x1="45" y1="30" x2="45" y2="130"/><line x1="95" y1="30" x2="95" y2="130"/>
+        <line x1="20" y1="55" x2="120" y2="55"/><line x1="20" y1="105" x2="120" y2="105"/>
+      </g>
+      <!-- highlight top-left 2x2 -->
+      <rect x="20" y="30" width="50" height="50" fill="#fef3eb" stroke="#c0510a" stroke-width="2.5"/>
+      <g font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520" text-anchor="middle">
+        <text x="32" y="48">12</text><text x="57" y="48">30</text>
+        <text x="32" y="73">8</text><text x="57" y="73">11</text>
+      </g>
+      <!-- arrow -->
+      <line x1="135" y1="80" x2="175" y2="80" stroke="#c0510a" stroke-width="2" marker-end="url(#ar4)"/>
+      <defs><marker id="ar4" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#c0510a"/></marker></defs>
+      <text x="155" y="68" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#6b6560">max</text>
+      <!-- 2x2 output -->
+      <g stroke="#d9d0c4" stroke-width="1.3" fill="#fff">
+        <rect x="190" y="45" width="70" height="70"/>
+      </g>
+      <line x1="225" y1="45" x2="225" y2="115" stroke="#d9d0c4" stroke-width="1"/>
+      <line x1="190" y1="80" x2="260" y2="80" stroke="#d9d0c4" stroke-width="1"/>
+      <rect x="190" y="45" width="35" height="35" fill="#edf7f0" stroke="#2d8a4e" stroke-width="2"/>
+      <text x="207" y="68" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2d8a4e" font-weight="600">30</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Max pooling over a 2×2 block keeps only the largest value (30). It has no learnable weights — it just summarizes "the strongest response in this region."</div>
+</div>
+
+<p>Why keep only the max? Because once a filter has detected "there's a strong vertical edge somewhere in this corner," we mostly care <em>that</em> it's there, not the exact pixel. Max pooling throws away precise position, shrinks the volume, and makes the representation a little more <strong>abstract</strong> and a little more robust to small shifts. Pooling acts on each channel independently, so it changes height and width but not depth.</p>
+
+<h3 id="architecture">The Whole Architecture in One Breath</h3>
+<p>Now you can read a CNN end to end. The image enters as a volume. It passes through a <strong>convolution</strong> layer (local feature detection) producing a new volume, then a <strong>pooling</strong> layer (aggregation) producing a smaller volume, then convolution, then pooling — alternating the two pillars, getting deeper (more filters) and spatially smaller as it goes. Finally the volume feeds a <strong>fully connected layer</strong> that outputs the answer (cat / not-cat). And remember — all of those filter weights are learned by gradient descent. That conceptual simplicity, against everything CNNs can do, is exactly what "gives people pause."</p>
+
+<div class="quiz" id="quiz3box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">You convolve a 6×6×3 image with 16 filters using padding P = 1 and stride 1. What is the output volume?</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>4×4×3</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>6×6×16</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>4×4×16</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>6×6×3</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct — B.</strong> Padding of 1 with a 3×3 filter at stride 1 is a "same" convolution, so the spatial size stays 6×6. The depth of the output equals the <em>number of filters</em>, which is 16 — note the input's 3 color channels were collapsed by each filter. Option C (4×4×16) would be right only with no padding; option A keeps the channel count instead of the filter count.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>Model-Free vs Model-Based AI</h2>
+</div>
+
+<p>This is where the lecture zooms out from CNNs to a question that frames the whole field — and the whole course. CNNs are powerful, but they have a specific <em>character</em>, and naming that character lets us see both their gifts and their failures clearly.</p>
+
+<h3 id="model-free">What "Model-Free" Means</h3>
+<p>A neural network is <strong>model-free</strong>. You hand it labeled data — images tagged "cat" or "no cat" — set up an architecture, run gradient descent, and out comes a classifier. At <em>no point</em> did you tell it what a cat is. You never wrote down "a cat is an animal with a head shaped like this and a tail like that." The network just fits a function from pixels to labels. People also call this <strong>function fitting</strong> or <strong>curve fitting</strong>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Model-Free vs Model-Based</div>
+  <p><strong>Model-free</strong> systems (neural nets) carry <em>no knowledge</em> of the phenomenon they predict; they extract patterns straight from data. <strong>Model-based</strong> systems (logic, Bayesian networks, the search and reasoning we studied all term) encode explicit knowledge — variables, relationships, structure — and then <em>reason</em> over it.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">This Connects the Whole Course</div>
+  <p>Nearly everything before today — propositional and first-order logic, search, constraint satisfaction, Bayesian networks — was <strong>model-based</strong>: we represented knowledge and reasoned with it. CNNs are the course's clearest example of the opposite pole. Holding both in view is the point of this final lecture.</p>
+</div>
+
+<h3 id="three-problems">Three Weaknesses of the Model-Free Approach</h3>
+<p>Because they lean entirely on data and carry no model of the world, model-free systems inherit three much-discussed weaknesses.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Hungry for data.</strong> The only thing the network feeds on is data — and usually <em>labeled</em> data. Not hundreds of examples, but millions and beyond. For some domains that data exists; for many it simply does not.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Brittle / not robust.</strong> Even though they beat everything before them, they are surprisingly <em>easy to break</em>. Tiny changes to an input that you and I would never even notice can make the network's answer collapse.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Not transparent / hard to explain.</strong> We have intuitions about what they do, but they are not interpretable. When a network declines a loan, asking "<em>why?</em>" is genuinely hard to answer — and in sensitive domains, accountability and liability demand an answer. This is the field of <strong>explainable AI</strong>.</p>
+</div>
+
+<p>All three trace back to the same root: these systems are model-free, so they have no concept to point to when asked to justify, generalize, or learn from few examples.</p>
+
+<h3 id="brittleness">Brittleness in Practice</h3>
+<p>The famous example: a network trained to recognize <strong>stop signs</strong> works beautifully — until someone sticks a small yellow sticker on the sign, and the network can no longer recognize it. To a human the sign is obviously still a stop sign. To the network, which never learned that "a stop sign is red, octagonal, and reads STOP," the perturbation is catastrophic. Changing an image's colors in particular ways can flip the label entirely.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Adversarial Attacks</div>
+  <p>Deliberately crafting tiny input changes to fool a network is an <strong>adversarial attack</strong>. There is an arms race: attackers find perturbations that flip the output, and defenders try to train and structure networks to resist them. The vulnerability exists precisely because the model is fitting patterns, not understanding objects.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">"It Fits the Data, It Doesn't Learn the Concept"</div>
+  <p>When gradient descent reports "I minimized the loss," it means the network fit the training data well — <em>not</em> that it grasped the underlying concept. If the data isn't representative, or the test distribution differs, the network can fall apart, because it was never reasoning about what the object truly is.</p>
+</div>
+
+<div class="quiz" id="quiz4box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">A small sticker on a stop sign causes a trained CNN to misclassify it. What does this most directly illustrate about model-free systems?</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>The network was trained with too high a stride</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>They are brittle because they fit patterns in data rather than encode knowledge of what the object is</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Pooling layers always discard the most important pixels</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>The sticker physically changed the geometry of the sign</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct — B.</strong> The sign is still unmistakably a stop sign to any human, but the network never encoded the concept "red octagon reading STOP" — it only fit pixel patterns, so a perturbation it never saw in training breaks it. This is the textbook illustration of brittleness in model-free learning. Options A and C blame mechanisms (stride, pooling) that are unrelated to the conceptual failure being demonstrated.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>Injecting Knowledge — Model-Based Learning</h2>
+</div>
+
+<p>If model-free systems suffer from being knowledge-blind, the natural fix is to <em>give them knowledge</em>. This is the professor's own research area, and the closing technical idea of the course: <strong>model-based supervised learning</strong>, where you do the same task as a CNN but bake in what you know about the world.</p>
+
+<h3 id="model-based-sl">From a Model to a Circuit</h3>
+<p>Take a concrete task: an image contains a main <strong>rectangle</strong> plus noise, and you want to predict properties of that rectangle — is it tall or wide, its height, width, and the position of its upper-left corner. A CNN would just learn this from labels. The model-based alternative instead writes down a <strong>model</strong>: a rectangle <em>has</em> a height, a width, a corner row and column, a shape that is a function of height and width, and these together generate the pixels.</p>
+
+<p>Once you have such a model — often a <strong>Bayesian network</strong> where each node is a known function of its parents — you can <strong>compile it into a circuit</strong> (an <em>arithmetic circuit</em>, AC) whose inputs are the pixels and whose output is the prediction. That circuit can then be trained on labeled data <em>just like a neural network</em>, but it carries the structure of the model inside it.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — BN + BK</div>
+  <p><strong>BN + BK</strong> = a <strong>B</strong>ayesian <strong>N</strong>etwork plus <strong>B</strong>ackground <strong>K</strong>nowledge. You specify not just the network's variables but the <em>precise functional relationships</em> between each node and its parents — injecting every piece of knowledge you have about the model directly into the compiled circuit, rather than leaving those relationships to be guessed from data.</p>
+</div>
+
+<p>A seven-segment digit recognizer is built the same way, just bigger: a digit is a composition of seven segments, each segment is on or off as a function of which digit (0–9) it is, and each segment generates its own pixels. Compile that model into an AC and you get a digit classifier with real structure.</p>
+
+<details>
+<summary>The two costs of going model-based</summary>
+<div class="details-body">
+<p>Model-based learning isn't free. Two hard barriers keep it from scaling the way CNNs have:</p>
+<p><strong>1. Compilation is expensive.</strong> Turning a model into a circuit is computationally involved and genuinely hard — even being able to compile these particular models is the fruit of very recent algorithmic results. This is the "heavy algorithmic CSE" front of the research.</p>
+<p><strong>2. Sometimes you can't build the model.</strong> For some phenomena we simply don't understand the domain well enough to write down a good model — whereas a CNN needs almost no understanding of what it's recognizing. When no faithful model exists, the model-based route is closed.</p>
+</div>
+</details>
+
+<h3 id="experiments">What the Experiments Showed</h3>
+<p>Two experiments compared a plain <strong>CNN</strong> against the knowledge-rich <strong>BN + BK</strong> circuit. They directly demonstrate the cures for two of the three weaknesses from Part IV.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Data hunger.</strong> As training data grew, both methods eventually converged to similar accuracy. But at only <strong>250 examples</strong>, the knowledge-based model was <em>dramatically</em> more accurate. It already "knows" it's looking at a rectangle, so a little data goes a long way; the CNN, starting from nothing, needs far more data to catch up.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Brittleness.</strong> A clever test: train on one kind of noise (two pixels appearing <em>horizontally</em>) but test on a different kind (two pixels appearing <em>vertically</em>). The knowledge-based circuit was <strong>essentially unaffected</strong>. The CNN — which could hit nearly 100% when train and test noise matched — <strong>fell apart</strong> once the noise was flipped.</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>Background knowledge buys you <strong>data efficiency</strong> and <strong>robustness</strong>. Because the model-based system carries a concept of the object, it generalizes from few examples and survives distribution shifts that demolish a pattern-fitting network. The flip side — compilation cost and the need for a buildable model — is why this approach hasn't yet scaled to CNN-level ubiquity.</p>
+</div>
+
+<div class="quiz" id="quiz5box">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In the noise experiment, both models were trained on horizontal noise and tested on vertical noise. The BN+BK circuit held up while the CNN collapsed. Why?</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>The CNN simply had fewer parameters than the circuit</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>The circuit encodes knowledge of the object, so it generalizes beyond the noise pattern it happened to be trained on; the CNN fit the training distribution and breaks when that distribution shifts</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Vertical noise contains fewer pixels than horizontal noise</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Max pooling is undefined for vertical patterns</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct — B.</strong> The knowledge-based circuit reasons about what the object actually is, so a change in the <em>irrelevant</em> noise orientation doesn't disturb it. The CNN only learned to fit the training data's specific (horizontal-noise) distribution, so when tested on an unrepresented (vertical-noise) distribution it fails — the classic "fit the data, not the concept" trap. The other options invent mechanisms that played no role in the result.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SUMMARY ═══════════════════════ -->
+<section id="together" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This final lecture told one story in two halves. The first half built a <strong>CNN from scratch</strong> and revealed how little machinery it really contains: a <em>filter</em> is just a small neuron whose weights are shared as it roams an image (<strong>convolution</strong>); three hyperparameters — filter size, padding, stride — control how the output volume is shaped; many filters turn a volume into a deeper volume of detected features; and <strong>max pooling</strong> aggregates those features into a coarser, more abstract summary. Stack convolution and pooling, alternating local detection with aggregation, end with a fully connected layer, and let gradient descent learn every weight. That is the entire architecture that revolutionized computer vision.</p>
+
+<p>The second half stepped back to ask <em>what kind of thing</em> we had just built. A CNN is <strong>model-free</strong>: it fits a function from pixels to labels without ever encoding what the object is. That gift — needing no understanding of the domain — is also its curse, producing the three weaknesses of <strong>data hunger</strong>, <strong>brittleness</strong>, and <strong>opacity</strong>. The antidote, <strong>model-based learning</strong>, compiles explicit knowledge (a Bayesian network plus background knowledge) into a trainable circuit, and the experiments showed it winning decisively on small data and on shifted distributions — at the price of expensive compilation and the need for a model you can actually build.</p>
+
+<p>So the two halves are really the course's two pillars facing each other. Almost everything we studied — logic, search, constraint satisfaction, Bayesian networks — was <strong>represent-and-reason</strong>, i.e. model-based. CNNs are the purest <strong>curve-fitting</strong>, i.e. function-based, system in the syllabus. The closing perspective from the ACM article is that the real lesson of recent AI is <em>about the structure of our world</em> — that many tasks we assumed required deep understanding can be approximated astonishingly well by pattern-fitting alone. But pattern-fitting performance is not the same as intelligence: animals still out-reason our best systems on many tasks, and the honest path forward is to <strong>fuse</strong> the two approaches so that learning and reasoning reinforce each other.</p>
+
+<div class="callout tip" style="margin-top: 32px;">
+  <div class="callout-title">What's Next</div>
+  <p>This is the last lecture of CS161 — so "what's next" is the rest of your work in AI. The frontier the professor leaves you with is exactly the integration of these two worlds: bringing <strong>model-based reasoning</strong> (logic, Bayesian networks, the represent-and-reason machinery of this course) together with <strong>model-free learning</strong> (neural networks like the CNN you just built). Watch for this seam everywhere — in explainable AI, in robust and data-efficient learning, and in the careful distinction between a system's <em>performance</em> and its <em>intelligence</em>. Best of luck on the final.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

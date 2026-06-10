@@ -1,0 +1,540 @@
+0:011 second[Music]
+0:1515 seconds[Music]
+0:1818 secondsright so let's get started with our second lecture on first-order logic in which we will discuss the subject of
+0:2727 secondsinference we will have a few topics that we will cover today the very first one would be reducing
+0:3535 secondsinference and first-order logic to inference in propositional logic and we
+0:4343 secondswill see that I mentioned and this is actually common today and it is
+0:5050 secondsparticularly effective for subsets of the logics we'll talk more about this later
+0:5656 secondsand then we will discuss a method or a couple of methods for doing inference
+1:041 minute, 4 secondsdirectly on first-order logic sentences you may want to think of these as simple
+1:121 minute, 12 secondsor restricted methods they are not too general one of them is called forward
+1:231 minute, 23 secondschaining and the second is backward chaining and we see that these are
+1:291 minute, 29 secondstypically applied to restricted subsets of first-order logic and that's
+1:361 minute, 36 secondssomething we will discuss will be the general method of resolution which we
+1:441 minute, 44 secondsalso discussed in the propositional setting but you will see that when we do this in the first of the level things
+1:521 minute, 52 secondsget a little bit more interesting so the same ideas there but we'll have to add some new components for that to actually
+2:012 minutes, 1 secondapply in this particular context alright so we will basically do the first two items in the first part of the lecture
+2:092 minutes, 9 secondsand then we will dedicate the second part of the lecture to resolution so let's get started with this guy here and
+2:182 minutes, 18 secondsyou will see that this will be based on two concepts that we will have to do
+2:252 minutes, 25 secondsone is known as universal instantiation and the other one is known as existential instantiation so let's go
+2:332 minutes, 33 secondsahead and discuss these next all right so Universal instantiation is basically a rule about taking a
+2:412 minutes, 41 secondsuniversally quantified sentence and then replacing it with propositional
+2:482 minutes, 48 secondssentences so let me illustrate this first with a concrete example and then
+2:552 minutes, 55 secondswe'll give you the general rule so if you have this particular first order statement that says that for all X King
+3:023 minutes, 2 secondsX and greedy X implies evil acts and
+3:073 minutes, 7 secondslet's say that we basically have two particularly constants one of them is
+3:163 minutes, 16 secondsJohn and the other one is Richard and let's say we have one function something which is father so the idea is this is
+3:253 minutes, 25 secondssame for all X king X and px equal X then that applies to John so then I can
+3:323 minutes, 32 secondsgo ahead and write King John and greedy alright but then I can do the same thing for Richard and in that case I will get
+3:413 minutes, 41 secondsthe following statement and moreover now I can do more because now I can apply
+3:493 minutes, 49 secondsthe function father and create even more instances of this particular first-order
+3:583 minutes, 58 secondsstatement what we did here is basically created yet another way of instantiating
+4:064 minutes, 6 secondsthe variable X now one thing about this is that as you can see in this case you can go on further so you could talk
+4:144 minutes, 14 secondsabout the father of John but then you could talk about the father of the father of John and in principle you may
+4:204 minutes, 20 secondshave an infinite number of instances now we're going to get to that later but here I want to
+4:294 minutes, 29 secondssure that I cover two concepts the first concept is this notion of a ground term
+4:364 minutes, 36 secondsnow we know what the term is if you remember when we discussed term we said that's either a variable X or a constant
+4:464 minutes, 46 secondsor a function applied to terms right now so what is a ground term a ground term is a term that does not happen so I
+4:554 minutes, 55 secondscannot have this and then if I have one of these guys here they also have to be ground and you've seen examples of that
+5:045 minutes, 4 secondshere so constants are ground terms this is a grantor right because it's a function symbol and applied to a ground
+5:135 minutes, 13 secondsterm which happens to be rich in this case and so on so more generally what
+5:215 minutes, 21 secondsthis rule looks like it goes like this is for all X alpha what you will have to
+5:285 minutes, 28 secondsdo is do a substitution where you
+5:345 minutes, 34 secondsreplace the variable X by G in alpha
+5:395 minutes, 39 secondsright and in this case G is a ground now as we said you may have an infinite
+5:485 minutes, 48 secondsnumber of ground terms and that happens when you have functions symptoms one interesting restriction and you'd hear it again later is when I do not
+5:575 minutes, 57 secondsallow function symbols so only constants and in that case you can actually bound the number of ground terms and that's one of these sections that people use on
+6:066 minutes, 6 secondsfirst-order logic in some cases and we'll actually see that later so this is basically the general rule here now
+6:146 minutes, 14 secondsthere's one more concept now when you look at this and say but wait a minute why don't you say that we are reducing
+6:236 minutes, 23 secondsfirst-order inference to proposition of instance I'm looking at this and it's looking to me like first-order no here's
+6:316 minutes, 31 secondssomething you have to pay attention to there are no variables here so basically you can go to this guy and call it x1
+6:396 minutes, 39 secondsand you can go to this guy and call it x2 and it's gotta hear that call it X 3 and then you can think of
+6:476 minutes, 47 secondsthis first rule as the propositional rule x1 and x2 implies X 3 and and
+6:566 minutes, 56 secondssimilarly right so these literals because they're ground they don't have variables even though they look fancy
+7:047 minutes, 4 secondsKing and parentheses and rich each one of them can be viewed as something that is either true or false and therefore
+7:137 minutes, 13 secondscan be mad to a boolean value so if you do that you will end up seeing this as
+7:217 minutes, 21 secondssimply a propositional knowledge base like we've handled in the lectures on propositional logic so I hope this is
+7:287 minutes, 28 secondsclear when you get rid of this fancy syntax just in the proposition world and then you can do your influence on that
+7:357 minutes, 35 secondsall right now let's go to the next concept that we need here and then we'll
+7:437 minutes, 43 secondssee how we can put things together so the next concept is the rule of existential instantiation and this is is
+7:547 minutes, 54 secondsmen to get rid of existential quantifiers so let's go ahead and do
+8:018 minutes, 1 secondthat so an existential quantification again we will start it with a complete example and then talk more generally so
+8:098 minutes, 9 secondsthe example we're gonna use here is the phone that exists X and Crown X and on
+8:168 minutes, 16 secondshead X job so we want to get rid of this guy but the way we're gonna do it is
+8:248 minutes, 24 secondspretty simply we're gonna say pick some constant in this case that's call it c1 just make sure that this does not appear
+8:338 minutes, 33 secondsanywhere in the knowledge base so it's a new kind of constant and simply use that instead of X so what I will use here is
+8:428 minutes, 42 secondscrown c1 and on head c1 John now there's
+8:508 minutes, 50 secondsa couple of things here one is why are we picking up a new concept just have to be new but even before that
+8:578 minutes, 57 secondslet's look at it intuitively are they really saying similar things well what is the guy in first guy says first time
+9:059 minutes, 5 secondsthere is some ex it happens to be crown and that happens to be sitting on or
+9:129 minutes, 12 secondsJohn's head and what is this guy saying there is something actually constant there's an object there I'm gonna refer to it by the main see one and that has
+9:219 minutes, 21 secondsto be crown and it actually sits on John's head all right sounds similar now
+9:289 minutes, 28 secondsyou're gonna tell me why this tattooing you well imagine somewhere in your knowledge base we have some predicate or statement that says read c1 and I ended
+9:379 minutes, 37 secondsup using seoeon in that case not only am i saying that there is a crown that sits on Jon's head I'm also saying that it
+9:449 minutes, 44 secondshappens to be read this guy doesn't say that so I want to make sure that when I use the constant it doesn't appear
+9:539 minutes, 53 secondsanywhere so nothing else is being said about it it's completely fresh and new and this guy is called s :
+10:0110 minutes, 1 secondconstant and that's do touch column who introduced this notion or this technique now if you wanna write something similar
+10:1010 minutes, 10 secondsto what we did on the previous rule it would look something like this so we'll have there exist X alpha and then we'll
+10:1910 minutes, 19 secondsdo a substitution where we replace X by some K in alpha that's basically what
+10:2710 minutes, 27 secondsthe spins where K is a constant symbol that does not appear anywhere in the
+10:3610 minutes, 36 secondsknowledge base right and that's basically what we have done now two things here when we go ahead and do this
+10:4610 minutes, 46 secondsthe only guarantee is that if you look at the first order knowledge base and
+10:5510 minutes, 55 secondsnow we're gonna get a propositional logic knowledge base all right so we started with this and we ended with that
+11:0311 minutes, 3 secondsthey get a T here is satisfiability is preserved that is
+11:1011 minutes, 10 secondsit's not necessarily that equivalents will be presented they would not be equivalent to each other logically but
+11:1711 minutes, 17 secondsif one is satisfiable then the other is if one is not certifiable the other is not and therefore as far as answering
+11:2411 minutes, 24 secondssatisfiability queries i can use this and then I'll be good and you've seen how important is satisfiability queries
+11:3211 minutes, 32 secondsas far as doing things including entailment and so on right now for the
+11:3911 minutes, 39 secondsthis is for existential quantification for or existence in instantiation if you
+11:4711 minutes, 47 secondslook at the case of universal instantiation and assuming let's say
+11:5411 minutes, 54 secondsthat we do not have function symptoms and therefore we can generate a finite
+12:0212 minutes, 2 secondsproposition knowledge base then in that case you are guaranteed equivalence when
+12:0812 minutes, 8 secondsyou apply Universal instantiation but in this case it's only satisfiability now the last thing we want to discuss on
+12:1712 minutes, 17 secondsthis is this notion of what happens when you have actually an infinite
+12:2512 minutes, 25 secondspropositional knowledge base as we've seen in the previous case right so we can keep doing associations because we
+12:3312 minutes, 33 secondscan nest functions and that actually leads us to some fundamental result one particular algorithm which is very
+12:4112 minutes, 41 secondssimply to state and also a fundamental complexity result on inference in first order logic so we'll do that and we will
+12:4912 minutes, 49 secondsend this component at that no all right so this last topic for this component
+12:5712 minutes, 57 secondswill be done under this label of entailment in first all the logic is semi decidable okay this looks pretty
+13:0413 minutes, 4 secondsserious new term semi decider we'll see what that means but before we say what it is it's basically a limitation and
+13:1213 minutes, 12 secondsyou see but there are certain things we can do and certain things we cannot do compared to propositional logic which would be decided so what does that mean
+13:2213 minutes, 22 secondsthe main thing we have start with is this notion Orvis theorem by someone
+13:3113 minutes, 31 secondswith the name of her present and this was in 1930 and let me write this theorem and then explain it all right so
+13:4013 minutes, 40 secondswhat this theorem basically says if a sentence alpha is entailed by some first order logic knowledgebase
+13:4713 minutes, 47 secondsthen it is entailed by a finite subset of the propositional knowledge base now remember the key here is this notion of
+13:5613 minutes, 56 secondsnesting all right so what does that mean so we had like constant John and then we
+14:0314 minutes, 3 secondssaid oh we could have father of John and then we said well but you could also have father or father of John now you
+14:1314 minutes, 13 secondsdon't have to just nest these guys you could have age of father of John and
+14:2014 minutes, 20 secondsthen you put other functions of that but you get the point that I can generate an
+14:2814 minutes, 28 secondsinfinite instances and then the propositional knowledge base would be too large and what this guy says yeah even though the propositions knowledge
+14:3714 minutes, 37 secondsbase could be infinite if alpha follows from it then you can grab a finite subset of it right so this is the whole
+14:4514 minutes, 45 secondsguy then you can grab a subset of it let's call this this alpha is entailed by this guy you can grab a substitute
+14:5414 minutes, 54 secondsDelta prime and you can think you're gonna find that this actually follow of course you have to find the right one now why is this significant it's
+15:0115 minutes, 1 secondsignificant because then it suggests the following methods for trying to prove
+15:0815 minutes, 8 secondsthere's alpha follows from Delta and I'm gonna write the algorithm is very simple couple of lines and then we will look at
+15:1615 minutes, 16 secondsit together alright so this is the algorithm it's simply a loop that says for N equals to 0 all the way to
+15:2415 minutes, 24 secondsinfinity you do two things first you create a proposition knowledge base by instantiating with depth and third so
+15:3115 minutes, 31 secondswe could call this theft zero and this is depth one and this is depth 2 so first I'll just use constants and then I
+15:4115 minutes, 41 secondsdo universal instantiation just using constants to place variables now I will get a subset of the funny propositional
+15:4915 minutes, 49 secondsknowledge base and then I check to see if alpha is entailed by that right we can do this by you know using
+15:5715 minutes, 57 secondssatisfiability as we've seen before now if yes then we're done right so we could call this if we're starting with
+16:0516 minutes, 5 secondsthe with this original first-order one so let's call this guy is the propositional subset with that zero and
+16:1216 minutes, 12 secondsthen I will check whether our files from that if it is then I'm done otherwise I go ahead and do this I will increase the
+16:1916 minutes, 19 secondslevel of nesting and then check and again if it is then fine otherwise then I will go to Delta 2 and so on ok you
+16:2716 minutes, 27 secondsget the idea the point is hairpin says if alpha indeed follows from this guy then at
+16:3516 minutes, 35 secondssome point for some n you will get this you will see that so just keep trying
+16:4216 minutes, 42 secondsand at some point you will finish but the problem is if alpha does not follow
+16:4816 minutes, 48 secondsfrom this Delta then I'll I wouldn't know right and I keep increasing N and M
+16:5616 minutes, 56 secondsand then I will basically go into an infinite - if alpha is not in tail so I
+17:0417 minutes, 4 secondscan use this to put us something follows but not to pull that something does not follow and that's basically what's known
+17:1117 minutes, 11 secondsas semi decidability that I can decide one thing where I do have a process that will finish to decide maintain but I do
+17:1917 minutes, 19 secondsnot have a process to decide on entailment in this case and this is what's known as a demon interest of
+17:2717 minutes, 27 secondsAllah to be being so I decide I will and the people credited for this are touring in 1936 and also church
+17:3817 minutes, 38 secondsand the same yeah right so now you know what that basically means so as I
+17:4517 minutes, 45 secondsmentioned typically when people use this technique of converting that restored their knowledge base into propositional
+17:5317 minutes, 53 secondsone typically there is no function symbols so you get a finite proposition knowledge base and then you do apply
+18:0018 minutespropositional knowledge based techniques like set solvers on it and actually as I said this is pretty common now before actually we move on to the next part let
+18:0718 minutes, 7 secondsme just say that historically with first order logic when AI started if you remember we talked about McCarthy's
+18:1418 minutes, 14 secondsproposal and how it was based on first-order logic and so on so for the first few decades of AI there was actually a lot of investment in first
+18:2318 minutes, 23 secondsorder logic including computationally then at some point later and of course because it is more expressive than propositional logic right that was the
+18:3118 minutes, 31 secondsattraction so we need it but in later stages the attention shifted more to propositional logic and in particular
+18:3818 minutes, 38 secondscomputation so a lot of the advancement over the last couple of decades maybe even more computationally are directed
+18:4518 minutes, 45 secondstowards propositional logic and set solvers and particular knowledge compilers and not as much on first-order
+18:5318 minutes, 53 secondswell because we were viewed as difficult and you'll see that most of the results there are pretty bold on this subject so
+19:0319 minutes, 3 secondsit's interesting to see how things shift in history and now because we have these very advanced inference engines for propositional logic people actually end
+19:1119 minutes, 11 secondsup translating to propositional logic and do the influence at that alright so we're done with this particular
+19:1819 minutes, 18 secondscomponent what we will do next is go ahead and discuss the first inference methods which applies directly to first
+19:2719 minutes, 27 secondsother logic sentences and as we said this is kind of restricted and it has two parts forward chaining and backward chaining so let's go ahead and look at
+19:3519 minutes, 35 secondsthat but these methods are applied to a specific type of knowledge bases which
+19:4519 minutes, 45 secondsinclude what we call definite closets let me explain what that is if you
+19:5219 minutes, 52 secondsremember from propositional logic we had the notion of horn clause and that was a
+20:0020 minutesclause that had most one positive literal so for example we could have and
+20:0920 minutes, 9 secondsthis would be horn clause because it has exactly one positive literal but we
+20:1620 minutes, 16 secondscould also have and this will also be horn Clause because it has zero positive literals and that's fine so 0 or 1
+20:2520 minutes, 25 secondspositive letters are fine but no more now definite clauses says that you have to have exactly exactly what positive
+20:3320 minutes, 33 secondsliteral so this is fine all right but then the second one this guy would not be fine now why is definite Clause
+20:4220 minutes, 42 secondsinteresting if you remember from the connection between this kind of a statement that we can write as this kind
+20:5120 minutes, 51 secondsof statement so we said these are the same if you look at a definite Clause like this and try to put back the
+20:5920 minutes, 59 secondsimplication you're gonna get a or B implies C and what you will find is
+21:0621 minutes, 6 secondsevery definite Clause when you use the implication would end up being written as an application where you have in the
+21:1421 minutes, 14 secondsantecedent only positive literals and the consequent only positive literal now realize that this is also a definite
+21:2221 minutes, 22 secondsclause it only has one literal which is positive so that's also fine so either be of this particular form or that
+21:2921 minutes, 29 secondsparticular quote so you can think of these clauses as if-then rules with
+21:3921 minutes, 39 secondspositive literals on each side and
+21:4621 minutes, 46 secondsmoreover not only do we have positive literals in the antecedent which is this guy but those positive literals are all
+21:5421 minutes, 54 secondsconjoin so this is a special type of knowledge bases definite close knowledge bases and the discussion that we will
+22:0322 minutes, 3 secondshave we'll apply to these what you would do is just work out these notions of forward and backward chaining using an
+22:1222 minutes, 12 secondsexample from your book and I will lay it out first and we use the same example to illustrate both methods of doing
+22:2022 minutes, 20 secondsinference now this example is about a little story I leave it to you first and then we'd go ahead and write the
+22:2922 minutes, 29 secondsfirst-order sentences that correspond to that and then see how we can infer its using a forward and backward chaining the story goes as follows it says that
+22:3822 minutes, 38 secondsthe dog says that it is a crime for an American to sell weapons to hostile
+22:4322 minutes, 43 secondsnations the country no no an enemy of America has some missiles and all of its
+22:5122 minutes, 51 secondsmissiles were sold to it by Colin and West who is a narc and we want to prove that Cornel West is actually a criminal
+22:5922 minutes, 59 secondsso but we'll go ahead and break this down into a number of sentences and first over logic that people acknowledge
+23:0623 minutes, 6 secondsand we're gonna give them numbers because we're gonna be using these numbers so the first one would be the
+23:1623 minutes, 16 secondsfollowing all right so this first statement basically says that it's a crime for an American to sell weapons to hostile nations and then we have the
+23:2523 minutes, 25 secondssecond statement so basically says that no know has some missiles now this is an
+23:3223 minutes, 32 secondsexistential II quantified statement we will have to replace it by its existence and instantiation and use that instead
+23:4023 minutes, 40 secondsand as you remember from the first part we can do this by replacing the variable X with a constant that does not appear anywhere in the knowledge base and
+23:4823 minutes, 48 secondsthat's what we're gonna do all right so we used in this case the constant M 1 for this particular purpose so now let's
+23:5723 minutes, 57 secondsgo to the third statement in this example alright so again this is saying that all of the missiles that are owned by
+24:0624 minutes, 6 secondsthe country no no worse off to it by Konami West and the next segment we have is number four and this listing says
+24:1624 minutes, 16 secondsthat missiles are weapons and then we have our statement which basically says
+24:2324 minutes, 23 secondsthat an enemy of America counts as hostile and then we have just two more which basically says that West is an
+24:3324 minutes, 33 secondsAmerican and the final one number seven which basically says the country no no is an enemy of America
+24:4224 minutes, 42 secondsnow you may have realized that in this particular case we do not use any quantifiers and the reason is that
+24:4924 minutes, 49 secondseverything is universally quantified so in this case there's a convention that you don't explicitly say for all X for all X and so on
+24:5724 minutes, 57 secondsremember this is the only one that had an existential quantification but we're using this so actually this guy here is
+25:0625 minutes, 6 secondsout and this guy is in alright and the other thing you have to realize is that
+25:1225 minutes, 12 secondsthis is actually a knowledge base of definite clauses so the idea with
+25:1925 minutes, 19 secondsforward chaining is pretty simple and it's probably what you may expect that what we will do is we would start with
+25:2825 minutes, 28 secondsthe things that we know for sure and then try to apply these rules by
+25:3625 minutes, 36 secondsmatching their antecedents and then trying to draw the conclusions that they make and before we start that realize
+25:4625 minutes, 46 secondsthat what we really want to do in this particular case is basically show that
+25:5425 minutes, 54 secondswhat is a criminal this is positive actually after in this particular case so again what we do is
+26:0126 minutes, 1 secondwe start with me if you want to think of them the ground literals that we have
+26:0826 minutes, 8 secondsand then we will start applying these rules in a forward fashion all right so what we have here is the
+26:1626 minutes, 16 secondsif you want to think about them the literals that we have the ground literals that we have in this particular case and now what we'd like to do is try
+26:2526 minutes, 25 secondsto see if we can apply some of these rules to grow further conclusions and we can perhaps start with the rule number
+26:3326 minutes, 33 secondsfive and what rule number five says if X is an enemy of America then they are
+26:4026 minutes, 40 secondshostile now we do have here that nono is an enemy of America so if we applying
+26:4826 minutes, 48 secondsthe rule number five in this case and in this case X would be bound to no no then we can go ahead and conclude that no no
+26:5826 minutes, 58 secondsis hostile and maybe right here rule number five all right so we use this particular rule five to draw the
+27:0627 minutes, 6 secondsconclusion that no no would be outside similarly we can go ahead and apply rule number four in this particular case
+27:1327 minutes, 13 secondswhich says that if X is inside there is a weapon now we do have in this case that m1 is a massage so if we apply that
+27:2227 minutes, 22 secondsparticular rule then we end up concluding that m1 is a weapon and that
+27:3027 minutes, 30 secondswould be a little number four another rule that we can apply in this particular case is number three number
+27:3827 minutes, 38 secondsthree says if X is a missile and it's owned by no no and then it was so - it
+27:4327 minutes, 43 secondsby West and we can actually apply this rule to these two particular literals
+27:5327 minutes, 53 secondsand in this case we would go ahead and conclude the cells west one and this is
+28:0428 minutes, 4 secondsa conjunction here and we would write three in this particular case that's what we actually used so what you see
+28:1228 minutes, 12 secondshere is basically we're applying this rule in a forward fashion by matching the premise of a rule and then going
+28:1928 minutes, 19 secondsinclusion and we are now ready actually to go and do our final rule application which will get us to the conclusion and
+28:2828 minutes, 28 secondswith me rule number one so if you apply rule number one to this this guy this
+28:3528 minutes, 35 secondsguy and that guy and that would be here a conjunction again and that would be rule number one we can go ahead and
+28:4428 minutes, 44 secondsconclude criminal west all right so it's pretty simple you just opportunistically
+28:5328 minutes, 53 secondsapply these particular rules and keep doing this until you finally find the thing that you are looking for now there
+29:0229 minutes, 2 secondsare properties of this method of forward chaining we're not gonna go over this here we just wanted to illustrate the basic concept because these properties
+29:1129 minutes, 11 secondsalso relate to what you assumed about the knowledge base there are two dimensions here there is the dimension
+29:2029 minutes, 20 secondsthat is definite clause knowledge base the other dimension is do you allow
+29:2729 minutes, 27 secondsfunction symbols or not if you do not allow functions then the only ground terms that you may have would be
+29:3629 minutes, 36 secondsconstants and that has all kind of applications we will not get into these properties here you can read about them
+29:4429 minutes, 44 secondsin your book if you want but let me just say that that combination where you have
+29:5229 minutes, 52 secondsno function symbols and you also have different clauses it is known as data
+30:0130 minutes, 1 secondlog this is from the world of databases that's a subset of first-order logic that's pretty common because when you
+30:1130 minutes, 11 secondshave definite clauses with no function symbols then you get some desirable properties but we will again not get
+30:1930 minutes, 19 secondsinto this here and you can refer to your book to learn more about this if you interested the final thing I wanna mention that even the process of rule
+30:2730 minutes, 27 secondsmatch to decide whether a certain rule can fire and to do that you have to see
+30:3330 minutes, 33 secondsif it's premise matches what has already been established that's also not easy in general and
+30:4030 minutes, 40 secondsbut you can read about this more as I said in your textbook so now we go back or move forward with the next method of
+30:5030 minutes, 50 secondssolving these problems which is backward chaining backward chaining so just to
+30:5830 minutes, 58 secondsfinalize this here let me go ahead and write all right so this is here forward okay and next we're gonna go ahead and
+31:0731 minutes, 7 secondsdo backward chaining what you're doing backward chaining is as the name suggests you will start with what you
+31:1631 minutes, 16 secondswant to prove right so in this case we will go ahead and say criminal West and
+31:2231 minutes, 22 secondsour going to see if we can actually show this or prove it so the way to do it is you would look in
+31:3131 minutes, 31 secondsyour knowledge base and see if there are rules that will imply that and then try
+31:3831 minutes, 38 secondsto use them in this particular case rule number one can be used to establish that
+31:4731 minutes, 47 secondsWest is criminal and if we actually use it then we'll find ourself having to prove
+31:5431 minutes, 54 secondsnow the antecedent of that particular rule so this is here rule number one and
+32:0132 minutes, 1 secondremember that when we match this criminal west to the conclusion of that
+32:0932 minutes, 9 secondsrule we will have to go ahead and set X as West right for that matching to
+32:1632 minutes, 16 secondshappens so if we do that we find ourselves having to establish American
+32:2332 minutes, 23 secondsnow this would be X but now we have west actually that's what we need to show and
+32:3032 minutes, 30 secondsthen we have to establish that weapon Y
+32:3632 minutes, 36 secondsand we also have to establish that cells in this case where
+32:4532 minutes, 45 secondsX sorry Y Z and finally hostile Z now we
+32:5332 minutes, 53 secondsneed to establish this and the way we do this is again using backward chaining so
+33:0133 minutes, 1 secondwe will have to pick one of them and say is there a rule that allows us to establish that now if we pick the first
+33:1033 minutes, 10 secondsone we will see that already matches six so this is done actually because that's already in our knowledge base we we
+33:1833 minutes, 18 secondsdon't need to show that so the neat sha alright so now we have to go and pick another one and if we pick let's say
+33:2533 minutes, 25 secondsweapon Y and we look at rule number four so rule number four says if something is
+33:3333 minutes, 33 secondsa missile then it is actually a weapon and that tells us yeah we can show that but now we have to go ahead and show
+33:4033 minutes, 40 secondsthat aside why all right so let's take another one and let's put here for
+33:4833 minutes, 48 secondsbecause that's the rule we used in this case we pick Miss on Y and see can we
+33:5733 minutes, 57 secondsactually establish that we find that in rule number two - we have owns no no and
+34:0534 minutes, 5 secondsone and we also have missile m1 so we can match this to missile on one and by
+34:1134 minutes, 11 secondssetting y to M 1 then we have this now and again this would have been ruled to
+34:2034 minutes, 20 secondsrealize now that we have two set Y and one and that applies to the two places
+34:2834 minutes, 28 secondswhere it already appears so this is now M 1 and this is now an one as well so we
+34:3734 minutes, 37 secondskeep going with this procedure and let's go ahead apical third one sends west and
+34:4534 minutes, 45 secondsas we said now this is M 1 here and this is M 1 so what we have is since West M 1
+34:5334 minutes, 53 secondsto Z and the rule that we can use for this is number three now when we do the
+35:0135 minutes, 1 secondmatching with number three we find that the variable Z has to be bound to no no
+35:1035 minutes, 10 secondsand if we go ahead and do this we will find ourself that we will have to
+35:1635 minutes, 16 secondsestablish that missing and one and we
+35:2135 minutes, 21 secondsalso have to establish owns no no m1 all right so remember what happened here
+35:3035 minutes, 30 secondswhen we matched our goal here what we want with the conclusion of that rule we
+35:3835 minutes, 38 secondshad to bind Z to the constant now we can
+35:4435 minutes, 44 secondsdo these guys so missile m1 is already established that would be two and then
+35:5335 minutes, 53 secondsalso no no N 1 that is also comes from number two so that's also already
+36:0036 minutesestablished and we have that now the final thing we need to do is we have
+36:0936 minutes, 9 secondsjust one more thing to establish which is hostile Z so if we apply a rule 5 in
+36:1536 minutes, 15 secondsthis particular case we will see that we can do this but now we have to establish
+36:2236 minutes, 22 secondsthat enemy no no America because remember that Z is
+36:3036 minutes, 30 secondsnow and that is already established by 7
+36:3536 minutes, 35 secondsso we already have that which is 7 so as you can see what we did with the
+36:4336 minutes, 43 secondsbackward chaining is that once more we start with what we want to prove and then start applying the rules backwards
+36:5036 minutes, 50 secondsand this is something that's typically done using depth-first search again it
+36:5836 minutes, 58 secondshas its own properties we're not going to get into all of the details we'll just mention two things quickly that if
+37:0737 minutes, 7 secondsyou just apply this literally and because it's done using first manner it's possible that this may
+37:1437 minutes, 14 secondsget into infinite loops and in some cases you would have to do certain things to avoid that the other thing is
+37:2237 minutes, 22 secondsthat this method of backward chaining is actually used quite widely but with
+37:3137 minutes, 31 secondsimprovements and in particular in logic programming if you remember when we
+37:3837 minutes, 38 secondstalked about first order logic last time we did mention the notion of asking
+37:4637 minutes, 46 secondsthese existential queries and then as a result of answering them you get these bindings lists so you can think of doing logical inference or first also a
+37:5537 minutes, 55 secondslogical inference as doing some kind of computation and we did mention in particular Prolog as the programming
+38:0338 minutes, 3 secondslanguage that is based on that concept so Prolog actually does use backward chaining with improvements and some
+38:1138 minutes, 11 secondsvariations and there should be a discussion about that in your text for those so this actually concludes the
+38:2138 minutes, 21 secondsfirst part of our lecture within which we first discuss the reduction of
+38:2938 minutes, 29 secondsfirst-order logic to propositional logic using two rules we Universal instantiation rule and the existence of
+38:3938 minutes, 39 secondsinstantiation rule and we gave some basic procedure which is most of the
+38:4638 minutes, 46 secondsirritating interest in which you go and incrementally generate instantiations of your knowledge base by increasing the
+38:5538 minutes, 55 secondsdepth of nesting in terms and then doing propositional inference to try to prove
+39:0339 minutes, 3 secondswhat you need to prove and the highlight of that that that procedure was what we call semi decidable or inference in terms of the logic a semi decidable in
+39:1139 minutes, 11 secondsthe sense that if you actually if what you're trying to prove indeed follows from the knowledge base then you'll eventually be able to do that but if
+39:2039 minutes, 20 secondssomething does not follow a knowledge base then there is no procedure that will do that and and will terminate
+39:2839 minutes, 28 secondsand then we went and reviewed former chaining and backward chaining as two particular different methods on what we
+39:3739 minutes, 37 secondscall definite clauses and then in the next part we will go ahead and talk
+0:011 second[Music]
+0:1515 seconds[Music]
+0:1717 secondsall right so what we will do in the second part of the lecture is discuss
+0:2424 secondsthe resolution in first of the logic largely speaking and at the high level the discussion will be similar to what
+0:3333 secondswe did in propositional logic in the sense that you would normally have some
+0:3939 secondsknowledge base and some query alpha and you want to tell whether alpha follows
+0:4646 secondsfrom Delta and then you do this by constructing this knowledge base and
+0:5353 secondsthen checking if satisfiable and once
+1:001 minutemore this has to be in CNF because we do apply resolution in this case to conjunctive normal form and if you
+1:081 minute, 8 secondsremember from previously we will have that alpha does indeed follow from Delta if and only if another alpha is
+1:181 minute, 18 secondssatisfied so that would be the normal process of doing a resolution proof at this point it's very similar or it's the
+1:251 minute, 25 secondssame basically as in propositional logic the difference is that we will have a new way to a generalized way of
+1:351 minute, 35 secondscomparing two CNF it's a little bit of a more involved process and the other
+1:421 minute, 42 secondsthing that we will need to discuss is that the rule of resolution itself is a little bit more involved and it was this
+1:511 minute, 51 secondsnotion of matching that we have seen in the previous part about forward and backward chaining and this notion of
+2:002 minutesmatching more generally is known as the process of unification so we explain that now and we will see
+2:092 minutes, 9 secondsthat we need to know what unification is and know how to do it at least its simple forms before we can actually
+2:162 minutes, 16 secondsdiscuss the rule of resolution in the first-order setting so what is unification unification is when you have things like
+2:252 minutes, 25 secondssay tells John X and then you have another one that is knows John Jayde
+2:352 minutes, 35 secondsnow these are not exactly the same thing right but I want to see if I can actually make them the same thing and I
+2:452 minutes, 45 secondscan do this by doing a unification and that is by setting the variable X to Jane if I do that we will call this a
+2:552 minutes, 55 secondsunifier and the idea if you go ahead and apply the substitution to both of them
+3:003 minutesthen this guy becomes knows John Jane which is now exactly this particular guy
+3:103 minutes, 10 secondsso we would say we have unified one so more generally if you do have some alpha
+3:173 minutes, 17 secondsand beta then the unifier typically we call this guy theta and the idea is
+3:273 minutes, 27 secondsunifying alpha and theta is this part you know you can invite them using this
+3:343 minutes, 34 secondsunifier that basically means if you take alpha and apply the substitution to it and take beta and apply that
+3:433 minutes, 43 secondssubstitution to it and you'll get the exact same thing right so in our case this would be alpha and this would be
+3:523 minutes, 52 secondsbetter and our unifier would be that particular guy so let's take some more
+3:593 minutes, 59 secondsexamples in this case let's say we have
+4:044 minutes, 4 secondsnose John X and nose why Oh J so again
+4:134 minutes, 13 secondsthey're not the same and the question is can we unify them and for that we need to have a substitution that if we apply
+4:214 minutes, 21 secondsto both of them then they become exactly the same now if you look at it in this case this guy we will need to sell why
+4:324 minutes, 32 secondsto John and then if you look at these guys here here set X - Oh J then that should work right
+4:414 minutes, 41 secondsbecause if you apply this substitution to both of them you apply to the first you get nose John Oh J and you apply to
+4:514 minutes, 51 secondsthe second you get nose so let's take a couple of more examples so in this case
+4:584 minutes, 58 secondsnow we have something a little bit more involved we will have nose John X and
+5:065 minutes, 6 secondsthen on the other side we have knows why alright so you can stare at it for a little bit and see what kind of unifier
+5:155 minutes, 15 secondswe need again in general there is an algorithm for doing unification we will not give you the actual form and
+5:235 minutes, 23 secondsalgorithm and the pseudocode and so on we will try to do it by visual inspection this should be sufficient for our class and one way of doing this is
+5:325 minutes, 32 secondsmaybe you look at this and say what is obvious what is immediately has to be done so that this can be unified and in
+5:415 minutes, 41 secondsthis particular case you know that you must bind the variable Y to John
+5:465 minutes, 46 secondsotherwise to make this the same and if you do that then this guy here becomes
+5:555 minutes, 55 secondsmother ah John right so the other thing you can do here is set X to the mother
+6:026 minutes, 2 secondsright so let's try that out so if we apply the substitution to the first guy
+6:076 minutes, 7 secondsit becomes nose John mother John and if
+6:156 minutes, 15 secondsyou apply to the other one then you also get so we basically have these two guy
+6:226 minutes, 22 secondsnow exactly the same right and of course you can't always unify certain things so let's look at this example if you have
+6:306 minutes, 30 secondsnose John X and the other side you have
+6:356 minutes, 35 secondsnose x oj you can do that right so if you
+6:436 minutes, 43 secondslike to do that then you'll have to set X to John but then if you do that then you're gonna get the clash between these
+6:516 minutes, 51 secondstwo guys right so he said X to John then that wouldn't John wouldn't match Oh J
+6:596 minutes, 59 secondsand the other way around if you set X to OJ then you would get a clash with John so this will fail in this case and these
+7:077 minutes, 7 secondscannot be defined okay as I said there is a general procedure for this doing
+7:157 minutes, 15 secondsthis more generally and for a buttery kind of predicates is not as Styrian but this should be sufficient for us in
+7:237 minutes, 23 secondsorder to be able to do it intuitively by visual inspection so now let's see why is this relevant because now we can go
+7:327 minutes, 32 secondsahead and fill out the resolution ruling on the first order level and let's
+7:407 minutes, 40 secondsbelieve back so next thing you have something like for all X which X implies
+7:487 minutes, 48 secondsunhappy and let's say we also have rich Ken all right so this is all we have and
+7:577 minutes, 57 secondsas I said to apply the solution you need to have it in a CNF form we haven't done that yet but I'm gonna go ahead and do
+8:068 minutes, 6 secondsthe first one which will end up being this so if you compare the first
+8:118 minutes, 11 secondsstatement to first order to CNF sorry
+8:178 minutes, 17 secondsthen you will get this one and then we move to the other one again so it's
+8:268 minutes, 26 secondspretty now at this point similar to what we did in the prepositional case and the prepositional case when we had something
+8:328 minutes, 32 secondsnot let's say A or B and then we had a we could do resolution on these cancel
+8:418 minutes, 41 secondsthese and conclude be right and more generally if we had not a or B or C and
+8:498 minutes, 49 secondsthen let's say we had a or D again we cancel these and the rest the same thing
+8:588 minutes, 58 secondsexcept in Chris Holden you may not have a and not a but you may have something similar to what's going on here where we
+9:069 minutes, 6 secondshave not rich X and then I have rich Ken all right so these are not exactly the
+9:139 minutes, 13 secondssame this is not exactly like that but I can unify them and if you are unify them in this case we unify that would be this
+9:219 minutes, 21 secondsguy so I can set the variable X to the constant Ken in this particular case if I apply the substitution to this guy
+9:299 minutes, 29 secondsthen I will get not rich Ken and if I apply to this guy I will also get H Ken
+9:399 minutes, 39 secondsand now I can do to the motion and that's the idea in this particular case so to apply resolution here what I will
+9:479 minutes, 47 secondsneed to do is do the unification and here's the interesting part when I did the unification in this case I've got
+9:569 minutes, 56 secondsthe unifier that sets X to Ken now when
+10:0310 minutes, 3 secondsI cancel this with that under there something is excess set to Ken then the conclusion that I'm gonna get which is
+10:1010 minutes, 10 secondsunhappy now has to be Ken that's what I actually concluded in this particular case I concluded particularly that can
+10:1810 minutes, 18 secondsis unhappy so you have to apply begin a fire that you got to to the result of
+10:2810 minutes, 28 secondsunification and the specific case we will take examples of this and in
+10:3510 minutes, 35 secondsparticular how to convert to CNF and then we will go ahead and to example of resolution I think I will do
+10:4410 minutes, 44 secondsthe example of resolution first and then I will leave the conversion to CNF to
+10:5110 minutes, 51 secondsthe last part which is similar to how we did it in propositional logic this way you get some intuition about things
+10:5910 minutes, 59 secondsbefore we go ahead and do the conversion to Vienna so in this particular example that we will discuss again we have a
+11:0611 minutes, 6 secondslittle story I'm gonna read it for you first and then I will write out the first-order sentences that correspond to
+11:1411 minutes, 14 secondsit and then I will show you the CNF of that and then we'll do a resolution on
+11:2111 minutes, 21 secondsit in fact let me go ahead and write these statements of the story first alright so this is the story that we
+11:2711 minutes, 27 secondshave we have that Jack owns a dog every dog owner is an animal lover no animal
+11:3611 minutes, 36 secondslover he's an animal either jack or curiosity killed the cat cats are animals and then the query that we have with curiosity can be cat that's what
+11:4411 minutes, 44 secondswe're gonna try to prove now what a loon X is write down the first other sentences that correspond to these
+11:5211 minutes, 52 secondsnatural language sentences and then I will show you how they look in CNF form alright so these are the first-order
+12:0112 minutes, 1 secondsentences that represent this example the first one here is basically saying that we have a dog and it's owned by
+12:1012 minutes, 10 secondsJack the second statement here basically says that every dog owner is an animal
+12:1612 minutes, 16 secondslover now if you look at the premise it says this component here this statement
+12:2412 minutes, 24 secondssays there exists a Y and it's owned by X so what this statement saying that X
+12:3012 minutes, 30 secondsthe variable X is dog owner and then you have for all X if X is a dog owner then they're an animal lover and then we have
+12:4012 minutes, 40 secondsthe third statement in this particular case which says animal lovers will not kill animals right so you can see this
+12:4912 minutes, 49 secondspart here again what this guy's saying is if Y is an animal and they're not killed by X but X would
+12:5612 minutes, 56 secondsnot give them and this statement saying that if X is an animal over the next would not kill Nana and so on so the the
+13:0413 minutes, 4 secondsstatement after that this guy says that either jackal tuna or curious little tuna so tuna here is the cat and then
+13:1313 minutes, 13 secondsthis is saying that tuna is the cat and then finally this thing that every cat is animal so we have these dice and what
+13:2313 minutes, 23 secondswe really want to prove from them or show if indeed curiosity killed the cat
+13:3113 minutes, 31 secondswhich is this guy right you want to see if Kim's curiosity tuna and as we
+13:4013 minutes, 40 secondsmentioned the way you would do this is you would first compare all of mr. C&L all right this is Delta and this is
+13:4813 minutes, 48 secondsalpha in our case you convert that to CNF and then you negate alpha sorry the NCNR and then we applied a solution to
+13:5613 minutes, 56 secondsthat and then what we want to do is try to derive a contradiction just like we did it in the propositional logic case
+14:0414 minutes, 4 secondsand to do that what we will need to have is we see enough compression so I'm gonna just show you this because we
+14:1214 minutes, 12 secondshaven't shown how to do it so I'll just go ahead and do it actually up here all
+14:2014 minutes, 20 secondsright so just like we did it in the propositional case we will have clauses and I will number that because we would use these numbers when we do a
+14:2814 minutes, 28 secondsresolution so let me go ahead and write them all right so here's the knowledge
+14:3514 minutes, 35 secondsbase Delta that would be these guys in CNF and then we also have not alpha
+14:4414 minutes, 44 secondswhich is this guy here right now how do we get these clauses one through seven
+14:5114 minutes, 51 secondswe didn't explain that yet but that's a process that we're gonna go over but we do have them now and then close number
+14:5914 minutes, 59 secondszero which I could at the very end that's the negated query and what we'd like to do here is basically try to apply resolution and therefore the
+15:0715 minutes, 7 secondsso let's be similar to what we've done improve the prepositional case we pick two clauses and we try to resolve them
+15:1515 minutes, 15 secondstogether but we will have to sometimes find a unifier so next go ahead and start let's say with 1 & 3
+15:2515 minutes, 25 secondsnow one says dog didi is a constant and 3 basically says not on the XY or not
+15:3415 minutes, 34 secondsthat so we can do the resolution in this case in particular if you look at this
+15:4115 minutes, 41 secondsguy here and you look at that that's an opportunity to apply resolution but in this case we have to do a unification
+15:4815 minutes, 48 secondsunification of this case is that we have to set Y to the constant T right and if we actually go ahead and do that we will
+15:5715 minutes, 57 secondsget basically close eight and it will
+16:0216 minutes, 2 secondsend up saying not o XD or animal lover X
+16:0916 minutes, 9 secondsright remember the unifier here who was that wine had to be to the constant
+16:1916 minutes, 19 secondsthat's what happened in this particular case and then we can keep moving so we
+16:2516 minutes, 25 secondscan go ahead and get another close I can create more space so we can do nine here which is between two and eight so if you
+16:3416 minutes, 34 secondslook at two in this particular case we've got this guy if you look at 8
+16:4416 minutes, 44 secondswhich we just did we have this guy again we can apply resolution in this case and
+16:5116 minutes, 51 secondsin fact this would be what we would call a unit resolution but we have to come up with the unifier and this unifier will
+17:0017 minutesbasically says that excess to be Jack and if we go ahead and do the unification what we would actually end
+17:0917 minutes, 9 secondsup deriving is another okay one more here is close 10 the next one that will
+17:1717 minutes, 17 secondsbe sick and seven if you look at six and seven and six we have cat tuna and seven not
+17:2517 minutes, 25 secondscat X or animal X again we can unify these two guys and the unifier would be
+17:3317 minutes, 33 secondsthat X would be bound to tuna and then we can cancel these two guys and then
+17:4017 minutes, 40 secondswhat we'll end up concluding is animal tuna all right we keep going we're trying to get a contradiction and in
+17:4717 minutes, 47 secondsthis case we're gonna do four and ten so if you do 4 and 10 10 says animal tuna
+17:5617 minutes, 56 secondsand four let me highlight this here we're doing this guy and if you look at 4 we've got that guy here we can unify
+18:0418 minutes, 4 secondsthem and the unifier would be that I would want Y to be tuna and then we can
+18:1018 minutes, 10 secondscancel that radical X negation and the conclusion that we will get in this
+18:1618 minutes, 16 secondsparticular case would be not a lover X
+18:2218 minutes, 22 secondsor not kills next tuna all right so this would be this is this guy here all right
+18:3218 minutes, 32 secondsso we've got a couple of more steps and we'll be done with this example so we have here the 12th claws and that we're
+18:3918 minutes, 39 secondsgoing to be doing 9 and 11 so if you look at 911 mine says jack is an animal lover and 11 says not animal or X or
+18:4818 minutes, 48 secondsthat kills X tuna so again we can do unification and then in the unifier in
+18:5518 minutes, 55 secondsthis case would be that X has to be bound to Jack and if we do that once
+19:0219 minutes, 2 secondsmore look at this guy this we would have not animal lover Jack and then here we have animal lover black we cancel them
+19:1019 minutes, 10 secondsand therefore we end up getting not killed Jack tuna all right and our last
+19:1819 minutes, 18 secondsguy here will be 13 and in 13 what we will do is 0 and 5 so if you look at 0
+19:2619 minutes, 26 secondsit says not conspiracy tuna if you look at 5 it says they killed jack tuna or callous
+19:3319 minutes, 33 secondscuriosity tuna right so we can apply resolution in this case and then what we
+19:3919 minutes, 39 secondswill get is kills right so what we did here is again look at 0 this is 0 and
+19:4819 minutes, 48 secondsthis is 5 so we didn't have to do any unification in this particular case we simply cancel this and that and then we
+19:5719 minutes, 57 secondsend up reaching this particle but now you can see that what we've done is we have 14 which is empty clause she
+20:0720 minutes, 7 secondsremember that convention or basically contradiction and that's a game 12 and 15 so what we've done in this particular
+20:1520 minutes, 15 secondscase is we've shown a contradiction what does that mean that means we have shown that Delta and not alpha is an
+20:2220 minutes, 22 secondssatisfied and therefore we have also shown that Delta implies and so Jack is
+20:3120 minutes, 31 secondsactually innocent and it is indeed that curiosity that couldn't be cat tuna all
+20:4020 minutes, 40 secondsright so this would be our resolution example the only thing left is next is to actually show you how do you do the
+20:4620 minutes, 46 secondsconversion into a conjunctive normal form in the first other case which is
+20:5320 minutes, 53 secondspart of it is similar to the proposition case but there is a little bit of an addition all right so let's do that next
+21:0321 minutes, 3 secondswe will use the following sentence as an example to illustrate the various steps that we would take so what this sentence
+21:1221 minutes, 12 secondsbasically says is that everyone who loves all animals is loved by someone
+21:2021 minutes, 20 secondsyou can try to look at this again and convince yourself that it is indeed saying this but it's similar to some of
+21:2721 minutes, 27 secondsthe sentences that we wrote in the last lecture so the steps that we have to go through to convert this into a CNF are
+21:3621 minutes, 36 secondsrelatively similar to the ones for propositional logic there is a few additional steps in the middle
+21:4421 minutes, 44 secondsbut the very first one for example is pretty much the same where we eliminate
+21:5121 minutes, 51 secondsso this first step is basically what we eliminate the connectives except for
+21:5821 minutes, 58 secondsconjunction disjunction and negation so in this particular case we do have
+22:0622 minutes, 6 secondsactually two of these connectives we have this guy here and we have that guy
+22:1222 minutes, 12 secondsso the rule as we know it is the following if we have this guy then we
+22:1922 minutes, 19 secondssimply write it that way and if we go ahead and do the very first one which is
+22:2722 minutes, 27 secondsthis guy we will end up adding a negation before
+22:3322 minutes, 33 secondsthis here and if we want to do this guy then we end up adding a negation right
+22:4222 minutes, 42 secondsthere and that's what we were gonna do next and then the sentence would end up
+22:4722 minutes, 47 secondslooking like for all X naught for all Y
+22:5522 minutes, 55 secondsnot animal all right so this is the result that we have in this
+23:0523 minutes, 5 secondscase and again realized that we actually had these two negations this guy and
+23:1123 minutes, 11 secondsthat guy as a result of doing this now the next step is also similar to what
+23:1823 minutes, 18 secondswe've done in propositional logic where we go ahead and move negations inwards
+23:2523 minutes, 25 secondsand if you recall from propositional logic we had de Morgan's law which said
+23:3323 minutes, 33 secondsif you had the following then that becomes this right so we have flipped
+23:4123 minutes, 41 secondsthe conjunction into a disjunction and if we have this then that becomes that
+23:4923 minutes, 49 secondsbut then we have two more rules in this case which apply and be first order setting and that is if I have a negation
+23:5823 minutes, 58 secondsand then I have for all X and let's say some alpha that goes and becomes there
+24:0524 minutes, 5 secondsexists X naught alpha so when the negation goes past the quantifier it actually flips it and here we have this
+24:1324 minutes, 13 secondsguy and that becomes for all X not alpha
+24:2224 minutes, 22 secondsall right so if we go ahead and do this in this case we only have one negation
+24:2924 minutes, 29 secondsthat we want to push which is this guy now if we push this then the for all Y
+24:3524 minutes, 35 secondsbecomes that exists Y and then the rest of it will be de Morgan's law so let's
+24:4424 minutes, 44 secondsgo ahead and do this and then we will have for all X and then we would have here that exists Y now when you put this
+24:5424 minutes, 54 secondsnegation here they have double negation three cancel so I have animal why and then remember this guy will have to flip
+25:0125 minutes, 1 secondand then hums XY okay I cornered myself here so
+25:0825 minutes, 8 secondsI'm gonna do it this year and then we copy this guy as it's alright very good
+25:1725 minutes, 17 secondsso now we go to the next step and this
+25:2325 minutes, 23 secondsnext step is the first one where we is
+25:3025 minutes, 30 secondsspecific also to first order logic where we have to make sure that the variables
+25:3625 minutes, 36 secondsthat are quantified over are distinct so if you look in this particular case you will see that I have there exists Y here
+25:4525 minutes, 45 secondsand I have there exists Y here now so far this is okay but then because of the steps were going to do data we can't
+25:5225 minutes, 52 secondshave this ambiguity so basically we need to make sure that each quantifier has a
+25:5825 minutes, 58 secondsdistinct variable and in this case all we have to do is for example rename this guy to be Z so this is known as the step
+26:0726 minutes, 7 secondsof you stand price variables so we'll
+26:1826 minutes, 18 secondshave to copy it in this case there's not much change so that's the result now the next one is probably the more involved
+26:2726 minutes, 27 secondschange compared to propositional logic so in this case what we want to do is get rid of the existential quantifiers
+26:3726 minutes, 37 secondswe we don't want any existent quantifiers now we've seen an example of this before when we did existential
+26:4526 minutes, 45 secondsquantification and the idea there was if I had some variable X let's say in some predicate P and then I have there exists
+26:5426 minutes, 54 secondsX and then P X so what we would do in that case we would drop this quantifier and replace X by some constant that is
+27:0227 minutes, 2 secondsunique that's not in the knowledge base it's let's say C 1 so instead of this you end up having P of C 1 now this
+27:1127 minutes, 11 secondsworks but what we'd have to do next is go a little more general and I'll tell you what's going on here what's going on here is if you look at
+27:2027 minutes, 20 secondsthis existence you're equal to Phi or Y you would see that it's actually in the scope of a universal quantifier for all
+27:2727 minutes, 27 secondsX so when you say for all X that exists Y this particular Y is in a sense a function of X depends on what X is so
+27:3727 minutes, 37 secondsfor all X their son Y so you can't just replace it by a constant you have to
+27:4527 minutes, 45 secondsflip the fact that that constant in a sense depends on X and the way to do this is to use a function of X instead
+27:5427 minutes, 54 secondsso let me write down the answer and then I'll explain it to you more so this step
+28:0128 minutes, 1 secondis actually known as skolemization or we Scala Mize this is in reference to
+28:0928 minutes, 9 secondsskolem who actually proposed this techniques and the answer in this case will be the following alright so what
+28:1628 minutes, 16 secondshappened here is the there exists Y is dropped and then instead of the variable
+28:2428 minutes, 24 secondsY what we have now is f of X f is a function symbol it has to be again in
+28:3128 minutes, 31 secondsyou not reused basically saying instead of saying oh there exists some why that depends on X
+28:3828 minutes, 38 secondswe just say f of X an object that is a function of X and we did the same thing here that's the other occurrence of Y
+28:4528 minutes, 45 secondsand if you look here we had G of X this is for the there exists C so the dropping will be easy variable which is
+28:5428 minutes, 54 secondsessentially quantified over and we ended up replace again by that alright so
+29:0129 minutes, 1 secondsometimes we call these skolem functions now if you did not have the exist
+29:0929 minutes, 9 secondsactually quantifier in the scope of universal quantifier like we have here you would do this that would be in a special case you would just replace it by a constant and this would be called s
+29:1829 minutes, 18 secondscolumn constant right so this here is a special case of the so we basically have
+29:2729 minutes, 27 secondsjust two more steps and the next step which I'm gonna do implicitly is that we
+29:3429 minutes, 34 secondscan now drop Universal quantifiers because at this point we only have Universal quantifiers so there is really no need for that so what we can do is
+29:4229 minutes, 42 secondsbasically just remove that and then this is how the sentence would look in that case do anything we put it as step 5 so
+29:5129 minutes, 51 secondsI'm gonna just do it here which is drop Universal quantifiers okay but we just
+29:5929 minutes, 59 secondsdid this step I just need to leave room for the last step and the last step is the distribution step which we know from
+30:0630 minutes, 6 secondspropositional logic so this is the distribute and if you remember what this was what we had I would use blue today
+30:1630 minutes, 16 secondswhat we will do in that case is if I had the following then this becomes this and
+30:2430 minutes, 24 secondsif you look at the sentence we have from step 4 or actually step 5 it's exactly this pattern so if we go ahead and do the
+30:3230 minutes, 32 secondsdistribution then we now have our final answer that is defined as in this case
+30:4030 minutes, 40 secondswe simply applied this the solution law and we basically got
+30:4630 minutes, 46 secondstwo clauses so the very first Clause is this guy here and the second clause is
+30:5430 minutes, 54 secondsthis particular one and the first one basically says element of X or loves G
+31:0131 minutes, 1 secondof X comma X and the second clause says not loves X f of X or loves G of X X and
+31:0931 minutes, 9 secondstypically we split these two separate lines and give them numbers and then we move on with our application of
+31:1631 minutes, 16 secondsresolution so this is basically the six step process for converting to CNF in the first order case and this is
+31:2431 minutes, 24 secondsconcludes the last part of the lecture today so what we did in the second part is first discuss resolution and the
+31:3431 minutes, 34 secondsfirst at the first order level which required us to talk about the notion of unification which was new compared to the propositional case and then we did a
+31:4231 minutes, 42 secondsfull example of resolution showing how we can use it to do entertainment and then finally we showed how we convert to
+31:5131 minutes, 51 secondsCNF for I so this is gonna be the end of our discussion on first-order logic and
+31:5731 minutes, 57 secondsnext lecture we will start a new topic which is basically knowledge representation reasoning and learning
+32:0632 minutes, 6 secondsunder uncertainty and in particular promised reasoning so I will see you then thank you

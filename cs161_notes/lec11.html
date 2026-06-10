@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 11 — First-Order Logic — Interactive Textbook</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 11 — First-Order Logic</div>
+  <a href="#part1">Part I — Why First-Order Logic?</a>
+  <a href="#prop-limits" class="sub">The Limits of Propositional Logic</a>
+  <a href="#wumpus-compact" class="sub">The Wumpus World, Compactly</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Worlds, Objects &amp; Relations</a>
+  <a href="#what-is-world" class="sub">What a World Looks Like</a>
+  <a href="#four-ingredients" class="sub">Objects, Properties, Relations, Functions</a>
+  <a href="#anatomy" class="sub">Dissecting Sentences</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — The Vocabulary &amp; Syntax</a>
+  <a href="#vocabulary" class="sub">Picking a Vocabulary</a>
+  <a href="#terms" class="sub">Terms — Naming Objects</a>
+  <a href="#atomic" class="sub">Atomic Sentences</a>
+  <a href="#complex" class="sub">Complex Sentences</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — Quantifiers</a>
+  <a href="#forall" class="sub">Universal: For All</a>
+  <a href="#exists" class="sub">Existential: There Exists</a>
+  <a href="#quant-props" class="sub">Properties &amp; Order Matters</a>
+  <a href="#duality" class="sub">Duality &amp; De Morgan</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — Representing Knowledge</a>
+  <a href="#two-sisters" class="sub">Spot Has Two Sisters</a>
+  <a href="#exactly-two" class="sub">Exactly Two</a>
+  <a href="#scope" class="sub">Scope &amp; Free Variables</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part6">Part VI — Inference &amp; A Real Example</a>
+  <a href="#binding-lists" class="sub">Inference &amp; Binding Lists</a>
+  <a href="#circuit" class="sub">The Circuit Knowledge Base</a>
+  <a href="#quiz6" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#together">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">CS161 · Fundamentals of Artificial Intelligence</div>
+  <h1>First-Order Logic — Reasoning About Objects, Relations &amp; Quantifiers</h1>
+  <p class="hero-sub">An interactive guide to Lecture 11 — moving beyond true/false variables to a logic rich enough to talk about <em>things</em>, the relations between them, and statements about <em>all</em> or <em>some</em> of them.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>Why First-Order Logic?</h2>
+</div>
+
+<p>Last time the course studied <strong>propositional logic</strong> — a system where the only building blocks are simple true-or-false variables glued together with connectives like "and," "or," and "not." Propositional logic is clean and decidable, but it has a fatal weakness for AI: it cannot talk about <em>things</em>. It can only say "this fact is true" or "that fact is false." If you want to say something about <em>every</em> cell in a grid, or <em>some</em> person at UCLA, propositional logic forces you to spell out one variable per case, by hand, forever.</p>
+
+<p>Today's lecture introduces the fix: <strong>first-order logic</strong> (often abbreviated <strong>FOL</strong>, and historically called <strong>predicate calculus</strong>). It is one of the most influential logics ever devised — central not only to AI and computer science but to philosophy and mathematics long before computers existed. When John McCarthy first proposed using logic to model reasoning in AI (a knowledge base of statements fed to a "thinking engine" that performs deduction), the logic he reached for was first-order logic, precisely because it is so much more <em>expressive</em> than propositional logic.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — First-Order Logic (FOL)</div>
+  <p>A logic whose vocabulary includes <strong>objects</strong> (the things in the world), <strong>relations / predicates</strong> among those objects, and <strong>functions</strong> mapping objects to objects — plus <strong>quantifiers</strong> ("for all," "there exists") that let a single sentence speak about whole collections of objects at once. Also known as <strong>predicate calculus</strong>; the two names are interchangeable.</p>
+</div>
+
+<h3 id="prop-limits">The Limits of Propositional Logic</h3>
+<p>To feel the pain that FOL relieves, recall the <strong>Wumpus World</strong> example used to motivate propositional logic. The Wumpus World is a grid of cells. A "wumpus" (a monster) lurks somewhere; pits are scattered around; and the rules of the world connect them — for instance, any cell <em>adjacent</em> to a pit feels <em>breezy</em>. The agent's job is to reason its way safely through the grid.</p>
+
+<p>In propositional logic, you have to invent a separate variable for every fact about every cell. <code>Breezy_2_3</code> means "cell (2,3) is breezy." <code>Pit_1_1</code> means "there is a pit in cell (1,1)." A modest grid already needs a swarm of these variables. Worse, the <em>rule</em> "if a cell has a pit, every adjacent cell is breezy" cannot be stated once. You must re-state it, fully written out, for cell (1,1), then again for (1,2), then again for (2,1) — once per cell. The knowledge base balloons, and nothing in it captures the <em>general</em> idea.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Core Problem</div>
+  <p>Propositional logic has no notion of "for every cell." A rule that should be one sentence becomes hundreds of nearly identical sentences. There is no way to factor out the pattern — the logic simply cannot see that all those cells are instances of the same idea.</p>
+</div>
+
+<h3 id="wumpus-compact">The Wumpus World, Compactly</h3>
+<p>First-order logic lets you write the breeze rule <em>once</em>. The lecture sketched it as a single sentence (don't worry about parsing every symbol yet — this is a preview of what FOL buys you):</p>
+
+<pre><code><span class="op">∀</span> s   Pit(s)  <span class="op">→</span>  <span class="op">∀</span> r  ( Adjacent(r, s)  <span class="op">→</span>  Breezy(r) )</code></pre>
+
+<p>Read aloud: "<strong>for all</strong> squares <code>s</code>, if there is a pit in <code>s</code>, then <strong>for all</strong> squares <code>r</code> adjacent to <code>s</code>, that square <code>r</code> is breezy." Three brand-new ideas appear here, each of which the rest of this lecture unpacks:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Quantification</strong> — the <code>∀</code> ("for all") symbol. Instead of enumerating every square, one sentence ranges over <em>all</em> of them automatically.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Relations (predicates)</strong> — <code>Adjacent(r, s)</code> is a relationship <em>between two objects</em>, and <code>Breezy(r)</code> is a property <em>of one object</em>. These replace the one-variable-per-fact explosion.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Functions</strong> — you could even define a function <code>Left(s)</code> that, given a cell, returns the cell to its left. Functions let you <em>refer</em> to objects indirectly instead of naming each one.</p>
+</div>
+
+<p>That single sentence replaces the whole pile of propositional rules. That is what the lecture meant by FOL being "more succinct": you can express knowledge <em>compactly</em>, capturing the general pattern instead of grinding out every special case.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>First-order logic adds <em>structure to the world</em>. Propositional logic sees only a flat list of true/false flags; FOL sees objects, the relationships among them, and quantifiers that let one sentence speak for an entire collection. Expressiveness is the whole point — and, as we'll learn, also the source of its main difficulty.</p>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Where This Is Heading</div>
+  <p>That expressiveness comes at a cost: the main challenge with full first-order logic is <em>computational</em>. Reasoning can be far harder than in propositional logic. That is why people invented <strong>restricted</strong> forms of FOL that sit between the two — restricted enough to be converted back into propositional logic and solved with propositional machinery. The next lecture takes up that story; today is about learning to <em>read and write</em> FOL.</p>
+</div>
+
+<div class="quiz" id="quiz1c">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Why does the breeze rule "a cell adjacent to a pit is breezy" require many separate sentences in propositional logic but only one in first-order logic?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Propositional logic cannot express the connective "implies," so each case must be written separately.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Propositional logic has no quantifiers, so it cannot say "for every cell" — each cell needs its own restated rule, while FOL's <code>∀</code> ranges over all cells at once.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>First-order logic is faster to evaluate, so it needs fewer sentences.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Propositional logic does not allow the word "breezy" as a variable name.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct — B.</strong> The missing ingredient is <em>quantification</em>. Propositional logic can only assert facts about specific, individually-named situations, so a general rule must be copied out once per cell. FOL's universal quantifier <code>∀</code> lets a single sentence stand for the rule applied to every object in the domain. Answer A is wrong because propositional logic does have implication; the issue is generality, not connectives. Answer C confuses expressiveness with speed — in fact FOL is generally <em>harder</em> to reason with, not faster.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>Worlds, Objects &amp; Relations</h2>
+</div>
+
+<p>Before writing a single FOL sentence, we need to know what a sentence is <em>about</em>. In any logic, a "world" (or model) is a possible state of affairs — the thing a sentence is true or false <em>in</em>. The jump from propositional to first-order logic is, at its heart, a jump in what a world can contain.</p>
+
+<h3 id="what-is-world">What a World Looks Like</h3>
+<p>In <strong>propositional logic</strong>, a world is dead simple. You have variables <code>A</code>, <code>B</code>, <code>C</code>, …, and a world is just an assignment of true/false to each one. A world <em>is</em> a row of a truth table:</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="320" height="120" viewBox="0 0 320 120" style="display:block; margin:0 auto;">
+      <text x="160" y="22" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" fill="#6b6560">A propositional world = one truth assignment</text>
+      <rect x="40" y="44" width="70" height="44" rx="8" fill="#eff4ff" stroke="#2563eb" stroke-width="1.5"/>
+      <rect x="125" y="44" width="70" height="44" rx="8" fill="#fef0f0" stroke="#c53030" stroke-width="1.5"/>
+      <rect x="210" y="44" width="70" height="44" rx="8" fill="#fef0f0" stroke="#c53030" stroke-width="1.5"/>
+      <text x="75" y="66" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" fill="#2a2520">A</text>
+      <text x="75" y="82" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#2563eb">true</text>
+      <text x="160" y="66" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" fill="#2a2520">B</text>
+      <text x="160" y="82" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#c53030">false</text>
+      <text x="245" y="66" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" fill="#2a2520">C</text>
+      <text x="245" y="82" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" fill="#c53030">false</text>
+    </svg>
+  </div>
+  <div class="figure-caption">A propositional world is nothing but a list of variables, each flagged true or false.</div>
+</div>
+
+<p>In <strong>first-order logic</strong>, a world is far richer. It contains a collection of <strong>objects</strong>, and those objects can have <strong>properties</strong>, be tied together by <strong>relations</strong>, and be transformed into other objects by <strong>functions</strong>. Instead of a flat list of flags, an FOL world is a little universe of things and the structure among them.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="360" height="200" viewBox="0 0 360 200" style="display:block; margin:0 auto;">
+      <text x="180" y="20" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" fill="#6b6560">An FOL world = objects + relations + functions</text>
+      <!-- objects -->
+      <circle cx="70" cy="80" r="26" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="70" y="78" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">Jack</text>
+      <text x="70" y="92" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" fill="#6b6560">object</text>
+      <circle cx="230" cy="80" r="26" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="230" y="78" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">Tom</text>
+      <text x="230" y="92" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" fill="#6b6560">object</text>
+      <circle cx="150" cy="170" r="26" fill="#f3effe" stroke="#7c3aed" stroke-width="2"/>
+      <text x="150" y="174" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#2a2520">George</text>
+      <!-- relation -->
+      <line x1="96" y1="80" x2="204" y2="80" stroke="#2563eb" stroke-width="2"/>
+      <text x="150" y="72" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2563eb">Brother</text>
+      <!-- function arrow -->
+      <line x1="62" y1="104" x2="138" y2="148" stroke="#7c3aed" stroke-width="2" stroke-dasharray="5,4"/>
+      <polygon points="138,148 128,144 133,153" fill="#7c3aed"/>
+      <text x="60" y="140" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#7c3aed">FatherOf</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Objects (Jack, Tom, George), a <span style="color:#2563eb">relation</span> (Brother holds between Jack and Tom), and a <span style="color:#7c3aed">function</span> (FatherOf maps Jack to George).</div>
+</div>
+
+<h3 id="four-ingredients">The Four Ingredients</h3>
+<p>Every FOL world is built from four kinds of thing. Learn these four words; the entire syntax of the logic is organized around them.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The Four Ingredients of an FOL World</div>
+  <p><strong>Objects</strong> are the things themselves: people, houses, the wumpus, numbers, colors. <strong>Properties</strong> are things true of a single object: <em>breezy</em>, <em>large</em>, <em>red</em>. <strong>Relations</strong> hold among several objects: <em>inside</em>, <em>adjacent</em>, <em>larger-than</em>. <strong>Functions</strong> map objects to objects: <em>father-of</em>, <em>best-friend-of</em>, <em>age-of</em>.</p>
+</div>
+
+<p>The cleanest way to keep relations and functions apart is to ask what each one <em>returns</em>. A <strong>function</strong> takes objects and gives you back <em>another object</em>. A <strong>relation</strong> takes objects and gives you back a <em>truth value</em> — it either holds or it doesn't. The lecture summarized it crisply: a relation (predicate) maps objects to a Boolean (true/false), while a function maps objects to objects.</p>
+
+<table class="compare-table">
+  <tr><th>Function</th><th>Relation (Predicate)</th></tr>
+  <tr><td>Maps objects → an object</td><td>Maps objects → true / false</td></tr>
+  <tr><td><code>Age(Sally)</code> is a number (an object)</td><td><code>Greater(x, y)</code> is true or false</td></tr>
+  <tr><td>"the father of Jack" — points at a person</td><td>"Jack is the brother of Tom" — holds or not</td></tr>
+  <tr><td>Can be nested as part of a bigger term</td><td>Forms a complete sentence on its own</td></tr>
+</table>
+
+<div class="callout insight">
+  <div class="callout-title">A Property Is Just a One-Argument Relation</div>
+  <p>Why are "properties" and "relations" sometimes lumped together? Because a property is simply a relation that takes a <em>single</em> argument. <code>Smelly(x)</code> — "x is smelly" — is a relation about one object. So in the formal syntax we'll meet shortly, both fall under the single umbrella of <strong>predicates</strong>. The distinction is conceptual, not structural, and we can often ignore it.</p>
+</div>
+
+<h3 id="anatomy">Dissecting Sentences</h3>
+<p>The best way to internalize the four ingredients is to take an English sentence and label every piece. The lecture did this live with the class; let's reproduce two examples.</p>
+
+<h4>Example 1: "one plus one equals two"</h4>
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Objects:</strong> <code>1</code> and <code>2</code> — the numbers themselves are the things we're talking about.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Relation:</strong> <code>equals</code> — it holds (or not) between two objects.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Function:</strong> <code>plus</code> — it takes two number-objects and returns a number-object. "One plus one" is a function applied to objects, yielding the object two.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Properties:</strong> none here — everything was accounted for by objects, the relation, and the function.</p>
+</div>
+
+<h4>Example 2: "square 1 is adjacent to square 2 and it is smelly"</h4>
+<p>Here the <strong>objects</strong> are the two squares; the <strong>relation</strong> is <code>adjacent</code> (it holds between two squares); there are <strong>no functions</strong>; and there is a <strong>property</strong>, <code>smelly</code>, true of a single square.</p>
+
+<div class="callout tip">
+  <div class="callout-title">The Categories Aren't Forced — You Choose</div>
+  <p>Are these four categories mutually exclusive? Yes — a single thing belongs to exactly one. But <em>how you carve up the world is your choice</em>. The same English statement can often be modeled by treating something as a property in one design and a relation in another. There is no single "right" answer, only better and worse modeling decisions. This freedom — and the skill of using it well — is one of the genuinely interesting (and tricky) parts of representing natural language in FOL.</p>
+</div>
+
+<div class="quiz" id="quiz2c">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In the sentence "the age of Sally is greater than the age of Tom," which piece is a <em>function</em> and which is a <em>relation</em>?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div><code>age</code> is the relation; <code>greater-than</code> is the function.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div><code>age</code> is a function (Sally → a number); <code>greater-than</code> is a relation (true/false between two numbers).</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Both <code>age</code> and <code>greater-than</code> are functions, because both take arguments.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Both are relations, because "age" describes a property of Sally.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct — B.</strong> Apply the "what does it return?" test. <code>age(Sally)</code> returns an <em>object</em> (a number), so <code>age</code> is a function — and that number can then be fed into something larger. <code>greater-than</code> takes two objects and returns <em>true or false</em>, so it is a relation. Answer C is the classic trap: taking arguments doesn't make something a function — what matters is whether the result is an object (function) or a truth value (relation).
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>The Vocabulary &amp; Syntax</h2>
+</div>
+
+<p>Now we leave the intuitive picture and pin down the actual <strong>syntax</strong> — the rules for what counts as a legal FOL sentence. The lecture flagged early that, unlike propositional logic, FOL is rich enough that we'll spend most of our time on syntax and on the <em>art of representing knowledge</em>, only hinting at the more involved formal semantics.</p>
+
+<h3 id="vocabulary">Step Zero: Picking a Vocabulary</h3>
+<p>In propositional logic, the only problem-specific thing you invent is the set of variables; everything else (the connectives) is fixed. In FOL there is more to choose, and the choices split cleanly into two groups.</p>
+
+<table class="compare-table">
+  <tr><th>Domain-specific (you invent these)</th><th>Always present (built in)</th></tr>
+  <tr><td><strong>Constants</strong> — names of objects: <code>2</code>, <code>Jack</code>, <code>UCLA</code></td><td><strong>Variables</strong> — lowercase: <code>x</code>, <code>y</code>, …</td></tr>
+  <tr><td><strong>Predicates</strong> — relations/properties: <code>Adjacent</code>, <code>Smelly</code></td><td><strong>Connectives</strong> — <code>∧ ∨ ¬ → ↔</code></td></tr>
+  <tr><td><strong>Functions</strong> — object→object maps: <code>Left</code>, <code>Age</code></td><td><strong>Equality</strong> <code>=</code> (a special predicate)</td></tr>
+  <tr><td></td><td><strong>Quantifiers</strong> — <code>∀</code> (for all), <code>∃</code> (there exists)</td></tr>
+</table>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Vocabulary (Ontology)</div>
+  <p>Before representing anything in FOL you must <strong>pick a vocabulary</strong>: which constants, predicates, and functions exist in your domain. This domain-specific choice is sometimes called the <strong>ontology</strong>. For trivial examples the vocabulary is obvious; for substantial problems it is a genuine design task with multiple valid options.</p>
+</div>
+
+<p><strong>Convention used in this course:</strong> variables are written in <em>lowercase</em> (<code>x</code>, <code>y</code>, <code>z</code>) and constants in <em>uppercase</em> (<code>Jack</code>, <code>UCLA</code>). Keeping these visually distinct prevents a great deal of confusion later.</p>
+
+<h3 id="terms">Building Blocks: Terms</h3>
+<p>FOL sentences are assembled in two layers. The lower layer is the <strong>term</strong> — anything that <em>refers to an object</em>. You cannot ask whether a term is true or false; a term is not a claim, it is a <em>name</em>. There are exactly three ways to build one:</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Term (a way to refer to an object)</div>
+  <p>A <strong>term</strong> is one of: (1) a <strong>constant</strong>, e.g. <code>2</code>, <code>UCLA</code>, <code>Jack</code>; (2) a <strong>variable</strong>, e.g. <code>x</code> (used with quantifiers); or (3) a <strong>function applied to terms</strong>, e.g. <code>FatherOf(Jack)</code>. The third case is <em>recursive</em>: a function's arguments are themselves terms, so you can nest — <code>FatherOf(FatherOf(Jack))</code> names Jack's grandfather.</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="280" height="170" viewBox="0 0 280 170" style="display:block; margin:0 auto;">
+      <text x="140" y="20" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" fill="#c0510a" font-weight="600">FatherOf( FatherOf( Jack ) )</text>
+      <!-- outer function node -->
+      <rect x="95" y="42" width="90" height="30" rx="6" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="140" y="62" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">FatherOf</text>
+      <line x1="140" y1="72" x2="140" y2="92" stroke="#d9d0c4" stroke-width="2"/>
+      <rect x="95" y="92" width="90" height="30" rx="6" fill="#fef3eb" stroke="#c0510a" stroke-width="1.5"/>
+      <text x="140" y="112" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">FatherOf</text>
+      <line x1="140" y1="122" x2="140" y2="140" stroke="#d9d0c4" stroke-width="2"/>
+      <rect x="108" y="140" width="64" height="26" rx="6" fill="#fff" stroke="#2563eb" stroke-width="1.5"/>
+      <text x="140" y="158" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">Jack</text>
+    </svg>
+  </div>
+  <div class="figure-caption">A term as a tree: each <span style="color:#c0510a">function</span> wraps another term, bottoming out at the <span style="color:#2563eb">constant</span> <code>Jack</code>. The whole tree still names a single object — Jack's grandfather.</div>
+</div>
+
+<h3 id="atomic">Atomic Sentences</h3>
+<p>The upper layer is the <strong>sentence</strong> — something that can be true or false. The simplest sentence is an <strong>atomic sentence</strong>: a <em>predicate applied to terms</em>. This is the analogue of a single propositional variable, but with internal structure.</p>
+
+<pre><code><span class="cm">// predicate applied to terms → an atomic sentence</span>
+<span class="fn">Brother</span>(Jack, Tom)              <span class="cm">// terms are simple constants</span>
+<span class="fn">Brother</span>(<span class="fn">FatherOf</span>(Jack), Tom)   <span class="cm">// a term can be a nested function</span>
+<span class="fn">Smelly</span>(x)                      <span class="cm">// a one-argument predicate (a "property")</span></code></pre>
+
+<p>Notice how the two layers fit together: <code>FatherOf(Jack)</code> is a <em>term</em> (it names an object), and feeding it into the predicate <code>Brother</code> produces an <em>atomic sentence</em> (it makes a claim). Terms refer; predicates assert.</p>
+
+<h3 id="complex">Complex Sentences</h3>
+<p>Once you have atomic sentences, you combine them exactly as in propositional logic — using the connectives. If <code>S</code>, <code>S₁</code>, <code>S₂</code> are sentences, then so are their negation, conjunction, disjunction, implication, and equivalence:</p>
+
+<pre><code><span class="op">¬</span> <span class="fn">Greater</span>(1, 2)
+<span class="fn">Greater</span>(1, 2)  <span class="op">∧</span>  <span class="op">¬</span><span class="fn">Greater</span>(3, 2)
+<span class="fn">Greater</span>(<span class="fn">Age</span>(Sally), <span class="fn">Age</span>(Tom))   <span class="cm">// compares two people's ages</span></code></pre>
+
+<p>That last line is worth a second look. <code>Age(Sally)</code> and <code>Age(Tom)</code> are function terms returning numbers, and <code>Greater</code> is a relation between those numbers. We've stacked functions inside a predicate to say something genuinely useful — "Sally is older than Tom" — without ever naming their actual ages. This connective layer behaves just like propositional logic; the genuinely new power arrives with quantifiers in Part IV.</p>
+
+<div class="quiz" id="quiz3c">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Which of the following is a <em>term</em> (refers to an object) rather than a <em>sentence</em> (something true or false)?</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div><code>Brother(Jack, Tom)</code></div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div><code>FatherOf(Jack)</code></div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div><code>Greater(Age(Sally), Age(Tom))</code></div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div><code>Smelly(x)</code></div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct — B.</strong> <code>FatherOf</code> is a <em>function</em>, so applying it to the term <code>Jack</code> yields another <em>term</em> — it names an object (Jack's father), it does not assert anything. Every other option is a <em>predicate</em> applied to terms, which produces an atomic <em>sentence</em> that is true or false. This term/sentence distinction is the backbone of FOL syntax: terms name, predicates assert.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>Quantifiers — The Heart of FOL</h2>
+</div>
+
+<p>Everything so far could (clumsily) be mimicked in propositional logic. <strong>Quantifiers</strong> are what make first-order logic genuinely more powerful. A quantifier lets one sentence say something about <em>all</em> objects, or about <em>at least one</em> object, without listing them. There are two, and the trick to mastering them is a single mental technique: <strong>unfolding</strong>.</p>
+
+<h3 id="forall">Universal Quantification: For All (∀)</h3>
+<p>The universal quantifier <code>∀</code> reads "for all." Its general shape is <code>∀ &lt;variable&gt; &lt;sentence&gt;</code>. Here is the canonical example:</p>
+
+<pre><code><span class="op">∀</span> x   <span class="fn">At</span>(x, UCLA)  <span class="op">→</span>  <span class="fn">Smart</span>(x)
+<span class="cm">// "everyone at UCLA is smart"</span></code></pre>
+
+<p>Labeling the pieces: <code>At</code> is a two-argument predicate (a relation), <code>Smart</code> is a one-argument predicate (a property), <code>UCLA</code> is a constant, and <code>x</code> is a quantified variable.</p>
+
+<div class="callout insight">
+  <div class="callout-title">The Unfolding Technique — Universal = Big Conjunction</div>
+  <p>To truly understand <code>∀ x P(x)</code>, imagine replacing <code>x</code> by <em>every possible object</em> and joining the results with <strong>AND</strong>. That is, <code>∀ x</code> is a giant <strong>conjunction</strong>. This unfolding is your secret weapon: when a quantified sentence confuses you, mentally expand it and the meaning becomes obvious.</p>
+</div>
+
+<p>Unfolding the UCLA sentence, assuming the objects are John, Mary, … :</p>
+
+<pre><code>( <span class="fn">At</span>(John, UCLA) <span class="op">→</span> <span class="fn">Smart</span>(John) )  <span class="op">∧</span>
+( <span class="fn">At</span>(Mary, UCLA) <span class="op">→</span> <span class="fn">Smart</span>(Mary) )  <span class="op">∧</span>  <span class="op">…</span>
+<span class="cm">// and also for function terms:</span>
+( <span class="fn">At</span>(<span class="fn">FatherOf</span>(John), UCLA) <span class="op">→</span> <span class="fn">Smart</span>(<span class="fn">FatherOf</span>(John)) )  <span class="op">∧</span>  <span class="op">…</span></code></pre>
+
+<p>Two things to notice. First, <code>x</code> ranges over <em>function terms too</em> — <code>FatherOf(John)</code>, <code>FatherOf(FatherOf(John))</code>, and so on. Second, because functions can be nested without limit, this conjunction can be <strong>infinite</strong>. That is exactly why quantifiers are indispensable: <code>∀</code> packs a potentially infinite conjunction into one finite sentence.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Most Common Beginner Mistake</div>
+  <p>With <code>∀</code>, the natural connective is <strong>implication</strong> (<code>At(x,UCLA) → Smart(x)</code>), <em>not</em> conjunction. Writing <code>∀ x At(x,UCLA) ∧ Smart(x)</code> would claim that <em>everything in the universe</em> is both at UCLA and smart — including rocks and the number 7. The implication form correctly restricts the claim to the things actually at UCLA.</p>
+</div>
+
+<h3 id="exists">Existential Quantification: There Exists (∃)</h3>
+<p>The existential quantifier <code>∃</code> reads "there exists." Its shape is <code>∃ &lt;variable&gt; &lt;sentence&gt;</code>. Example:</p>
+
+<pre><code><span class="op">∃</span> x   <span class="fn">At</span>(x, UCLA)  <span class="op">∧</span>  <span class="fn">Tall</span>(x)
+<span class="cm">// "someone at UCLA is tall"</span></code></pre>
+
+<p>Now unfold it. With existentials you don't AND the cases together — you <strong>OR</strong> them. If the only objects are Ed, Sandy, and Tom:</p>
+
+<pre><code>( <span class="fn">At</span>(Ed, UCLA) <span class="op">∧</span> <span class="fn">Tall</span>(Ed) )  <span class="op">∨</span>
+( <span class="fn">At</span>(Sandy, UCLA) <span class="op">∧</span> <span class="fn">Tall</span>(Sandy) )  <span class="op">∨</span>  <span class="op">…</span></code></pre>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — The ∀/∃ Connective Pairing</div>
+  <p><strong>Universal</strong> <code>∀</code> unfolds to a <em>conjunction</em> (AND) and naturally pairs with <em>implication</em> (<code>→</code>). <strong>Existential</strong> <code>∃</code> unfolds to a <em>disjunction</em> (OR) and naturally pairs with <em>conjunction</em> (<code>∧</code>). Memorize this pairing — using the wrong connective is the single most frequent FOL error.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Don't Pair ∃ With Implication</div>
+  <p>Swapping the connectives breaks the meaning. <code>∃ x At(x,UCLA) → Tall(x)</code> is satisfied by any object <em>not</em> at UCLA (a false antecedent makes the implication vacuously true), so it says almost nothing. The lecture left this swap as a home exercise precisely because unfolding reveals how badly it misfires.</p>
+</div>
+
+<h3 id="quant-props">Properties of Quantifiers — Order Matters</h3>
+<p>Some rearrangements of quantifiers are harmless; one is dangerous. You can <em>convince yourself of each by unfolding</em>.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Same-type quantifiers commute.</strong> <code>∀x ∀y</code> means the same as <code>∀y ∀x</code> (both unfold to one big AND over all pairs). Likewise <code>∃x ∃y</code> equals <code>∃y ∃x</code> (one big OR over all pairs).</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Mixed quantifiers do NOT commute.</strong> <code>∃x ∀y</code> is <em>not</em> the same as <code>∀y ∃x</code>. Flipping a <code>∀</code> past an <code>∃</code> changes the meaning.</p>
+</div>
+
+<p>The lecture's vivid example: let <code>Loves(x, y)</code> mean "x loves y."</p>
+
+<table class="compare-table">
+  <tr><th>Sentence</th><th>English meaning</th></tr>
+  <tr><td><code>∀y ∃x Loves(x, y)</code></td><td>Everyone in the world is loved by <em>at least one</em> person (each person may have a different admirer).</td></tr>
+  <tr><td><code>∃x ∀y Loves(x, y)</code></td><td>There is <em>one</em> person who loves <em>everyone</em> in the world (a single universal lover).</td></tr>
+</table>
+
+<div class="callout insight">
+  <div class="callout-title">Why the Flip Matters So Much</div>
+  <p>In <code>∀y ∃x</code>, the <code>x</code> is chosen <em>after</em> <code>y</code>, so the lover can depend on who is being loved — different admirers for different people. In <code>∃x ∀y</code>, the <code>x</code> is chosen <em>first</em> and must work for <em>all</em> <code>y</code> — one person loving the entire world. The order of quantifiers encodes <em>what depends on what</em>. This is exactly the kind of subtlety that makes FOL powerful and treacherous.</p>
+</div>
+
+<h3 id="duality">Duality &amp; De Morgan for Quantifiers</h3>
+<p>The two quantifiers are <strong>duals</strong>: given one, you can always simulate the other. You never strictly need both. The bridge is a quantifier version of <strong>De Morgan's laws</strong>.</p>
+
+<p>Recall ordinary De Morgan: pushing a negation through an AND flips it to OR, and vice versa. The quantifier rule is the analogue — <em>pushing a negation through a quantifier flips the quantifier</em>:</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Quantifier Duality (De Morgan)</div>
+  <p>Moving <code>¬</code> inward past a quantifier flips it: <code>¬∀x P(x) ≡ ∃x ¬P(x)</code> and <code>¬∃x P(x) ≡ ∀x ¬P(x)</code>. A universal "all" is just "there's no exception"; an existential "some" is just "not everything fails."</p>
+</div>
+
+<p>Worked example — express "everybody likes ice cream" <em>without</em> using <code>∀</code>:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>Start with the universal form: <code>∀x Likes(x, IceCream)</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>Rephrase in English: "there is <em>no</em> person who does <em>not</em> like ice cream."</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>That becomes <code>¬∃x ¬Likes(x, IceCream)</code> — the inner <code>∃x ¬Likes…</code> says "someone dislikes ice cream," and the outer <code>¬</code> says "that's impossible."</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p>To verify, push the outer <code>¬</code> inward: it flips <code>∃</code> to <code>∀</code>, giving <code>∀x ¬¬Likes(…)</code>. The double negation cancels, returning <code>∀x Likes(x, IceCream)</code>. The two forms are provably equal.</p>
+</div>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>Unfolding turns quantifiers into ordinary conjunctions and disjunctions — and once they're conjunctions and disjunctions, the familiar laws of propositional logic (De Morgan, double negation, implication) apply directly. Almost every quantifier puzzle in this course can be cracked by unfolding, then reasoning propositionally.</p>
+</div>
+
+<div class="quiz" id="quiz4c">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Which English sentence is captured by <code>∀y ∃x Loves(x, y)</code>?</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>There is one special person who loves everyone in the world.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Everyone in the world is loved by at least one person (possibly a different person for each).</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Everyone loves everyone.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Nobody loves anybody.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct — B.</strong> Reading outermost-first: "for all <code>y</code> (every person), there exists an <code>x</code> (some person) such that <code>x</code> loves <code>y</code>." Because <code>∃x</code> is <em>inside</em> the <code>∀y</code>, the chosen lover may vary with each <code>y</code> — everyone has an admirer, but not necessarily the same one. Answer A is the <em>flipped</em> sentence <code>∃x ∀y</code>, which fixes one lover for the whole world — a genuinely different claim, illustrating why mixed quantifiers do not commute.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>Representing Knowledge in Practice</h2>
+</div>
+
+<p>The real skill — and the maze the lecture said we must "pick up from today" — is translating natural-language statements into correct FOL. This is harder than it looks, and the only way to get good is to work examples. Let's do the lecture's running example: a dog named Spot and his sisters.</p>
+
+<h3 id="two-sisters">"Spot Has Two Sisters" — At Least Two</h3>
+<p>The vocabulary is given: one predicate <code>Sister(a, b)</code> meaning "a is a sister of b," and one constant <code>Spot</code>. A first attempt — without quantifiers — fails:</p>
+
+<pre><code><span class="cm">// WRONG — x and y are free variables, not quantified</span>
+<span class="fn">Sister</span>(x, Spot) <span class="op">∧</span> <span class="fn">Sister</span>(y, Spot) <span class="op">∧</span> <span class="op">¬</span>(x <span class="op">=</span> y)</code></pre>
+
+<p>The idea is right — two distinct sisters of Spot — but <code>x</code> and <code>y</code> dangle with no quantifier. We need to <em>introduce</em> these objects existentially:</p>
+
+<pre><code><span class="op">∃</span> x <span class="op">∃</span> y   <span class="fn">Sister</span>(x, Spot) <span class="op">∧</span> <span class="fn">Sister</span>(y, Spot) <span class="op">∧</span> <span class="op">¬</span>(x <span class="op">=</span> y)
+<span class="cm">// "there exist two different things, each a sister of Spot"</span></code></pre>
+
+<p>Note the use of <strong>equality</strong> — the special built-in predicate — to insist the two sisters are not the same object. Without <code>¬(x = y)</code>, <code>x</code> and <code>y</code> could refer to the very same sister, and we'd have proved only that Spot has <em>one</em> sister.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Subtle: This Says "At Least Two," Not "Exactly Two"</div>
+  <p>The sentence above is satisfied even if Spot has three or four sisters — it only asserts that <em>two distinct</em> sisters exist, saying nothing about whether there are more. The everyday phrase "has two sisters" is genuinely ambiguous between "at least two" and "exactly two," and FOL forces us to make the choice explicit.</p>
+</div>
+
+<h3 id="exactly-two">Tightening to "Exactly Two"</h3>
+<p>To say <em>exactly</em> two, we keep the "at least two" core and add a clause forbidding any third, different sister. The clean way: any sister <code>z</code> of Spot must already be one of our two.</p>
+
+<pre><code><span class="op">∃</span> x <span class="op">∃</span> y   <span class="fn">Sister</span>(x, Spot) <span class="op">∧</span> <span class="fn">Sister</span>(y, Spot) <span class="op">∧</span> <span class="op">¬</span>(x <span class="op">=</span> y)
+        <span class="op">∧</span>  <span class="op">∀</span> z ( <span class="fn">Sister</span>(z, Spot) <span class="op">→</span> (z <span class="op">=</span> x <span class="op">∨</span> z <span class="op">=</span> y) )</code></pre>
+
+<p>Read the new line as: "and for every <code>z</code>, if <code>z</code> is a sister of Spot, then <code>z</code> must be either <code>x</code> or <code>y</code>." Nobody outside our pair can be a sister, so there are exactly two.</p>
+
+<div class="callout insight">
+  <div class="callout-title">Two Forms, Provably Equal</div>
+  <p>An equivalent way to forbid a third sister is to negate its existence: <code>¬∃z ( Sister(z,Spot) ∧ ¬(z=x) ∧ ¬(z=y) )</code> — "there is no sister who is neither x nor y." Pushing that negation inward (flip <code>∃</code> to <code>∀</code>, then De Morgan and double-negation on the body) transforms it <em>exactly</em> into the <code>∀z (Sister(z,Spot) → z=x ∨ z=y)</code> form above. Two different-looking sentences that the quantifier/De Morgan machinery proves identical.</p>
+</div>
+
+<details>
+<summary>Expand: the "uniqueness" quantifier ∃! and "there is exactly one king"</summary>
+<div class="details-body">
+<p>There is a convenient shorthand <code>∃!x P(x)</code> meaning "there exists a <em>unique</em> <code>x</code> with property P." It is not strictly needed — like everything, it can be written with ordinary <code>∃</code>. "There is exactly one king":</p>
+<pre><code><span class="op">∃</span> x ( <span class="fn">King</span>(x) <span class="op">∧</span> <span class="op">∀</span> y ( <span class="fn">King</span>(y) <span class="op">→</span> x <span class="op">=</span> y ) )</code></pre>
+<p>The first conjunct says a king exists; the second says any king <code>y</code> must <em>be</em> that same <code>x</code> — so there can be only one. <strong>Watch the parentheses:</strong> the closing bracket must come <em>after</em> the <code>∀y …</code> clause. If you close it too early, the <code>x</code> inside <code>∀y</code> falls outside the scope of <code>∃x</code> and becomes a stray free variable — a real bug the lecturer deliberately made and asked the class to catch.</p>
+</div>
+</details>
+
+<h3 id="scope">Scope &amp; Free Variables</h3>
+<p>The bracket mistake above points at a deeper idea: <strong>scope</strong>. A quantifier governs a particular region of the sentence — just like a variable's scope in a programming language. Every variable must lie inside the scope of a quantifier that introduces it.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Free Variable &amp; Well-Formed Formula</div>
+  <p>A <strong>free variable</strong> is one that appears with <em>no governing quantifier</em>. A <strong>well-formed formula (WFF)</strong> is a sentence with <em>no free variables</em> — every variable is quantified over. Free variables make a formula meaningless (what would <code>Sister(x, Spot)</code> even claim if <code>x</code> refers to nothing in particular?), so a legitimate FOL sentence must have none.</p>
+</div>
+
+<p>The programming analogy is exact. Re-using a quantified variable name inside a nested quantifier (shadowing) is legal but poor style — just like shadowing a loop variable in code. But a variable with <em>no</em> quantifier at all is a genuine error, the FOL equivalent of using an undeclared variable.</p>
+
+<div class="quiz" id="quiz5c">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Why does <code>∃x ∃y ( Sister(x,Spot) ∧ Sister(y,Spot) ∧ ¬(x=y) )</code> say "<em>at least</em> two sisters" rather than "exactly two"?</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Because <code>∃</code> can never express counting at all.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>It asserts two distinct sisters exist but places no upper bound — a third, different sister would still satisfy it. Ruling out a third requires an extra <code>∀z</code> clause.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Because <code>¬(x=y)</code> is redundant and should be removed.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Because <code>x</code> and <code>y</code> are free variables.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct — B.</strong> The sentence only <em>witnesses</em> two distinct sisters; it never claims those are the only ones, so a model with three sisters satisfies it just fine. To pin it to exactly two you add <code>∀z (Sister(z,Spot) → z=x ∨ z=y)</code>, which forbids any sister outside the pair. Answer D is wrong because <code>x</code> and <code>y</code> <em>are</em> bound here — by the leading <code>∃x ∃y</code> — so this is a well-formed formula.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART VI ═══════════════════════ -->
+<section id="part6" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part VI</div>
+  <h2>Inference &amp; a Full-Scale Example</h2>
+</div>
+
+<p>Representing knowledge is only half the story. The point of a knowledge base is to <strong>infer</strong> new facts from it. Picture an <em>inference engine</em>: a box that takes a knowledge base (a set of sentences, call it Δ) plus a query (call it α) and reports whether α <em>follows</em> from Δ.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="380" height="120" viewBox="0 0 380 120" style="display:block; margin:0 auto;">
+      <rect x="20" y="40" width="110" height="44" rx="8" fill="#eff4ff" stroke="#2563eb" stroke-width="1.5"/>
+      <text x="75" y="60" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#2563eb">Knowledge Base</text>
+      <text x="75" y="76" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">Δ</text>
+      <line x1="130" y1="62" x2="158" y2="62" stroke="#d9d0c4" stroke-width="2"/>
+      <polygon points="158,62 148,57 148,67" fill="#c0510a"/>
+      <rect x="158" y="40" width="80" height="44" rx="8" fill="#fef3eb" stroke="#c0510a" stroke-width="2"/>
+      <text x="198" y="58" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#c0510a">Inference</text>
+      <text x="198" y="72" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#c0510a">Engine</text>
+      <line x1="238" y1="62" x2="266" y2="62" stroke="#d9d0c4" stroke-width="2"/>
+      <polygon points="266,62 256,57 256,67" fill="#c0510a"/>
+      <rect x="266" y="40" width="100" height="44" rx="8" fill="#edf7f0" stroke="#2d8a4e" stroke-width="1.5"/>
+      <text x="316" y="58" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#2d8a4e">Yes / No</text>
+      <text x="316" y="74" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#2d8a4e">+ binding list</text>
+      <text x="100" y="108" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#6b6560">query α</text>
+      <line x1="75" y1="100" x2="75" y2="86" stroke="#d9d0c4" stroke-width="2"/>
+    </svg>
+  </div>
+  <div class="figure-caption">An inference engine asks: does query α follow from knowledge base Δ? In FOL it returns more than yes/no — it returns a <strong>binding list</strong>.</div>
+</div>
+
+<h3 id="binding-lists">The New Twist: Binding Lists</h3>
+<p>In propositional logic the answer was a flat yes or no. FOL inference does something richer. Consider a tiny knowledge base:</p>
+
+<pre><code><span class="op">∀</span> x ( <span class="fn">Cat</span>(x) <span class="op">→</span> <span class="fn">Mammal</span>(x) )    <span class="cm">// all cats are mammals</span>
+<span class="fn">Cat</span>(Tuna)                       <span class="cm">// Tuna is a cat</span>
+<span class="fn">Cat</span>(Spot)                       <span class="cm">// Spot is a cat</span></code></pre>
+
+<p>Query: <code>∃x Mammal(x)</code> — "is there a mammal?" The answer is yes. But the engine can also hand back a <strong>binding list</strong>: the values of <code>x</code> that make the query true.</p>
+
+<pre><code>x = Spot    <span class="cm">// or</span>
+x = Tuna</code></pre>
+
+<div class="callout insight">
+  <div class="callout-title">Answering a Query Performs a Computation</div>
+  <p>By asking an existential query "is there an <code>x</code> with this property?", the engine doesn't merely say <em>yes</em> — it <em>finds and reports the witnesses</em>. The act of proving the query <em>computes</em> the answers. If that feels like programming, it is: this is exactly the idea behind <strong>Prolog</strong>, a logic programming language built on a restricted form of FOL. You state facts and rules, ask a question, and the inference engine computes the bindings that satisfy it.</p>
+</div>
+
+<h3 id="circuit">A Full-Scale Example: Reasoning About a Circuit</h3>
+<p>The lecture closed with a substantial example from the textbook — modeling a digital logic circuit (a one-bit full adder, with XOR, AND, and OR gates) in FOL. We won't encode every line, but the <em>shape</em> of the example teaches the most important lesson about real knowledge engineering.</p>
+
+<h4>Why model a circuit in logic?</h4>
+<p>Plain simulation only goes one way: given inputs, compute outputs. Logic lets you run it <em>backward</em> — "I observe a 0 on this output and a 1 on that one; what inputs could produce that?" — and even diagnose faults ("the output is wrong, which gate is broken?"). Logical reasoning answers questions simulation can't.</p>
+
+<h4>The crucial structural lesson: two parts</h4>
+<p>A real FOL knowledge base splits into two pieces, and recognizing this split is the heart of the example.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>The general (domain) part</strong> — facts true of <em>any</em> circuit, independent of this specific one. Connectivity is symmetric: <code>∀t₁ ∀t₂ Connected(t₁,t₂) ↔ Connected(t₂,t₁)</code>. Connected ports carry equal signals. The behavior of each gate type, e.g. an OR gate outputs 1 iff some input is 1: <code>∀g ( Type(g)=OR → ( Signal(Out(1,g))=1 ↔ ∃n Signal(In(n,g))=1 ) )</code>. And housekeeping like <code>∀s ( Signal(s)=1 ∨ Signal(s)=0 )</code> with <code>¬(1 = 0)</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>The specific (instance) part</strong> — facts about <em>this</em> circuit. The five gates and their types: <code>Type(X1)=XOR</code>, <code>Type(X2)=XOR</code>, and so on. The wiring: <code>Connected(Out(1,X1), In(1,A2))</code>, one such fact per wire.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">The Logic Knows Nothing You Don't Tell It</div>
+  <p>Why state that <code>Connected</code> is symmetric, when "obviously" a wire connects both ways? Because the logic has <em>no</em> built-in common sense. Likewise you must assert <code>¬(1 = 0)</code> — that the constants 1 and 0 name <em>different</em> objects — since in general two different constant names <em>could</em> denote the same object (people have nicknames!). Drop that one statement and, as the textbook shows, the whole knowledge base collapses into nonsense. Knowledge engineering is largely the discipline of making the obvious explicit.</p>
+</div>
+
+<h4>Running it backward</h4>
+<p>With both parts in place, the diagnostic query "what inputs give output (0,1)?" becomes an existential:</p>
+
+<pre><code><span class="op">∃</span> i₁ <span class="op">∃</span> i₂ <span class="op">∃</span> i₃   Signal(In(1, C1)) <span class="op">=</span> i₁ <span class="op">∧</span> <span class="op">…</span>
+                  <span class="op">∧</span> Signal(Out(1, C1)) <span class="op">=</span> 0 <span class="op">∧</span> Signal(Out(2, C1)) <span class="op">=</span> 1</code></pre>
+
+<p>The engine answers yes <em>and</em> returns the binding lists — the input combinations producing that output: <code>(1,1,0)</code>, <code>(1,0,1)</code>, <code>(0,1,1)</code>. Inference ran the circuit in reverse and <em>computed</em> the valid inputs, exactly the binding-list idea from the cat example, now doing real work.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea</div>
+  <p>A serious FOL knowledge base separates the <strong>general domain theory</strong> (true of all circuits, all families, all worlds of this kind) from the <strong>specific instance</strong> (this circuit, this family). The general part is reusable; the instance part is swapped in per problem. This factoring — plus the discipline of stating everything the logic can't infer on its own — is the craft called <strong>knowledge engineering</strong>.</p>
+</div>
+
+<div class="quiz" id="quiz6c">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">When the inference engine answers the existential query <code>∃x Mammal(x)</code> against the cat knowledge base, what does the <em>binding list</em> add beyond a plain "yes"?</div>
+  <div class="quiz-options" data-quiz="q6">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>It reports how long the proof took to compute.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>It lists the actual objects (<code>x = Spot</code>, <code>x = Tuna</code>) that make the query true — so proving the query also computes the witnesses.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>It converts the query into propositional logic.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It guarantees the knowledge base contains no contradictions.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q6','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q6">
+    <strong>Correct — B.</strong> Because the query is existential, the engine must <em>find</em> witnesses to prove it, and it hands those witnesses back: <code>x</code> can be bound to <code>Spot</code> or <code>Tuna</code>. So answering the question simultaneously performs a computation — the engine tells you not just <em>that</em> a mammal exists but <em>which</em> objects qualify. This is precisely the mechanism that makes logic programming languages like Prolog able to compute answers from declarative facts and rules.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PUTTING IT ALL TOGETHER ═══════════════════════ -->
+<section id="together" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This lecture took one big step: from a logic of flat true/false flags to a logic of <em>structured worlds</em>. The thread running through all six parts is the trade-off between <strong>expressiveness</strong> and <strong>cost</strong>.</p>
+
+<p><strong>Part I</strong> motivated the leap — propositional logic drowns in repetition because it cannot say "for all," so first-order logic was invented to capture general patterns compactly. <strong>Part II</strong> rebuilt the notion of a <em>world</em> around four ingredients: objects, properties, relations, and functions, with the litmus test that functions return objects while relations return truth values. <strong>Part III</strong> turned that picture into precise syntax: choose a vocabulary, build <em>terms</em> that name objects, apply predicates to terms to get <em>atomic sentences</em>, and combine them with connectives.</p>
+
+<p><strong>Part IV</strong> delivered the real payoff — quantifiers — and gave us the master technique of <em>unfolding</em>: <code>∀</code> is a (possibly infinite) conjunction paired with implication, <code>∃</code> is a disjunction paired with conjunction, the order of mixed quantifiers encodes dependence, and the two are De-Morgan duals. <strong>Part V</strong> put it to work translating English ("at least two sisters" vs. "exactly two," uniqueness, scope, free variables, well-formed formulas), where the same unfolding-and-De-Morgan machinery proves two different-looking sentences identical. <strong>Part VI</strong> showed inference returning not just yes/no but <em>binding lists</em> — the seed of Prolog — and the discipline of knowledge engineering: split a knowledge base into a reusable general theory and a swappable instance, and state explicitly everything the logic can't figure out on its own.</p>
+
+<p>The unifying insight: once you <em>unfold</em> quantifiers into conjunctions and disjunctions, all the propositional reasoning you already know comes flooding back. First-order logic isn't a replacement for propositional logic — it's propositional logic given the power to talk about objects and to quantify over them.</p>
+
+<div class="callout tip" style="margin-top: 32px;">
+  <div class="callout-title">What's Next</div>
+  <p>The expressiveness we gained today is not free — full first-order inference is computationally hard, which is exactly why this lecture kept hinting at <em>restricted</em> forms of FOL. The next (and final logic) lecture tackles <strong>inference in first-order logic</strong> head-on: how a machine actually performs deduction over quantified sentences, how restricted FOL can be converted into propositional logic so propositional machinery applies, and how this all ties back to the inference we did in the propositional world. Keep the unfolding technique close — it's the bridge between the two worlds.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

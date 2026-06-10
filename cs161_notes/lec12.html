@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 12 — Inference in First-Order Logic</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Interactive Lecture Textbook — Canonical Stylesheet
+   Light mode. Source Serif 4 body / DM Sans UI / JetBrains Mono code.
+   Paste this verbatim into the <style> block of every generated page.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #faf8f4;
+  --bg-warm: #f5f0e8;
+  --text: #2a2520;
+  --text-muted: #6b6560;
+  --accent: #c0510a;
+  --accent-light: #e8833a;
+  --accent-bg: #fef3eb;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-keyword: #cba6f7;
+  --code-string: #a6e3a1;
+  --code-comment: #6c7086;
+  --code-type: #89b4fa;
+  --code-func: #f9e2af;
+  --code-op: #fab387;
+  --border: #d9d0c4;
+  --shadow: 0 2px 20px rgba(42,37,32,0.06);
+  --green: #2d8a4e;
+  --green-bg: #edf7f0;
+  --red: #c53030;
+  --red-bg: #fef0f0;
+  --blue: #2563eb;
+  --blue-bg: #eff4ff;
+  --purple: #7c3aed;
+  --purple-bg: #f3effe;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV SIDEBAR ── */
+.nav-toggle {
+  position: fixed; top: 20px; left: 20px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.nav-toggle:hover { background: var(--bg-warm); }
+.nav-toggle span { display: block; width: 18px; height: 2px; background: var(--text); position: relative; transition: all .3s; }
+.nav-toggle span::before, .nav-toggle span::after {
+  content: ''; position: absolute; width: 18px; height: 2px; background: var(--text); transition: all .3s;
+}
+.nav-toggle span::before { top: -6px; }
+.nav-toggle span::after { top: 6px; }
+.nav-toggle.open span { background: transparent; }
+.nav-toggle.open span::before { transform: rotate(45deg); top: 0; }
+.nav-toggle.open span::after { transform: rotate(-45deg); top: 0; }
+
+.sidebar {
+  position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+  background: var(--bg); border-right: 1px solid var(--border);
+  z-index: 1000; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; padding: 80px 24px 40px;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.05);
+}
+.sidebar.open { left: 0; }
+
+.sidebar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 12px; padding-left: 12px;
+}
+.sidebar a {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text-muted); text-decoration: none; transition: all .15s;
+  margin-bottom: 2px; line-height: 1.5;
+}
+.sidebar a:hover { background: var(--bg-warm); color: var(--text); }
+.sidebar a.sub { padding-left: 28px; font-size: 13px; }
+.sidebar .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── MAIN CONTENT ── */
+.container {
+  max-width: 740px; margin: 0 auto; padding: 60px 28px 120px;
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center; padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border); margin-bottom: 60px;
+}
+.hero-eyebrow {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 700;
+  line-height: 1.15; margin-bottom: 20px; color: var(--text);
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 520px;
+  margin: 0 auto; line-height: 1.7;
+}
+
+/* ── SECTION HEADERS ── */
+.part-header {
+  margin: 80px 0 40px; padding: 32px 0; border-top: 3px solid var(--accent);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.part-header h2 {
+  font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px; font-weight: 600; margin: 48px 0 16px;
+  color: var(--text); line-height: 1.3;
+}
+h4 {
+  font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
+  margin: 32px 0 12px; color: var(--text);
+}
+
+p { margin-bottom: 18px; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0 24px;
+  overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; line-height: 1.7; position: relative;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+pre .label {
+  position: absolute; top: 10px; right: 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: #585b70; font-family: 'DM Sans', sans-serif;
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  background: var(--bg-warm); padding: 2px 7px; border-radius: 5px;
+  color: var(--accent);
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.kw { color: var(--code-keyword); font-weight: 500; }
+.str { color: var(--code-string); }
+.cm { color: var(--code-comment); font-style: italic; }
+.tp { color: var(--code-type); }
+.fn { color: var(--code-func); }
+.op { color: var(--code-op); }
+.nb { color: #f38ba8; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 12px; padding: 20px 24px; margin: 24px 0;
+  position: relative; border-left: 4px solid;
+}
+.callout-title {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.concept { background: var(--blue-bg); border-color: var(--blue); }
+.callout.concept .callout-title { color: var(--blue); }
+
+.callout.warning { background: var(--red-bg); border-color: var(--red); }
+.callout.warning .callout-title { color: var(--red); }
+
+.callout.tip { background: var(--green-bg); border-color: var(--green); }
+.callout.tip .callout-title { color: var(--green); }
+
+.callout.insight { background: var(--purple-bg); border-color: var(--purple); }
+.callout.insight .callout-title { color: var(--purple); }
+
+.callout.big-idea { background: var(--accent-bg); border-color: var(--accent); }
+.callout.big-idea .callout-title { color: var(--accent); }
+
+/* ── INTERACTIVE QUIZ ── */
+.quiz {
+  background: var(--bg-warm); border-radius: 14px; padding: 28px;
+  margin: 32px 0; border: 1px solid var(--border);
+}
+.quiz-header {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.quiz-header::before { content: '✦'; }
+.quiz-question {
+  font-weight: 600; font-size: 17px; margin-bottom: 16px; line-height: 1.6;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-option {
+  padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; background: var(--bg); user-select: none;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.quiz-option:hover { border-color: var(--accent-light); background: #fff; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+.quiz-option.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); }
+.quiz-option .marker {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; margin-top: 1px; transition: all .2s;
+}
+.quiz-option.selected .marker { border-color: var(--accent); background: var(--accent); color: #fff; }
+.quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #fff; }
+.quiz-option.incorrect .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+.quiz-btn {
+  margin-top: 16px; padding: 10px 28px; border-radius: 10px;
+  border: none; background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.quiz-btn:hover { background: var(--accent-light); }
+.quiz-btn:disabled { opacity: 0.5; cursor: default; }
+
+.quiz-explanation {
+  margin-top: 16px; padding: 16px; border-radius: 10px;
+  font-size: 15px; line-height: 1.65; display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: var(--green-bg); border: 1px solid #b4dfc4; }
+.quiz-explanation.incorrect-exp { background: var(--red-bg); border: 1px solid #f5c6c6; }
+
+/* ── DIAGRAM / FIGURE ── */
+.figure {
+  margin: 28px 0; text-align: center;
+}
+.figure-box {
+  display: inline-block; background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 32px; box-shadow: var(--shadow);
+}
+.figure-caption {
+  margin-top: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-muted);
+}
+
+/* ── EXPANDABLE SECTIONS ── */
+details {
+  margin: 20px 0; border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+}
+summary {
+  padding: 14px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 15px; background: var(--bg-warm);
+  user-select: none; list-style: none; display: flex; align-items: center; gap: 10px;
+}
+summary::before { content: '▸'; transition: transform .2s; display: inline-block; color: var(--accent); }
+details[open] summary::before { transform: rotate(90deg); }
+summary::-webkit-details-marker { display: none; }
+.details-body { padding: 20px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  z-index: 2000; transition: width .1s;
+}
+
+/* ── CONNECTOR LINES ── */
+.flow-step {
+  padding-left: 32px; position: relative; margin-bottom: 24px;
+}
+.flow-step::before {
+  content: ''; position: absolute; left: 10px; top: 32px; bottom: -24px;
+  width: 2px; background: var(--border);
+}
+.flow-step:last-child::before { display: none; }
+.flow-step .step-num {
+  position: absolute; left: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABLE ── */
+.compare-table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 14.5px;
+}
+.compare-table th {
+  background: var(--bg-warm); padding: 10px 14px; text-align: left;
+  font-weight: 700; border-bottom: 2px solid var(--border);
+  font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.compare-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+
+/* ── ANIMATED REVEAL ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: all .5s cubic-bezier(.4,0,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 100px; }
+  pre { padding: 16px 14px; font-size: 13px; }
+  .hero { padding: 60px 0 40px; }
+  .quiz { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+  <span></span>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-label">Lecture 12 — Inference in FOL</div>
+  <a href="#part1">Part I — Reducing FOL to Propositional Logic</a>
+  <a href="#why-reduce" class="sub">Why Reduce At All?</a>
+  <a href="#universal-inst" class="sub">Universal Instantiation</a>
+  <a href="#ground-terms" class="sub">Ground Terms</a>
+  <a href="#existential-inst" class="sub">Existential Instantiation</a>
+  <a href="#quiz1" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part2">Part II — Semi-Decidability</a>
+  <a href="#herbrand" class="sub">Herbrand's Theorem</a>
+  <a href="#the-algorithm" class="sub">The Increasing-Depth Algorithm</a>
+  <a href="#semi-decidable" class="sub">What Semi-Decidable Means</a>
+  <a href="#quiz2" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part3">Part III — Forward &amp; Backward Chaining</a>
+  <a href="#definite-clauses" class="sub">Definite Clauses</a>
+  <a href="#west-story" class="sub">The Colonel West Story</a>
+  <a href="#forward" class="sub">Forward Chaining</a>
+  <a href="#backward" class="sub">Backward Chaining</a>
+  <a href="#quiz3" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part4">Part IV — Unification</a>
+  <a href="#what-unify" class="sub">The Matching Problem</a>
+  <a href="#unify-examples" class="sub">Worked Examples</a>
+  <a href="#quiz4" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part5">Part V — First-Order Resolution</a>
+  <a href="#lifted-rule" class="sub">The Lifted Resolution Rule</a>
+  <a href="#cat-story" class="sub">The Curiosity &amp; Cat Proof</a>
+  <a href="#quiz5" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#part6">Part VI — Converting to CNF</a>
+  <a href="#cnf-steps" class="sub">The Six Steps</a>
+  <a href="#skolemization" class="sub">Skolemization</a>
+  <a href="#quiz6" class="sub">↳ Check Yourself</a>
+  <div class="divider"></div>
+  <a href="#synthesis">Putting It All Together</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<header class="hero reveal">
+  <div class="hero-eyebrow">CS161 · Fundamentals of Artificial Intelligence</div>
+  <h1>Inference in First-Order Logic</h1>
+  <p class="hero-sub">From propositionalization and semi-decidability to chaining, unification, and lifted resolution — how a machine reasons over quantified knowledge.</p>
+</header>
+
+<!-- ═══════════════════════ PART I ═══════════════════════ -->
+<section id="part1" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part I</div>
+  <h2>Reducing First-Order Logic to Propositional Logic</h2>
+</div>
+
+<h3 id="why-reduce">Why Reduce At All?</h3>
+<p>Before this lecture, we already had a powerful, well-understood machine for reasoning: <strong>propositional inference</strong>. In propositional logic, every fact is an atomic true-or-false symbol like <code>Rains</code> or <code>P</code>, and we have fast, mature algorithms (SAT solvers) that decide whether one set of propositions <em>entails</em> another. "Entails" means: in every world where the knowledge base is true, the query is also true.</p>
+<p>First-order logic (FOL) is more expressive. Instead of bare symbols it gives us <strong>objects</strong> (John, Richard), <strong>predicates</strong> that say things about objects (<code>King(John)</code>), <strong>functions</strong> that build new objects from old ones (<code>Father(John)</code>), and above all <strong>quantifiers</strong> — "for all <code>x</code>…" (∀) and "there exists an <code>x</code>…" (∃). That extra expressiveness is exactly why early AI was built on FOL. But it also breaks our propositional toolbox: a SAT solver has no idea what a quantifier is.</p>
+<p>The strategy of this first part is therefore a translation: take a first-order knowledge base, mechanically strip out the quantifiers, and produce an ordinary propositional knowledge base that a SAT solver <em>can</em> chew on. This trick — called <strong>propositionalization</strong> — turns out to be not just a teaching device but the way modern systems actually do FOL inference in practice.</p>
+
+<div class="callout tip">
+  <div class="callout-title">Why This Matters Later</div>
+  <p>Everything in Part I rests on two replacement rules: <strong>Universal Instantiation</strong> (kills ∀) and <strong>Existential Instantiation</strong> (kills ∃). The very same two rules reappear in Part VI when we convert FOL sentences to CNF for resolution — there ∃ is handled by a fancier version called <em>Skolemization</em>. Learn them once here; reuse them everywhere.</p>
+</div>
+
+<h3 id="universal-inst">Universal Instantiation — Killing "For All"</h3>
+<p>A universally quantified sentence ∀<code>x</code> α says α holds for <em>every</em> object. <strong>Universal Instantiation (UI)</strong> says: if it holds for everything, then it certainly holds for any specific object I care to name. So I am allowed to drop the ∀ and substitute a concrete <strong>ground term</strong> (a term with no variables) for the variable.</p>
+<p>Take the classic example:</p>
+<pre><code>∀x  King(x) ∧ Greedy(x) ⇒ Evil(x)</code></pre>
+<p>Suppose our vocabulary has two constants, <code>John</code> and <code>Richard</code>, and one function, <code>Father</code>. UI lets us generate concrete instances by plugging in any ground term:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p>Substitute <code>x ↦ John</code>: &nbsp;<code>King(John) ∧ Greedy(John) ⇒ Evil(John)</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p>Substitute <code>x ↦ Richard</code>: &nbsp;<code>King(Richard) ∧ Greedy(Richard) ⇒ Evil(Richard)</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p>Apply the function to make a <em>new</em> ground term <code>Father(John)</code>, then substitute <code>x ↦ Father(John)</code>: &nbsp;<code>King(Father(John)) ∧ Greedy(Father(John)) ⇒ Evil(Father(John))</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p>And nothing stops us nesting: <code>Father(Father(John))</code>, <code>Father(Father(Father(John)))</code>, … In principle there are <strong>infinitely many</strong> instances. Hold that thought — it is the seed of Part II.</p>
+</div>
+
+<p>The general rule, written compactly, is:</p>
+<pre><code>   ∀x α
+─────────────      where g is any ground term
+ Subst({x/g}, α)</code></pre>
+
+<h4 id="ground-terms">What Exactly Is a "Ground Term"?</h4>
+<p>Earlier we defined a <strong>term</strong> as one of three things: a variable (<code>x</code>), a constant (<code>John</code>), or a function applied to terms (<code>Father(x)</code>). A <strong>ground term</strong> is a term with <em>no variables anywhere inside it</em>.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Ground Term</div>
+  <p>A <strong>ground term</strong> contains no variables. A constant like <code>Richard</code> is ground. A function applied to ground arguments, like <code>Father(Richard)</code>, is also ground (a function symbol on a ground term). But <code>Father(x)</code> is <em>not</em> ground, because <code>x</code> is a variable. Ground terms are exactly the things UI is allowed to substitute in.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Why This Is Really Propositional</div>
+  <p>Look at an instantiated sentence like <code>King(John) ∧ Greedy(John) ⇒ Evil(John)</code>. It looks first-order, but there are <strong>no variables left</strong>. Each ground literal — <code>King(John)</code>, <code>Greedy(John)</code>, <code>Evil(John)</code> — is just a complicated name for something that is simply true or false. Rename them <code>X₁</code>, <code>X₂</code>, <code>X₃</code> and the sentence becomes the purely propositional <code>X₁ ∧ X₂ ⇒ X₃</code>. Once the fancy syntax is gone, an ordinary propositional solver does the work.</p>
+</div>
+
+<h3 id="existential-inst">Existential Instantiation — Killing "There Exists"</h3>
+<p>An existentially quantified sentence ∃<code>x</code> α says α holds for <em>at least one</em> object — but it does not tell us which one. <strong>Existential Instantiation (EI)</strong> handles this by giving that unknown object a brand-new name and then dropping the quantifier. Consider:</p>
+<pre><code>∃x  Crown(x) ∧ OnHead(x, John)</code></pre>
+<p>We invent a fresh constant — call it <code>C₁</code> — and replace <code>x</code> with it:</p>
+<pre><code>Crown(C₁) ∧ OnHead(C₁, John)</code></pre>
+<p>Intuitively the two say the same kind of thing: the first says "<em>some</em> crown sits on John's head"; the second says "<em>this particular object, which I'll call</em> C₁, is a crown and sits on John's head." The crucial subtlety is that <code>C₁</code> must be <strong>completely new</strong> — it cannot appear anywhere else in the knowledge base.</p>
+
+<div class="callout warning">
+  <div class="callout-title">The Fresh-Constant Rule — Don't Reuse Names</div>
+  <p>Suppose the knowledge base already contained <code>Red(C₁)</code>. If we reused <code>C₁</code> for the unknown crown, we'd accidentally be asserting that the crown is <em>red</em> — but the original ∃ never said that! The fresh name guarantees that nothing else is secretly being claimed about the object. This new name is called a <strong>Skolem constant</strong> (after the logician Skolem).</p>
+</div>
+
+<p>The general rule:</p>
+<pre><code>    ∃x α
+─────────────      where k is a constant symbol that
+ Subst({x/k}, α)    appears NOWHERE else in the KB</code></pre>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — UI Preserves Truth, EI Preserves Satisfiability</div>
+  <p>These two rules are <em>not</em> equally strong. With no function symbols, <strong>Universal Instantiation produces an equivalent</strong> propositional KB — same models, exactly. <strong>Existential Instantiation only preserves satisfiability</strong>: the new KB is satisfiable if and only if the old one is, but they are not logically equivalent. Since entailment can be reduced to a satisfiability check, preserving satisfiability is enough to answer the queries we care about.</p>
+</div>
+
+<div class="quiz" id="quiz1-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">We apply Existential Instantiation to <code>∃x Crown(x) ∧ OnHead(x, John)</code>. Which choice is a <em>legal</em> result?</div>
+  <div class="quiz-options" data-quiz="q1">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Replace <code>x</code> with the existing constant <code>John</code>, giving <code>Crown(John) ∧ OnHead(John, John)</code>.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Replace <code>x</code> with a brand-new constant <code>C₁</code> used nowhere else, giving <code>Crown(C₁) ∧ OnHead(C₁, John)</code>.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Just delete the <code>∃x</code> and leave the variable <code>x</code> in place.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Replace <code>x</code> with the function term <code>Father(John)</code>.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q1','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q1">
+    <strong>Correct answer: B.</strong> EI demands a <em>fresh</em> constant that appears nowhere else in the knowledge base, so that we don't accidentally assert anything extra about the unknown object. Option A reuses <code>John</code>, which would wrongly tie the crown's identity to John; option C leaves a free variable, which is not a propositional sentence; option D uses a function of an existing object, which again over-commits to who the object is.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART II ═══════════════════════ -->
+<section id="part2" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part II</div>
+  <h2>Semi-Decidability — When the Search Never Stops</h2>
+</div>
+
+<p>Part I left us with a worry. As soon as we have a function symbol like <code>Father</code>, Universal Instantiation can generate <em>infinitely many</em> ground terms: <code>John</code>, <code>Father(John)</code>, <code>Father(Father(John))</code>, … The propositionalized knowledge base could be <strong>infinite</strong>. Can we still answer "does α follow from the KB?" in finite time? The answer is a fascinating "yes-and-no," and it is one of the deepest results in logic.</p>
+
+<h3 id="herbrand">Herbrand's Theorem — A Finite Subset Always Suffices</h3>
+<p>The escape hatch is a 1930 theorem by Jacques Herbrand. It says: even if the full propositionalized knowledge base is infinite, you never need all of it.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Herbrand's Theorem (1930)</div>
+  <p>If a sentence α is entailed by a first-order knowledge base, then α is entailed by a <strong>finite subset</strong> of the propositionalized knowledge base. In symbols: if Δ ⊨ α, there exists a finite Δ′ ⊆ propositionalize(Δ) with Δ′ ⊨ α.</p>
+</div>
+
+<p>Why does this matter? Because functions let us build arbitrarily deep <strong>nested</strong> terms — not just <code>Father(John)</code> but <code>Age(Father(John))</code> and on and on — so the full instantiation is unbounded. Herbrand promises that a true entailment is always "caught" by some finite slice of that infinite set. We just have to find the right slice.</p>
+
+<h3 id="the-algorithm">The Increasing-Depth Algorithm</h3>
+<p>Herbrand's theorem suggests an almost embarrassingly simple algorithm: keep instantiating to deeper and deeper nesting levels, and after each level check whether the (now finite, propositional) knowledge base already entails α.</p>
+
+<pre><code><span class="cm">// Prove that α follows from first-order KB Δ</span>
+<span class="kw">for</span> n = <span class="nb">0</span> <span class="kw">to</span> ∞:
+    Δₙ = propositionalize(Δ, depth = n)   <span class="cm">// UI up to nesting depth n</span>
+    <span class="kw">if</span> Δₙ ⊨ α:                              <span class="cm">// a finite propositional check (SAT)</span>
+        <span class="kw">return</span> <span class="nb">true</span></code></pre>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Depth 0 (Δ₀):</strong> instantiate variables using only the constants. This already gives a finite propositional KB. Check whether <code>Δ₀ ⊨ α</code> using a SAT-based entailment test. If yes — done.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Depth 1 (Δ₁):</strong> if not, allow one level of function nesting, e.g. add terms like <code>Father(John)</code>. Re-check <code>Δ₁ ⊨ α</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Depth 2 (Δ₂):</strong> still no? Allow two levels of nesting, e.g. <code>Father(Father(John))</code>. Re-check. And so on, incrementing <code>n</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Guarantee:</strong> Herbrand says if α genuinely follows, then for <em>some</em> finite <code>n</code> the check succeeds. So this loop is guaranteed to <strong>halt and say "yes"</strong> whenever the answer is yes.</p>
+</div>
+
+<h3 id="semi-decidable">The Catch — Entailment in FOL Is Semi-Decidable</h3>
+<p>Now look at the failure case. Suppose α <em>does not</em> follow from Δ. The loop checks depth 0, fails, checks depth 1, fails, checks depth 2, fails… and never finds a contradiction-free reason to stop. It runs forever. We can never be sure whether we just haven't gone deep enough yet, or whether α truly doesn't follow.</p>
+
+<div class="callout insight">
+  <div class="callout-title">"Semi-Decidable" Defined</div>
+  <p>A problem is <strong>semi-decidable</strong> if there is a procedure that is guaranteed to terminate with "yes" whenever the answer is yes — but may run forever when the answer is no. FOL entailment is semi-decidable: we can confirm that something <em>does</em> follow, but we have no general procedure that always terminates to confirm that something <em>does not</em> follow.</p>
+</div>
+
+<p>This is not a weakness of our particular algorithm — it is a fundamental limit. It was proved independently in 1936 by <strong>Alan Turing</strong> and <strong>Alonzo Church</strong> (the Church–Turing result on the undecidability of first-order validity). Contrast this with propositional logic, which is fully <strong>decidable</strong>: a finite truth table always settles the question.</p>
+
+<div class="callout tip">
+  <div class="callout-title">How It's Actually Done in Practice</div>
+  <p>Because the infinite case is so painful, real systems usually restrict themselves to FOL <em>without function symbols</em>. Then the set of ground terms is finite, propositionalization yields a finite KB, and a powerful SAT solver or knowledge compiler finishes the job. Historically AI invested heavily in first-order computation for its first decades, but attention later shifted toward propositional solvers precisely because they're so effective — so today a common pattern is: translate the (function-free) FOL problem down to propositional logic and let a SAT solver do the heavy lifting.</p>
+</div>
+
+<div class="quiz" id="quiz2-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">What does it mean that entailment in first-order logic is <em>semi-decidable</em>?</div>
+  <div class="quiz-options" data-quiz="q2">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Half of all first-order sentences can be decided and half cannot.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>There is a procedure that always halts with "yes" when α follows, but may loop forever when α does not follow.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>FOL entailment can always be decided, just more slowly than propositional logic.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>It can be decided only when the knowledge base is finite.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q2','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q2">
+    <strong>Correct answer: B.</strong> Semi-decidable means a sound and complete procedure exists for the positive case: Herbrand's theorem guarantees that if α is entailed, the increasing-depth loop will reach a depth where it confirms entailment and halts. The trouble is the negative case — when α is not entailed, the loop may keep deepening forever, so there is no general always-terminating "no" procedure. Option C is the definition of <em>decidable</em>, which is exactly what FOL is <em>not</em>.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART III ═══════════════════════ -->
+<section id="part3" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part III</div>
+  <h2>Forward &amp; Backward Chaining</h2>
+</div>
+
+<p>Propositionalization is general but blunt. The next two methods work <strong>directly</strong> on first-order sentences, without translating everything down. They're not fully general — they apply only to a restricted, well-behaved class of knowledge bases — but on that class they're efficient and intuitive. The restriction is <strong>definite clauses</strong>.</p>
+
+<h3 id="definite-clauses">Definite Clauses — Rules in Disguise</h3>
+<p>Recall from propositional logic the idea of a <strong>Horn clause</strong>: a disjunction of literals with <em>at most one</em> positive literal (so zero or one). A <strong>definite clause</strong> is the stricter cousin: a clause with <em>exactly one</em> positive literal.</p>
+
+<table class="compare-table">
+  <tr><th>Clause type</th><th>Positive literals</th><th>Example</th></tr>
+  <tr><td>Horn clause</td><td>0 or 1</td><td><code>¬A ∨ ¬B ∨ C</code> &nbsp;or&nbsp; <code>¬A ∨ ¬B</code></td></tr>
+  <tr><td>Definite clause</td><td>exactly 1</td><td><code>¬A ∨ ¬B ∨ C</code></td></tr>
+</table>
+
+<p>The reason definite clauses are so useful is that they are secretly just <strong>if–then rules</strong>. A clause <code>¬A ∨ ¬B ∨ C</code> is logically the same as the implication <code>A ∧ B ⇒ C</code>. So every definite clause reads as: "a conjunction of positive premises implies a single positive conclusion."</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Definite Clause as a Rule</div>
+  <p>A <strong>definite clause</strong> rewrites as <code>P₁ ∧ P₂ ∧ … ∧ Pₙ ⇒ Q</code> where every <code>Pᵢ</code> and <code>Q</code> is a positive literal (or atomic fact). A single positive fact like <code>American(West)</code> is also a definite clause — it's the degenerate rule with an empty premise. Chaining methods only work on knowledge bases made entirely of definite clauses.</p>
+</div>
+
+<h3 id="west-story">The Story — Is Colonel West a Criminal?</h3>
+<p>We'll use one running story to illustrate both directions of chaining. In English: <em>"The law says it is a crime for an American to sell weapons to hostile nations. The country Nono, an enemy of America, has some missiles, and all of its missiles were sold to it by Colonel West, who is American. Prove West is a criminal."</em> Here are the seven first-order sentences:</p>
+
+<pre><code><span class="cm">// (1) It is a crime for an American to sell weapons to a hostile nation</span>
+American(x) ∧ Weapon(y) ∧ Sells(x,y,z) ∧ Hostile(z) ⇒ Criminal(x)
+
+<span class="cm">// (2) Nono has some missiles — ∃ removed by EI with fresh constant M1</span>
+Owns(Nono, M1)      Missile(M1)
+
+<span class="cm">// (3) All of Nono's missiles were sold to it by West</span>
+Missile(x) ∧ Owns(Nono,x) ⇒ Sells(West, x, Nono)
+
+Missile(x) ⇒ Weapon(x)              <span class="cm">// (4) missiles are weapons</span>
+Enemy(x, America) ⇒ Hostile(x)      <span class="cm">// (5) enemies of America are hostile</span>
+American(West)                      <span class="cm">// (6)</span>
+Enemy(Nono, America)                <span class="cm">// (7)</span></code></pre>
+
+<p>Two things to notice. First, sentence (2) was originally existential ("Nono has <em>some</em> missiles"), so we used Existential Instantiation to introduce the fresh constant <code>M1</code>. Second, all the other variables are universally quantified, and by convention we just drop the explicit ∀. Every sentence here is a definite clause — perfect for chaining.</p>
+
+<h3 id="forward">Forward Chaining — Start From Facts, Push Forward</h3>
+<p>Forward chaining is data-driven. You begin with what you know for sure (the ground facts), then repeatedly fire any rule whose premises you've already established, adding its conclusion to your pile. You keep going until the goal pops out.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Known facts:</strong> <code>Owns(Nono,M1)</code>, <code>Missile(M1)</code>, <code>American(West)</code>, <code>Enemy(Nono,America)</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Fire rule (5)</strong> with <code>x ↦ Nono</code>: premise <code>Enemy(Nono,America)</code> matches, so conclude <code>Hostile(Nono)</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Fire rule (4)</strong> with <code>x ↦ M1</code>: premise <code>Missile(M1)</code> matches, so conclude <code>Weapon(M1)</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Fire rule (3)</strong> with <code>x ↦ M1</code>: premises <code>Missile(M1)</code> and <code>Owns(Nono,M1)</code> both match, so conclude <code>Sells(West, M1, Nono)</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <p><strong>Fire rule (1)</strong> with <code>x ↦ West, y ↦ M1, z ↦ Nono</code>: all four premises — <code>American(West)</code>, <code>Weapon(M1)</code>, <code>Sells(West,M1,Nono)</code>, <code>Hostile(Nono)</code> — are now established, so conclude <code>Criminal(West)</code>. Goal reached.</p>
+</div>
+
+<p>Forward chaining is "opportunistic": you fire whatever you can and keep growing the set of known facts until the target appears.</p>
+
+<h3 id="backward">Backward Chaining — Start From the Goal, Work Backward</h3>
+<p>Backward chaining is goal-driven. You start with what you want to prove and ask: "which rule could conclude this?" Then you take that rule's premises as new sub-goals to prove, recursively, until every sub-goal bottoms out at a known fact.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Goal:</strong> <code>Criminal(West)</code>. Only rule (1) concludes <code>Criminal</code>. Matching its head forces <code>x ↦ West</code>, leaving four sub-goals: <code>American(West)</code>, <code>Weapon(y)</code>, <code>Sells(West,y,z)</code>, <code>Hostile(z)</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Sub-goal <code>American(West)</code>:</strong> already a fact (6). Done — no further work.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Sub-goal <code>Weapon(y)</code>:</strong> rule (4) says <code>Missile(y) ⇒ Weapon(y)</code>, so the new sub-goal becomes <code>Missile(y)</code>. Rule (2)'s fact <code>Missile(M1)</code> matches by binding <code>y ↦ M1</code> — and that binding propagates everywhere <code>y</code> appears.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Sub-goal <code>Sells(West, M1, z)</code>:</strong> rule (3) concludes it, forcing <code>z ↦ Nono</code> and leaving sub-goals <code>Missile(M1)</code> (a fact) and <code>Owns(Nono,M1)</code> (a fact). Both already known.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <p><strong>Sub-goal <code>Hostile(Nono)</code>:</strong> rule (5) concludes it, leaving <code>Enemy(Nono,America)</code> — fact (7). Every sub-goal is discharged, so <code>Criminal(West)</code> is proved.</p>
+</div>
+
+<div class="callout warning">
+  <div class="callout-title">Backward Chaining Can Loop Forever</div>
+  <p>Backward chaining is typically implemented with <strong>depth-first search</strong> over the rule tree. Applied naïvely, it can fall into infinite loops (e.g. a rule whose sub-goal keeps regenerating the same goal), so real implementations add loop-checking and other safeguards. This method, refined, is the engine behind <strong>Prolog</strong> and logic programming — answering an existential query returns a binding list, so logical inference doubles as computation.</p>
+</div>
+
+<details>
+<summary>Side note: Datalog — the function-free, definite-clause subset</summary>
+<div class="details-body">
+<p>When you combine <em>definite clauses</em> with <em>no function symbols</em>, the only ground terms are constants, so everything stays finite and several desirable properties hold (e.g. inference terminates). This subset is called <strong>Datalog</strong>, and it comes from the database world — it's a common, practical fragment of first-order logic. Note also that even <em>rule matching</em> — deciding whether a rule's premises match what's already known — is not trivial in general; the textbook covers the indexing tricks used to do it efficiently.</p>
+</div>
+</details>
+
+<div class="quiz" id="quiz3-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">What is the key difference between forward and backward chaining?</div>
+  <div class="quiz-options" data-quiz="q3">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Forward chaining works on definite clauses; backward chaining works on arbitrary clauses.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Forward chaining starts from known facts and derives new conclusions until the goal appears; backward chaining starts from the goal and reduces it to sub-goals until they bottom out at facts.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Forward chaining uses unification; backward chaining does not.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Backward chaining is always faster and never loops.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q3','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q3">
+    <strong>Correct answer: B.</strong> The two methods differ in <em>direction</em>: forward chaining is data-driven (fire rules whose premises hold, growing the fact set toward the goal), while backward chaining is goal-driven (find a rule that concludes the goal, then prove its premises as sub-goals). Option A is wrong because <em>both</em> require definite clauses; option D is wrong because naïve depth-first backward chaining can in fact loop forever.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART IV ═══════════════════════ -->
+<section id="part4" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part IV</div>
+  <h2>Unification — The Matching Engine</h2>
+</div>
+
+<p>Notice that every chaining step above quietly relied on the same operation: deciding that <code>Missile(y)</code> could be made identical to the fact <code>Missile(M1)</code> by setting <code>y ↦ M1</code>. That "make-two-things-identical-by-substitution" step is called <strong>unification</strong>, and it is the heart of all first-order inference. Before we can lift resolution to FOL in Part V, we need to understand it on its own.</p>
+
+<h3 id="what-unify">The Matching Problem</h3>
+<p>Two atomic sentences usually aren't <em>literally</em> the same, but they might be made the same by choosing the right values for their variables. A <strong>unifier</strong> is a substitution θ that, applied to both, yields identical results.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Unification</div>
+  <p>A substitution θ <strong>unifies</strong> α and β if <code>Subst(θ, α) = Subst(θ, β)</code> — applying θ to both makes them syntactically identical. For example, <code>Knows(John, x)</code> and <code>Knows(John, Jane)</code> are unified by θ = <code>{x / Jane}</code>: both become <code>Knows(John, Jane)</code>.</p>
+</div>
+
+<h3 id="unify-examples">Worked Examples — and One Failure</h3>
+<p>The professor solves these by visual inspection rather than running the full algorithm; that's enough for our purposes. Look for what <em>must</em> be true for the two atoms to coincide.</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><code>Knows(John, x)</code> and <code>Knows(y, OJ)</code>. To line up the first arguments, set <code>y ↦ John</code>; to line up the second, set <code>x ↦ OJ</code>. Unifier θ = <code>{y/John, x/OJ}</code>. Both become <code>Knows(John, OJ)</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><code>Knows(John, x)</code> and <code>Knows(y, Mother(y))</code>. First force <code>y ↦ John</code>, which turns the second into <code>Knows(John, Mother(John))</code>. Now match the second arguments by setting <code>x ↦ Mother(John)</code>. A variable can be bound to a whole function term — that's allowed.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><code>Knows(John, x)</code> and <code>Knows(x, OJ)</code>. <strong>This fails.</strong> Matching the first arguments demands <code>x ↦ John</code>; matching the second demands <code>x ↦ OJ</code>. The same variable <code>x</code> cannot be both <code>John</code> and <code>OJ</code> — a clash. No unifier exists.</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="170" viewBox="0 0 420 170" style="display:block; margin:0 auto;">
+      <!-- left atom -->
+      <text x="95" y="34" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" fill="#2a2520">Knows( John , x )</text>
+      <!-- right atom -->
+      <text x="325" y="34" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" fill="#2a2520">Knows( y , Mother(y) )</text>
+      <!-- arg 1 link: John <-> y -->
+      <line x1="72" y1="44" x2="295" y2="44" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="183" y="62" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#c0510a">y / John</text>
+      <!-- arg 2 link: x <-> Mother(y) -->
+      <line x1="120" y1="48" x2="345" y2="60" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="210" y="92" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#c0510a">x / Mother(John)</text>
+      <!-- result -->
+      <text x="210" y="138" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">⇒  both become  Knows( John , Mother(John) )</text>
+      <line x1="40" y1="115" x2="380" y2="115" stroke="#d9d0c4" stroke-width="1.5"/>
+    </svg>
+  </div>
+  <div class="figure-caption">Unifying <code>Knows(John,x)</code> with <code>Knows(y,Mother(y))</code>: bindings flow until both atoms collapse to one.</div>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">Why Unification Is the Linchpin</div>
+  <p>Unification is the precise, mechanical version of the "matching" we did informally in chaining. In Part V it becomes the new ingredient that makes resolution work in first-order logic: when we try to cancel a literal against its negation, the two won't be literally identical, so we first <em>unify</em> them, then apply the resulting substitution to whatever's left over.</p>
+</div>
+
+<div class="quiz" id="quiz4-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Why can <code>Knows(John, x)</code> and <code>Knows(x, OJ)</code> <em>not</em> be unified?</div>
+  <div class="quiz-options" data-quiz="q4">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Because <code>John</code> and <code>OJ</code> are different constants and constants can never be unified.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Because the single variable <code>x</code> would have to equal both <code>John</code> (from the first argument) and <code>OJ</code> (from the second), which is contradictory.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Because the two predicates have different names.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Because unification only works when there are no constants at all.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q4','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q4">
+    <strong>Correct answer: B.</strong> The same variable appears in both atoms but in positions that demand conflicting bindings: aligning the first arguments forces <code>x ↦ John</code> while aligning the second forces <code>x ↦ OJ</code>. A substitution can only assign one value to a variable, so no unifier exists. Option A is false — a variable can perfectly well unify two different constants when they sit in <em>different</em> variable slots, as example 1 showed.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART V ═══════════════════════ -->
+<section id="part5" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part V</div>
+  <h2>First-Order Resolution</h2>
+</div>
+
+<p>Chaining was powerful but limited to definite clauses. <strong>Resolution</strong> is the fully general method — it handles any first-order knowledge base. At a high level the recipe is identical to the propositional case we saw earlier: to test whether α follows from Δ, convert Δ and the <em>negated</em> query ¬α to <strong>conjunctive normal form (CNF)</strong>, then repeatedly resolve clauses, trying to derive the empty clause (a contradiction). If we reach a contradiction, then Δ ∧ ¬α is unsatisfiable, which means Δ ⊨ α.</p>
+
+<p>Only two things are new at the first-order level: the resolution rule now needs <strong>unification</strong> (Part IV) to cancel literals, and CNF conversion gains a couple of extra steps (Part VI). Let's see the lifted rule, then a full worked proof.</p>
+
+<h3 id="lifted-rule">The Lifted Resolution Rule</h3>
+<p>In propositional resolution, two clauses cancel when one contains a literal and the other contains its exact negation: from <code>¬A ∨ B</code> and <code>A ∨ D</code> we cancel <code>A</code>/<code>¬A</code> and conclude <code>B ∨ D</code>. In first-order logic the complementary literals usually <em>aren't</em> identical, so we unify them first — and then we must apply that unifier to the surviving literals too.</p>
+
+<pre><code><span class="cm">// Given these two clauses:</span>
+∀x  King(x) ⇒ Unhappy(x)      ≡   ¬King(x) ∨ Unhappy(x)
+    King(Ken)
+
+<span class="cm">// ¬King(x) and King(Ken) aren't identical — unify them:</span>
+θ = {x / Ken}
+
+<span class="cm">// Apply θ to the surviving literal Unhappy(x):</span>
+⇒  Unhappy(Ken)</code></pre>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Big Idea — Resolution = Unify, Cancel, Substitute</div>
+  <p>First-order resolution is propositional resolution plus one step: <strong>find a unifier θ for the complementary literals, cancel them, then apply θ to everything that remains.</strong> Forgetting to apply θ to the leftover literals is the classic mistake — in the example above, the conclusion isn't <code>Unhappy(x)</code>, it's <code>Unhappy(Ken)</code>, because the unifier that bound <code>x ↦ Ken</code> must propagate.</p>
+</div>
+
+<h3 id="cat-story">A Full Proof — Did Curiosity Kill the Cat?</h3>
+<p>The story: <em>Jack owns a dog. Every dog owner is an animal lover. No animal lover kills an animal. Either Jack or Curiosity killed the cat named Tuna. Cats are animals.</em> Query: <em>did Curiosity kill the cat?</em> Here is the knowledge base in CNF (the conversion itself is Part VI), plus the negated query as clause 0:</p>
+
+<pre><code><span class="cm">// Δ in CNF, clauses 1–7</span>
+(1)  Dog(D)              <span class="cm">// Jack owns a dog named D</span>
+     Owns(Jack, D)
+(2)  Owns(Jack, D)       <span class="cm">// (grouped with 1 above)</span>
+(3)  ¬Dog(y) ∨ ¬Owns(x,y) ∨ AnimalLover(x)     <span class="cm">// dog owners are animal lovers</span>
+(4)  ¬AnimalLover(x) ∨ ¬Animal(y) ∨ ¬Kills(x,y) <span class="cm">// lovers kill no animals</span>
+(5)  Kills(Jack,Tuna) ∨ Kills(Curiosity,Tuna)   <span class="cm">// Jack or Curiosity</span>
+(6)  Cat(Tuna)
+(7)  ¬Cat(x) ∨ Animal(x)                         <span class="cm">// cats are animals</span>
+
+<span class="cm">// Negated query, clause 0</span>
+(0)  ¬Kills(Curiosity, Tuna)</code></pre>
+
+<p>We resolve pairs of clauses, unifying as needed, hunting for the empty clause:</p>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Resolve (1) &amp; (3)</strong>: unify <code>Dog(D)</code> with <code>¬Dog(y)</code> via <code>y ↦ D</code>. New clause (8): <code>¬Owns(x,D) ∨ AnimalLover(x)</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Resolve (2) &amp; (8)</strong>: unify <code>Owns(Jack,D)</code> with <code>¬Owns(x,D)</code> via <code>x ↦ Jack</code>. New clause (9): <code>AnimalLover(Jack)</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Resolve (6) &amp; (7)</strong>: unify <code>Cat(Tuna)</code> with <code>¬Cat(x)</code> via <code>x ↦ Tuna</code>. New clause (10): <code>Animal(Tuna)</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Resolve (4) &amp; (10)</strong>: unify <code>Animal(Tuna)</code> with <code>¬Animal(y)</code> via <code>y ↦ Tuna</code>. New clause (11): <code>¬AnimalLover(x) ∨ ¬Kills(x, Tuna)</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <p><strong>Resolve (9) &amp; (11)</strong>: unify <code>AnimalLover(Jack)</code> with <code>¬AnimalLover(x)</code> via <code>x ↦ Jack</code>. New clause (12): <code>¬Kills(Jack, Tuna)</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">6</div>
+  <p><strong>Resolve (0) &amp; (5)</strong>: cancel <code>¬Kills(Curiosity,Tuna)</code> against <code>Kills(Curiosity,Tuna)</code> — no unification needed, they're identical. New clause (13): <code>Kills(Jack, Tuna)</code>.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">7</div>
+  <p><strong>Resolve (12) &amp; (13)</strong>: <code>¬Kills(Jack,Tuna)</code> and <code>Kills(Jack,Tuna)</code> cancel, leaving nothing — the <strong>empty clause</strong> (14), our contradiction.</p>
+</div>
+
+<div class="callout insight">
+  <div class="callout-title">Reading the Result</div>
+  <p>Deriving the empty clause means Δ ∧ ¬α is unsatisfiable, so Δ ⊨ α. The query was "did Curiosity kill Tuna?" and we proved it: working backward, the proof shows Jack is an animal lover, animal lovers don't kill animals, Tuna is an animal — so Jack is innocent, and since one of the two did it, <strong>Curiosity is guilty</strong>. Notice unification did the heavy lifting at every step except the last two.</p>
+</div>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="420" height="220" viewBox="0 0 420 220" style="display:block; margin:0 auto;">
+      <!-- nodes -->
+      <text x="50" y="24" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">(1)+(3)</text>
+      <text x="150" y="24" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">(6)+(7)</text>
+      <text x="150" y="60" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#c0510a">(10) Animal(Tuna)</text>
+      <text x="50" y="60" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#c0510a">(8)</text>
+      <text x="50" y="96" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#c0510a">(9) AnimalLover(Jack)</text>
+      <text x="240" y="96" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#c0510a">(11)</text>
+      <text x="150" y="132" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#c0510a">(12) ¬Kills(Jack,Tuna)</text>
+      <text x="330" y="132" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#c0510a">(13) Kills(Jack,Tuna)</text>
+      <text x="350" y="96" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#2a2520">(0)+(5)</text>
+      <text x="210" y="196" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="16" font-weight="600" fill="#c0510a">⊥  (empty clause)</text>
+      <!-- connectors -->
+      <line x1="50" y1="66" x2="50" y2="86" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="150" y1="40" x2="150" y2="50" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="80" y1="100" x2="200" y2="124" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="170" y1="66" x2="235" y2="86" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="350" y1="100" x2="330" y2="122" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="160" y1="138" x2="200" y2="182" stroke="#d9d0c4" stroke-width="2"/>
+      <line x1="320" y1="138" x2="225" y2="182" stroke="#d9d0c4" stroke-width="2"/>
+    </svg>
+  </div>
+  <div class="figure-caption">Resolution proof tree: clauses combine pairwise (with unification) until the contradictory empty clause ⊥ falls out.</div>
+</div>
+
+<div class="quiz" id="quiz5-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">In first-order resolution, what is the new ingredient that propositional resolution did <em>not</em> require?</div>
+  <div class="quiz-options" data-quiz="q5">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>You must unify the complementary literals before cancelling them, and apply the resulting substitution to the remaining literals.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>You no longer need to convert anything to CNF.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>You prove the query directly instead of negating it.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>You stop as soon as any clause is derived, not at the empty clause.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q5','a')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q5">
+    <strong>Correct answer: A.</strong> The overall structure — convert to CNF, negate the query, resolve toward the empty clause — is identical to the propositional case. What's new is that complementary literals like <code>¬Animal(y)</code> and <code>Animal(Tuna)</code> aren't literally identical, so we first compute a unifier (<code>y ↦ Tuna</code>) and then apply it to the surviving literals. Option C is wrong because we still negate the query, and option D is wrong because we still must reach the empty clause to declare a contradiction.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ PART VI ═══════════════════════ -->
+<section id="part6" class="reveal">
+<div class="part-header">
+  <div class="part-number">Part VI</div>
+  <h2>Converting First-Order Sentences to CNF</h2>
+</div>
+
+<p>Resolution assumed its inputs were already in CNF — a conjunction of clauses, each clause a disjunction of literals, with no quantifiers in sight. Part VI fills that gap. The procedure is the same skeleton as propositional CNF conversion, with a few extra middle steps to deal with the things only FOL has: quantifiers and variables. We'll run one sentence through all six steps:</p>
+
+<pre><code>∀x [ ∀y Animal(y) ⇒ Loves(x,y) ] ⇒ [ ∃y Loves(y,x) ]
+<span class="cm">// "everyone who loves all animals is loved by someone"</span></code></pre>
+
+<h3 id="cnf-steps">The Six Steps</h3>
+
+<div class="flow-step">
+  <div class="step-num">1</div>
+  <p><strong>Eliminate connectives</strong> other than ∧, ∨, ¬. Rewrite each <code>P ⇒ Q</code> as <code>¬P ∨ Q</code>. Both implications disappear, each leaving a fresh negation in front of its antecedent.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2</div>
+  <p><strong>Move negations inward.</strong> Use De Morgan's laws (<code>¬(A∧B) ≡ ¬A∨¬B</code>, <code>¬(A∨B) ≡ ¬A∧¬B</code>) <em>plus</em> two quantifier rules unique to FOL: <code>¬∀x α ≡ ∃x ¬α</code> and <code>¬∃x α ≡ ∀x ¬α</code>. A negation crossing a quantifier <strong>flips</strong> it. Double negations cancel.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">2½</div>
+  <p>After step 2 our sentence reads (schematically) <code>∀x [ ∃y (Animal(y) ∧ ¬Loves(x,y)) ] ∨ [ ∃y Loves(y,x) ]</code> — note we now have two different <code>∃y</code> in the same sentence.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">3</div>
+  <p><strong>Standardize variables apart.</strong> Two quantifiers must not share a variable name, or later steps get confused. Rename the second <code>∃y</code> to <code>∃z</code>. Now every quantifier owns a distinct variable.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">4</div>
+  <p><strong>Skolemize</strong> — remove every existential quantifier (detailed below).</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">5</div>
+  <p><strong>Drop universal quantifiers.</strong> After Skolemization only ∀'s remain; since everything left is implicitly universally quantified, we simply erase the ∀ symbols.</p>
+</div>
+<div class="flow-step">
+  <div class="step-num">6</div>
+  <p><strong>Distribute ∨ over ∧.</strong> Using <code>A ∨ (B ∧ C) ≡ (A∨B) ∧ (A∨C)</code>, push the sentence into a conjunction of disjunctions — pure CNF. Split into separately numbered clauses, ready for resolution.</p>
+</div>
+
+<h3 id="skolemization">Step 4 in Depth — Skolemization</h3>
+<p>Back in Part I, Existential Instantiation replaced ∃<code>x</code> with a <em>fresh constant</em>. That works when the ∃ stands alone. But here the existential is <strong>inside the scope of a ∀</strong>: <code>∀x … ∃y …</code>. The "someone" who loves <code>x</code> may be a <em>different</em> person for each <code>x</code> — so <code>y</code> depends on <code>x</code>. A single constant can't capture that dependence.</p>
+
+<div class="callout concept">
+  <div class="callout-title">Key Concept — Skolemization</div>
+  <p>To remove an existential quantifier inside the scope of universals over <code>x₁,…,xₙ</code>, replace its variable with a <strong>Skolem function</strong> <code>f(x₁,…,xₙ)</code> — a brand-new function symbol applied to the surrounding universal variables. This records that the existing object <em>depends on</em> those variables. If the ∃ is <em>not</em> inside any ∀ (as in plain EI), the function has no arguments and degenerates to a <strong>Skolem constant</strong> — exactly the fresh constant from Part I.</p>
+</div>
+
+<p>So in our example, <code>∃y</code> (inside <code>∀x</code>) becomes a function <code>F(x)</code>, and the renamed <code>∃z</code> (also inside <code>∀x</code>) becomes <code>G(x)</code>. Every occurrence of the existential variable is replaced by its Skolem term.</p>
+
+<div class="figure">
+  <div class="figure-box">
+    <svg width="380" height="120" viewBox="0 0 380 120" style="display:block; margin:0 auto;">
+      <text x="190" y="28" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">∀x  ∃y  Loves(y, x)</text>
+      <line x1="120" y1="50" x2="120" y2="70" stroke="#d9d0c4" stroke-width="2"/>
+      <text x="190" y="62" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#c0510a">skolemize: y ↦ F(x)</text>
+      <text x="190" y="98" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#2a2520">∀x  Loves(F(x), x)</text>
+    </svg>
+  </div>
+  <div class="figure-caption">Because <code>y</code> sits inside <code>∀x</code>, it must become a function <code>F(x)</code> — not a constant — to preserve the dependence on <code>x</code>.</div>
+</div>
+
+<p>After Skolemizing, dropping the ∀'s, and distributing, the example yields its two final clauses:</p>
+<pre><code>(C1)  Animal(F(x)) ∨ Loves(G(x), x)
+(C2)  ¬Loves(x, F(x)) ∨ Loves(G(x), x)</code></pre>
+
+<div class="callout warning">
+  <div class="callout-title">Skolem Symbols Must Be New</div>
+  <p>Just like the fresh constant in Existential Instantiation, each Skolem function or constant must use a symbol that appears <strong>nowhere else</strong> in the knowledge base. Reusing a name would smuggle in false equalities between objects. And remember: Skolemization preserves <em>satisfiability</em>, not logical equivalence — which is exactly what resolution needs, since resolution works by refuting Δ ∧ ¬α.</p>
+</div>
+
+<div class="quiz" id="quiz6-wrap">
+  <div class="quiz-header">Check Your Understanding</div>
+  <div class="quiz-question">Why is <code>∃y</code> in <code>∀x ∃y Loves(y,x)</code> replaced by a function <code>F(x)</code> rather than a plain constant?</div>
+  <div class="quiz-options" data-quiz="q6">
+    <div class="quiz-option" data-answer="a"><div class="marker">A</div><div>Because resolution forbids constants in clauses.</div></div>
+    <div class="quiz-option" data-answer="b"><div class="marker">B</div><div>Because the existential <code>y</code> lies inside the scope of <code>∀x</code>, so the object it names can differ for each <code>x</code> — a function records that dependence on <code>x</code>.</div></div>
+    <div class="quiz-option" data-answer="c"><div class="marker">C</div><div>Because functions are always shorter to write than constants.</div></div>
+    <div class="quiz-option" data-answer="d"><div class="marker">D</div><div>Because De Morgan's law requires it.</div></div>
+  </div>
+  <button class="quiz-btn" onclick="checkQuiz('q6','b')">Check Answer</button>
+  <div class="quiz-explanation" data-quiz-exp="q6">
+    <strong>Correct answer: B.</strong> Under <code>∀x ∃y</code>, the witnessing object <code>y</code> may depend on which <code>x</code> we picked, so a single constant would wrongly assert one fixed object loves everybody. A Skolem function <code>F(x)</code> captures "the object that depends on <code>x</code>." Only when the existential is <em>not</em> inside any universal does it collapse to a Skolem constant — which is precisely the Existential Instantiation rule from Part I.
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════ SYNTHESIS ═══════════════════════ -->
+<section id="synthesis" class="reveal" style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+<h2 style="font-size: 28px; margin-bottom: 24px;">Putting It All Together</h2>
+
+<p>This lecture answered one question — <em>how does a machine actually reason over quantified knowledge?</em> — three different ways, each trading generality against efficiency.</p>
+
+<p><strong>The brute-force route (Parts I–II).</strong> Strip quantifiers with Universal and Existential Instantiation, turning ground first-order sentences into ordinary propositions, then unleash a SAT solver. Herbrand's theorem guarantees a finite slice of the (possibly infinite) propositionalization always suffices for a true entailment — but the symmetry breaks for non-entailment, which is why FOL inference is only <em>semi-decidable</em>, a limit Turing and Church nailed down in 1936.</p>
+
+<p><strong>The efficient special case (Part III).</strong> Restrict to definite clauses — if-then rules with positive literals — and you get forward and backward chaining: fire rules from the facts toward the goal, or unwind the goal back to the facts. This is the machinery behind Datalog and Prolog.</p>
+
+<p><strong>The general engine (Parts IV–VI).</strong> Resolution handles any knowledge base. It needed two new pieces we built in order: <strong>unification</strong>, the substitution that makes two literals match (Part IV), which powers the lifted resolution rule (Part V); and a richer <strong>CNF conversion</strong> whose star step is <strong>Skolemization</strong> (Part VI) — itself just the grown-up version of the Existential Instantiation we met all the way back in Part I. The thread connecting the whole lecture is that handful of substitution ideas: instantiate, unify, Skolemize.</p>
+
+<div class="callout big-idea">
+  <div class="callout-title">The Through-Line</div>
+  <p>Every method here reduces first-order reasoning to something more concrete: chaining reduces it to rule-firing on ground facts, resolution reduces it to refutation in CNF, and propositionalization reduces it all the way down to SAT. First-order logic gives us the <em>expressiveness</em>; these algorithms give us the <em>computation</em>.</p>
+</div>
+
+<div class="callout tip" style="margin-top: 32px;">
+  <div class="callout-title">What's Next</div>
+  <p>This lecture closes our study of first-order logic. Notice its biggest limitation: everything has been <em>certain</em> — facts are simply true or false. Real agents face uncertainty. Next we turn to <strong>knowledge representation, reasoning, and learning under uncertainty</strong>, beginning with probabilistic reasoning — replacing crisp entailment with degrees of belief, and logical inference with probabilistic inference.</p>
+</div>
+</section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════ SCRIPTS — INCLUDE VERBATIM ═══════════════════════ -->
+<script>
+// ── NAV TOGGLE ──
+const navToggle = document.getElementById('navToggle');
+const sidebar = document.getElementById('sidebar');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  sidebar.classList.toggle('open');
+});
+sidebar.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    sidebar.classList.remove('open');
+  });
+});
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// ── REVEAL ON SCROLL ──
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── QUIZ LOGIC ──
+function checkQuiz(quizId, correctAnswer) {
+  const container = document.querySelector(`[data-quiz="${quizId}"]`);
+  const options = container.querySelectorAll('.quiz-option');
+  const expEl = document.querySelector(`[data-quiz-exp="${quizId}"]`);
+  let selected = null;
+  options.forEach(o => { if (o.classList.contains('selected')) selected = o; });
+  if (!selected) return;
+  const answer = selected.dataset.answer;
+  options.forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    else if (o.classList.contains('selected')) o.classList.add('incorrect');
+  });
+  expEl.classList.add('show');
+  if (answer === correctAnswer) {
+    expEl.classList.add('correct-exp');
+  } else {
+    expEl.classList.add('incorrect-exp');
+  }
+}
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    if (opt.style.pointerEvents === 'none') return;
+    const siblings = opt.parentElement.querySelectorAll('.quiz-option');
+    siblings.forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>
